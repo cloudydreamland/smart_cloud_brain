@@ -16,6 +16,11 @@
 | 问诊病历页 | `/doctor/record/:registrationId` | 医生 | 生成和保存病历 |
 | 处方开具页 | `/doctor/prescription/:patientId` | 医生 | 开方和 AI 审核 |
 | 医生通知中心 | `/doctor/notifications` | 医生 | 查看 WebSocket 高风险用药告警 |
+| 管理首页 | `/admin/home` | 管理员 | 基础数据和系统配置入口 |
+| 科室管理 | `/admin/departments` | 管理员 | 科室增删改查、启停 |
+| 医生管理 | `/admin/doctors` | 管理员 | 医生账号、科室、职称、擅长方向维护 |
+| 药品管理 | `/admin/drugs` | 管理员 | 药品基础信息和规则维护 |
+| Prompt 模板管理 | `/admin/prompts` | 管理员 | AI Prompt 模板维护 |
 
 ## 2. 页面跳转关系
 
@@ -23,6 +28,7 @@
 flowchart LR
   Login[登录页] --> PatientHome[患者首页]
   Login --> DoctorWorkbench[医生工作台]
+  Login --> AdminHome[管理首页]
   PatientHome --> Triage[智能分诊]
   Triage --> Registration[在线挂号]
   Registration --> MyRegs[我的挂号]
@@ -31,6 +37,10 @@ flowchart LR
   DoctorWorkbench --> Record[问诊病历]
   Record --> Prescription[处方开具]
   Prescription --> Notification[实时通知]
+  AdminHome --> Departments[科室管理]
+  AdminHome --> Doctors[医生管理]
+  AdminHome --> Drugs[药品管理]
+  AdminHome --> Prompts[Prompt模板管理]
 ```
 
 ## 3. 表单字段
@@ -43,6 +53,10 @@ flowchart LR
 | 在线挂号页 | 科室、医生、时间段 |
 | 问诊病历页 | 医患对话、主诉、现病史、既往史、体格检查、诊断、治疗建议 |
 | 处方开具页 | 药品名称、剂量、频次、用法 |
+| 科室管理页 | 科室名称、科室描述、启停状态 |
+| 医生管理页 | 姓名、手机号、登录密码、所属科室、职称、擅长方向、启停状态 |
+| 药品管理页 | 药品名称、规格、禁忌说明、相互作用说明、启停状态 |
+| Prompt 模板页 | 任务类型、科室编码、模板名称、模板内容、输出 Schema、版本、启停状态 |
 
 ## 4. 按钮行为
 

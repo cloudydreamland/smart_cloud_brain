@@ -66,6 +66,13 @@ Authorization: Bearer <jwt-token>
 | `/api/notification/read` | POST | 医生 | 标记通知已读 |
 | `/api/prompt-template/list` | GET | 医生/管理员 | Prompt 模板列表或配置展示 |
 | `/ws/notifications` | WS | 医生 | WebSocket 实时通知连接 |
+| `/api/admin/login` | POST | 游客 | 管理员登录 |
+| `/api/admin/department/list` | GET | 管理员 | 科室列表 |
+| `/api/admin/department/save` | POST | 管理员 | 新增或编辑科室 |
+| `/api/admin/doctor/save` | POST | 管理员 | 新增或编辑医生 |
+| `/api/admin/drug/list` | GET | 管理员 | 药品列表 |
+| `/api/admin/drug/save` | POST | 管理员 | 新增或编辑药品 |
+| `/api/admin/prompt-template/save` | POST | 管理员 | 新增或编辑 Prompt 模板 |
 
 ### 3.2 服务间内部 AI 接口
 
