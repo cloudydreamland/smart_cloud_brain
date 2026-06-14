@@ -1,5 +1,9 @@
 # 任务覆盖与必做任务方案
 
+## 0. 口径说明
+
+本文档结合 `东软智慧云脑诊疗平台实践任务描述(1).docx` 和用户补充图片要求整理。Word 文档中的项目初始化、传统业务、智能分诊、AI 处方审核、AI 病历生成、前后端联调、成果提交、答辩和非功能要求均作为基础必做内容；图片中的六项任务全部作为本项目必做升级项。
+
 ## 1. 原始任务覆盖矩阵
 
 | 原始要求 | 文档覆盖 | 开发交付 | 优先级 |
@@ -10,10 +14,10 @@
 | 项目初始化与环境搭建 | `04-technical-solution.md`、`09-development-plan.md`、`11-deployment-ops.md` | 前后端脚手架、统一响应、全局异常、CORS、Axios | P0 |
 | 患者管理、医生管理、在线挂号 | `03-prd.md`、`06-database-design.md`、`07-api-design.md`、`08-ui-interaction.md` | 注册登录、医生列表、挂号创建、列表、取消 | P0 |
 | 智能分诊 | `03-prd.md`、`05-system-architecture.md`、`07-api-design.md` | `/api/triage/consult`、分诊记录、推荐医生跳转挂号 | P0 |
-| AI 处方辅助审核 | `03-prd.md`、`06-database-design.md`、`07-api-design.md` | `/api/prescription/check`、审核记录、风险等级展示 | P1 |
-| AI 病历自动生成 | `03-prd.md`、`06-database-design.md`、`07-api-design.md` | `/api/medical-record/generate`、结构化病历回填和保存 | P1 |
-| 前后端联调与综合演示 | `09-development-plan.md`、`10-test-plan.md` | 完整诊疗案例、Postman 记录、前端截图或录屏 | P1 |
-| 成果要求、答辩要求 | `README.md`、`09-development-plan.md`、`10-test-plan.md` | 源码、数据库文档、PPT、演示视频、测试记录 | P1 |
+| AI 处方辅助审核 | `03-prd.md`、`06-database-design.md`、`07-api-design.md` | `/api/prescription/check`、审核记录、风险等级展示 | P0 |
+| AI 病历自动生成 | `03-prd.md`、`06-database-design.md`、`07-api-design.md` | `/api/medical-record/generate`、结构化病历回填和保存 | P0 |
+| 前后端联调与综合演示 | `09-development-plan.md`、`10-test-plan.md` | 完整诊疗案例、Postman 记录、前端截图或录屏 | P0 |
+| 成果要求、答辩要求 | `README.md`、`09-development-plan.md`、`10-test-plan.md` | 源码、数据库文档、PPT、演示视频、测试记录 | P0 |
 | 非功能要求 | `02-requirements-analysis.md`、`10-test-plan.md`、`11-deployment-ops.md`、`12-risks.md` | 可运行、可演示、规范、友好、可扩展 | P0 |
 | WebSocket 实时通知 | 本文档、`09-development-plan.md`、`10-test-plan.md` | 高风险处方实时告警 | P0 |
 | AI 流式响应 | 本文档、`09-development-plan.md`、`10-test-plan.md` | 病历生成 SSE 或 WebSocket 流式输出 | P0 |

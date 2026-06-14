@@ -62,6 +62,10 @@ Authorization: Bearer <jwt-token>
 | `/api/prescription/check` | POST | 医生 | AI 处方审核 |
 | `/api/prescription/create` | POST | 医生 | 保存处方 |
 | `/api/prescription/list` | GET | 患者/医生 | 处方列表 |
+| `/api/notification/list` | GET | 医生 | 医生通知列表 |
+| `/api/notification/read` | POST | 医生 | 标记通知已读 |
+| `/api/prompt-template/list` | GET | 医生/管理员 | Prompt 模板列表或配置展示 |
+| `/ws/notifications` | WS | 医生 | WebSocket 实时通知连接 |
 
 ### 3.2 服务间内部 AI 接口
 
@@ -73,6 +77,7 @@ Authorization: Bearer <jwt-token>
 | `/internal/ai/medical-record/generate` | POST | `diagnosis-service` | AI 生成病历 |
 | `/internal/ai/medical-record/generate/stream` | GET | `diagnosis-service` | AI 流式生成病历 |
 | `/internal/ai/prescription/check` | POST | `diagnosis-service` | AI 处方审核 |
+| `/internal/ai/prompt-template/resolve` | POST | `diagnosis-service` | 按任务类型和科室解析 Prompt 模板 |
 
 ## 4. 接口详情
 
@@ -264,6 +269,37 @@ Content-Type: application/json
 前端 -> /api/medical-record/generate -> diagnosis-service -> /internal/ai/medical-record/generate -> ai-service
 ```
 
+### 4.6.1 AI 流式生成病历
+
+```http
+GET /api/medical-record/generate/stream?registrationId=100
+Authorization: Bearer jwt-token
+Accept: text/event-stream
+```
+
+SSE 事件：
+
+```text
+event: start
+data: {"taskId":"mr-100"}
+
+event: delta
+data: {"text":"主诉：胸痛伴气短两天"}
+
+event: structured
+data: {"chiefComplaint":"胸痛伴气短两天","diagnosis":"胸痛待查"}
+
+event: done
+data: {"taskId":"mr-100"}
+```
+
+异常事件：
+
+```text
+event: error
+data: {"message":"AI 生成中断，可重试或手动填写"}
+```
+
 响应：
 
 ```json
@@ -309,6 +345,88 @@ Content-Type: application/json
 
 ```text
 前端 -> /api/prescription/check -> diagnosis-service -> /internal/ai/prescription/check -> ai-service
+```
+
+### 4.8 WebSocket 实时通知
+
+```text
+ws://localhost:8080/ws/notifications?token=<jwt-token>
+```
+
+服务端推送消息：
+
+```json
+{
+  "type": "PRESCRIPTION_HIGH_RISK",
+  "notificationId": 300,
+  "doctorId": 1,
+  "patientId": 1,
+  "prescriptionId": 200,
+  "riskLevel": "HIGH",
+  "title": "高风险用药提醒",
+  "content": "检测到潜在药物相互作用，请复核处方。",
+  "createdAt": "2026-06-14 16:00:00"
+}
+```
+
+触发规则：
+
+1. 医生调用 `/api/prescription/check`。
+2. AI 审核结果为 `HIGH`。
+3. 后端保存 `notification_message`。
+4. 后端通过 WebSocket 推送给处方所属医生。
+
+### 4.9 医生通知列表
+
+```http
+GET /api/notification/list?readStatus=UNREAD
+Authorization: Bearer jwt-token
+```
+
+响应：
+
+```json
+{
+  "code": 0,
+  "message": "success",
+  "data": [
+    {
+      "id": 300,
+      "type": "PRESCRIPTION_HIGH_RISK",
+      "title": "高风险用药提醒",
+      "content": "检测到潜在药物相互作用，请复核处方。",
+      "riskLevel": "HIGH",
+      "readStatus": "UNREAD",
+      "createdAt": "2026-06-14 16:00:00"
+    }
+  ]
+}
+```
+
+### 4.10 Prompt 模板列表
+
+```http
+GET /api/prompt-template/list?taskType=MEDICAL_RECORD&departmentCode=CARDIOLOGY
+Authorization: Bearer jwt-token
+```
+
+响应：
+
+```json
+{
+  "code": 0,
+  "message": "success",
+  "data": [
+    {
+      "id": 1,
+      "taskType": "MEDICAL_RECORD",
+      "departmentCode": "CARDIOLOGY",
+      "templateName": "心内科病历生成模板",
+      "version": "v1",
+      "enabled": true
+    }
+  ]
+}
 ```
 
 响应：
