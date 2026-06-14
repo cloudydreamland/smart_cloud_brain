@@ -22,4 +22,60 @@ public class Registration extends BaseEntity {
   private String status;
   @Column(name = "updated_at")
   private LocalDateTime updatedAt;
+
+  public Long getPatientId() {
+    return patientId;
+  }
+
+  public void setPatientId(Long patientId) {
+    this.patientId = patientId;
+  }
+
+  public Long getDoctorId() {
+    return doctorId;
+  }
+
+  public void setDoctorId(Long doctorId) {
+    this.doctorId = doctorId;
+  }
+
+  public Long getDepartmentId() {
+    return departmentId;
+  }
+
+  public void setDepartmentId(Long departmentId) {
+    this.departmentId = departmentId;
+  }
+
+  public Long getTriageRecordId() {
+    return triageRecordId;
+  }
+
+  public void setTriageRecordId(Long triageRecordId) {
+    this.triageRecordId = triageRecordId;
+  }
+
+  public LocalDateTime getAppointmentTime() {
+    return appointmentTime;
+  }
+
+  public void setAppointmentTime(LocalDateTime appointmentTime) {
+    this.appointmentTime = appointmentTime;
+  }
+
+  public String getStatus() {
+    return status;
+  }
+
+  public void setStatus(String status) {
+    this.status = status;
+  }
+
+  public LocalDateTime getUpdatedAt() {
+    return updatedAt;
+  }
+
+  public void setUpdatedAt(LocalDateTime updatedAt) {
+    this.updatedAt = updatedAt;
+  }
 }

@@ -5,33 +5,173 @@
 body {
   margin: 0;
   font-family: Inter, "Microsoft YaHei", system-ui, sans-serif;
-  background: #f5f7fb;
+  background: #eef4f2;
   color: #172033;
 }
 
-.app-shell {
-  min-height: 100vh;
-  padding: 48px;
+button,
+input,
+select,
+textarea {
+  font: inherit;
 }
 
-.workspace {
-  max-width: 960px;
-  margin: 0 auto;
+button {
+  border: 0;
+  border-radius: 6px;
+  padding: 10px 14px;
+  background: #dce6e2;
+  color: #16251f;
+  cursor: pointer;
+}
+
+button.primary {
+  background: #167255;
+  color: #fff;
+}
+
+button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  border: 1px solid #cbd8d4;
+  border-radius: 6px;
+  padding: 10px 12px;
+  background: #fff;
+  color: #172033;
+}
+
+label {
+  display: grid;
+  gap: 7px;
+  color: #53635e;
+  font-size: 13px;
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  min-height: 100vh;
+}
+
+.rail {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  padding: 36px 28px;
+  background: #17372e;
+  color: #eef8f4;
+}
+
+.rail h1 {
+  margin: 0 0 14px;
+  font-size: 34px;
+  letter-spacing: 0;
+}
+
+.rail p {
+  line-height: 1.7;
+  color: #bbd3cb;
 }
 
 .eyebrow {
   margin: 0 0 12px;
-  color: #1f7a5c;
-  font-size: 14px;
-  font-weight: 700;
+  color: #80d8b5;
+  font-size: 13px;
+  font-weight: 800;
 }
 
-h1 {
-  margin: 0 0 16px;
-  font-size: 32px;
+.session {
+  display: grid;
+  gap: 8px;
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid rgb(255 255 255 / 18%);
 }
 
-p {
-  max-width: 680px;
-  line-height: 1.7;
+.workspace {
+  display: grid;
+  gap: 18px;
+  align-content: start;
+  padding: 32px;
+}
+
+.panel {
+  display: grid;
+  gap: 14px;
+  padding: 22px;
+  border: 1px solid #d8e3df;
+  border-radius: 8px;
+  background: #fbfdfc;
+}
+
+.panel h2,
+.panel h3 {
+  margin: 0;
+}
+
+.grid {
+  display: grid;
+  gap: 12px;
+}
+
+.grid.two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.grid.three {
+  grid-template-columns: 1fr 1.3fr 1fr;
+}
+
+.compact {
+  margin-top: 8px;
+}
+
+.notice,
+.result {
+  display: grid;
+  gap: 6px;
+  border-radius: 8px;
+  padding: 14px 16px;
+  background: #dff3e9;
+  color: #164733;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+td {
+  border-bottom: 1px solid #e2e9e6;
+  padding: 10px 8px;
+}
+
+.split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+@media (max-width: 820px) {
+  .app-shell,
+  .grid.two,
+  .grid.three,
+  .split {
+    grid-template-columns: 1fr;
+  }
+
+  .rail {
+    position: static;
+    height: auto;
+  }
+
+  .workspace {
+    padding: 18px;
+  }
 }

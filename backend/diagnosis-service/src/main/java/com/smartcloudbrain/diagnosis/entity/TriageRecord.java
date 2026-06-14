@@ -20,4 +20,60 @@ public class TriageRecord extends BaseEntity {
   @Column(name = "ai_result_json")
   private String aiResultJson;
   private String status;
+
+  public Long getPatientId() {
+    return patientId;
+  }
+
+  public void setPatientId(Long patientId) {
+    this.patientId = patientId;
+  }
+
+  public String getChiefComplaint() {
+    return chiefComplaint;
+  }
+
+  public void setChiefComplaint(String chiefComplaint) {
+    this.chiefComplaint = chiefComplaint;
+  }
+
+  public String getRecommendedDepartment() {
+    return recommendedDepartment;
+  }
+
+  public void setRecommendedDepartment(String recommendedDepartment) {
+    this.recommendedDepartment = recommendedDepartment;
+  }
+
+  public String getRecommendedDoctorIds() {
+    return recommendedDoctorIds;
+  }
+
+  public void setRecommendedDoctorIds(String recommendedDoctorIds) {
+    this.recommendedDoctorIds = recommendedDoctorIds;
+  }
+
+  public String getReason() {
+    return reason;
+  }
+
+  public void setReason(String reason) {
+    this.reason = reason;
+  }
+
+  public String getAiResultJson() {
+    return aiResultJson;
+  }
+
+  public void setAiResultJson(String aiResultJson) {
+    this.aiResultJson = aiResultJson;
+  }
+
+  public String getStatus() {
+    return status;
+  }
+
+  public void setStatus(String status) {
+    this.status = status;
+  }
 }

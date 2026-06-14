@@ -4,6 +4,8 @@ import com.smartcloudbrain.common.result.Result;
 import com.smartcloudbrain.diagnosis.dto.admin.DepartmentSaveRequest;
 import com.smartcloudbrain.diagnosis.dto.admin.DoctorSaveRequest;
 import com.smartcloudbrain.diagnosis.dto.admin.DrugSaveRequest;
+import com.smartcloudbrain.diagnosis.dto.admin.KnowledgeEntrySaveRequest;
+import com.smartcloudbrain.diagnosis.dto.admin.PromptTemplateSaveRequest;
 import com.smartcloudbrain.diagnosis.service.AdminCatalogService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -45,5 +47,25 @@ public class AdminController {
   @PostMapping("/drug/save")
   public Result<?> saveDrug(@Valid @RequestBody DrugSaveRequest request) {
     return Result.success(adminCatalogService.saveDrug(request));
+  }
+
+  @GetMapping("/prompt-template/list")
+  public Result<?> prompts() {
+    return Result.success(adminCatalogService.prompts());
+  }
+
+  @PostMapping("/prompt-template/save")
+  public Result<?> savePrompt(@Valid @RequestBody PromptTemplateSaveRequest request) {
+    return Result.success(adminCatalogService.savePrompt(request));
+  }
+
+  @GetMapping("/knowledge/list")
+  public Result<?> knowledgeEntries() {
+    return Result.success(adminCatalogService.knowledgeEntries());
+  }
+
+  @PostMapping("/knowledge/save")
+  public Result<?> saveKnowledgeEntry(@Valid @RequestBody KnowledgeEntrySaveRequest request) {
+    return Result.success(adminCatalogService.saveKnowledgeEntry(request));
   }
 }

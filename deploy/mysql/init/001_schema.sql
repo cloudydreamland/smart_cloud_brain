@@ -179,14 +179,50 @@ CREATE TABLE IF NOT EXISTS drug (
   INDEX idx_drug_status (status)
 );
 
+CREATE TABLE IF NOT EXISTS knowledge_entry (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  title VARCHAR(100) NOT NULL,
+  symptoms TEXT NOT NULL,
+  risk_signals TEXT,
+  advice TEXT NOT NULL,
+  department_code VARCHAR(50),
+  status VARCHAR(20) NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_knowledge_status (status),
+  INDEX idx_knowledge_department (department_code)
+);
+
 INSERT INTO department (id, code, name, description)
 VALUES (1, 'CARDIOLOGY', '心内科', '心血管疾病诊疗科室')
+ON DUPLICATE KEY UPDATE name = VALUES(name);
+
+INSERT INTO department (id, code, name, description)
+VALUES (2, 'GENERAL', '全科/轻症门诊', '校园常见轻症初诊与复诊')
 ON DUPLICATE KEY UPDATE name = VALUES(name);
 
 INSERT INTO doctor (id, name, phone, password_hash, department_id, title, specialty, status)
 VALUES (1, '张医生', '13900000001', '$2a$mock', 1, '主任医师', '胸痛、心悸、高血压', 'ENABLED')
 ON DUPLICATE KEY UPDATE name = VALUES(name);
 
+INSERT INTO doctor (id, name, phone, password_hash, department_id, title, specialty, status)
+VALUES (2, '李医生', '13900000002', '{plain}123456', 2, '主治医师', '感冒发热、咽痛、腹泻、皮肤过敏', 'ENABLED')
+ON DUPLICATE KEY UPDATE name = VALUES(name);
+
+INSERT INTO admin_user (id, username, password_hash, name, status)
+VALUES (1, 'admin', '{plain}123456', '系统管理员', 'ENABLED')
+ON DUPLICATE KEY UPDATE name = VALUES(name);
+
 INSERT INTO drug (id, name, specification, contraindication, interaction_rule, status)
 VALUES (1, '阿司匹林', '100mg', '活动性出血禁用', '与抗凝药同用出血风险升高', 'ENABLED')
 ON DUPLICATE KEY UPDATE name = VALUES(name);
+
+INSERT INTO drug (id, name, specification, contraindication, interaction_rule, status)
+VALUES (2, '对乙酰氨基酚', '0.5g', '严重肝功能不全慎用', '避免与其他含对乙酰氨基酚复方药重复使用', 'ENABLED')
+ON DUPLICATE KEY UPDATE name = VALUES(name);
+
+INSERT INTO knowledge_entry (id, title, symptoms, risk_signals, advice, department_code, status)
+VALUES
+  (1, '普通感冒', '鼻塞、流涕、咽痛、低热、轻微咳嗽', '持续高热、呼吸困难、胸痛、意识异常', '注意休息和补液，症状加重或超过三天建议线下就诊。', 'GENERAL', 'ENABLED'),
+  (2, '急性腹泻', '腹泻、腹痛、恶心、轻度乏力', '便血、严重脱水、持续高热、剧烈腹痛', '补液和清淡饮食，出现危险信号时及时就医。', 'GENERAL', 'ENABLED')
+ON DUPLICATE KEY UPDATE title = VALUES(title);

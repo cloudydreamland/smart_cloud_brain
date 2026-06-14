@@ -1,8 +1,10 @@
 package com.smartcloudbrain.diagnosis.controller;
 
 import com.smartcloudbrain.aiapi.dto.MedicalRecordGenerateRequest;
+import com.smartcloudbrain.diagnosis.dto.medical.MedicalRecordSaveRequest;
 import com.smartcloudbrain.diagnosis.service.AiGatewayService;
 import com.smartcloudbrain.common.result.Result;
+import com.smartcloudbrain.diagnosis.service.MedicalRecordService;
 import jakarta.validation.Valid;
 import java.io.IOException;
 import java.util.List;
@@ -20,14 +22,31 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 public class MedicalRecordController {
 
   private final AiGatewayService aiGatewayService;
+  private final MedicalRecordService medicalRecordService;
 
-  public MedicalRecordController(AiGatewayService aiGatewayService) {
+  public MedicalRecordController(AiGatewayService aiGatewayService, MedicalRecordService medicalRecordService) {
     this.aiGatewayService = aiGatewayService;
+    this.medicalRecordService = medicalRecordService;
   }
 
   @PostMapping("/generate")
   public Result<?> generate(@Valid @RequestBody MedicalRecordGenerateRequest request) {
     return Result.success(aiGatewayService.generateMedicalRecord(request));
+  }
+
+  @PostMapping("/save")
+  public Result<?> save(@Valid @RequestBody MedicalRecordSaveRequest request) {
+    return Result.success(medicalRecordService.save(request));
+  }
+
+  @GetMapping("/list")
+  public Result<?> list() {
+    return Result.success(medicalRecordService.list());
+  }
+
+  @GetMapping("/detail")
+  public Result<?> detail(@RequestParam Long id) {
+    return Result.success(medicalRecordService.detail(id));
   }
 
   @GetMapping(value = "/generate/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)

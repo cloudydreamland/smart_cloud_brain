@@ -1,10 +1,10 @@
 # 东软智慧云脑诊疗平台
 
-本仓库用于整理“东软智慧云脑诊疗平台”课程实践项目文档。项目基于 Spring Boot 3 + Spring Cloud + Vue 3 的前后端分离纯微服务架构，包含患者端、医生端、管理端三个使用入口，围绕患者注册登录、智能分诊、在线挂号、医生问诊、AI 病历生成、AI 处方审核、基础数据维护和诊疗记录查看形成完整业务闭环，并将图片中的六项任务全部作为必做交付项。
+本仓库用于整理和实现“东软智慧云脑诊疗平台”课程实践项目。项目基于 JDK 17、Spring Boot 3、Vue 3、uni-app/HBuilder、Node.js 24 和 KingbaseES 兼容方案，包含 Vue Web 患者端、医生端、管理端，以及 uni-app 安卓患者端，围绕患者注册登录、AI 智能问诊/分诊、在线挂号、医生接诊、AI 病历草稿、医生确认病历、医生开具处方、AI 处方审核、患者查看记录形成轻症诊疗业务闭环。
 
 文档口径：核心业务、技术栈、成果要求和答辩要求以 `东软智慧云脑诊疗平台实践任务描述(1).docx` 为基础；图片中的六项任务按用户要求作为本项目必做项处理。
 
-统一口径声明：本项目采用“基础诊疗闭环 + FY26 企业项目实训方案 + 补充必做任务”的统一口径。后端从项目初始化起即采用 Spring Boot 3 + Spring Cloud 纯微服务架构，前端统一通过 `gateway-service` 访问业务能力；患者端、医生端、管理端均为必做入口。WebSocket 实时通知、AI 流式响应、Pinia 状态机、Prompt 工程、双端分离部署、纯微服务架构六项任务全部作为 P0 必做交付，不再作为可选扩展项处理。管理端除基础数据维护外，还需要覆盖 AI 医生排班和 AI 分诊台的最小可演示能力。
+统一口径声明：本项目采用“基础诊疗闭环 + FY26 企业项目实训方案 + 补充必做任务”的统一口径。第一阶段以后端 `diagnosis-service + ai-service` 承载可运行主链路，其他服务目录保留为后续领域拆分和长期维护规划；前端通过 `/api` 代理访问业务能力。患者端、医生端、管理端均为必做入口。WebSocket 实时通知、AI 流式响应、Prompt 工程、双端分离部署、纯微服务演进六项任务全部作为 P0 必做交付，不再作为可选扩展项处理。管理端第一版聚焦科室、医生、药品、Prompt 模板和轻症知识库维护。
 
 ## 文档入口
 
@@ -20,11 +20,35 @@ smart-cloud-brain/
   docs/       项目文档
   backend/    Spring Boot / Spring Cloud 后端多模块工程
   frontend/   pnpm 前端 monorepo，包含患者端、医生端和管理端
-  sql/        各业务库建表脚本和演示数据
+  sql/        KingbaseES 建表脚本、兼容 SQL 和演示数据
   deploy/     Docker Compose、Nacos、MySQL、Nginx 和环境变量配置
   scripts/    本地构建、启动、停止和初始化脚本
   postman/    本地接口调试集合
 ```
+
+## 本地运行
+
+```bash
+cd backend
+mvn test
+mvn -pl diagnosis-service spring-boot:run
+
+cd frontend
+corepack pnpm install
+corepack pnpm test
+corepack pnpm run build
+corepack pnpm --filter patient-web dev   # http://localhost:5173
+corepack pnpm --filter doctor-web dev    # http://localhost:5174
+corepack pnpm --filter admin-web dev     # http://localhost:5175
+```
+
+默认演示账号：
+
+- 患者端：可先用患者注册功能创建账号。
+- 医生端：`13900000002 / 123456`
+- 管理端：`admin / 123456`
+
+KingbaseES 建库脚本位于 `sql/kingbase_schema.sql`；若本地先用 MySQL 演示，可继续使用 `deploy/mysql/init/001_schema.sql`。
 
 ## 推荐开发主线
 

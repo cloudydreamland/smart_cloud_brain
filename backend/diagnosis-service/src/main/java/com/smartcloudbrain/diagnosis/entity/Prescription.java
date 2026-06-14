@@ -17,4 +17,44 @@ public class Prescription extends BaseEntity {
   @Column(name = "risk_level")
   private String riskLevel;
   private String status;
+
+  public Long getPatientId() {
+    return patientId;
+  }
+
+  public void setPatientId(Long patientId) {
+    this.patientId = patientId;
+  }
+
+  public Long getDoctorId() {
+    return doctorId;
+  }
+
+  public void setDoctorId(Long doctorId) {
+    this.doctorId = doctorId;
+  }
+
+  public Long getMedicalRecordId() {
+    return medicalRecordId;
+  }
+
+  public void setMedicalRecordId(Long medicalRecordId) {
+    this.medicalRecordId = medicalRecordId;
+  }
+
+  public String getRiskLevel() {
+    return riskLevel;
+  }
+
+  public void setRiskLevel(String riskLevel) {
+    this.riskLevel = riskLevel;
+  }
+
+  public String getStatus() {
+    return status;
+  }
+
+  public void setStatus(String status) {
+    this.status = status;
+  }
 }

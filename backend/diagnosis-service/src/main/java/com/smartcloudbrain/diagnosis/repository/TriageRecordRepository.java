@@ -1,7 +1,9 @@
 package com.smartcloudbrain.diagnosis.repository;
 
 import com.smartcloudbrain.diagnosis.entity.TriageRecord;
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface TriageRecordRepository extends JpaRepository<TriageRecord, Long> {
+  List<TriageRecord> findByPatientId(Long patientId);
 }

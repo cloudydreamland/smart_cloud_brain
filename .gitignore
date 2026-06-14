@@ -7,3 +7,7 @@ deploy/env/.env
 *.log
 node_modules/
 dist/
+
+# Hermes agent files
+.hermes/
+AGENTS.md

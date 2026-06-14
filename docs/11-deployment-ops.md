@@ -4,11 +4,11 @@
 
 | 工具 | 版本建议 |
 |---|---|
-| JDK | 17+ |
+| JDK | 17 |
 | Maven | 3.8+ |
-| Node.js | 18+ |
-| MySQL | 8+ |
-| IDE | IntelliJ IDEA、VS Code |
+| Node.js | 24 |
+| 数据库 | KingbaseES，开发期可用 MySQL 8 兼容演示 |
+| IDE | IntelliJ IDEA、HBuilder、VS Code |
 
 注册中心启动：
 
@@ -62,8 +62,10 @@ mvn spring-boot:run
 
 ```bash
 cd frontend
-pnpm install
-pnpm dev
+corepack pnpm install
+corepack pnpm --filter patient-web dev   # http://localhost:5173
+corepack pnpm --filter doctor-web dev    # http://localhost:5174
+corepack pnpm --filter admin-web dev     # http://localhost:5175
 ```
 
 接口文档：
@@ -87,7 +89,7 @@ pnpm dev
 
 - Vue 前端构建为静态资源，部署到 Nginx。
 - 各后端微服务分别打包为 Jar 独立运行。
-- MySQL 独立部署。
+- KingbaseES 独立部署，开发演示可临时使用 MySQL。
 - Nginx 将 `/api` 反向代理到 `gateway-service`。
 - Nginx 需要为 `/ws/notifications` 配置 WebSocket 升级代理，为 SSE 接口关闭代理缓冲。
 - 各业务服务通过注册中心发现彼此，并通过 OpenFeign 调用。
@@ -131,8 +133,8 @@ java -jar admin-service/target/admin-service.jar
 
 ```bash
 cd frontend
-pnpm install
-pnpm build
+corepack pnpm install
+corepack pnpm build
 ```
 
 将 `dist/` 目录部署到 Nginx 静态资源目录。
@@ -177,6 +179,9 @@ server {
 | `DB_NAME` | 当前服务使用的数据库或 schema 名称 |
 | `DB_USERNAME` | 数据库用户名 |
 | `DB_PASSWORD` | 数据库密码 |
+| `DB_URL` | JDBC URL，KingbaseES 示例：`jdbc:postgresql://127.0.0.1:54321/smart_cloud_brain` |
+| `DB_DRIVER_CLASS` | KingbaseES 可使用 PostgreSQL 兼容驱动：`org.postgresql.Driver` |
+| `DB_DIALECT` | Hibernate 方言，KingbaseES 兼容模式可用 `org.hibernate.dialect.PostgreSQLDialect` |
 | `JWT_SECRET` | JWT 签名密钥 |
 | `JWT_EXPIRE_HOURS` | JWT 有效期 |
 | `AI_BASE_URL` | AI 服务地址 |

@@ -6,5 +6,8 @@
     "dev": "vite --host 0.0.0.0 --port 5173",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0"
+  },
+  "dependencies": {
+    "@smart-cloud-brain/shared-api": "workspace:*"
   }
 }
