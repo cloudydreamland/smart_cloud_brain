@@ -1,0 +1,37 @@
+CREATE DATABASE IF NOT EXISTS doctor_db DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE doctor_db;
+
+CREATE TABLE IF NOT EXISTS department (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  code VARCHAR(50) NOT NULL UNIQUE,
+  name VARCHAR(50) NOT NULL UNIQUE,
+  description VARCHAR(500),
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS doctor (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  name VARCHAR(50) NOT NULL,
+  phone VARCHAR(20) UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  department_id BIGINT NOT NULL,
+  title VARCHAR(50),
+  specialty VARCHAR(500),
+  status VARCHAR(20) NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_doctor_department (department_id),
+  CONSTRAINT fk_doctor_department FOREIGN KEY (department_id) REFERENCES department(id)
+);
+
+CREATE TABLE IF NOT EXISTS drug (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  name VARCHAR(100) NOT NULL,
+  specification VARCHAR(100),
+  contraindication TEXT,
+  interaction_rule TEXT,
+  status VARCHAR(20) NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_drug_name (name),
+  INDEX idx_drug_status (status)
+);

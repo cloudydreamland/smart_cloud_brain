@@ -22,12 +22,17 @@
 | 医生管理 | 管理员维护医生资料 | 医生列表展示正确，医生账号可登录 |
 | 药品管理 | 管理员维护药品信息 | 处方开具页面可选择维护后的药品 |
 | Prompt 模板管理 | 管理员维护科室模板 | AI 生成时可使用对应模板 |
+| 系统字典管理 | 管理员新增或停用字典项 | 管理端表单和业务状态可读取更新后的字典 |
+| AI 排班生成 | 管理员选择科室和日期，点击 AI 生成 | 返回排班建议 |
+| 排班人工确认 | 管理员调整 AI 建议后发布 | `doctor-service` 生成可预约号源 |
+| AI 分诊台列表 | 管理员查看分诊记录 | 能看到主诉、推荐科室、推荐医生、处理状态 |
+| 分诊台人工改派 | 管理员将患者从推荐医生 A 改派到医生 B | 分诊记录更新，挂号页可按新推荐展示 |
 | WebSocket 实时通知 | AI 审核返回 HIGH 风险 | 医生端无需刷新收到实时告警 |
 | AI 流式响应 | 医生触发病历流式生成 | 前端逐字或逐段展示生成内容 |
 | Pinia 状态机 | 分诊、病历、处方流程切换状态 | 页面按钮、loading、失败状态符合状态机定义 |
 | Prompt 模板 | 切换心内科或儿科模板生成病历 | 生成结果使用对应科室模板约束 |
 | 双端分离部署 | 使用 Nginx 访问前端并代理 `/api` | 完整诊疗流程可跑通 |
-| 微服务拆分 | 主业务服务通过 Spring Cloud Feign 调用 AI 服务 | 分诊、病历、处方审核均可跨服务调用 |
+| 纯微服务架构 | 网关、注册发现、业务域服务、OpenFeign 和熔断降级可用 | 分诊、挂号、病历、处方均可跨服务调用 |
 
 ## 2. 接口测试用例
 
@@ -43,9 +48,14 @@
 | `/api/medical-record/generate` | AI 超时 | 600 或降级响应 |
 | `/api/prescription/check` | 药品为空 | 400 |
 | `/api/prescription/list` | 患者查询 | 仅返回本人处方 |
+| `/api/admin/schedule/generate` | 参数完整 | 返回 AI 排班建议 |
+| `/api/admin/schedule/publish` | 建议 ID 和排班明细完整 | 发布排班和号源 |
+| `/api/admin/triage-desk/list` | 管理员查询 | 返回分诊台列表 |
+| `/api/admin/triage-desk/assign` | 改派科室或医生 | 分诊记录更新 |
 | `/internal/ai/triage` | Mock AI 正常返回 | 返回推荐科室、推荐原因 |
 | `/internal/ai/medical-record/generate` | Mock AI 正常返回 | 返回结构化病历字段 |
 | `/internal/ai/prescription/check` | Mock AI 正常返回 | 返回风险等级和建议 |
+| `/internal/ai/schedule/generate` | Mock AI 正常返回 | 返回排班建议 |
 | `/api/medical-record/generate/stream` | 正常流式生成 | 持续返回 `delta` 并最终返回 `done` |
 | `/ws/notifications` | 医生端连接 | 高风险处方审核时收到告警消息 |
 
@@ -53,9 +63,13 @@
 
 | 场景 | 步骤 | 预期 |
 |---|---|---|
-| 服务间分诊调用 | 启动两个服务，通过 `/api/triage/consult` 发起请求 | `diagnosis-service` 成功调用 `ai-service` 并保存分诊记录 |
-| 服务间病历生成调用 | 通过 `/api/medical-record/generate` 发起请求 | 返回来自 `ai-service` 的结构化病历 |
-| 服务间处方审核调用 | 通过 `/api/prescription/check` 发起请求 | 返回来自 `ai-service` 的风险等级和建议 |
+| 网关路由 | 通过 `gateway-service` 访问 `/api/triage/consult` | 请求正确转发到 `triage-service` |
+| 服务间分诊调用 | 启动网关、分诊、AI、医生服务，通过 `/api/triage/consult` 发起请求 | `triage-service` 成功调用 `ai-service` 和 `doctor-service` 并保存分诊记录 |
+| 服务间病历生成调用 | 通过 `/api/medical-record/generate` 发起请求 | `medical-record-service` 调用 `ai-service` 返回结构化病历 |
+| 服务间处方审核调用 | 通过 `/api/prescription/check` 发起请求 | `prescription-service` 调用 `ai-service` 返回风险等级和建议 |
+| 服务间 AI 排班调用 | 通过 `/api/admin/schedule/generate` 发起请求 | `admin-service` 调用 `ai-service` 返回排班建议 |
+| 服务间排班发布调用 | 通过 `/api/admin/schedule/publish` 发起请求 | `admin-service` 调用 `doctor-service` 写入排班和号源 |
+| 服务间分诊台改派调用 | 通过 `/api/admin/triage-desk/assign` 发起请求 | `admin-service` 调用 `triage-service` 更新改派结果 |
 | AI 服务不可用 | 停止 `ai-service` 后调用分诊、病历或处方审核 | 业务服务返回降级提示，不影响手动流程 |
 | AI 服务超时 | 将 `ai-service` 响应延迟超过超时时间 | 业务服务超时降级，前端显示可操作提示 |
 | 内部接口安全 | 前端或外部直接访问 `/internal/ai/*` | 生产环境不暴露，或返回未授权/禁止访问 |
@@ -68,8 +82,21 @@
 | AI 流式响应 | 调用病历流式生成接口 | 前端逐字或逐段展示内容，结束后回填病历表单 |
 | 前端状态机优化 | 模拟成功、失败、重试、保存流程 | Pinia 状态流转清晰，按钮禁用和错误提示正确 |
 | Prompt 工程优化 | 使用不同科室模板生成病历 | 后端按科室选择 Prompt，输出结构符合模板要求 |
-| 双端分离部署 | 前端部署到 Nginx，后端 Jar 独立运行 | Nginx 页面访问正常，`/api` 代理正常，完整流程可演示 |
-| 微服务拆分 | 关闭 AI 微服务后调用 AI 相关业务接口 | 主业务服务返回降级提示，手动流程仍可继续 |
+| 双端分离部署 | 前端部署到 Nginx，各后端微服务 Jar 独立运行 | Nginx 页面访问正常，`/api` 代理正常，完整流程可演示 |
+| 纯微服务架构 | 关闭 AI、医生或通知等下游服务后调用相关业务接口 | 调用方返回降级提示，主流程或手动流程仍可继续 |
+
+## 4.1 管理端必做验收测试
+
+| 测试项 | 步骤 | 预期 |
+|---|---|---|
+| 管理员权限隔离 | 患者或医生访问 `/api/admin/*` | 返回 403 |
+| AI 排班生成 | 管理员选择科室和日期，点击 AI 生成 | 返回排班建议，状态为 GENERATED |
+| 排班人工确认 | 管理员调整 AI 建议后发布 | `doctor-service` 生成可预约号源 |
+| AI 分诊台列表 | 管理员查看分诊记录 | 能看到主诉、推荐科室、推荐医生和处理状态 |
+| 分诊台人工改派 | 管理员改派科室或医生 | 分诊记录更新，并记录操作日志 |
+| Prompt 模板启停 | 管理员停用某科室模板 | AI 生成回退到通用模板 |
+| WebSocket 网关代理 | Nginx + Gateway 环境下连接 `/ws/notifications` | 医生端能收到高风险告警 |
+| SSE 网关代理 | Nginx + Gateway 环境下调用流式病历接口 | 前端可持续收到 `delta` 事件 |
 
 ## 5. 边界测试
 
@@ -90,7 +117,7 @@
 |---|---|
 | 数据库连接失败 | 后端启动失败并输出明确日志 |
 | AI 服务不可用 | 返回降级提示，不影响手动业务 |
-| `ai-service` 进程退出 | `diagnosis-service` 返回降级结果并记录服务间调用失败日志 |
+| `ai-service` 进程退出 | 分诊、病历或处方服务返回降级结果并记录服务间调用失败日志 |
 | 后端接口 500 | 前端展示错误提示，不白屏 |
 | 网络超时 | 前端提示请求超时，可重试 |
 | Token 被篡改 | 返回 401 |

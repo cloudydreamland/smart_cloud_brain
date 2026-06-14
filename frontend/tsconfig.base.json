@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "jsx": "preserve",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "baseUrl": ".",
+    "paths": {
+      "@smart-cloud-brain/shared-api": ["packages/shared-api/src"],
+      "@smart-cloud-brain/shared-types": ["packages/shared-types/src"],
+      "@smart-cloud-brain/shared-ui": ["packages/shared-ui/src"],
+      "@smart-cloud-brain/shared-utils": ["packages/shared-utils/src"]
+    }
+  }
+}

@@ -69,22 +69,43 @@ Authorization: Bearer <jwt-token>
 | `/api/admin/login` | POST | 游客 | 管理员登录 |
 | `/api/admin/department/list` | GET | 管理员 | 科室列表 |
 | `/api/admin/department/save` | POST | 管理员 | 新增或编辑科室 |
+| `/api/admin/doctor/list` | GET | 管理员 | 医生列表 |
 | `/api/admin/doctor/save` | POST | 管理员 | 新增或编辑医生 |
 | `/api/admin/drug/list` | GET | 管理员 | 药品列表 |
 | `/api/admin/drug/save` | POST | 管理员 | 新增或编辑药品 |
+| `/api/admin/prompt-template/list` | GET | 管理员 | Prompt 模板列表 |
 | `/api/admin/prompt-template/save` | POST | 管理员 | 新增或编辑 Prompt 模板 |
+| `/api/admin/dict/list` | GET | 管理员 | 系统字典列表 |
+| `/api/admin/dict/save` | POST | 管理员 | 新增或编辑系统字典 |
+| `/api/admin/schedule/generate` | POST | 管理员 | AI 生成排班建议 |
+| `/api/admin/schedule/publish` | POST | 管理员 | 人工确认后发布排班和号源 |
+| `/api/admin/schedule/list` | GET | 管理员 | 排班和号源列表 |
+| `/api/admin/schedule/suggestion/detail` | GET | 管理员 | AI 排班建议详情 |
+| `/api/admin/triage-desk/list` | GET | 管理员 | AI 分诊台列表 |
+| `/api/admin/triage-desk/detail` | GET | 管理员 | AI 分诊台详情 |
+| `/api/admin/triage-desk/assign` | POST | 管理员 | 人工改派分诊科室或医生 |
+| `/api/admin/triage-desk/close` | POST | 管理员 | 关闭分诊台处理记录 |
 
 ### 3.2 服务间内部 AI 接口
 
-内部 AI 接口由 `ai-service` 提供，只允许 `diagnosis-service` 调用，不直接暴露给前端。
+内部接口只允许微服务之间通过内网和 OpenFeign 调用，不直接暴露给前端。前端统一访问 `gateway-service`，由网关转发到对应业务服务。
 
 | 接口 | 方法 | 调用方 | 说明 |
 |---|---|---|---|
-| `/internal/ai/triage` | POST | `diagnosis-service` | 智能分诊 |
-| `/internal/ai/medical-record/generate` | POST | `diagnosis-service` | AI 生成病历 |
-| `/internal/ai/medical-record/generate/stream` | GET | `diagnosis-service` | AI 流式生成病历 |
-| `/internal/ai/prescription/check` | POST | `diagnosis-service` | AI 处方审核 |
-| `/internal/ai/prompt-template/resolve` | POST | `diagnosis-service` | 按任务类型和科室解析 Prompt 模板 |
+| `/internal/auth/verify` | POST | `gateway-service`、业务服务 | Token 校验和身份解析 |
+| `/internal/patients/{id}` | GET | 挂号、病历、处方服务 | 患者基础信息 |
+| `/internal/doctors/{id}` | GET | 挂号、分诊服务 | 医生详情、科室、排班 |
+| `/internal/registrations/{id}` | GET | 病历、处方服务 | 挂号关系校验 |
+| `/internal/ai/triage` | POST | `triage-service` | 智能分诊 |
+| `/internal/ai/medical-record/generate` | POST | `medical-record-service` | AI 生成病历 |
+| `/internal/ai/medical-record/generate/stream` | GET | `medical-record-service` | AI 流式生成病历 |
+| `/internal/ai/prescription/check` | POST | `prescription-service` | AI 处方审核 |
+| `/internal/ai/schedule/generate` | POST | `admin-service` | AI 生成排班建议 |
+| `/internal/ai/prompt-template/resolve` | POST | `ai-service` 内部 | 按任务类型和科室解析 Prompt 模板 |
+| `/internal/notifications` | POST | `prescription-service` | 创建并推送通知 |
+| `/internal/triage-records` | GET | `admin-service` | 查询分诊记录 |
+| `/internal/triage-records/{id}/assign` | POST | `admin-service` | 更新分诊人工改派结果 |
+| `/internal/doctors/schedules/publish` | POST | `admin-service` | 发布医生排班和号源 |
 
 ## 4. 接口详情
 
@@ -218,7 +239,7 @@ Content-Type: application/json
 业务接口处理链路：
 
 ```text
-前端 -> /api/triage/consult -> diagnosis-service -> /internal/ai/triage -> ai-service
+前端 -> gateway-service -> triage-service /api/triage/consult -> ai-service /internal/ai/triage
 ```
 
 ### 4.5 创建挂号
@@ -273,7 +294,24 @@ Content-Type: application/json
 业务接口处理链路：
 
 ```text
-前端 -> /api/medical-record/generate -> diagnosis-service -> /internal/ai/medical-record/generate -> ai-service
+前端 -> gateway-service -> medical-record-service /api/medical-record/generate -> ai-service /internal/ai/medical-record/generate
+```
+
+响应：
+
+```json
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "chiefComplaint": "胸痛伴气短两天",
+    "presentIllness": "患者两天前出现胸痛伴气短，活动后加重。",
+    "pastHistory": "未提供明确既往史",
+    "physicalExam": "待补充",
+    "diagnosis": "胸痛待查",
+    "treatmentAdvice": "建议完善心电图、心肌酶等检查"
+  }
+}
 ```
 
 ### 4.6.1 AI 流式生成病历
@@ -307,22 +345,7 @@ event: error
 data: {"message":"AI 生成中断，可重试或手动填写"}
 ```
 
-响应：
-
-```json
-{
-  "code": 0,
-  "message": "success",
-  "data": {
-    "chiefComplaint": "胸痛伴气短两天",
-    "presentIllness": "患者两天前出现胸痛伴气短，活动后加重。",
-    "pastHistory": "未提供明确既往史",
-    "physicalExam": "待补充",
-    "diagnosis": "胸痛待查",
-    "treatmentAdvice": "建议完善心电图、心肌酶等检查"
-  }
-}
-```
+说明：该接口 `Accept` 和响应类型均为 `text/event-stream`，只返回 SSE 事件协议；普通 JSON 病历草稿响应属于非流式 `/api/medical-record/generate`。
 
 ### 4.7 AI 处方审核
 
@@ -348,13 +371,156 @@ Content-Type: application/json
 }
 ```
 
+响应：
+
+```json
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "riskLevel": "LOW",
+    "suggestions": "注意胃肠道不良反应，建议饭后服用。",
+    "interactions": []
+  }
+}
+```
+
 业务接口处理链路：
 
 ```text
-前端 -> /api/prescription/check -> diagnosis-service -> /internal/ai/prescription/check -> ai-service
+前端 -> gateway-service -> prescription-service /api/prescription/check -> ai-service /internal/ai/prescription/check
 ```
 
-### 4.8 WebSocket 实时通知
+### 4.8 管理端 AI 排班
+
+```http
+POST /api/admin/schedule/generate
+Authorization: Bearer admin-jwt-token
+Content-Type: application/json
+```
+
+请求：
+
+```json
+{
+  "departmentId": 1,
+  "dateRangeStart": "2026-06-15",
+  "dateRangeEnd": "2026-06-21",
+  "doctorIds": [1, 2, 3],
+  "slotRule": {
+    "shiftTypes": ["AM", "PM"],
+    "capacityPerSlot": 20
+  }
+}
+```
+
+响应：
+
+```json
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "suggestionId": 9001,
+    "status": "GENERATED",
+    "items": [
+      {
+        "doctorId": 1,
+        "scheduleDate": "2026-06-15",
+        "shiftType": "AM",
+        "capacity": 20
+      }
+    ]
+  }
+}
+```
+
+发布：
+
+```http
+POST /api/admin/schedule/publish
+Authorization: Bearer admin-jwt-token
+Content-Type: application/json
+```
+
+```json
+{
+  "suggestionId": 9001,
+  "items": [
+    {
+      "doctorId": 1,
+      "scheduleDate": "2026-06-15",
+      "shiftType": "AM",
+      "capacity": 20
+    }
+  ]
+}
+```
+
+业务接口处理链路：
+
+```text
+前端 -> gateway-service -> admin-service /api/admin/schedule/generate -> ai-service /internal/ai/schedule/generate
+前端 -> gateway-service -> admin-service /api/admin/schedule/publish -> doctor-service /internal/doctors/schedules/publish
+```
+
+### 4.9 管理端 AI 分诊台
+
+列表：
+
+```http
+GET /api/admin/triage-desk/list?status=SUCCESS&page=1&pageSize=10
+Authorization: Bearer admin-jwt-token
+```
+
+响应：
+
+```json
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "total": 1,
+    "records": [
+      {
+        "triageRecordId": 10,
+        "patientId": 1,
+        "chiefComplaint": "胸痛伴气短",
+        "recommendedDepartment": "心内科",
+        "recommendedDoctorIds": [1],
+        "reason": "症状与心血管疾病相关",
+        "status": "SUCCESS"
+      }
+    ]
+  }
+}
+```
+
+人工改派：
+
+```http
+POST /api/admin/triage-desk/assign
+Authorization: Bearer admin-jwt-token
+Content-Type: application/json
+```
+
+```json
+{
+  "triageRecordId": 10,
+  "departmentId": 2,
+  "doctorId": 8,
+  "note": "管理员根据问诊描述改派到呼吸内科"
+}
+```
+
+业务接口处理链路：
+
+```text
+前端 -> gateway-service -> admin-service /api/admin/triage-desk/list -> triage-service /internal/triage-records
+前端 -> gateway-service -> admin-service /api/admin/triage-desk/assign -> triage-service /internal/triage-records/{id}/assign
+```
+
+### 4.10 WebSocket 实时通知
 
 ```text
 ws://localhost:8080/ws/notifications?token=<jwt-token>
@@ -383,7 +549,7 @@ ws://localhost:8080/ws/notifications?token=<jwt-token>
 3. 后端保存 `notification_message`。
 4. 后端通过 WebSocket 推送给处方所属医生。
 
-### 4.9 医生通知列表
+### 4.11 医生通知列表
 
 ```http
 GET /api/notification/list?readStatus=UNREAD
@@ -410,7 +576,7 @@ Authorization: Bearer jwt-token
 }
 ```
 
-### 4.10 Prompt 模板列表
+### 4.12 Prompt 模板列表
 
 ```http
 GET /api/prompt-template/list?taskType=MEDICAL_RECORD&departmentCode=CARDIOLOGY
@@ -433,19 +599,5 @@ Authorization: Bearer jwt-token
       "enabled": true
     }
   ]
-}
-```
-
-响应：
-
-```json
-{
-  "code": 0,
-  "message": "success",
-  "data": {
-    "riskLevel": "LOW",
-    "suggestions": "注意胃肠道不良反应，建议饭后服用。",
-    "interactions": []
-  }
 }
 ```

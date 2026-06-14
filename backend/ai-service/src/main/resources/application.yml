@@ -1,0 +1,21 @@
+server:
+  port: ${SERVER_PORT:8081}
+
+spring:
+  application:
+    name: ai-service
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+knife4j:
+  enable: true
+
+ai:
+  provider: ${AI_PROVIDER:mock}
+  base-url: ${AI_BASE_URL:}
+  api-key: ${AI_API_KEY:}
+  timeout-ms: ${AI_TIMEOUT_MS:8000}

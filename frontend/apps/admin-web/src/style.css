@@ -1,0 +1,37 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Inter, "Microsoft YaHei", system-ui, sans-serif;
+  background: #f7f8fa;
+  color: #172033;
+}
+
+.app-shell {
+  min-height: 100vh;
+  padding: 48px;
+}
+
+.workspace {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.eyebrow {
+  margin: 0 0 12px;
+  color: #8a5a00;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+h1 {
+  margin: 0 0 16px;
+  font-size: 32px;
+}
+
+p {
+  max-width: 680px;
+  line-height: 1.7;
+}
