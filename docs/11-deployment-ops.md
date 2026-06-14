@@ -10,9 +10,17 @@
 | MySQL | 8+ |
 | IDE | IntelliJ IDEA、VS Code |
 
-后端启动：
+业务服务启动：
 
 ```bash
+cd backend/diagnosis-service
+mvn spring-boot:run
+```
+
+AI 服务启动：
+
+```bash
+cd backend/ai-service
 mvn spring-boot:run
 ```
 
@@ -26,7 +34,8 @@ npm run dev
 接口文档：
 
 ```text
-http://localhost:8080/doc.html
+业务服务：http://localhost:8080/doc.html
+AI 服务：http://localhost:8081/doc.html
 ```
 
 ## 2. 测试环境
@@ -42,21 +51,31 @@ http://localhost:8080/doc.html
 推荐部署结构：
 
 - Vue 前端构建为静态资源，部署到 Nginx。
-- Spring Boot 后端打包为 Jar 独立运行。
+- `diagnosis-service` 和 `ai-service` 分别打包为 Jar 独立运行。
 - MySQL 独立部署。
-- Nginx 将 `/api` 反向代理到后端。
-- AI 服务通过环境变量配置地址和密钥。
+- Nginx 将 `/api` 反向代理到 `diagnosis-service`。
+- `diagnosis-service` 通过内网地址调用 `ai-service`。
+- `ai-service` 通过环境变量配置外部 AI 地址和密钥。
 
 ## 4. 部署流程
 
-### 4.1 后端
+### 4.1 业务服务
 
 ```bash
+cd backend/diagnosis-service
 mvn clean package -DskipTests
-java -jar target/smart-diagnosis.jar
+java -jar target/diagnosis-service.jar
 ```
 
-### 4.2 前端
+### 4.2 AI 服务
+
+```bash
+cd backend/ai-service
+mvn clean package -DskipTests
+java -jar target/ai-service.jar
+```
+
+### 4.3 前端
 
 ```bash
 npm install
@@ -85,6 +104,8 @@ server {
 }
 ```
 
+`ai-service` 不建议直接暴露到公网。`diagnosis-service` 通过 `AI_SERVICE_BASE_URL` 访问，例如 `http://127.0.0.1:8081`。
+
 ## 5. 环境变量
 
 | 变量 | 说明 |
@@ -99,6 +120,8 @@ server {
 | `AI_BASE_URL` | AI 服务地址 |
 | `AI_API_KEY` | AI 服务密钥 |
 | `AI_TIMEOUT_MS` | AI 调用超时时间 |
+| `AI_SERVICE_BASE_URL` | `diagnosis-service` 调用 `ai-service` 的地址 |
+| `AI_SERVICE_TIMEOUT_MS` | 服务间 AI 调用超时时间 |
 
 ## 6. 日志方案
 
@@ -107,6 +130,7 @@ server {
 | 请求日志 | 接口路径、方法、耗时、状态码 |
 | 异常日志 | 异常堆栈、请求参数摘要 |
 | AI 调用日志 | 调用类型、耗时、状态、错误信息 |
+| 微服务调用日志 | `diagnosis-service` 调用 `ai-service` 的接口、耗时、状态和降级原因 |
 | 审计日志 | 登录、挂号、病历保存、处方保存、AI 审核 |
 
 注意：AI 日志和请求日志不应保存完整敏感病情信息，必要时进行脱敏。
@@ -118,4 +142,3 @@ server {
 - 初始化 SQL 单独维护。
 - AI 调用记录可按月归档。
 - 重要配置文件不提交真实密钥，使用 `.env.example` 提供模板。
-

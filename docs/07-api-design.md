@@ -41,6 +41,8 @@ Authorization: Bearer <jwt-token>
 
 ## 3. 接口列表
 
+### 3.1 对前端开放的业务接口
+
 | 接口 | 方法 | 权限 | 说明 |
 |---|---|---|---|
 | `/api/patient/register` | POST | 游客 | 患者注册 |
@@ -60,6 +62,17 @@ Authorization: Bearer <jwt-token>
 | `/api/prescription/check` | POST | 医生 | AI 处方审核 |
 | `/api/prescription/create` | POST | 医生 | 保存处方 |
 | `/api/prescription/list` | GET | 患者/医生 | 处方列表 |
+
+### 3.2 服务间内部 AI 接口
+
+内部 AI 接口由 `ai-service` 提供，只允许 `diagnosis-service` 调用，不直接暴露给前端。
+
+| 接口 | 方法 | 调用方 | 说明 |
+|---|---|---|---|
+| `/internal/ai/triage` | POST | `diagnosis-service` | 智能分诊 |
+| `/internal/ai/medical-record/generate` | POST | `diagnosis-service` | AI 生成病历 |
+| `/internal/ai/medical-record/generate/stream` | GET | `diagnosis-service` | AI 流式生成病历 |
+| `/internal/ai/prescription/check` | POST | `diagnosis-service` | AI 处方审核 |
 
 ## 4. 接口详情
 
@@ -190,6 +203,12 @@ Content-Type: application/json
 }
 ```
 
+业务接口处理链路：
+
+```text
+前端 -> /api/triage/consult -> diagnosis-service -> /internal/ai/triage -> ai-service
+```
+
 ### 4.5 创建挂号
 
 ```http
@@ -239,6 +258,12 @@ Content-Type: application/json
 }
 ```
 
+业务接口处理链路：
+
+```text
+前端 -> /api/medical-record/generate -> diagnosis-service -> /internal/ai/medical-record/generate -> ai-service
+```
+
 响应：
 
 ```json
@@ -280,6 +305,12 @@ Content-Type: application/json
 }
 ```
 
+业务接口处理链路：
+
+```text
+前端 -> /api/prescription/check -> diagnosis-service -> /internal/ai/prescription/check -> ai-service
+```
+
 响应：
 
 ```json
@@ -293,4 +324,3 @@ Content-Type: application/json
   }
 }
 ```
-

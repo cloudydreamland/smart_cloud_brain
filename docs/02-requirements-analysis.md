@@ -29,7 +29,13 @@
 | 可运行性 | 前端通过 `npm run dev` 启动，后端通过 `mvn spring-boot:run` 启动 |
 | 可演示性 | 浏览器中可完整演示患者注册到医生开方流程 |
 | 代码规范 | 后端遵循 Controller-Service-Repository 分层，前端使用 Vue 3 组合式 API |
-| 可扩展性 | AI 能力封装为独立 Service，便于替换服务提供方 |
+| 可扩展性 | AI 能力封装为独立 Service，并在最终交付中抽取为独立微服务 |
+| WebSocket 实时通知 | AI 审核发现高风险用药时，医生端必须收到实时告警 |
+| AI 流式响应 | 病历生成必须支持 SSE 或 WebSocket 流式输出 |
+| 状态机优化 | 前端必须使用 Pinia 模块化管理患者、医生、挂号、处方等关键状态 |
+| Prompt 工程 | 后端必须支持可配置 Prompt 模板，并支持按科室优化 |
+| 分离部署 | 前端必须可部署为 Nginx 静态资源，后端必须可打包为独立 Jar |
+| 微服务要求 | AI 能力层必须拆为独立微服务，使用 Spring Cloud Feign 实现服务间调用 |
 | 体验友好 | AI 请求展示 Loading，失败时给出明确提示 |
 | 稳定性 | AI 服务异常时允许回退到手动选择、手动填写、手动保存 |
 | 安全性 | JWT 鉴权，角色权限控制，数据归属校验 |
@@ -92,7 +98,7 @@ flowchart LR
 - 前后端通过 RESTful API 通信。
 - 使用 JWT 鉴权。
 - 使用 MySQL 或 PostgreSQL，MVP 推荐 MySQL 8。
-- AI 能力由后端 Service 统一封装，前端不直接调用 AI 服务。
+- AI 能力最终必须由独立 AI 微服务统一封装，前端不直接调用 AI 服务。
+- 主业务后端负责对前端暴露业务 API，并通过 Spring Cloud Feign 调用 AI 微服务。
 - AI 输出必须经医生确认后才能保存为正式病历或处方审核依据。
 - 项目使用模拟数据，不接入真实医疗机构生产数据。
-
