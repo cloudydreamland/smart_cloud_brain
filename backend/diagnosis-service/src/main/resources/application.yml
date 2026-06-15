@@ -1,14 +1,19 @@
+# ===== 公共配置（提交到 Git） =====
+# 本地配置放 application-dev.yml（不提交，每人用自己的数据库）
+
 server:
   port: ${SERVER_PORT:8080}
 
 spring:
   application:
     name: diagnosis-service
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
   datasource:
-    url: ${DB_URL:jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:smart_cloud_brain}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true}
-    username: ${DB_USERNAME:scb}
-    password: ${DB_PASSWORD:scb_password}
-    driver-class-name: ${DB_DRIVER_CLASS:com.mysql.cj.jdbc.Driver}
+    driver-class-name: ${DB_DRIVER:com.mysql.cj.jdbc.Driver}
+    url: ${DB_URL:jdbc:mysql://localhost:3306/smart_cloud_brain}
+    username: ${DB_USER:scb}
+    password: ${DB_PASS:scb_password}
   jpa:
     hibernate:
       ddl-auto: none
