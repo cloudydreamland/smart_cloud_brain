@@ -93,7 +93,7 @@ onMounted(refresh);
     <aside class="rail">
       <p class="eyebrow">Patient Web</p>
       <h1>患者端</h1>
-      <p>完成轻症预问诊、AI 分诊、预约挂号、诊疗记录查看。</p>
+      <p>注册登录、AI 分诊、预约挂号、查看病历和处方。</p>
       <div class="session" v-if="session">
         <strong>{{ session.name }}</strong>
         <span>{{ session.role }} #{{ session.userId }}</span>

@@ -14,7 +14,6 @@ COPY backend/prescription-service/pom.xml prescription-service/pom.xml
 COPY backend/ai-service/pom.xml ai-service/pom.xml
 COPY backend/notification-service/pom.xml notification-service/pom.xml
 COPY backend/admin-service/pom.xml admin-service/pom.xml
-COPY backend/diagnosis-service/pom.xml diagnosis-service/pom.xml
 COPY backend/common-lib/src common-lib/src
 COPY backend/ai-api/src ai-api/src
 COPY backend/ai-service/src ai-service/src

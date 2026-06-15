@@ -1,0 +1,67 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: gateway-service
+  cloud:
+    gateway:
+      routes:
+        - id: auth-service
+          uri: ${AUTH_SERVICE_URI:http://localhost:8082}
+          predicates:
+            - Path=/api/patient/register,/api/patient/login,/api/doctor/login,/api/admin/login,/internal/auth/**
+        - id: patient-service
+          uri: ${PATIENT_SERVICE_URI:http://localhost:8083}
+          predicates:
+            - Path=/api/patient/**,/internal/patients/**
+        - id: doctor-service
+          uri: ${DOCTOR_SERVICE_URI:http://localhost:8084}
+          predicates:
+            - Path=/api/doctor/**,/internal/doctors/**
+        - id: registration-service
+          uri: ${REGISTRATION_SERVICE_URI:http://localhost:8085}
+          predicates:
+            - Path=/api/registration/**,/internal/registrations/**
+        - id: triage-service
+          uri: ${TRIAGE_SERVICE_URI:http://localhost:8086}
+          predicates:
+            - Path=/api/triage/**,/internal/triage-records/**
+        - id: medical-record-service
+          uri: ${MEDICAL_RECORD_SERVICE_URI:http://localhost:8087}
+          predicates:
+            - Path=/api/medical-record/**
+        - id: prescription-service
+          uri: ${PRESCRIPTION_SERVICE_URI:http://localhost:8088}
+          predicates:
+            - Path=/api/prescription/**
+        - id: notification-service
+          uri: ${NOTIFICATION_SERVICE_URI:http://localhost:8089}
+          predicates:
+            - Path=/api/notification/**,/internal/notifications/**
+        - id: notification-websocket
+          uri: ${NOTIFICATION_WS_URI:ws://localhost:8089}
+          predicates:
+            - Path=/ws/notifications
+        - id: admin-service
+          uri: ${ADMIN_SERVICE_URI:http://localhost:8090}
+          predicates:
+            - Path=/api/admin/**,/api/search/**
+      globalcors:
+        cors-configurations:
+          "[/**]":
+            allowedOriginPatterns: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+            allowCredentials: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+jwt:
+  secret: ${JWT_SECRET:smart-cloud-brain-local-secret-please-change}
+  expire-hours: ${JWT_EXPIRE_HOURS:24}
+

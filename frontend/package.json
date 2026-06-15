@@ -5,7 +5,13 @@
   "packageManager": "pnpm@9.15.0",
   "scripts": {
     "dev": "corepack pnpm --filter patient-web dev",
+    "dev:patient": "corepack pnpm --filter patient-web dev",
+    "dev:doctor": "corepack pnpm --filter doctor-web dev",
+    "dev:admin": "corepack pnpm --filter admin-web dev",
     "build": "corepack pnpm -r --if-present build",
+    "build:patient": "corepack pnpm --filter patient-web build",
+    "build:doctor": "corepack pnpm --filter doctor-web build",
+    "build:admin": "corepack pnpm --filter admin-web build",
     "lint": "corepack pnpm -r --if-present lint",
     "test": "vitest run"
   },

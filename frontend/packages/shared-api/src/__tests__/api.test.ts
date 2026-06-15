@@ -12,12 +12,12 @@ describe("shared api", () => {
       json: async () => ({
         code: 0,
         message: "success",
-        data: { token: "mock-token-patient-1", userId: 1, role: "PATIENT", name: "测试患者" },
+        data: { token: "jwt.patient.token", userId: 1, role: "PATIENT", name: "测试患者" },
       }),
     })));
 
     await expect(api.loginPatient("13800000001", "123456")).resolves.toMatchObject({
-      token: "mock-token-patient-1",
+      token: "jwt.patient.token",
       role: "PATIENT",
     });
   });

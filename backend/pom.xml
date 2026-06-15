@@ -26,7 +26,6 @@
     <module>ai-service</module>
     <module>notification-service</module>
     <module>admin-service</module>
-    <module>diagnosis-service</module>
   </modules>
 
   <properties>

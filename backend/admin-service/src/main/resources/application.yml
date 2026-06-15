@@ -1,0 +1,31 @@
+server:
+  port: ${SERVER_PORT:8090}
+
+spring:
+  application:
+    name: admin-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:54321}/${DB_NAME:smart_cloud_brain}}
+    username: ${DB_USERNAME:scb}
+    password: ${DB_PASSWORD:scb_password}
+    driver-class-name: ${DB_DRIVER_CLASS:org.postgresql.Driver}
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: ${DB_DIALECT:org.hibernate.dialect.PostgreSQLDialect}
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:scb}
+    password: ${RABBITMQ_PASSWORD:scb_password}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+

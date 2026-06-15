@@ -54,8 +54,8 @@ async function login() {
 }
 
 async function refresh() {
-  drugs.value = await api.drugs();
   if (session.value) {
+    drugs.value = await api.drugs(token());
     registrations.value = await api.registrations(token());
     records.value = await api.medicalRecords(token());
     notifications.value = await api.notifications(token());
@@ -136,7 +136,7 @@ onMounted(refresh);
     <aside class="rail">
       <p class="eyebrow">Doctor Web</p>
       <h1>医生端</h1>
-      <p>接诊轻症患者，确认 AI 病历草稿，完成处方审核。</p>
+      <p>接诊患者、确认 AI 病历草稿、完成处方审核。</p>
       <div class="session" v-if="session">
         <strong>{{ session.name }}</strong>
         <span>{{ session.role }} #{{ session.userId }}</span>

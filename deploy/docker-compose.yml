@@ -1,29 +1,207 @@
 services:
-  mysql:
-    image: mysql:8.4
-    container_name: scb-mysql
+  kingbase:
+    image: ${KINGBASE_IMAGE:-postgres:16-alpine}
+    container_name: scb-kingbase
+    profiles:
+      - embedded-db
     restart: unless-stopped
     environment:
-      MYSQL_DATABASE: ${DB_NAME:-smart_cloud_brain}
-      MYSQL_USER: ${DB_USERNAME:-scb}
-      MYSQL_PASSWORD: ${DB_PASSWORD:-scb_password}
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_password}
+      DB_NAME: ${DB_NAME:-smart_cloud_brain}
+      DB_USER: ${DB_USERNAME:-scb}
+      DB_PASSWORD: ${DB_PASSWORD:-scb_password}
+      SYSTEM_PWD: ${KINGBASE_SYSTEM_PASSWORD:-kingbase_password}
+      POSTGRES_DB: ${DB_NAME:-smart_cloud_brain}
+      POSTGRES_USER: ${DB_USERNAME:-scb}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-scb_password}
       TZ: Asia/Shanghai
     ports:
-      - "${DB_PORT:-3306}:3306"
+      - "${DB_PORT:-54321}:${DB_INTERNAL_PORT:-5432}"
     volumes:
-      - mysql-data:/var/lib/mysql
-      - ./mysql/init:/docker-entrypoint-initdb.d:ro
-    healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$${MYSQL_ROOT_PASSWORD}"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
+      - kingbase-data:${DB_DATA_DIR:-/var/lib/postgresql/data}
+      - ../sql/kingbase_schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
+
+  nacos:
+    image: nacos/nacos-server:v2.4.3
+    container_name: scb-nacos
+    restart: unless-stopped
+    environment:
+      MODE: standalone
+      NACOS_AUTH_ENABLE: "false"
+      JVM_XMS: 256m
+      JVM_XMX: 512m
+      JVM_XMN: 128m
+      TZ: Asia/Shanghai
+    ports:
+      - "8848:8848"
+      - "9848:9848"
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: scb-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME:-scb}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-scb_password}
+      TZ: Asia/Shanghai
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+
+  gateway-service:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile.service
+      args:
+        SERVICE: gateway-service
+    container_name: scb-gateway-service
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: 8080
+      JWT_SECRET: ${JWT_SECRET:-smart-cloud-brain-local-secret-please-change}
+      AUTH_SERVICE_URI: http://auth-service:8082
+      PATIENT_SERVICE_URI: http://patient-service:8083
+      DOCTOR_SERVICE_URI: http://doctor-service:8084
+      REGISTRATION_SERVICE_URI: http://registration-service:8085
+      TRIAGE_SERVICE_URI: http://triage-service:8086
+      MEDICAL_RECORD_SERVICE_URI: http://medical-record-service:8087
+      PRESCRIPTION_SERVICE_URI: http://prescription-service:8088
+      NOTIFICATION_SERVICE_URI: http://notification-service:8089
+      NOTIFICATION_WS_URI: ws://notification-service:8089
+      ADMIN_SERVICE_URI: http://admin-service:8090
+      TZ: Asia/Shanghai
+    ports:
+      - "${GATEWAY_PORT:-18080}:8080"
+
+  auth-service: &domain-service
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile.service
+      args:
+        SERVICE: auth-service
+    container_name: scb-auth-service
+    restart: unless-stopped
+    depends_on:
+      - rabbitmq
+    environment: &domain-env
+      DB_HOST: ${DB_SERVICE_HOST:-kingbase}
+      DB_PORT: ${DB_SERVICE_PORT:-5432}
+      DB_NAME: ${DB_NAME:-smart_cloud_brain}
+      DB_USERNAME: ${DB_USERNAME:-scb}
+      DB_PASSWORD: ${DB_PASSWORD:-scb_password}
+      JWT_SECRET: ${JWT_SECRET:-smart-cloud-brain-local-secret-please-change}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-scb}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-scb_password}
+      TZ: Asia/Shanghai
+
+  patient-service:
+    <<: *domain-service
+    container_name: scb-patient-service
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile.service
+      args:
+        SERVICE: patient-service
+    environment:
+      <<: *domain-env
+      SERVER_PORT: 8083
+
+  doctor-service:
+    <<: *domain-service
+    container_name: scb-doctor-service
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile.service
+      args:
+        SERVICE: doctor-service
+    environment:
+      <<: *domain-env
+      SERVER_PORT: 8084
+
+  registration-service:
+    <<: *domain-service
+    container_name: scb-registration-service
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile.service
+      args:
+        SERVICE: registration-service
+    environment:
+      <<: *domain-env
+      SERVER_PORT: 8085
+
+  triage-service:
+    <<: *domain-service
+    container_name: scb-triage-service
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile.service
+      args:
+        SERVICE: triage-service
+    environment:
+      <<: *domain-env
+      SERVER_PORT: 8086
+      AI_SERVICE_BASE_URL: http://ai-service:8081
+
+  medical-record-service:
+    <<: *domain-service
+    container_name: scb-medical-record-service
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile.service
+      args:
+        SERVICE: medical-record-service
+    environment:
+      <<: *domain-env
+      SERVER_PORT: 8087
+      AI_SERVICE_BASE_URL: http://ai-service:8081
+
+  prescription-service:
+    <<: *domain-service
+    container_name: scb-prescription-service
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile.service
+      args:
+        SERVICE: prescription-service
+    environment:
+      <<: *domain-env
+      SERVER_PORT: 8088
+      AI_SERVICE_BASE_URL: http://ai-service:8081
+
+  notification-service:
+    <<: *domain-service
+    container_name: scb-notification-service
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile.service
+      args:
+        SERVICE: notification-service
+    environment:
+      <<: *domain-env
+      SERVER_PORT: 8089
+
+  admin-service:
+    <<: *domain-service
+    container_name: scb-admin-service
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile.service
+      args:
+        SERVICE: admin-service
+    environment:
+      <<: *domain-env
+      SERVER_PORT: 8090
 
   ai-service:
     build:
       context: ..
-      dockerfile: backend/ai-service/Dockerfile
+      dockerfile: backend/Dockerfile.service
+      args:
+        SERVICE: ai-service
     container_name: scb-ai-service
     restart: unless-stopped
     environment:
@@ -31,53 +209,53 @@ services:
       AI_PROVIDER: ${AI_PROVIDER:-mock}
       AI_BASE_URL: ${AI_BASE_URL:-}
       AI_API_KEY: ${AI_API_KEY:-}
-      AI_TIMEOUT_MS: ${AI_TIMEOUT_MS:-8000}
       TZ: Asia/Shanghai
-    ports:
-      - "8081:8081"
-    healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8081/actuator/health || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
 
-  diagnosis-service:
+  patient-web:
     build:
       context: ..
-      dockerfile: backend/diagnosis-service/Dockerfile
-    container_name: scb-diagnosis-service
+      dockerfile: frontend/Dockerfile.web
+      args:
+        APP_NAME: patient-web
+    container_name: scb-patient-web
     restart: unless-stopped
     depends_on:
-      mysql:
-        condition: service_healthy
-      ai-service:
-        condition: service_started
-    environment:
-      SERVER_PORT: 8080
-      DB_HOST: mysql
-      DB_PORT: 3306
-      DB_NAME: ${DB_NAME:-smart_cloud_brain}
-      DB_USERNAME: ${DB_USERNAME:-scb}
-      DB_PASSWORD: ${DB_PASSWORD:-scb_password}
-      JWT_SECRET: ${JWT_SECRET:-change-me-in-local-env}
-      JWT_EXPIRE_HOURS: ${JWT_EXPIRE_HOURS:-24}
-      AI_SERVICE_BASE_URL: http://ai-service:8081
-      AI_SERVICE_TIMEOUT_MS: ${AI_SERVICE_TIMEOUT_MS:-5000}
-      TZ: Asia/Shanghai
+      - gateway-service
     ports:
-      - "8080:8080"
-    healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
+      - "5173:80"
+
+  doctor-web:
+    build:
+      context: ..
+      dockerfile: frontend/Dockerfile.web
+      args:
+        APP_NAME: doctor-web
+    container_name: scb-doctor-web
+    restart: unless-stopped
+    depends_on:
+      - gateway-service
+    ports:
+      - "5174:80"
+
+  admin-web:
+    build:
+      context: ..
+      dockerfile: frontend/Dockerfile.web
+      args:
+        APP_NAME: admin-web
+    container_name: scb-admin-web
+    restart: unless-stopped
+    depends_on:
+      - gateway-service
+    ports:
+      - "5175:80"
 
   nginx:
     image: nginx:1.27-alpine
     container_name: scb-nginx
     restart: unless-stopped
     depends_on:
-      - diagnosis-service
+      - gateway-service
     ports:
       - "80:80"
     volumes:
@@ -85,4 +263,5 @@ services:
       - ./nginx/html:/usr/share/nginx/html:ro
 
 volumes:
-  mysql-data:
+  kingbase-data:
+  rabbitmq-data:

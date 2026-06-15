@@ -1,22 +1,22 @@
-# 接口设计文档 API
+﻿# 鎺ュ彛璁捐鏂囨。 API
 
-## 1. 通用约定
+## 1. 閫氱敤绾﹀畾
 
-### 1.1 基础路径
+### 1.1 鍩虹璺緞
 
 ```text
 /api
 ```
 
-### 1.2 认证方式
+### 1.2 璁よ瘉鏂瑰紡
 
-登录成功后，前端在请求头中携带：
+鐧诲綍鎴愬姛鍚庯紝鍓嶇鍦ㄨ姹傚ご涓惡甯︼細
 
 ```http
 Authorization: Bearer <jwt-token>
 ```
 
-### 1.3 统一响应结构
+### 1.3 缁熶竴鍝嶅簲缁撴瀯
 
 ```json
 {
@@ -26,111 +26,111 @@ Authorization: Bearer <jwt-token>
 }
 ```
 
-## 2. 错误码
+## 2. 閿欒鐮?
 
-| code | 含义 |
+| code | 鍚箟 |
 |---|---|
-| 0 | 成功 |
-| 400 | 参数错误 |
-| 401 | 未登录或 Token 失效 |
-| 403 | 无权限 |
-| 404 | 资源不存在 |
-| 409 | 数据冲突 |
-| 500 | 系统异常 |
-| 600 | AI 服务不可用 |
+| 0 | 鎴愬姛 |
+| 400 | 鍙傛暟閿欒 |
+| 401 | 鏈櫥褰曟垨 Token 澶辨晥 |
+| 403 | 鏃犳潈闄?|
+| 404 | 璧勬簮涓嶅瓨鍦?|
+| 409 | 鏁版嵁鍐茬獊 |
+| 500 | 绯荤粺寮傚父 |
+| 600 | AI 鏈嶅姟涓嶅彲鐢?|
 
-## 3. 接口列表
+## 3. 鎺ュ彛鍒楄〃
 
-### 3.1 对前端开放的业务接口
+### 3.1 瀵瑰墠绔紑鏀剧殑涓氬姟鎺ュ彛
 
-| 接口 | 方法 | 权限 | 说明 |
+| 鎺ュ彛 | 鏂规硶 | 鏉冮檺 | 璇存槑 |
 |---|---|---|---|
-| `/api/patient/register` | POST | 游客 | 患者注册 |
-| `/api/patient/login` | POST | 游客 | 患者登录 |
-| `/api/doctor/login` | POST | 游客 | 医生登录 |
-| `/api/patient/info` | GET | 患者 | 获取患者信息 |
-| `/api/doctor/list` | GET | 登录用户 | 医生列表 |
-| `/api/doctor/detail` | GET | 登录用户 | 医生详情 |
-| `/api/triage/consult` | POST | 患者 | 智能分诊 |
-| `/api/registration/create` | POST | 患者 | 创建挂号 |
-| `/api/registration/list` | GET | 患者/医生 | 挂号列表 |
-| `/api/registration/cancel` | POST | 患者 | 取消挂号 |
-| `/api/medical-record/generate` | POST | 医生 | AI 生成病历 |
-| `/api/medical-record/save` | POST | 医生 | 保存病历 |
-| `/api/medical-record/list` | GET | 患者/医生 | 病历列表 |
-| `/api/medical-record/detail` | GET | 患者/医生 | 病历详情 |
-| `/api/prescription/check` | POST | 医生 | AI 处方审核 |
-| `/api/prescription/create` | POST | 医生 | 保存处方 |
-| `/api/prescription/list` | GET | 患者/医生 | 处方列表 |
-| `/api/notification/list` | GET | 医生 | 医生通知列表 |
-| `/api/notification/read` | POST | 医生 | 标记通知已读 |
-| `/api/prompt-template/list` | GET | 医生/管理员 | Prompt 模板列表或配置展示 |
-| `/ws/notifications` | WS | 医生 | WebSocket 实时通知连接 |
-| `/api/admin/login` | POST | 游客 | 管理员登录 |
-| `/api/admin/department/list` | GET | 管理员 | 科室列表 |
-| `/api/admin/department/save` | POST | 管理员 | 新增或编辑科室 |
-| `/api/admin/doctor/list` | GET | 管理员 | 医生列表 |
-| `/api/admin/doctor/save` | POST | 管理员 | 新增或编辑医生 |
-| `/api/admin/drug/list` | GET | 管理员 | 药品列表 |
-| `/api/admin/drug/save` | POST | 管理员 | 新增或编辑药品 |
-| `/api/admin/prompt-template/list` | GET | 管理员 | Prompt 模板列表 |
-| `/api/admin/prompt-template/save` | POST | 管理员 | 新增或编辑 Prompt 模板 |
-| `/api/admin/dict/list` | GET | 管理员 | 系统字典列表 |
-| `/api/admin/dict/save` | POST | 管理员 | 新增或编辑系统字典 |
-| `/api/admin/schedule/generate` | POST | 管理员 | AI 生成排班建议 |
-| `/api/admin/schedule/publish` | POST | 管理员 | 人工确认后发布排班和号源 |
-| `/api/admin/schedule/list` | GET | 管理员 | 排班和号源列表 |
-| `/api/admin/schedule/suggestion/detail` | GET | 管理员 | AI 排班建议详情 |
-| `/api/admin/triage-desk/list` | GET | 管理员 | AI 分诊台列表 |
-| `/api/admin/triage-desk/detail` | GET | 管理员 | AI 分诊台详情 |
-| `/api/admin/triage-desk/assign` | POST | 管理员 | 人工改派分诊科室或医生 |
-| `/api/admin/triage-desk/close` | POST | 管理员 | 关闭分诊台处理记录 |
+| `/api/patient/register` | POST | 娓稿 | 鎮ｈ€呮敞鍐?|
+| `/api/patient/login` | POST | 娓稿 | 鎮ｈ€呯櫥褰?|
+| `/api/doctor/login` | POST | 娓稿 | 鍖荤敓鐧诲綍 |
+| `/api/patient/info` | GET | 鎮ｈ€?| 鑾峰彇鎮ｈ€呬俊鎭?|
+| `/api/doctor/list` | GET | 鐧诲綍鐢ㄦ埛 | 鍖荤敓鍒楄〃 |
+| `/api/doctor/detail` | GET | 鐧诲綍鐢ㄦ埛 | 鍖荤敓璇︽儏 |
+| `/api/triage/consult` | POST | 鎮ｈ€?| 鏅鸿兘鍒嗚瘖 |
+| `/api/registration/create` | POST | 鎮ｈ€?| 鍒涘缓鎸傚彿 |
+| `/api/registration/list` | GET | 鎮ｈ€?鍖荤敓 | 鎸傚彿鍒楄〃 |
+| `/api/registration/cancel` | POST | 鎮ｈ€?| 鍙栨秷鎸傚彿 |
+| `/api/medical-record/generate` | POST | 鍖荤敓 | AI 鐢熸垚鐥呭巻 |
+| `/api/medical-record/save` | POST | 鍖荤敓 | 淇濆瓨鐥呭巻 |
+| `/api/medical-record/list` | GET | 鎮ｈ€?鍖荤敓 | 鐥呭巻鍒楄〃 |
+| `/api/medical-record/detail` | GET | 鎮ｈ€?鍖荤敓 | 鐥呭巻璇︽儏 |
+| `/api/prescription/check` | POST | 鍖荤敓 | AI 澶勬柟瀹℃牳 |
+| `/api/prescription/create` | POST | 鍖荤敓 | 淇濆瓨澶勬柟 |
+| `/api/prescription/list` | GET | 鎮ｈ€?鍖荤敓 | 澶勬柟鍒楄〃 |
+| `/api/notification/list` | GET | 鍖荤敓 | 鍖荤敓閫氱煡鍒楄〃 |
+| `/api/notification/read` | POST | 鍖荤敓 | 鏍囪閫氱煡宸茶 |
+| `/api/prompt-template/list` | GET | 鍖荤敓/绠＄悊鍛?| Prompt 妯℃澘鍒楄〃鎴栭厤缃睍绀?|
+| `/ws/notifications` | WS | 鍖荤敓 | WebSocket 瀹炴椂閫氱煡杩炴帴 |
+| `/api/admin/login` | POST | 娓稿 | 绠＄悊鍛樼櫥褰?|
+| `/api/admin/department/list` | GET | 绠＄悊鍛?| 绉戝鍒楄〃 |
+| `/api/admin/department/save` | POST | 绠＄悊鍛?| 鏂板鎴栫紪杈戠瀹?|
+| `/api/admin/doctor/list` | GET | 绠＄悊鍛?| 鍖荤敓鍒楄〃 |
+| `/api/admin/doctor/save` | POST | 绠＄悊鍛?| 鏂板鎴栫紪杈戝尰鐢?|
+| `/api/admin/drug/list` | GET | 绠＄悊鍛?| 鑽搧鍒楄〃 |
+| `/api/admin/drug/save` | POST | 绠＄悊鍛?| 鏂板鎴栫紪杈戣嵂鍝?|
+| `/api/admin/prompt-template/list` | GET | 绠＄悊鍛?| Prompt 妯℃澘鍒楄〃 |
+| `/api/admin/prompt-template/save` | POST | 绠＄悊鍛?| 鏂板鎴栫紪杈?Prompt 妯℃澘 |
+| `/api/admin/dict/list` | GET | 绠＄悊鍛?| 绯荤粺瀛楀吀鍒楄〃 |
+| `/api/admin/dict/save` | POST | 绠＄悊鍛?| 鏂板鎴栫紪杈戠郴缁熷瓧鍏?|
+| `/api/admin/schedule/generate` | POST | 绠＄悊鍛?| AI 鐢熸垚鎺掔彮寤鸿 |
+| `/api/admin/schedule/publish` | POST | 绠＄悊鍛?| 浜哄伐纭鍚庡彂甯冩帓鐝拰鍙锋簮 |
+| `/api/admin/schedule/list` | GET | 绠＄悊鍛?| 鎺掔彮鍜屽彿婧愬垪琛?|
+| `/api/admin/schedule/suggestion/detail` | GET | 绠＄悊鍛?| AI 鎺掔彮寤鸿璇︽儏 |
+| `/api/admin/triage-desk/list` | GET | 绠＄悊鍛?| AI 鍒嗚瘖鍙板垪琛?|
+| `/api/admin/triage-desk/detail` | GET | 绠＄悊鍛?| AI 鍒嗚瘖鍙拌鎯?|
+| `/api/admin/triage-desk/assign` | POST | 绠＄悊鍛?| 浜哄伐鏀规淳鍒嗚瘖绉戝鎴栧尰鐢?|
+| `/api/admin/triage-desk/close` | POST | 绠＄悊鍛?| 鍏抽棴鍒嗚瘖鍙板鐞嗚褰?|
 
-### 3.2 服务间内部 AI 接口
+### 3.2 鏈嶅姟闂村唴閮?AI 鎺ュ彛
 
-内部接口只允许微服务之间通过内网和 OpenFeign 调用，不直接暴露给前端。前端统一访问 `gateway-service`，由网关转发到对应业务服务。
+鍐呴儴鎺ュ彛鍙厑璁稿井鏈嶅姟涔嬮棿閫氳繃鍐呯綉鍜?OpenFeign 璋冪敤锛屼笉鐩存帴鏆撮湶缁欏墠绔€傚墠绔粺涓€璁块棶 `gateway-service`锛岀敱缃戝叧杞彂鍒板搴斾笟鍔℃湇鍔°€?
 
-| 接口 | 方法 | 调用方 | 说明 |
+| 鎺ュ彛 | 鏂规硶 | 璋冪敤鏂?| 璇存槑 |
 |---|---|---|---|
-| `/internal/auth/verify` | POST | `gateway-service`、业务服务 | Token 校验和身份解析 |
-| `/internal/patients/{id}` | GET | 挂号、病历、处方服务 | 患者基础信息 |
-| `/internal/doctors/{id}` | GET | 挂号、分诊服务 | 医生详情、科室、排班 |
-| `/internal/registrations/{id}` | GET | 病历、处方服务 | 挂号关系校验 |
-| `/internal/ai/triage` | POST | `triage-service` | 智能分诊 |
-| `/internal/ai/medical-record/generate` | POST | `medical-record-service` | AI 生成病历 |
-| `/internal/ai/medical-record/generate/stream` | GET | `medical-record-service` | AI 流式生成病历 |
-| `/internal/ai/prescription/check` | POST | `prescription-service` | AI 处方审核 |
-| `/internal/ai/schedule/generate` | POST | `admin-service` | AI 生成排班建议 |
-| `/internal/ai/prompt-template/resolve` | POST | `ai-service` 内部 | 按任务类型和科室解析 Prompt 模板 |
-| `/internal/notifications` | POST | `prescription-service` | 创建并推送通知 |
-| `/internal/triage-records` | GET | `admin-service` | 查询分诊记录 |
-| `/internal/triage-records/{id}/assign` | POST | `admin-service` | 更新分诊人工改派结果 |
-| `/internal/doctors/schedules/publish` | POST | `admin-service` | 发布医生排班和号源 |
+| `/internal/auth/verify` | POST | `gateway-service`銆佷笟鍔℃湇鍔?| Token 鏍￠獙鍜岃韩浠借В鏋?|
+| `/internal/patients/{id}` | GET | 鎸傚彿銆佺梾鍘嗐€佸鏂规湇鍔?| 鎮ｈ€呭熀纭€淇℃伅 |
+| `/internal/doctors/{id}` | GET | 鎸傚彿銆佸垎璇婃湇鍔?| 鍖荤敓璇︽儏銆佺瀹ゃ€佹帓鐝?|
+| `/internal/registrations/{id}` | GET | 鐥呭巻銆佸鏂规湇鍔?| 鎸傚彿鍏崇郴鏍￠獙 |
+| `/internal/ai/triage` | POST | `triage-service` | 鏅鸿兘鍒嗚瘖 |
+| `/internal/ai/medical-record/generate` | POST | `medical-record-service` | AI 鐢熸垚鐥呭巻 |
+| `/internal/ai/medical-record/generate/stream` | GET | `medical-record-service` | AI 娴佸紡鐢熸垚鐥呭巻 |
+| `/internal/ai/prescription/check` | POST | `prescription-service` | AI 澶勬柟瀹℃牳 |
+| `/internal/ai/schedule/generate` | POST | `admin-service` | AI 鐢熸垚鎺掔彮寤鸿 |
+| `/internal/ai/prompt-template/resolve` | POST | `ai-service` 鍐呴儴 | 鎸変换鍔＄被鍨嬪拰绉戝瑙ｆ瀽 Prompt 妯℃澘 |
+| `/internal/notifications` | POST | `prescription-service` | 鍒涘缓骞舵帹閫侀€氱煡 |
+| `/internal/triage-records` | GET | `admin-service` | 鏌ヨ鍒嗚瘖璁板綍 |
+| `/internal/triage-records/{id}/assign` | POST | `admin-service` | 鏇存柊鍒嗚瘖浜哄伐鏀规淳缁撴灉 |
+| `/internal/doctors/schedules/publish` | POST | `admin-service` | 鍙戝竷鍖荤敓鎺掔彮鍜屽彿婧?|
 
-## 4. 接口详情
+## 4. 鎺ュ彛璇︽儏
 
-### 4.1 患者注册
+### 4.1 鎮ｈ€呮敞鍐?
 
 ```http
 POST /api/patient/register
 Content-Type: application/json
 ```
 
-请求：
+璇锋眰锛?
 
 ```json
 {
-  "name": "王小明",
+  "name": "鐜嬪皬鏄?,
   "phone": "13800000000",
   "password": "123456",
-  "gender": "男",
+  "gender": "鐢?,
   "age": 35,
-  "allergyHistory": "无",
-  "pastHistory": "无明显既往史"
+  "allergyHistory": "鏃?,
+  "pastHistory": "鏃犳槑鏄炬棦寰€鍙?
 }
 ```
 
-响应：
+鍝嶅簲锛?
 
 ```json
 {
@@ -142,14 +142,14 @@ Content-Type: application/json
 }
 ```
 
-### 4.2 患者登录
+### 4.2 鎮ｈ€呯櫥褰?
 
 ```http
 POST /api/patient/login
 Content-Type: application/json
 ```
 
-请求：
+璇锋眰锛?
 
 ```json
 {
@@ -158,7 +158,7 @@ Content-Type: application/json
 }
 ```
 
-响应：
+鍝嶅簲锛?
 
 ```json
 {
@@ -168,19 +168,19 @@ Content-Type: application/json
     "token": "jwt-token",
     "userId": 1,
     "role": "PATIENT",
-    "name": "王小明"
+    "name": "鐜嬪皬鏄?
   }
 }
 ```
 
-### 4.3 医生列表
+### 4.3 鍖荤敓鍒楄〃
 
 ```http
 GET /api/doctor/list?departmentId=1
 Authorization: Bearer jwt-token
 ```
 
-响应：
+鍝嶅簲锛?
 
 ```json
 {
@@ -189,16 +189,16 @@ Authorization: Bearer jwt-token
   "data": [
     {
       "id": 1,
-      "name": "张医生",
-      "departmentName": "心内科",
-      "title": "主任医师",
-      "specialty": "胸痛、心悸、高血压"
+      "name": "寮犲尰鐢?,
+      "departmentName": "蹇冨唴绉?,
+      "title": "涓讳换鍖诲笀",
+      "specialty": "鑳哥棝銆佸績鎮搞€侀珮琛€鍘?
     }
   ]
 }
 ```
 
-### 4.4 智能分诊
+### 4.4 鏅鸿兘鍒嗚瘖
 
 ```http
 POST /api/triage/consult
@@ -206,15 +206,15 @@ Authorization: Bearer jwt-token
 Content-Type: application/json
 ```
 
-请求：
+璇锋眰锛?
 
 ```json
 {
-  "chiefComplaint": "胸痛伴气短，活动后加重"
+  "chiefComplaint": "鑳哥棝浼存皵鐭紝娲诲姩鍚庡姞閲?
 }
 ```
 
-响应：
+鍝嶅簲锛?
 
 ```json
 {
@@ -222,27 +222,27 @@ Content-Type: application/json
   "message": "success",
   "data": {
     "triageRecordId": 10,
-    "recommendedDepartment": "心内科",
+    "recommendedDepartment": "蹇冨唴绉?,
     "recommendedDoctors": [
       {
         "id": 1,
-        "name": "张医生",
-        "title": "主任医师",
-        "specialty": "胸痛、心悸、高血压"
+        "name": "寮犲尰鐢?,
+        "title": "涓讳换鍖诲笀",
+        "specialty": "鑳哥棝銆佸績鎮搞€侀珮琛€鍘?
       }
     ],
-    "reason": "症状与心血管疾病相关，建议优先心内科就诊"
+    "reason": "鐥囩姸涓庡績琛€绠＄柧鐥呯浉鍏筹紝寤鸿浼樺厛蹇冨唴绉戝氨璇?
   }
 }
 ```
 
-业务接口处理链路：
+涓氬姟鎺ュ彛澶勭悊閾捐矾锛?
 
 ```text
-前端 -> gateway-service -> triage-service /api/triage/consult -> ai-service /internal/ai/triage
+鍓嶇 -> gateway-service -> triage-service /api/triage/consult -> ai-service /internal/ai/triage
 ```
 
-### 4.5 创建挂号
+### 4.5 鍒涘缓鎸傚彿
 
 ```http
 POST /api/registration/create
@@ -250,7 +250,7 @@ Authorization: Bearer jwt-token
 Content-Type: application/json
 ```
 
-请求：
+璇锋眰锛?
 
 ```json
 {
@@ -261,7 +261,7 @@ Content-Type: application/json
 }
 ```
 
-响应：
+鍝嶅簲锛?
 
 ```json
 {
@@ -274,7 +274,7 @@ Content-Type: application/json
 }
 ```
 
-### 4.6 AI 生成病历
+### 4.6 AI 鐢熸垚鐥呭巻
 
 ```http
 POST /api/medical-record/generate
@@ -282,39 +282,39 @@ Authorization: Bearer jwt-token
 Content-Type: application/json
 ```
 
-请求：
+璇锋眰锛?
 
 ```json
 {
   "registrationId": 100,
-  "dialogueText": "患者：胸痛伴气短两天。医生：是否活动后加重？患者：是。"
+  "dialogueText": "鎮ｈ€咃細鑳哥棝浼存皵鐭袱澶┿€傚尰鐢燂細鏄惁娲诲姩鍚庡姞閲嶏紵鎮ｈ€咃細鏄€?
 }
 ```
 
-业务接口处理链路：
+涓氬姟鎺ュ彛澶勭悊閾捐矾锛?
 
 ```text
-前端 -> gateway-service -> medical-record-service /api/medical-record/generate -> ai-service /internal/ai/medical-record/generate
+鍓嶇 -> gateway-service -> medical-record-service /api/medical-record/generate -> ai-service /internal/ai/medical-record/generate
 ```
 
-响应：
+鍝嶅簲锛?
 
 ```json
 {
   "code": 0,
   "message": "success",
   "data": {
-    "chiefComplaint": "胸痛伴气短两天",
-    "presentIllness": "患者两天前出现胸痛伴气短，活动后加重。",
-    "pastHistory": "未提供明确既往史",
-    "physicalExam": "待补充",
-    "diagnosis": "胸痛待查",
-    "treatmentAdvice": "建议完善心电图、心肌酶等检查"
+    "chiefComplaint": "鑳哥棝浼存皵鐭袱澶?,
+    "presentIllness": "鎮ｈ€呬袱澶╁墠鍑虹幇鑳哥棝浼存皵鐭紝娲诲姩鍚庡姞閲嶃€?,
+    "pastHistory": "鏈彁渚涙槑纭棦寰€鍙?,
+    "physicalExam": "寰呰ˉ鍏?,
+    "diagnosis": "鑳哥棝寰呮煡",
+    "treatmentAdvice": "寤鸿瀹屽杽蹇冪數鍥俱€佸績鑲岄叾绛夋鏌?
   }
 }
 ```
 
-### 4.6.1 AI 流式生成病历
+### 4.6.1 AI 娴佸紡鐢熸垚鐥呭巻
 
 ```http
 GET /api/medical-record/generate/stream?registrationId=100
@@ -322,32 +322,32 @@ Authorization: Bearer jwt-token
 Accept: text/event-stream
 ```
 
-SSE 事件：
+SSE 浜嬩欢锛?
 
 ```text
 event: start
 data: {"taskId":"mr-100"}
 
 event: delta
-data: {"text":"主诉：胸痛伴气短两天"}
+data: {"text":"涓昏瘔锛氳兏鐥涗即姘旂煭涓ゅぉ"}
 
 event: structured
-data: {"chiefComplaint":"胸痛伴气短两天","diagnosis":"胸痛待查"}
+data: {"chiefComplaint":"鑳哥棝浼存皵鐭袱澶?,"diagnosis":"鑳哥棝寰呮煡"}
 
 event: done
 data: {"taskId":"mr-100"}
 ```
 
-异常事件：
+寮傚父浜嬩欢锛?
 
 ```text
 event: error
-data: {"message":"AI 生成中断，可重试或手动填写"}
+data: {"message":"AI 鐢熸垚涓柇锛屽彲閲嶈瘯鎴栨墜鍔ㄥ～鍐?}
 ```
 
-说明：该接口 `Accept` 和响应类型均为 `text/event-stream`，只返回 SSE 事件协议；普通 JSON 病历草稿响应属于非流式 `/api/medical-record/generate`。
+璇存槑锛氳鎺ュ彛 `Accept` 鍜屽搷搴旂被鍨嬪潎涓?`text/event-stream`锛屽彧杩斿洖 SSE 浜嬩欢鍗忚锛涙櫘閫?JSON 鐥呭巻鑽夌鍝嶅簲灞炰簬闈炴祦寮?`/api/medical-record/generate`銆?
 
-### 4.7 AI 处方审核
+### 4.7 AI 澶勬柟瀹℃牳
 
 ```http
 POST /api/prescription/check
@@ -355,23 +355,23 @@ Authorization: Bearer jwt-token
 Content-Type: application/json
 ```
 
-请求：
+璇锋眰锛?
 
 ```json
 {
   "patientId": 1,
   "drugs": [
     {
-      "drugName": "阿司匹林",
+      "drugName": "闃垮徃鍖规灄",
       "dosage": "100mg",
-      "frequency": "每日一次",
-      "usageMethod": "口服"
+      "frequency": "姣忔棩涓€娆?,
+      "usageMethod": "鍙ｆ湇"
     }
   ]
 }
 ```
 
-响应：
+鍝嶅簲锛?
 
 ```json
 {
@@ -379,19 +379,19 @@ Content-Type: application/json
   "message": "success",
   "data": {
     "riskLevel": "LOW",
-    "suggestions": "注意胃肠道不良反应，建议饭后服用。",
+    "suggestions": "娉ㄦ剰鑳冭偁閬撲笉鑹弽搴旓紝寤鸿楗悗鏈嶇敤銆?,
     "interactions": []
   }
 }
 ```
 
-业务接口处理链路：
+涓氬姟鎺ュ彛澶勭悊閾捐矾锛?
 
 ```text
-前端 -> gateway-service -> prescription-service /api/prescription/check -> ai-service /internal/ai/prescription/check
+鍓嶇 -> gateway-service -> prescription-service /api/prescription/check -> ai-service /internal/ai/prescription/check
 ```
 
-### 4.8 管理端 AI 排班
+### 4.8 绠＄悊绔?AI 鎺掔彮
 
 ```http
 POST /api/admin/schedule/generate
@@ -399,7 +399,7 @@ Authorization: Bearer admin-jwt-token
 Content-Type: application/json
 ```
 
-请求：
+璇锋眰锛?
 
 ```json
 {
@@ -414,7 +414,7 @@ Content-Type: application/json
 }
 ```
 
-响应：
+鍝嶅簲锛?
 
 ```json
 {
@@ -435,7 +435,7 @@ Content-Type: application/json
 }
 ```
 
-发布：
+鍙戝竷锛?
 
 ```http
 POST /api/admin/schedule/publish
@@ -457,23 +457,23 @@ Content-Type: application/json
 }
 ```
 
-业务接口处理链路：
+涓氬姟鎺ュ彛澶勭悊閾捐矾锛?
 
 ```text
-前端 -> gateway-service -> admin-service /api/admin/schedule/generate -> ai-service /internal/ai/schedule/generate
-前端 -> gateway-service -> admin-service /api/admin/schedule/publish -> doctor-service /internal/doctors/schedules/publish
+鍓嶇 -> gateway-service -> admin-service /api/admin/schedule/generate -> ai-service /internal/ai/schedule/generate
+鍓嶇 -> gateway-service -> admin-service /api/admin/schedule/publish -> doctor-service /internal/doctors/schedules/publish
 ```
 
-### 4.9 管理端 AI 分诊台
+### 4.9 绠＄悊绔?AI 鍒嗚瘖鍙?
 
-列表：
+鍒楄〃锛?
 
 ```http
 GET /api/admin/triage-desk/list?status=SUCCESS&page=1&pageSize=10
 Authorization: Bearer admin-jwt-token
 ```
 
-响应：
+鍝嶅簲锛?
 
 ```json
 {
@@ -485,10 +485,10 @@ Authorization: Bearer admin-jwt-token
       {
         "triageRecordId": 10,
         "patientId": 1,
-        "chiefComplaint": "胸痛伴气短",
-        "recommendedDepartment": "心内科",
+        "chiefComplaint": "鑳哥棝浼存皵鐭?,
+        "recommendedDepartment": "蹇冨唴绉?,
         "recommendedDoctorIds": [1],
-        "reason": "症状与心血管疾病相关",
+        "reason": "鐥囩姸涓庡績琛€绠＄柧鐥呯浉鍏?,
         "status": "SUCCESS"
       }
     ]
@@ -496,7 +496,7 @@ Authorization: Bearer admin-jwt-token
 }
 ```
 
-人工改派：
+浜哄伐鏀规淳锛?
 
 ```http
 POST /api/admin/triage-desk/assign
@@ -509,24 +509,24 @@ Content-Type: application/json
   "triageRecordId": 10,
   "departmentId": 2,
   "doctorId": 8,
-  "note": "管理员根据问诊描述改派到呼吸内科"
+  "note": "绠＄悊鍛樻牴鎹棶璇婃弿杩版敼娲惧埌鍛煎惛鍐呯"
 }
 ```
 
-业务接口处理链路：
+涓氬姟鎺ュ彛澶勭悊閾捐矾锛?
 
 ```text
-前端 -> gateway-service -> admin-service /api/admin/triage-desk/list -> triage-service /internal/triage-records
-前端 -> gateway-service -> admin-service /api/admin/triage-desk/assign -> triage-service /internal/triage-records/{id}/assign
+鍓嶇 -> gateway-service -> admin-service /api/admin/triage-desk/list -> triage-service /internal/triage-records
+鍓嶇 -> gateway-service -> admin-service /api/admin/triage-desk/assign -> triage-service /internal/triage-records/{id}/assign
 ```
 
-### 4.10 WebSocket 实时通知
+### 4.10 WebSocket 瀹炴椂閫氱煡
 
 ```text
 ws://localhost:8080/ws/notifications?token=<jwt-token>
 ```
 
-服务端推送消息：
+鏈嶅姟绔帹閫佹秷鎭細
 
 ```json
 {
@@ -536,27 +536,27 @@ ws://localhost:8080/ws/notifications?token=<jwt-token>
   "patientId": 1,
   "prescriptionId": 200,
   "riskLevel": "HIGH",
-  "title": "高风险用药提醒",
-  "content": "检测到潜在药物相互作用，请复核处方。",
+  "title": "楂橀闄╃敤鑽彁閱?,
+  "content": "妫€娴嬪埌娼滃湪鑽墿鐩镐簰浣滅敤锛岃澶嶆牳澶勬柟銆?,
   "createdAt": "2026-06-14 16:00:00"
 }
 ```
 
-触发规则：
+瑙﹀彂瑙勫垯锛?
 
-1. 医生调用 `/api/prescription/check`。
-2. AI 审核结果为 `HIGH`。
-3. 后端保存 `notification_message`。
-4. 后端通过 WebSocket 推送给处方所属医生。
+1. 鍖荤敓璋冪敤 `/api/prescription/check`銆?
+2. AI 瀹℃牳缁撴灉涓?`HIGH`銆?
+3. 鍚庣淇濆瓨 `notification_message`銆?
+4. 鍚庣閫氳繃 WebSocket 鎺ㄩ€佺粰澶勬柟鎵€灞炲尰鐢熴€?
 
-### 4.11 医生通知列表
+### 4.11 鍖荤敓閫氱煡鍒楄〃
 
 ```http
 GET /api/notification/list?readStatus=UNREAD
 Authorization: Bearer jwt-token
 ```
 
-响应：
+鍝嶅簲锛?
 
 ```json
 {
@@ -566,8 +566,8 @@ Authorization: Bearer jwt-token
     {
       "id": 300,
       "type": "PRESCRIPTION_HIGH_RISK",
-      "title": "高风险用药提醒",
-      "content": "检测到潜在药物相互作用，请复核处方。",
+      "title": "楂橀闄╃敤鑽彁閱?,
+      "content": "妫€娴嬪埌娼滃湪鑽墿鐩镐簰浣滅敤锛岃澶嶆牳澶勬柟銆?,
       "riskLevel": "HIGH",
       "readStatus": "UNREAD",
       "createdAt": "2026-06-14 16:00:00"
@@ -576,14 +576,14 @@ Authorization: Bearer jwt-token
 }
 ```
 
-### 4.12 Prompt 模板列表
+### 4.12 Prompt 妯℃澘鍒楄〃
 
 ```http
 GET /api/prompt-template/list?taskType=MEDICAL_RECORD&departmentCode=CARDIOLOGY
 Authorization: Bearer jwt-token
 ```
 
-响应：
+鍝嶅簲锛?
 
 ```json
 {
@@ -594,10 +594,17 @@ Authorization: Bearer jwt-token
       "id": 1,
       "taskType": "MEDICAL_RECORD",
       "departmentCode": "CARDIOLOGY",
-      "templateName": "心内科病历生成模板",
+      "templateName": "蹇冨唴绉戠梾鍘嗙敓鎴愭ā鏉?,
       "version": "v1",
       "enabled": true
     }
   ]
 }
 ```
+## Search APIs
+
+| API | Method | Role | Description |
+|---|---|---|---|
+| `/api/search/knowledge?q=&departmentCode=` | GET | 登录用户 | 从 KingbaseES 搜索知识库 |
+| `/api/search/drugs?q=` | GET | 登录用户 | 从 KingbaseES 搜索药品 |
+| `/api/admin/search/prompts?q=` | GET | 管理员 | 从 KingbaseES 搜索 Prompt 模板 |
