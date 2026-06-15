@@ -1,0 +1,1353 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>智慧云脑诊疗平台前端原型</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --panel-soft: #f8fafc;
+      --text: #172033;
+      --muted: #667085;
+      --line: #d9e2ec;
+      --primary: #176b87;
+      --primary-strong: #0d5269;
+      --accent: #2f8f6b;
+      --warn: #b7791f;
+      --danger: #b42318;
+      --info: #2457a6;
+      --shadow: 0 18px 48px rgba(20, 42, 73, .12);
+      --radius: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background: var(--bg);
+      font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", Arial, sans-serif;
+      letter-spacing: 0;
+    }
+
+    button, input, select, textarea {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 280px minmax(0, 1fr);
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      padding: 22px 18px;
+      color: #e9f6f8;
+      background: #12343f;
+      overflow: auto;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, .15);
+    }
+
+    .brand-mark {
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: #d8f1f2;
+      color: #12343f;
+      font-weight: 800;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 17px;
+      line-height: 1.25;
+    }
+
+    .brand p {
+      margin: 4px 0 0;
+      color: #a9cbd2;
+      font-size: 12px;
+    }
+
+    .nav-title {
+      margin: 22px 0 10px;
+      color: #a9cbd2;
+      font-size: 12px;
+    }
+
+    .nav-btn {
+      width: 100%;
+      min-height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 7px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      color: #dff2f5;
+      background: transparent;
+      text-align: left;
+    }
+
+    .nav-btn span:first-child {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .nav-btn.active,
+    .nav-btn:hover {
+      background: rgba(216, 241, 242, .14);
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      color: #154a5a;
+      background: #e3f5f3;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .tag.warn {
+      color: #8a4b0f;
+      background: #fff5d6;
+    }
+
+    .tag.danger {
+      color: #9f1f17;
+      background: #ffe6e2;
+    }
+
+    .tag.gray {
+      color: #485465;
+      background: #edf2f7;
+    }
+
+    .main {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      min-height: 70px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 16px 28px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(244, 247, 251, .92);
+      backdrop-filter: blur(12px);
+    }
+
+    .topbar h2 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.25;
+    }
+
+    .topbar p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      min-height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 9px 13px;
+      border-radius: 8px;
+      color: #fff;
+      background: var(--primary);
+      font-weight: 650;
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      background: var(--primary-strong);
+    }
+
+    .btn.secondary {
+      color: var(--text);
+      background: #e8eef5;
+    }
+
+    .btn.secondary:hover {
+      background: #dbe5ef;
+    }
+
+    .btn.ghost {
+      color: var(--primary);
+      background: #e7f4f5;
+    }
+
+    .btn.warn {
+      color: #7a3d00;
+      background: #ffe6ad;
+    }
+
+    .content {
+      width: min(1440px, 100%);
+      margin: 0 auto;
+      padding: 24px 28px 38px;
+    }
+
+    .section {
+      margin-bottom: 24px;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+
+    .section-head h3 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .section-head p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .grid.cols-4 {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .grid.cols-3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .grid.cols-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: 0 1px 2px rgba(20, 42, 73, .04);
+    }
+
+    .panel.pad {
+      padding: 16px;
+    }
+
+    .metric {
+      min-height: 108px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .metric small {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .metric strong {
+      margin-top: 8px;
+      font-size: 28px;
+      line-height: 1;
+    }
+
+    .metric .trend {
+      margin-top: 12px;
+      color: var(--accent);
+      font-size: 12px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 6px;
+      padding: 4px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #eef3f7;
+    }
+
+    .tab {
+      min-height: 36px;
+      padding: 8px 14px;
+      border-radius: 6px;
+      color: var(--muted);
+      background: transparent;
+      font-weight: 650;
+    }
+
+    .tab.active {
+      color: var(--primary);
+      background: #fff;
+      box-shadow: 0 1px 2px rgba(20, 42, 73, .08);
+    }
+
+    .view {
+      display: none;
+    }
+
+    .view.active {
+      display: block;
+    }
+
+    .workflow {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(120px, 1fr));
+      gap: 10px;
+    }
+
+    .step {
+      position: relative;
+      min-height: 108px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .step::after {
+      content: "";
+      position: absolute;
+      right: -10px;
+      top: 50%;
+      width: 10px;
+      height: 1px;
+      background: var(--line);
+    }
+
+    .step:last-child::after {
+      display: none;
+    }
+
+    .step b {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--primary);
+      font-size: 14px;
+    }
+
+    .step p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    .field label {
+      color: #344054;
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      min-height: 38px;
+      border: 1px solid #cdd8e4;
+      border-radius: 8px;
+      padding: 9px 10px;
+      color: var(--text);
+      background: #fff;
+      outline: none;
+    }
+
+    textarea {
+      min-height: 112px;
+      resize: vertical;
+      line-height: 1.6;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(23, 107, 135, .12);
+    }
+
+    .split-card {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .split-card:last-child {
+      border-bottom: 0;
+    }
+
+    .split-card h4 {
+      margin: 0 0 6px;
+      font-size: 15px;
+    }
+
+    .split-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 720px;
+    }
+
+    th, td {
+      padding: 12px 13px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      font-size: 13px;
+      vertical-align: middle;
+    }
+
+    th {
+      color: #475467;
+      background: #f7fafc;
+      font-weight: 700;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .mini-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .mini-tabs button {
+      min-height: 34px;
+      padding: 7px 11px;
+      border-radius: 8px;
+      color: #344054;
+      background: #edf2f7;
+      font-weight: 650;
+    }
+
+    .mini-tabs button.active {
+      color: #fff;
+      background: var(--primary);
+    }
+
+    .callout {
+      padding: 12px 14px;
+      border: 1px solid #c9e4e2;
+      border-left: 4px solid var(--accent);
+      border-radius: 8px;
+      background: #f1fbf9;
+      color: #264d46;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .callout.warn {
+      border-color: #f8d28a;
+      border-left-color: var(--warn);
+      background: #fff8e6;
+      color: #68420b;
+    }
+
+    .callout.danger {
+      border-color: #ffc5bd;
+      border-left-color: var(--danger);
+      background: #fff1ef;
+      color: #842018;
+    }
+
+    .prototype-frame {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: var(--shadow);
+    }
+
+    .frame-header {
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      background: #f9fbfd;
+    }
+
+    .frame-title {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-width: 0;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 16px 0 #f0b429, 32px 0 #d64545;
+      flex: none;
+    }
+
+    .frame-title span {
+      margin-left: 34px;
+      color: #475467;
+      font-size: 13px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .mock-screen {
+      display: grid;
+      grid-template-columns: 180px minmax(0, 1fr);
+      min-height: 460px;
+      background: #f5f8fb;
+    }
+
+    .mock-menu {
+      padding: 14px;
+      border-right: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .mock-menu div {
+      min-height: 34px;
+      display: flex;
+      align-items: center;
+      margin-bottom: 7px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      color: #526071;
+      font-size: 13px;
+    }
+
+    .mock-menu div.active {
+      color: var(--primary);
+      background: #e7f4f5;
+      font-weight: 700;
+    }
+
+    .mock-body {
+      padding: 16px;
+      min-width: 0;
+    }
+
+    .record-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .record-box {
+      min-height: 86px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .record-box strong {
+      display: block;
+      margin-bottom: 8px;
+      color: #344054;
+      font-size: 13px;
+    }
+
+    .record-box p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .progress {
+      height: 8px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #e6edf4;
+    }
+
+    .progress span {
+      display: block;
+      width: 72%;
+      height: 100%;
+      background: linear-gradient(90deg, #176b87, #2f8f6b);
+    }
+
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      z-index: 20;
+      width: min(360px, calc(100vw - 32px));
+      display: none;
+      padding: 14px 16px;
+      border: 1px solid #ffc5bd;
+      border-left: 4px solid var(--danger);
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: var(--shadow);
+    }
+
+    .toast.show {
+      display: block;
+    }
+
+    .toast h4 {
+      margin: 0 0 6px;
+      color: var(--danger);
+      font-size: 15px;
+    }
+
+    .toast p {
+      margin: 0;
+      color: #475467;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .function-map {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .feature-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .feature-item {
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+      min-height: 40px;
+    }
+
+    .feature-item i {
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      color: #fff;
+      background: var(--primary);
+      font-style: normal;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .feature-item b {
+      display: block;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .feature-item span {
+      display: block;
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .footer-note {
+      margin-top: 26px;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: #536170;
+      background: #fff;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 1180px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: static;
+        height: auto;
+      }
+
+      .nav-group {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 7px;
+      }
+
+      .workflow,
+      .grid.cols-4,
+      .function-map {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 16px;
+      }
+
+      .content {
+        padding: 16px;
+      }
+
+      .grid.cols-3,
+      .grid.cols-2,
+      .grid.cols-4,
+      .workflow,
+      .function-map,
+      .form-grid,
+      .record-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .mock-screen {
+        grid-template-columns: 1fr;
+      }
+
+      .mock-menu {
+        display: flex;
+        gap: 8px;
+        overflow: auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .mock-menu div {
+        flex: none;
+      }
+
+      .nav-group {
+        grid-template-columns: 1fr;
+      }
+
+      .split-card {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">SCB</div>
+        <div>
+          <h1>智慧云脑诊疗平台</h1>
+          <p>前端功能规划与 HTML 原型</p>
+        </div>
+      </div>
+
+      <div class="nav-title">三端入口</div>
+      <div class="nav-group">
+        <button class="nav-btn active" data-view="patient"><span>患者端工作流</span><span>P0</span></button>
+        <button class="nav-btn" data-view="doctor"><span>医生端工作台</span><span>P0</span></button>
+        <button class="nav-btn" data-view="admin"><span>管理端控制台</span><span>P0</span></button>
+      </div>
+
+      <div class="nav-title">必做能力</div>
+      <div class="feature-list">
+        <div class="feature-item"><i>1</i><div><b>WebSocket 实时通知</b><span>高风险处方即时推送给医生</span></div></div>
+        <div class="feature-item"><i>2</i><div><b>AI 流式病历</b><span>SSE 或 WebSocket 逐段输出</span></div></div>
+        <div class="feature-item"><i>3</i><div><b>Pinia 状态机</b><span>loading、success、failed、retry</span></div></div>
+        <div class="feature-item"><i>4</i><div><b>Prompt 工程</b><span>按任务和科室选择模板</span></div></div>
+        <div class="feature-item"><i>5</i><div><b>分离部署</b><span>Nginx 静态资源，API 走网关</span></div></div>
+        <div class="feature-item"><i>6</i><div><b>纯微服务架构</b><span>Gateway、注册发现、OpenFeign、降级</span></div></div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h2>前端界面总体规划</h2>
+          <p>覆盖患者端、医生端、管理端，优先满足完整诊疗闭环与 P0 验收点。</p>
+        </div>
+        <div class="actions">
+          <div class="tabs" aria-label="端切换">
+            <button class="tab active" data-view="patient">患者</button>
+            <button class="tab" data-view="doctor">医生</button>
+            <button class="tab" data-view="admin">管理</button>
+          </div>
+          <button class="btn secondary" id="show-alert">模拟高风险通知</button>
+        </div>
+      </header>
+
+      <div class="content">
+        <section class="section">
+          <div class="section-head">
+            <div>
+              <h3>完整诊疗闭环</h3>
+              <p>从患者输入主诉开始，到医生确认病历、处方审核，再回到患者查看记录。</p>
+            </div>
+            <span class="tag">统一通过 gateway-service /api 与 /ws</span>
+          </div>
+          <div class="workflow">
+            <div class="step"><b>1. 注册登录</b><p>患者、医生、管理员三类身份登录，JWT 与角色路由守卫。</p></div>
+            <div class="step"><b>2. 智能分诊</b><p>患者输入主诉，AI 推荐科室与医生，失败时允许手动选择。</p></div>
+            <div class="step"><b>3. 在线挂号</b><p>选择医生、日期、号源，创建挂号并可查看或取消。</p></div>
+            <div class="step"><b>4. 问诊病历</b><p>医生录入对话，AI 流式生成结构化病历，医生确认保存。</p></div>
+            <div class="step"><b>5. 处方审核</b><p>医生开药，AI 审核风险，HIGH 风险触发实时通知。</p></div>
+            <div class="step"><b>6. 记录回看</b><p>患者查看挂号、电子病历、处方和审核摘要。</p></div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <div>
+              <h3>功能覆盖地图</h3>
+              <p>按文档要求收敛出的前端必备页面与核心交互。</p>
+            </div>
+          </div>
+          <div class="function-map">
+            <div class="panel pad">
+              <h4>患者端</h4>
+              <div class="feature-list">
+                <div class="feature-item"><i>A</i><div><b>登录注册</b><span>姓名、手机号、密码、性别、年龄、过敏史、既往史。</span></div></div>
+                <div class="feature-item"><i>B</i><div><b>智能分诊</b><span>主诉校验、AI 推荐、Loading、失败降级、去挂号。</span></div></div>
+                <div class="feature-item"><i>C</i><div><b>在线挂号</b><span>科室筛选、医生卡片、号源时间段、重复挂号提示。</span></div></div>
+                <div class="feature-item"><i>D</i><div><b>我的记录</b><span>挂号列表、电子病历、处方明细与审核摘要。</span></div></div>
+              </div>
+            </div>
+            <div class="panel pad">
+              <h4>医生端</h4>
+              <div class="feature-list">
+                <div class="feature-item"><i>A</i><div><b>今日工作台</b><span>待接诊、已完成、风险提醒、通知中心入口。</span></div></div>
+                <div class="feature-item"><i>B</i><div><b>AI 病历生成</b><span>问诊对话输入、流式输出、模板标记、结构化回填。</span></div></div>
+                <div class="feature-item"><i>C</i><div><b>处方开具</b><span>药品明细、剂量频次用法、AI 辅助审核、医生确认。</span></div></div>
+                <div class="feature-item"><i>D</i><div><b>实时通知</b><span>WebSocket 断线重连、高风险弹窗、历史通知列表。</span></div></div>
+              </div>
+            </div>
+            <div class="panel pad">
+              <h4>管理端</h4>
+              <div class="feature-list">
+                <div class="feature-item"><i>A</i><div><b>基础数据维护</b><span>科室、医生、药品、Prompt 模板、系统字典。</span></div></div>
+                <div class="feature-item"><i>B</i><div><b>AI 医生排班</b><span>科室日期规则、AI 建议、人工调整、发布号源。</span></div></div>
+                <div class="feature-item"><i>C</i><div><b>AI 分诊台</b><span>记录列表、推荐理由、人工改派、关闭处理。</span></div></div>
+                <div class="feature-item"><i>D</i><div><b>权限与审计</b><span>/api/admin/* 仅 ADMIN，关键操作记录日志。</span></div></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="view active" id="patient">
+          <div class="section-head">
+            <div>
+              <h3>患者端原型</h3>
+              <p>面向患者的高频路径：分诊、挂号、记录查看。</p>
+            </div>
+            <span class="tag">/patient/home /patient/triage /patient/registration</span>
+          </div>
+          <div class="grid cols-4 section">
+            <div class="panel pad metric"><small>今日可预约号源</small><strong>126</strong><span class="trend">心内科 28 个号源</span></div>
+            <div class="panel pad metric"><small>AI 分诊成功率</small><strong>96%</strong><span class="trend">失败可手动挂号</span></div>
+            <div class="panel pad metric"><small>我的待就诊</small><strong>2</strong><span class="trend">最近 2026-06-15 09:30</span></div>
+            <div class="panel pad metric"><small>待查看记录</small><strong>3</strong><span class="trend">病历 1，处方 2</span></div>
+          </div>
+
+          <div class="layout">
+            <div class="prototype-frame">
+              <div class="frame-header">
+                <div class="frame-title"><div class="dot"></div><span>患者端：智能分诊与挂号</span></div>
+                <span class="tag gray">PATIENT</span>
+              </div>
+              <div class="mock-screen">
+                <div class="mock-menu">
+                  <div class="active">智能分诊</div>
+                  <div>在线挂号</div>
+                  <div>我的挂号</div>
+                  <div>我的病历</div>
+                  <div>我的处方</div>
+                </div>
+                <div class="mock-body">
+                  <div class="panel pad">
+                    <div class="form-grid">
+                      <div class="field full">
+                        <label>症状主诉</label>
+                        <textarea id="complaint">胸痛伴气短，活动后加重两天。</textarea>
+                      </div>
+                      <div class="field">
+                        <label>手动兜底科室</label>
+                        <select>
+                          <option>心内科</option>
+                          <option>呼吸内科</option>
+                          <option>全科门诊</option>
+                        </select>
+                      </div>
+                      <div class="field">
+                        <label>流程状态</label>
+                        <select>
+                          <option>待分诊</option>
+                          <option>AI 处理中</option>
+                          <option>分诊成功</option>
+                          <option>AI 失败，可重试</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="status-row">
+                      <button class="btn" id="triage-btn">智能分诊</button>
+                      <button class="btn ghost">手动选择科室</button>
+                      <span class="tag" id="triage-state">可提交</span>
+                    </div>
+                  </div>
+
+                  <div class="panel" style="margin-top:12px">
+                    <div class="split-card">
+                      <div>
+                        <h4>推荐科室：心内科</h4>
+                        <p id="triage-reason">症状与心血管疾病相关，建议优先心内科就诊。AI 服务不可用时仍可手动选择科室和医生。</p>
+                        <div class="status-row"><span class="tag">AI 推荐</span><span class="tag gray">Prompt：心内科分诊模板 v1</span></div>
+                      </div>
+                      <button class="btn">去挂号</button>
+                    </div>
+                    <div class="split-card">
+                      <div>
+                        <h4>张医生 主任医师</h4>
+                        <p>擅长胸痛、心悸、高血压。今日剩余号源 8 个。</p>
+                      </div>
+                      <button class="btn secondary">选择 09:30</button>
+                    </div>
+                    <div class="split-card">
+                      <div>
+                        <h4>我的挂号</h4>
+                        <p>心内科 张医生，2026-06-15 09:30，状态 CREATED，可取消。</p>
+                      </div>
+                      <button class="btn warn">取消挂号</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid">
+              <div class="panel pad">
+                <h4>患者端交互要点</h4>
+                <div class="feature-list">
+                  <div class="feature-item"><i>1</i><div><b>表单即时校验</b><span>手机号 11 位、密码 6 位以上、主诉建议 10 到 1000 字。</span></div></div>
+                  <div class="feature-item"><i>2</i><div><b>明确状态反馈</b><span>AI 请求展示 loading；失败提示“可手动选择科室挂号”。</span></div></div>
+                  <div class="feature-item"><i>3</i><div><b>可逆操作</b><span>未就诊挂号支持二次确认取消，已完成或已就诊不可取消。</span></div></div>
+                  <div class="feature-item"><i>4</i><div><b>隐私边界</b><span>患者只能查看自己的病历、处方和挂号记录。</span></div></div>
+                </div>
+              </div>
+              <div class="callout">
+                P0 页面：登录、注册、患者首页、智能分诊、在线挂号、我的挂号、我的病历、我的处方。后续 Vue 实现建议复用同一套 AppShell、空状态、错误提示、列表分页和详情抽屉。
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" id="doctor">
+          <div class="section-head">
+            <div>
+              <h3>医生端原型</h3>
+              <p>围绕接诊效率、AI 可解释生成、处方安全和实时提醒组织界面。</p>
+            </div>
+            <span class="tag">/doctor/workbench /doctor/record/:id /doctor/prescription/:id</span>
+          </div>
+          <div class="grid cols-4 section">
+            <div class="panel pad metric"><small>待接诊</small><strong>9</strong><span class="trend">3 人已到诊</span></div>
+            <div class="panel pad metric"><small>病历生成中</small><strong>1</strong><span class="trend">SSE 连接正常</span></div>
+            <div class="panel pad metric"><small>高风险提醒</small><strong>2</strong><span class="trend">WebSocket 已连接</span></div>
+            <div class="panel pad metric"><small>今日已完成</small><strong>17</strong><span class="trend">平均接诊 9 分钟</span></div>
+          </div>
+
+          <div class="layout">
+            <div class="prototype-frame">
+              <div class="frame-header">
+                <div class="frame-title"><div class="dot"></div><span>医生端：问诊病历与处方审核</span></div>
+                <span class="tag gray">DOCTOR</span>
+              </div>
+              <div class="mock-screen">
+                <div class="mock-menu">
+                  <div class="active">工作台</div>
+                  <div>问诊病历</div>
+                  <div>处方开具</div>
+                  <div>通知中心</div>
+                  <div>历史记录</div>
+                </div>
+                <div class="mock-body">
+                  <div class="mini-tabs">
+                    <button class="active">待接诊</button>
+                    <button>病历生成</button>
+                    <button>处方审核</button>
+                  </div>
+                  <div class="panel pad">
+                    <div class="split-card">
+                      <div>
+                        <h4>王小明 男 35 岁</h4>
+                        <p>心内科 09:30，主诉：胸痛伴气短，活动后加重两天。</p>
+                      </div>
+                      <button class="btn">进入问诊</button>
+                    </div>
+                    <div class="form-grid" style="margin-top:12px">
+                      <div class="field full">
+                        <label>医患对话</label>
+                        <textarea>患者：胸痛伴气短两天。
+医生：是否活动后加重？
+患者：是，休息后略缓解，无明确药物过敏史。</textarea>
+                      </div>
+                    </div>
+                    <div class="status-row">
+                      <button class="btn" id="stream-btn">AI 流式生成病历</button>
+                      <span class="tag gray">模板：心内科病历生成 v1</span>
+                      <span class="tag" id="stream-state">未开始</span>
+                    </div>
+                    <div class="progress" style="margin:12px 0"><span id="stream-progress"></span></div>
+                    <div class="record-grid">
+                      <div class="record-box"><strong>主诉</strong><p id="record-chief">胸痛伴气短两天。</p></div>
+                      <div class="record-box"><strong>现病史</strong><p id="record-present">等待 AI 逐段生成并回填。</p></div>
+                      <div class="record-box"><strong>初步诊断</strong><p>胸痛待查，建议完善心电图。</p></div>
+                      <div class="record-box"><strong>治疗建议</strong><p>根据检查结果进一步评估，必要时急诊处理。</p></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid">
+              <div class="panel pad">
+                <h4>处方审核卡片</h4>
+                <div class="table-wrap">
+                  <table>
+                    <thead><tr><th>药品</th><th>剂量</th><th>频次</th><th>用法</th></tr></thead>
+                    <tbody>
+                      <tr><td>阿司匹林</td><td>100mg</td><td>每日一次</td><td>口服</td></tr>
+                      <tr><td>硝酸甘油</td><td>0.5mg</td><td>必要时</td><td>舌下含服</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="callout warn" style="margin-top:12px">
+                  AI 审核：MEDIUM 风险。建议关注胃肠道反应和出血风险，医生确认后才能保存处方。
+                </div>
+                <div class="status-row">
+                  <button class="btn">AI 辅助审核</button>
+                  <button class="btn secondary">保存处方</button>
+                </div>
+              </div>
+              <div class="callout danger">
+                实时通知表现：当 `/api/prescription/check` 返回 HIGH，后端通过 `/ws/notifications` 推送给处方所属医生。前端展示弹窗，同时写入通知中心列表，断线时显示重连状态但不阻塞处方保存。
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" id="admin">
+          <div class="section-head">
+            <div>
+              <h3>管理端原型</h3>
+              <p>第三个必做入口，负责基础数据、AI 排班、AI 分诊台和人工兜底。</p>
+            </div>
+            <span class="tag">/admin/home /admin/schedules /admin/triage-desk</span>
+          </div>
+          <div class="grid cols-4 section">
+            <div class="panel pad metric"><small>启用科室</small><strong>12</strong><span class="trend">支持患者筛选</span></div>
+            <div class="panel pad metric"><small>启用医生</small><strong>48</strong><span class="trend">7 人今日出诊</span></div>
+            <div class="panel pad metric"><small>待发布排班</small><strong>6</strong><span class="trend">AI 建议待确认</span></div>
+            <div class="panel pad metric"><small>分诊台待处理</small><strong>5</strong><span class="trend">2 条需改派</span></div>
+          </div>
+
+          <div class="layout">
+            <div class="prototype-frame">
+              <div class="frame-header">
+                <div class="frame-title"><div class="dot"></div><span>管理端：AI 排班与分诊台</span></div>
+                <span class="tag gray">ADMIN</span>
+              </div>
+              <div class="mock-screen">
+                <div class="mock-menu">
+                  <div class="active">管理首页</div>
+                  <div>科室管理</div>
+                  <div>医生管理</div>
+                  <div>药品管理</div>
+                  <div>Prompt 模板</div>
+                  <div>系统字典</div>
+                  <div>AI 排班</div>
+                  <div>AI 分诊台</div>
+                </div>
+                <div class="mock-body">
+                  <div class="panel pad">
+                    <div class="form-grid">
+                      <div class="field">
+                        <label>科室</label>
+                        <select><option>心内科</option><option>呼吸内科</option></select>
+                      </div>
+                      <div class="field">
+                        <label>日期范围</label>
+                        <input value="2026-06-15 至 2026-06-21">
+                      </div>
+                      <div class="field">
+                        <label>班次</label>
+                        <select><option>上午、下午</option><option>全天</option></select>
+                      </div>
+                      <div class="field">
+                        <label>每时段容量</label>
+                        <input value="20">
+                      </div>
+                    </div>
+                    <div class="status-row">
+                      <button class="btn" id="schedule-btn">AI 生成排班</button>
+                      <button class="btn ghost">手动新增排班</button>
+                      <span class="tag" id="schedule-state">待生成</span>
+                    </div>
+                    <div class="table-wrap" style="margin-top:12px">
+                      <table>
+                        <thead><tr><th>医生</th><th>日期</th><th>班次</th><th>容量</th><th>状态</th><th>操作</th></tr></thead>
+                        <tbody>
+                          <tr><td>张医生</td><td>2026-06-15</td><td>上午</td><td>20</td><td><span class="tag warn">GENERATED</span></td><td><button class="btn secondary">调整</button></td></tr>
+                          <tr><td>李医生</td><td>2026-06-15</td><td>下午</td><td>18</td><td><span class="tag gray">DRAFT</span></td><td><button class="btn secondary">调整</button></td></tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <div class="status-row">
+                      <button class="btn">确认发布号源</button>
+                      <span class="tag gray">发布后患者端才可预约</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid">
+              <div class="panel pad">
+                <h4>AI 分诊台</h4>
+                <div class="table-wrap">
+                  <table>
+                    <thead><tr><th>患者主诉</th><th>AI 推荐</th><th>状态</th><th>处理</th></tr></thead>
+                    <tbody>
+                      <tr><td>胸痛伴气短</td><td>心内科 / 张医生</td><td><span class="tag">SUCCESS</span></td><td><button class="btn secondary">查看</button></td></tr>
+                      <tr><td>咳嗽发热三天</td><td>全科 / 待确认</td><td><span class="tag warn">需改派</span></td><td><button class="btn">改派</button></td></tr>
+                      <tr><td>腹痛恶心</td><td>消化内科 / 王医生</td><td><span class="tag gray">CLOSED</span></td><td><button class="btn secondary">详情</button></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="form-grid" style="margin-top:12px">
+                  <div class="field">
+                    <label>改派科室</label>
+                    <select><option>呼吸内科</option><option>心内科</option></select>
+                  </div>
+                  <div class="field">
+                    <label>改派医生</label>
+                    <select><option>赵医生</option><option>张医生</option></select>
+                  </div>
+                  <div class="field full">
+                    <label>处理备注</label>
+                    <input value="根据主诉和号源情况进行人工改派">
+                  </div>
+                </div>
+                <div class="status-row">
+                  <button class="btn">提交改派</button>
+                  <button class="btn secondary">关闭记录</button>
+                </div>
+              </div>
+              <div class="callout">
+                管理端基础数据页均采用“筛选区 + 表格 + 新增/编辑抽屉 + 启停状态”的模式，降低学习成本。Prompt 模板页额外展示任务类型、科室编码、输出 Schema、版本和启停状态。
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" style="margin-top:24px">
+          <div class="section-head">
+            <div>
+              <h3>状态机与异常兜底</h3>
+              <p>前端实现时建议用 Pinia 为各业务流维护统一状态字段。</p>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>业务流</th><th>状态</th><th>界面表现</th><th>失败兜底</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>智能分诊</td><td>idle / loading / success / failed</td><td>按钮禁用、进度提示、推荐卡片</td><td>手动选择科室和医生</td></tr>
+                <tr><td>挂号</td><td>slotLoading / creating / created / conflict</td><td>号源余量、重复挂号提示</td><td>重新选择时间段</td></tr>
+                <tr><td>病历生成</td><td>streaming / structured / saved / interrupted</td><td>逐段输出、结构化回填、模板标记</td><td>继续手动填写或重试</td></tr>
+                <tr><td>处方审核</td><td>checking / low / medium / high / unavailable</td><td>风险色彩、确认动作、通知弹窗</td><td>医生人工确认并记录</td></tr>
+                <tr><td>AI 排班</td><td>generating / generated / adjusted / published</td><td>建议表格、可编辑容量、发布确认</td><td>手动维护排班</td></tr>
+                <tr><td>AI 分诊台</td><td>success / assigned / closed / failed</td><td>列表筛选、详情抽屉、改派表单</td><td>人工改派或关闭记录</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <div class="footer-note">
+          原型放置位置：frontend/prototypes/smart-cloud-brain-ui-prototype.html。后续进入 Vue 实现时，可按文档建议拆为 apps/patient-web、apps/doctor-web、apps/admin-web 三端，并抽取 shared-ui、shared-api、shared-types、shared-utils。
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite">
+    <h4>高风险用药提醒</h4>
+    <p>检测到潜在药物相互作用，请复核王小明的处方。该消息来自 /ws/notifications，并保留在通知中心。</p>
+  </div>
+
+  <script>
+    const tabs = document.querySelectorAll("[data-view]");
+    const views = document.querySelectorAll(".view");
+
+    function switchView(name) {
+      views.forEach((view) => view.classList.toggle("active", view.id === name));
+      document.querySelectorAll(".tab").forEach((tab) => tab.classList.toggle("active", tab.dataset.view === name));
+      document.querySelectorAll(".nav-btn").forEach((btn) => btn.classList.toggle("active", btn.dataset.view === name));
+    }
+
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => switchView(tab.dataset.view));
+    });
+
+    const triageBtn = document.getElementById("triage-btn");
+    const triageState = document.getElementById("triage-state");
+    const triageReason = document.getElementById("triage-reason");
+    triageBtn.addEventListener("click", () => {
+      triageState.textContent = "AI 处理中";
+      triageState.className = "tag warn";
+      triageBtn.disabled = true;
+      setTimeout(() => {
+        triageState.textContent = "分诊成功";
+        triageState.className = "tag";
+        triageReason.textContent = "AI 已推荐心内科和张医生。推荐理由：胸痛伴气短且活动后加重，与心血管疾病相关。";
+        triageBtn.disabled = false;
+      }, 800);
+    });
+
+    const streamBtn = document.getElementById("stream-btn");
+    const streamState = document.getElementById("stream-state");
+    const streamProgress = document.getElementById("stream-progress");
+    const recordPresent = document.getElementById("record-present");
+    streamBtn.addEventListener("click", () => {
+      streamState.textContent = "流式生成中";
+      streamState.className = "tag warn";
+      streamProgress.style.width = "38%";
+      recordPresent.textContent = "AI 正在输出：患者两天前出现胸痛伴气短，活动后加重...";
+      setTimeout(() => {
+        streamProgress.style.width = "100%";
+        streamState.textContent = "结构化回填完成";
+        streamState.className = "tag";
+        recordPresent.textContent = "患者两天前出现胸痛伴气短，活动后加重，休息后略缓解，无明确药物过敏史。";
+      }, 1100);
+    });
+
+    const scheduleBtn = document.getElementById("schedule-btn");
+    const scheduleState = document.getElementById("schedule-state");
+    scheduleBtn.addEventListener("click", () => {
+      scheduleState.textContent = "生成中";
+      scheduleState.className = "tag warn";
+      scheduleBtn.disabled = true;
+      setTimeout(() => {
+        scheduleState.textContent = "已生成，待人工确认";
+        scheduleState.className = "tag";
+        scheduleBtn.disabled = false;
+      }, 900);
+    });
+
+    const toast = document.getElementById("toast");
+    document.getElementById("show-alert").addEventListener("click", () => {
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 4200);
+    });
+  </script>
+</body>
+</html>
