@@ -8,6 +8,10 @@ deploy/env/.env
 node_modules/
 dist/
 
+# 本地配置文件（每人用自己的数据库）
+**/application-dev.yml
+**/application-prod.yml
+
 # Hermes agent files
 .hermes/
 AGENTS.md
