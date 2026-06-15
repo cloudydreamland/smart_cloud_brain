@@ -1,0 +1,24 @@
+{
+  "name": "东软智慧云脑诊疗平台患者端",
+  "appid": "__UNI__SCB_PATIENT",
+  "description": "轻症智能问诊、分诊、挂号和诊疗记录查询",
+  "versionName": "0.1.0",
+  "versionCode": "1",
+  "transformPx": false,
+  "app-plus": {
+    "usingComponents": true,
+    "nvueStyleCompiler": "uni-app",
+    "compilerVersion": 3,
+    "splashscreen": {
+      "alwaysShowBeforeRender": true,
+      "waiting": true,
+      "autoclose": true
+    },
+    "modules": {},
+    "distribute": {
+      "android": {
+        "permissions": []
+      }
+    }
+  }
+}
