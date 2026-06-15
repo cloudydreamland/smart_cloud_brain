@@ -68,6 +68,7 @@ public class AuthService {
 
   public LoginResponse loginDoctor(LoginRequest request) {
     Doctor doctor = doctorRepository.findByPhone(request.account())
+        .or(() -> doctorByDemoAccount(request.account()))
         .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
     passwordService.assertMatches(request.password(), doctor.getPasswordHash());
     return session(doctor.getId(), RoleType.DOCTOR, doctor.getName());
@@ -86,6 +87,13 @@ public class AuthService {
 
   private LoginResponse session(Long id, RoleType role, String name) {
     return new LoginResponse(jwtService.issue(id, role, name), id, role.name(), name);
+  }
+
+  private java.util.Optional<Doctor> doctorByDemoAccount(String account) {
+    if (account == null || !account.matches("doctor\\d+")) {
+      return java.util.Optional.empty();
+    }
+    return doctorRepository.findById(Long.valueOf(account.substring("doctor".length())));
   }
 }
 

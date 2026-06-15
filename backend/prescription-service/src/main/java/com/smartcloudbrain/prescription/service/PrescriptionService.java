@@ -5,7 +5,10 @@ import com.smartcloudbrain.aiapi.dto.PrescriptionCheckRequest;
 import com.smartcloudbrain.aiapi.dto.PrescriptionCheckResponse;
 import com.smartcloudbrain.common.event.DomainEventNames;
 import com.smartcloudbrain.common.event.RabbitTopology;
+import com.smartcloudbrain.common.error.ErrorCode;
+import com.smartcloudbrain.common.exception.BusinessException;
 import com.smartcloudbrain.common.security.RoleType;
+import com.smartcloudbrain.prescription.entity.MedicalRecord;
 import com.smartcloudbrain.prescription.dto.prescription.PrescriptionCreateRequest;
 import com.smartcloudbrain.prescription.entity.Prescription;
 import com.smartcloudbrain.prescription.entity.PrescriptionCheckRecord;
@@ -14,6 +17,7 @@ import com.smartcloudbrain.prescription.event.OutboxEventPublisher;
 import com.smartcloudbrain.prescription.repository.PrescriptionCheckRecordRepository;
 import com.smartcloudbrain.prescription.repository.PrescriptionItemRepository;
 import com.smartcloudbrain.prescription.repository.PrescriptionRepository;
+import com.smartcloudbrain.prescription.repository.MedicalRecordRepository;
 import com.smartcloudbrain.common.security.AuthenticatedUser;
 import com.smartcloudbrain.common.security.CurrentUserService;
 import java.util.LinkedHashMap;
@@ -29,6 +33,7 @@ public class PrescriptionService {
   private final PrescriptionRepository prescriptionRepository;
   private final PrescriptionItemRepository prescriptionItemRepository;
   private final PrescriptionCheckRecordRepository checkRecordRepository;
+  private final MedicalRecordRepository medicalRecordRepository;
   private final OutboxEventPublisher outboxEventPublisher;
   private final CurrentUserService currentUserService;
 
@@ -37,6 +42,7 @@ public class PrescriptionService {
       PrescriptionRepository prescriptionRepository,
       PrescriptionItemRepository prescriptionItemRepository,
       PrescriptionCheckRecordRepository checkRecordRepository,
+      MedicalRecordRepository medicalRecordRepository,
       OutboxEventPublisher outboxEventPublisher,
       CurrentUserService currentUserService
   ) {
@@ -44,14 +50,18 @@ public class PrescriptionService {
     this.prescriptionRepository = prescriptionRepository;
     this.prescriptionItemRepository = prescriptionItemRepository;
     this.checkRecordRepository = checkRecordRepository;
+    this.medicalRecordRepository = medicalRecordRepository;
     this.outboxEventPublisher = outboxEventPublisher;
     this.currentUserService = currentUserService;
   }
 
   @Transactional
   public Map<String, Object> check(PrescriptionCheckRequest request) {
-    AuthenticatedUser user = currentUserService.get();
+    AuthenticatedUser user = currentUserService.require(RoleType.DOCTOR);
     Long doctorId = request.doctorId() == null ? user.userId() : request.doctorId();
+    if (!doctorId.equals(user.userId())) {
+      throw new BusinessException(ErrorCode.FORBIDDEN);
+    }
     PrescriptionCheckResponse response = aiGatewayService.checkPrescription(new PrescriptionCheckRequest(request.patientId(), doctorId, request.drugs()));
     PrescriptionCheckRecord record = new PrescriptionCheckRecord();
     record.setPatientId(request.patientId());
@@ -75,7 +85,12 @@ public class PrescriptionService {
 
   @Transactional
   public Map<String, Object> create(PrescriptionCreateRequest request) {
-    AuthenticatedUser user = currentUserService.get();
+    AuthenticatedUser user = currentUserService.require(RoleType.DOCTOR);
+    MedicalRecord medicalRecord = medicalRecordRepository.findById(request.medicalRecordId())
+        .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+    if (!medicalRecord.getDoctorId().equals(user.userId()) || !medicalRecord.getPatientId().equals(request.patientId())) {
+      throw new BusinessException(ErrorCode.FORBIDDEN);
+    }
     Prescription prescription = new Prescription();
     prescription.setPatientId(request.patientId());
     prescription.setDoctorId(user.userId());

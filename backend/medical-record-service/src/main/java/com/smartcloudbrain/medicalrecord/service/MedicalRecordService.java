@@ -40,9 +40,12 @@ public class MedicalRecordService {
 
   @Transactional
   public Map<String, Object> save(MedicalRecordSaveRequest request) {
-    AuthenticatedUser user = currentUserService.get();
+    AuthenticatedUser user = currentUserService.require(RoleType.DOCTOR);
     Registration registration = registrationRepository.findById(request.registrationId())
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+    if (!registration.getDoctorId().equals(user.userId())) {
+      throw new BusinessException(ErrorCode.FORBIDDEN);
+    }
     MedicalRecord record = medicalRecordRepository.findByRegistrationId(request.registrationId()).orElseGet(MedicalRecord::new);
     record.setRegistrationId(registration.getId());
     record.setPatientId(registration.getPatientId());
@@ -71,7 +74,24 @@ public class MedicalRecordService {
   }
 
   public Map<String, Object> detail(Long id) {
-    return recordView(medicalRecordRepository.findById(id).orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND)));
+    MedicalRecord record = medicalRecordRepository.findById(id).orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+    AuthenticatedUser user = currentUserService.get();
+    if (user.role() == RoleType.PATIENT && !record.getPatientId().equals(user.userId())) {
+      throw new BusinessException(ErrorCode.FORBIDDEN);
+    }
+    if (user.role() == RoleType.DOCTOR && !record.getDoctorId().equals(user.userId())) {
+      throw new BusinessException(ErrorCode.FORBIDDEN);
+    }
+    return recordView(record);
+  }
+
+  public void requireDoctorRegistration(Long registrationId) {
+    AuthenticatedUser user = currentUserService.require(RoleType.DOCTOR);
+    Registration registration = registrationRepository.findById(registrationId)
+        .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+    if (!registration.getDoctorId().equals(user.userId())) {
+      throw new BusinessException(ErrorCode.FORBIDDEN);
+    }
   }
 
   public Map<String, Object> recordView(MedicalRecord record) {

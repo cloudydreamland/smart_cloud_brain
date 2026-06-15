@@ -31,6 +31,7 @@ public class MedicalRecordController {
 
   @PostMapping("/generate")
   public Result<?> generate(@Valid @RequestBody MedicalRecordGenerateRequest request) {
+    medicalRecordService.requireDoctorRegistration(request.registrationId());
     return Result.success(aiGatewayService.generateMedicalRecord(request));
   }
 
@@ -51,6 +52,7 @@ public class MedicalRecordController {
 
   @GetMapping(value = "/generate/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
   public SseEmitter generateStream(@RequestParam Long registrationId) {
+    medicalRecordService.requireDoctorRegistration(registrationId);
     SseEmitter emitter = new SseEmitter(30_000L);
     new Thread(() -> {
       try {

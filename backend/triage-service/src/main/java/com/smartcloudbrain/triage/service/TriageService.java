@@ -2,6 +2,8 @@ package com.smartcloudbrain.triage.service;
 
 import com.smartcloudbrain.aiapi.dto.TriageRequest;
 import com.smartcloudbrain.aiapi.dto.TriageResponse;
+import com.smartcloudbrain.common.error.ErrorCode;
+import com.smartcloudbrain.common.exception.BusinessException;
 import com.smartcloudbrain.common.security.RoleType;
 import com.smartcloudbrain.triage.entity.TriageRecord;
 import com.smartcloudbrain.triage.repository.TriageRecordRepository;
@@ -32,8 +34,11 @@ public class TriageService {
 
   @Transactional
   public Map<String, Object> consult(TriageRequest request) {
-    AuthenticatedUser user = currentUserService.get();
+    AuthenticatedUser user = currentUserService.require(RoleType.PATIENT);
     Long patientId = request.patientId() == null ? user.userId() : request.patientId();
+    if (!patientId.equals(user.userId())) {
+      throw new BusinessException(ErrorCode.FORBIDDEN);
+    }
     TriageResponse response = aiGatewayService.triage(new TriageRequest(patientId, request.chiefComplaint()));
     TriageRecord record = new TriageRecord();
     record.setPatientId(patientId);
@@ -64,6 +69,7 @@ public class TriageService {
         "recommendedDepartment", record.getRecommendedDepartment() == null ? "" : record.getRecommendedDepartment(),
         "departmentCode", response == null ? "" : response.departmentCode(),
         "recommendedDoctorIds", response == null ? record.getRecommendedDoctorIds() : response.recommendedDoctorIds(),
+        "assignedDoctorId", record.getAssignedDoctorId() == null ? 0L : record.getAssignedDoctorId(),
         "reason", record.getReason() == null ? "" : record.getReason(),
         "status", record.getStatus(),
         "degraded", response != null && response.degraded()

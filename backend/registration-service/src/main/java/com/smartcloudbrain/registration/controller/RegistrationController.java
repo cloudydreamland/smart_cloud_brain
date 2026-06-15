@@ -31,6 +31,11 @@ public class RegistrationController {
     return Result.success(registrationService.list());
   }
 
+  @GetMapping("/slots")
+  public Result<?> slots() {
+    return Result.success(registrationService.slots());
+  }
+
   @PostMapping("/cancel")
   public Result<?> cancel(@RequestBody Map<String, Long> request) {
     return Result.success(registrationService.cancel(request.get("registrationId")));

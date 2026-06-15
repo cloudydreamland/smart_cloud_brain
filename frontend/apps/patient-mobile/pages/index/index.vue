@@ -3,7 +3,7 @@
     <view class="hero">
       <text class="eyebrow">Patient Mobile</text>
       <text class="title">患者移动端</text>
-      <text class="subtitle">轻症问诊、AI 分诊、预约挂号、记录查询。</text>
+      <text class="subtitle">轻症问诊、AI 分诊、预约挂号、记录查询</text>
     </view>
 
     <view class="panel" v-if="!session">
@@ -41,7 +41,7 @@
 </template>
 
 <script>
-const API_BASE = "http://localhost:8080/api";
+const API_BASE = "http://localhost:18080/api";
 
 function request(path, method = "GET", data = null, token = "") {
   return new Promise((resolve, reject) => {
@@ -78,7 +78,7 @@ export default {
       triageResult: null,
       doctorId: 2,
       departmentId: 2,
-      appointmentTime: "2026-06-15T09:00:00",
+      appointmentTime: "2026-06-17T09:00:00",
       registrations: [],
       medicalRecords: [],
       prescriptions: []

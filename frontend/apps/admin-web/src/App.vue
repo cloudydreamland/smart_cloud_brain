@@ -12,13 +12,19 @@ const doctors = ref<Array<Record<string, unknown>>>([]);
 const drugs = ref<Array<Record<string, unknown>>>([]);
 const prompts = ref<Array<Record<string, unknown>>>([]);
 const knowledge = ref<Array<Record<string, unknown>>>([]);
+const dicts = ref<Array<Record<string, unknown>>>([]);
+const suggestions = ref<Array<Record<string, unknown>>>([]);
+const schedules = ref<Array<Record<string, unknown>>>([]);
+const triageDesk = ref<Array<Record<string, unknown>>>([]);
 
 const departmentForm = ref({ code: "GENERAL", name: "全科门诊", description: "常见轻症初诊与复诊" });
-const doctorForm = ref({ name: "李医生", phone: "13900000002", password: "123456", departmentId: 2, title: "主治医师", specialty: "发热、咽痛、腹泻、皮肤过敏", status: "ENABLED" });
+const doctorForm = ref({ name: "李医生", phone: "13900000002", password: "", departmentId: 2, title: "主治医师", specialty: "发热、咽痛、腹泻、皮肤过敏", status: "ENABLED" });
 const drugForm = ref({ name: "对乙酰氨基酚", specification: "0.5g", contraindication: "严重肝功能不全慎用", interactionRule: "避免与其他含同成分复方药重复使用", status: "ENABLED" });
 const promptForm = ref({ taskType: "MEDICAL_RECORD", departmentCode: "GENERAL", templateName: "GENERAL_MEDICAL_RECORD_v1", templateContent: "根据轻症问诊文本生成结构化病历 JSON，必须提示医生确认。", outputSchema: "{\"type\":\"object\"}", version: "v1", enabled: true });
 const knowledgeForm = ref({ title: "普通感冒", symptoms: "鼻塞、流涕、咽痛、低热、轻微咳嗽", riskSignals: "持续高热、呼吸困难、胸痛、意识异常", advice: "注意休息和补液，症状加重或超过三天建议线下就诊。", departmentCode: "GENERAL", status: "ENABLED" });
-
+const dictForm = ref({ dictType: "REGISTRATION_STATUS", dictKey: "CREATED", dictValue: "已预约", sort: 1, status: "ENABLED" });
+const scheduleForm = ref({ startDate: new Date(Date.now() + 86400000).toISOString().slice(0, 10), days: 3 });
+const assignForm = ref({ triageRecordId: 0, doctorId: 2 });
 const search = ref({ q: "感冒", departmentCode: "" });
 const searchResults = ref({
   knowledge: [] as Array<Record<string, unknown>>,
@@ -56,6 +62,9 @@ async function refresh() {
   drugs.value = await api.drugs(token());
   prompts.value = await api.prompts(token());
   knowledge.value = await api.knowledgeEntries(token());
+  dicts.value = await api.dicts(token());
+  schedules.value = await api.schedules(token());
+  triageDesk.value = await api.triageDesk(token());
 }
 
 async function saveDepartment() {
@@ -68,6 +77,7 @@ async function saveDepartment() {
 async function saveDoctor() {
   await run("保存医生", async () => {
     await api.saveDoctor(token(), doctorForm.value);
+    doctorForm.value.password = "";
     await refresh();
   });
 }
@@ -93,6 +103,43 @@ async function saveKnowledge() {
   });
 }
 
+async function saveDict() {
+  await run("保存字典", async () => {
+    await api.saveDict(token(), dictForm.value);
+    await refresh();
+  });
+}
+
+async function generateSchedule() {
+  await run("生成 AI 排班建议", async () => {
+    suggestions.value = await api.generateSchedule(token(), scheduleForm.value);
+    await refresh();
+  });
+}
+
+async function publishSchedule() {
+  await run("发布排班", async () => {
+    const suggestionIds = suggestions.value.map((item) => Number(item.id)).filter(Boolean);
+    schedules.value = await api.publishSchedule(token(), { suggestionIds });
+    suggestions.value = [];
+    await refresh();
+  });
+}
+
+async function assignTriage() {
+  await run("分配分诊", async () => {
+    await api.assignTriage(token(), assignForm.value);
+    await refresh();
+  });
+}
+
+async function closeTriage(id: unknown) {
+  await run("关闭分诊", async () => {
+    await api.closeTriage(token(), Number(id));
+    await refresh();
+  });
+}
+
 async function doSearch() {
   await run("搜索", async () => {
     const [knowledgeList, drugList, promptList] = await Promise.all([
@@ -102,6 +149,11 @@ async function doSearch() {
     ]);
     searchResults.value = { knowledge: knowledgeList, drugs: drugList, prompts: promptList };
   });
+}
+
+function useTriage(item: Record<string, unknown>) {
+  assignForm.value.triageRecordId = Number(item.triageRecordId);
+  assignForm.value.doctorId = Number(item.assignedDoctorId || doctors.value[0]?.id || 0);
 }
 
 function logout() {
@@ -117,7 +169,7 @@ onMounted(refresh);
     <aside class="rail">
       <p class="eyebrow">Admin Web</p>
       <h1>管理端</h1>
-      <p>维护真实科室、医生、药品、Prompt 和轻症知识库数据，搜索结果直接来自金仓数据库。</p>
+      <p>维护金仓基础数据、系统字典、AI 排班、分诊工作台和轻症知识库。</p>
       <div class="session" v-if="session">
         <strong>{{ session.name }}</strong>
         <span>{{ session.role }} #{{ session.userId }}</span>
@@ -152,13 +204,60 @@ onMounted(refresh);
             <label>科室 ID<input v-model.number="doctorForm.departmentId" type="number" /></label>
             <label>职称<input v-model="doctorForm.title" /></label>
             <label>专长<input v-model="doctorForm.specialty" /></label>
-            <label>密码<input v-model="doctorForm.password" /></label>
+            <label>新密码<input v-model="doctorForm.password" placeholder="留空则不修改" /></label>
           </div>
           <button class="primary" @click="saveDoctor">保存医生</button>
         </section>
 
         <section class="panel">
-          <h2>药品基础信息</h2>
+          <h2>AI 排班与号源</h2>
+          <div class="grid three">
+            <label>开始日期<input v-model="scheduleForm.startDate" type="date" /></label>
+            <label>天数<input v-model.number="scheduleForm.days" type="number" /></label>
+            <div class="actions">
+              <button @click="generateSchedule">生成建议</button>
+              <button class="primary" :disabled="!suggestions.length" @click="publishSchedule">发布排班</button>
+            </div>
+          </div>
+          <div class="data-grid">
+            <div><h3>待发布建议</h3><p v-for="item in suggestions" :key="String(item.id)">#{{ item.id }} {{ item.workDate }} {{ item.timeRange }} {{ item.doctorName }}</p></div>
+            <div><h3>已发布排班</h3><p v-for="item in schedules" :key="String(item.id)">#{{ item.id }} {{ item.workDate }} {{ item.timeRange }} {{ item.doctorName }}</p></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>分诊工作台</h2>
+          <div class="grid three">
+            <label>分诊记录 ID<input v-model.number="assignForm.triageRecordId" type="number" /></label>
+            <label>分配医生
+              <select v-model.number="assignForm.doctorId">
+                <option v-for="doctor in doctors" :key="String(doctor.id)" :value="Number(doctor.id)">{{ doctor.name }} · {{ doctor.departmentName }}</option>
+              </select>
+            </label>
+            <div class="actions"><button class="primary" @click="assignTriage">分配医生</button></div>
+          </div>
+          <table>
+            <tbody>
+              <tr v-for="item in triageDesk" :key="String(item.triageRecordId)" @click="useTriage(item)">
+                <td>#{{ item.triageRecordId }}</td>
+                <td>{{ item.chiefComplaint }}</td>
+                <td>{{ item.recommendedDepartment }}</td>
+                <td>{{ item.assignedDoctorName || "-" }}</td>
+                <td>{{ item.status }}</td>
+                <td><button @click.stop="closeTriage(item.triageRecordId)">关闭</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="panel">
+          <h2>字典、药品、Prompt 与知识库</h2>
+          <div class="grid three">
+            <label>字典类型<input v-model="dictForm.dictType" /></label>
+            <label>字典键<input v-model="dictForm.dictKey" /></label>
+            <label>字典值<input v-model="dictForm.dictValue" /></label>
+          </div>
+          <button @click="saveDict">保存字典</button>
           <div class="grid three">
             <label>药品名称<input v-model="drugForm.name" /></label>
             <label>规格<input v-model="drugForm.specification" /></label>
@@ -167,15 +266,9 @@ onMounted(refresh);
             <label>相互作用<textarea v-model="drugForm.interactionRule" rows="2" /></label>
           </div>
           <button class="primary" @click="saveDrug">保存药品</button>
-        </section>
-
-        <section class="panel">
-          <h2>Prompt 与知识库</h2>
           <div class="grid two">
             <label>任务类型<input v-model="promptForm.taskType" /></label>
-            <label>科室编码<input v-model="promptForm.departmentCode" /></label>
             <label>模板名称<input v-model="promptForm.templateName" /></label>
-            <label>版本<input v-model="promptForm.version" /></label>
           </div>
           <textarea v-model="promptForm.templateContent" rows="3" />
           <button @click="savePrompt">保存 Prompt</button>
@@ -190,29 +283,18 @@ onMounted(refresh);
         </section>
 
         <section class="panel">
-          <h2>金仓搜索</h2>
+          <h2>金仓搜索与当前数据</h2>
           <div class="grid three">
             <label>关键词<input v-model="search.q" /></label>
             <label>科室编码<input v-model="search.departmentCode" /></label>
-            <div class="actions">
-              <button class="primary" @click="doSearch">搜索</button>
-            </div>
+            <div class="actions"><button class="primary" @click="doSearch">搜索</button></div>
           </div>
-          <div class="data-grid">
-            <div><h3>知识库</h3><p v-for="item in searchResults.knowledge" :key="String(item.id)">#{{ item.id }} {{ item.title }} | {{ item.departmentCode }}</p></div>
-            <div><h3>药品</h3><p v-for="item in searchResults.drugs" :key="String(item.id)">#{{ item.id }} {{ item.name }} | {{ item.specification }}</p></div>
-            <div><h3>Prompt</h3><p v-for="item in searchResults.prompts" :key="String(item.id)">#{{ item.id }} {{ item.templateName }}</p></div>
-          </div>
-        </section>
-
-        <section class="panel">
-          <h2>当前基础数据</h2>
           <div class="data-grid">
             <div><h3>科室</h3><p v-for="item in departments" :key="String(item.id)">#{{ item.id }} {{ item.name }}</p></div>
             <div><h3>医生</h3><p v-for="item in doctors" :key="String(item.id)">#{{ item.id }} {{ item.name }} | {{ item.specialty }}</p></div>
-            <div><h3>药品</h3><p v-for="item in drugs" :key="String(item.id)">#{{ item.id }} {{ item.name }} | {{ item.specification }}</p></div>
-            <div><h3>知识库</h3><p v-for="item in knowledge" :key="String(item.id)">#{{ item.id }} {{ item.title }} | {{ item.departmentCode }}</p></div>
-            <div><h3>Prompt</h3><p v-for="item in prompts" :key="String(item.id)">#{{ item.id }} {{ item.templateName }}</p></div>
+            <div><h3>药品</h3><p v-for="item in drugs" :key="String(item.id)">#{{ item.id }} {{ item.name }}</p></div>
+            <div><h3>字典</h3><p v-for="item in dicts" :key="String(item.id)">#{{ item.id }} {{ item.dictType }}: {{ item.dictValue }}</p></div>
+            <div><h3>搜索结果</h3><p v-for="item in searchResults.knowledge" :key="String(item.id)">知识 #{{ item.id }} {{ item.title }}</p><p v-for="item in searchResults.drugs" :key="String(item.id)">药品 #{{ item.id }} {{ item.name }}</p><p v-for="item in searchResults.prompts" :key="String(item.id)">Prompt #{{ item.id }} {{ item.templateName }}</p></div>
           </div>
         </section>
       </template>

@@ -1,6 +1,6 @@
 # 智慧云脑诊疗平台
 
-本项目是前后端分离的智慧诊疗微服务平台。后端采用 JDK 17、Spring Boot 3、Spring Cloud Gateway、OpenFeign、KingbaseES、RabbitMQ；前端采用 Vue 3 monorepo，包含患者端、医生端和管理端。系统主链路覆盖患者注册登录、AI 分诊、挂号、医生接诊、AI 病历生成、处方开具、AI 处方审核、实时通知和患者记录查看。
+本项目是前后端分离的智慧诊疗微服务平台。后端使用 JDK 17、Spring Boot 3、Spring Cloud Gateway、OpenFeign、KingbaseES/PostgreSQL 兼容数据库和 RabbitMQ；前端使用 Vue 3 monorepo，包含患者端、医生端、管理端和患者移动端。
 
 ## 目录
 
@@ -8,59 +8,39 @@
 docs/       项目文档
 backend/    Spring Boot 多模块微服务
 frontend/   Vue 3 前端 monorepo
-sql/        KingbaseES 主建表和种子数据
+sql/        Kingbase 建表和演示种子数据
 deploy/     Docker Compose、Nacos、RabbitMQ、Nginx
 postman/    接口调试集合
 ```
 
-## 后端服务
+## 核心演示流程
 
-前端只访问 `gateway-service`。`diagnosis-service` 已移除，不再作为入口或兼容服务。
+1. 患者登录后提交 AI 分诊。
+2. 患者从金仓号源中选择医生排班并预约挂号。
+3. 医生查看自己的挂号队列，生成并保存 AI 病历草稿。
+4. 医生执行处方审核并确认处方，风险通知通过 RabbitMQ/WebSocket 推送。
+5. 患者查看自己的病历和处方。
+6. 管理员维护基础数据、系统字典、分诊工作台，并生成/发布 AI 排班。
 
-```text
-gateway-service, auth-service, patient-service, doctor-service,
-registration-service, triage-service, medical-record-service,
-prescription-service, notification-service, admin-service, ai-service
-```
+## 默认账号
 
-KingbaseES 是唯一事实数据库。知识库、药品和 Prompt 的搜索直接查询金仓表；RabbitMQ 负责处方风险通知等异步事件。
+- 患者：`13800000001 / 123456`
+- 医生：`doctor1 / 123456`，也可以用手机号 `13900000001 / 123456`
+- 管理员：`admin / 123456`
 
 ## 一键启动
 
-先复制环境变量模板：
+推荐使用脚本：
 
 ```powershell
 cd D:\smart_cloud_brain
-copy deploy\env\.env.example deploy\env\.env
-```
-
-如果你本机已经安装 KingbaseES，编辑 `deploy\env\.env`：
-
-```text
-DB_SERVICE_HOST=host.docker.internal
-DB_SERVICE_PORT=15432
-DB_USERNAME=system
-DB_PASSWORD=123456
-```
-
-推荐启动方式：
-
-```powershell
 .\scripts\start-local.ps1
 ```
 
-这个脚本会启动 Docker Compose 里的 Nacos、RabbitMQ、Gateway、后端微服务和三个前端容器，搜索直接使用金仓。
-
-如果不使用脚本，也可以直接执行：
+也可以直接使用 Docker Compose：
 
 ```powershell
-docker-compose --env-file deploy\env\.env -f deploy\docker-compose.yml up -d --build
-```
-
-如果没有本机 KingbaseES，可以启用内置兼容数据库：
-
-```powershell
-docker-compose --env-file deploy\env\.env -f deploy\docker-compose.yml --profile embedded-db up -d --build
+docker-compose -f deploy\docker-compose.yml --profile embedded-db up -d --build
 ```
 
 常用地址：
@@ -74,25 +54,30 @@ docker-compose --env-file deploy\env\.env -f deploy\docker-compose.yml --profile
 
 ## 本地编译
 
+后端：
+
 ```powershell
 cd backend
 mvn -pl gateway-service,auth-service,patient-service,doctor-service,registration-service,triage-service,medical-record-service,prescription-service,notification-service,admin-service,ai-service -am compile -DskipTests
 ```
 
-## 前端启动
+前端：
 
 ```powershell
 cd frontend
 corepack pnpm install
-corepack pnpm --filter patient-web dev
-corepack pnpm --filter doctor-web dev
-corepack pnpm --filter admin-web dev
+corepack pnpm test
+corepack pnpm --filter patient-web build
+corepack pnpm --filter doctor-web build
+corepack pnpm --filter admin-web build
 ```
 
-日常如果只用 Docker 一键启动，不需要单独运行 pnpm。
+## 数据库
 
-默认测试账号：
+`sql/kingbase_schema.sql` 是演示环境主初始化脚本，包含：
 
-- 患者端：`13800000001 / 123456`
-- 医生端：`13900000002 / 123456`
-- 管理端：`admin / 123456`
+- 患者、医生、管理员、科室、药品、Prompt、知识库。
+- 系统字典。
+- 已发布医生排班和可预约号源。
+
+挂号、病历、处方、通知等交易数据通过实际演示流程生成。

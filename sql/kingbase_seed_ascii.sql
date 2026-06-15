@@ -77,6 +77,45 @@ ON CONFLICT (id) DO UPDATE SET
   department_code = EXCLUDED.department_code,
   status = EXCLUDED.status;
 
+INSERT INTO system_dict (id, dict_type, dict_key, dict_value, sort, status) VALUES
+  (1, 'REGISTRATION_STATUS', 'CREATED', 'Booked', 1, 'ENABLED'),
+  (2, 'REGISTRATION_STATUS', 'CANCELLED', 'Cancelled', 2, 'ENABLED'),
+  (3, 'TRIAGE_STATUS', 'AI_RECOMMENDED', 'AI recommended', 1, 'ENABLED'),
+  (4, 'TRIAGE_STATUS', 'ASSIGNED', 'Assigned', 2, 'ENABLED'),
+  (5, 'TRIAGE_STATUS', 'CLOSED', 'Closed', 3, 'ENABLED')
+ON CONFLICT (id) DO UPDATE SET
+  dict_type = EXCLUDED.dict_type,
+  dict_key = EXCLUDED.dict_key,
+  dict_value = EXCLUDED.dict_value,
+  sort = EXCLUDED.sort,
+  status = EXCLUDED.status;
+
+INSERT INTO doctor_schedule (id, doctor_id, department_id, work_date, time_range, capacity, status) VALUES
+  (1, 2, 2, CURRENT_DATE + 1, '09:00-12:00', 12, 'PUBLISHED'),
+  (2, 1, 1, CURRENT_DATE + 1, '14:00-17:00', 8, 'PUBLISHED'),
+  (3, 3, 3, CURRENT_DATE + 2, '09:00-12:00', 10, 'PUBLISHED')
+ON CONFLICT (id) DO UPDATE SET
+  doctor_id = EXCLUDED.doctor_id,
+  department_id = EXCLUDED.department_id,
+  work_date = EXCLUDED.work_date,
+  time_range = EXCLUDED.time_range,
+  capacity = EXCLUDED.capacity,
+  status = EXCLUDED.status;
+
+INSERT INTO appointment_slot (id, schedule_id, doctor_id, department_id, start_time, end_time, capacity, remaining_capacity, status) VALUES
+  (1, 1, 2, 2, CURRENT_DATE + INTERVAL '1 day 9 hours', CURRENT_DATE + INTERVAL '1 day 12 hours', 12, 12, 'AVAILABLE'),
+  (2, 2, 1, 1, CURRENT_DATE + INTERVAL '1 day 14 hours', CURRENT_DATE + INTERVAL '1 day 17 hours', 8, 8, 'AVAILABLE'),
+  (3, 3, 3, 3, CURRENT_DATE + INTERVAL '2 day 9 hours', CURRENT_DATE + INTERVAL '2 day 12 hours', 10, 10, 'AVAILABLE')
+ON CONFLICT (id) DO UPDATE SET
+  schedule_id = EXCLUDED.schedule_id,
+  doctor_id = EXCLUDED.doctor_id,
+  department_id = EXCLUDED.department_id,
+  start_time = EXCLUDED.start_time,
+  end_time = EXCLUDED.end_time,
+  capacity = EXCLUDED.capacity,
+  remaining_capacity = EXCLUDED.remaining_capacity,
+  status = EXCLUDED.status;
+
 SELECT setval(pg_get_serial_sequence('department', 'id'), COALESCE((SELECT MAX(id) FROM department), 1));
 SELECT setval(pg_get_serial_sequence('doctor', 'id'), COALESCE((SELECT MAX(id) FROM doctor), 1));
 SELECT setval(pg_get_serial_sequence('patient', 'id'), COALESCE((SELECT MAX(id) FROM patient), 1));
@@ -84,3 +123,6 @@ SELECT setval(pg_get_serial_sequence('admin_user', 'id'), COALESCE((SELECT MAX(i
 SELECT setval(pg_get_serial_sequence('drug', 'id'), COALESCE((SELECT MAX(id) FROM drug), 1));
 SELECT setval(pg_get_serial_sequence('prompt_template', 'id'), COALESCE((SELECT MAX(id) FROM prompt_template), 1));
 SELECT setval(pg_get_serial_sequence('knowledge_entry', 'id'), COALESCE((SELECT MAX(id) FROM knowledge_entry), 1));
+SELECT setval(pg_get_serial_sequence('system_dict', 'id'), COALESCE((SELECT MAX(id) FROM system_dict), 1));
+SELECT setval(pg_get_serial_sequence('doctor_schedule', 'id'), COALESCE((SELECT MAX(id) FROM doctor_schedule), 1));
+SELECT setval(pg_get_serial_sequence('appointment_slot', 'id'), COALESCE((SELECT MAX(id) FROM appointment_slot), 1));

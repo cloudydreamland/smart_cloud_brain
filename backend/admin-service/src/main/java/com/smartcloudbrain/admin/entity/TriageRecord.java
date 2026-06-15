@@ -1,4 +1,4 @@
-package com.smartcloudbrain.triage.entity;
+package com.smartcloudbrain.admin.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -19,8 +19,6 @@ public class TriageRecord extends BaseEntity {
   @Column(name = "assigned_doctor_id")
   private Long assignedDoctorId;
   private String reason;
-  @Column(name = "ai_result_json")
-  private String aiResultJson;
   private String status;
 
   public Long getPatientId() {
@@ -71,14 +69,6 @@ public class TriageRecord extends BaseEntity {
     this.reason = reason;
   }
 
-  public String getAiResultJson() {
-    return aiResultJson;
-  }
-
-  public void setAiResultJson(String aiResultJson) {
-    this.aiResultJson = aiResultJson;
-  }
-
   public String getStatus() {
     return status;
   }
@@ -87,5 +77,3 @@ public class TriageRecord extends BaseEntity {
     this.status = status;
   }
 }
-
-

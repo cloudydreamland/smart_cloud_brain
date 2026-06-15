@@ -11,6 +11,7 @@ body {
 
 button,
 input,
+select,
 textarea {
   font: inherit;
 }
@@ -30,6 +31,7 @@ button.primary {
 }
 
 input,
+select,
 textarea {
   width: 100%;
   border: 1px solid #ded4c3;
@@ -37,6 +39,31 @@ textarea {
   padding: 10px 12px;
   background: #fff;
   color: #1f2430;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  align-items: end;
+  flex-wrap: wrap;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+td {
+  border-bottom: 1px solid #eee3d0;
+  padding: 10px 8px;
+}
+
+tr {
+  cursor: pointer;
+}
+
+tr:hover {
+  background: #fff7ea;
 }
 
 label {

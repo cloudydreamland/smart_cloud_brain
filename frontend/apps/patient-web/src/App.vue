@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { api, type Session } from "@smart-cloud-brain/shared-api";
 
 const session = ref<Session | null>(JSON.parse(localStorage.getItem("patient-session") || "null"));
@@ -9,14 +9,18 @@ const loginForm = ref({ account: "13800000001", password: "123456" });
 const registerForm = ref({ name: "测试患者", phone: "13800000001", password: "123456", gender: "FEMALE", age: 21 });
 const chiefComplaint = ref("咽痛、低热、鼻塞两天，想预约轻症门诊。");
 const departments = ref<Array<Record<string, unknown>>>([]);
-const doctors = ref<Array<Record<string, unknown>>>([]);
 const triage = ref<Record<string, unknown> | null>(null);
-const appointment = ref({ doctorId: 2, departmentId: 2, appointmentTime: new Date(Date.now() + 86400000).toISOString().slice(0, 16) });
+const slots = ref<Array<Record<string, unknown>>>([]);
+const selectedSlotId = ref<number | null>(null);
 const registrations = ref<Array<Record<string, unknown>>>([]);
 const records = ref<Array<Record<string, unknown>>>([]);
 const prescriptions = ref<Array<Record<string, unknown>>>([]);
 
 const token = () => session.value?.token ?? "";
+const availableSlots = computed(() => {
+  const departmentName = String(triage.value?.recommendedDepartment || "");
+  return slots.value.filter((slot) => !departmentName || String(slot.departmentName || "").includes(departmentName) || String(slot.departmentName || "") === departmentName);
+});
 
 async function run(label: string, task: () => Promise<void>) {
   busy.value = true;
@@ -50,30 +54,43 @@ async function login() {
 async function consult() {
   await run("智能分诊", async () => {
     triage.value = await api.triage(token(), chiefComplaint.value);
-    const recommended = String(triage.value.departmentCode || "");
-    const department = departments.value.find((item) => item.code === recommended);
-    if (department?.id) appointment.value.departmentId = Number(department.id);
-    if (Array.isArray(triage.value.recommendedDoctorIds) && triage.value.recommendedDoctorIds[0]) {
-      appointment.value.doctorId = Number(triage.value.recommendedDoctorIds[0]);
-    }
+    await refreshSlots();
+    selectedSlotId.value = Number(availableSlots.value[0]?.slotId || slots.value[0]?.slotId || 0) || null;
   });
 }
 
+async function refreshSlots() {
+  if (session.value) {
+    slots.value = await api.registrationSlots(token());
+  }
+}
+
 async function createRegistration() {
+  const slot = slots.value.find((item) => Number(item.slotId) === selectedSlotId.value);
+  if (!slot) return;
   await run("预约挂号", async () => {
     await api.createRegistration(token(), {
-      ...appointment.value,
-      appointmentTime: `${appointment.value.appointmentTime}:00`,
+      doctorId: Number(slot.doctorId),
+      departmentId: Number(slot.departmentId),
+      appointmentTime: String(slot.startTime),
       triageRecordId: triage.value?.triageRecordId ?? null,
+      slotId: Number(slot.slotId),
     });
+    await refresh();
+  });
+}
+
+async function cancelRegistration(registrationId: unknown) {
+  await run("取消挂号", async () => {
+    await api.cancelRegistration(token(), Number(registrationId));
     await refresh();
   });
 }
 
 async function refresh() {
   departments.value = await api.departments();
-  doctors.value = await api.doctors();
   if (session.value) {
+    await refreshSlots();
     registrations.value = await api.registrations(token());
     records.value = await api.medicalRecords(token());
     prescriptions.value = await api.prescriptions(token());
@@ -93,7 +110,7 @@ onMounted(refresh);
     <aside class="rail">
       <p class="eyebrow">Patient Web</p>
       <h1>患者端</h1>
-      <p>注册登录、AI 分诊、预约挂号、查看病历和处方。</p>
+      <p>完成注册登录、AI 分诊、选择金仓号源、预约挂号、取消挂号、查看病历和处方。</p>
       <div class="session" v-if="session">
         <strong>{{ session.name }}</strong>
         <span>{{ session.role }} #{{ session.userId }}</span>
@@ -133,21 +150,22 @@ onMounted(refresh);
         </section>
 
         <section class="panel">
-          <h2>预约挂号</h2>
-          <div class="grid three">
-            <label>科室
-              <select v-model.number="appointment.departmentId">
-                <option v-for="item in departments" :key="String(item.id)" :value="Number(item.id)">{{ item.name }}</option>
+          <h2>选择可预约号源</h2>
+          <div class="grid two">
+            <label>推荐科室
+              <select disabled>
+                <option>{{ triage?.recommendedDepartment || departments[0]?.name || "请先提交分诊" }}</option>
               </select>
             </label>
-            <label>医生
-              <select v-model.number="appointment.doctorId">
-                <option v-for="item in doctors" :key="String(item.id)" :value="Number(item.id)">{{ item.name }} · {{ item.departmentName }}</option>
+            <label>号源
+              <select v-model.number="selectedSlotId">
+                <option v-for="item in (availableSlots.length ? availableSlots : slots)" :key="String(item.slotId)" :value="Number(item.slotId)">
+                  {{ item.departmentName }} · {{ item.doctorName }} · {{ item.startTime }} · 余号 {{ item.remainingCapacity }}
+                </option>
               </select>
             </label>
-            <label>预约时间<input v-model="appointment.appointmentTime" type="datetime-local" /></label>
           </div>
-          <button class="primary" :disabled="busy" @click="createRegistration">确认预约</button>
+          <button class="primary" :disabled="busy || !selectedSlotId" @click="createRegistration">确认预约</button>
         </section>
 
         <section class="panel">
@@ -160,6 +178,7 @@ onMounted(refresh);
                 <td>{{ item.doctorName }}</td>
                 <td>{{ item.appointmentTime }}</td>
                 <td>{{ item.status }}</td>
+                <td><button :disabled="busy || item.status === 'CANCELLED'" @click="cancelRegistration(item.registrationId)">取消</button></td>
               </tr>
             </tbody>
           </table>
@@ -170,7 +189,7 @@ onMounted(refresh);
           <div class="split">
             <div>
               <h3>病历</h3>
-              <p v-for="item in records" :key="String(item.medicalRecordId)">{{ item.diagnosis }} · {{ item.treatmentAdvice }}</p>
+              <p v-for="item in records" :key="String(item.medicalRecordId)">#{{ item.medicalRecordId }} · {{ item.diagnosis }} · {{ item.treatmentAdvice }}</p>
             </div>
             <div>
               <h3>处方</h3>

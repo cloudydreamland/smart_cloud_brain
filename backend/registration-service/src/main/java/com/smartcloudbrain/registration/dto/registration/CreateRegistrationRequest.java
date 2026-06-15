@@ -7,7 +7,8 @@ public record CreateRegistrationRequest(
     @NotNull Long doctorId,
     @NotNull Long departmentId,
     @NotNull LocalDateTime appointmentTime,
-    Long triageRecordId
+    Long triageRecordId,
+    Long slotId
 ) {
 }
 

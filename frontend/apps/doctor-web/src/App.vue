@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
-import { api, type Session } from "@smart-cloud-brain/shared-api";
+import { onBeforeUnmount, onMounted, ref } from "vue";
+import { api, notificationWebSocketUrl, type Session } from "@smart-cloud-brain/shared-api";
 
 const session = ref<Session | null>(JSON.parse(localStorage.getItem("doctor-session") || "null"));
 const message = ref("");
 const busy = ref(false);
-const loginForm = ref({ account: "13900000002", password: "123456" });
+const loginForm = ref({ account: "doctor1", password: "123456" });
 const registrations = ref<Array<Record<string, unknown>>>([]);
 const records = ref<Array<Record<string, unknown>>>([]);
 const drugs = ref<Array<Record<string, unknown>>>([]);
@@ -29,6 +29,7 @@ const prescription = ref({
   drugs: [{ drugName: "对乙酰氨基酚", dosage: "0.5g", frequency: "必要时", usageMethod: "口服" }],
 });
 const checkResult = ref<Record<string, unknown> | null>(null);
+let socket: WebSocket | null = null;
 
 const token = () => session.value?.token ?? "";
 
@@ -49,23 +50,35 @@ async function login() {
   await run("登录", async () => {
     session.value = await api.loginDoctor(loginForm.value.account, loginForm.value.password);
     localStorage.setItem("doctor-session", JSON.stringify(session.value));
+    connectSocket();
     await refresh();
   });
 }
 
 async function refresh() {
   if (session.value) {
-    drugs.value = await api.drugs(token());
+    drugs.value = await api.searchDrugs(token(), "");
     registrations.value = await api.registrations(token());
     records.value = await api.medicalRecords(token());
     notifications.value = await api.notifications(token());
   }
 }
 
+function connectSocket() {
+  if (!session.value) return;
+  socket?.close();
+  socket = new WebSocket(notificationWebSocketUrl(session.value.userId));
+  socket.onmessage = async () => {
+    await refresh();
+    message.value = "收到新的处方风险通知";
+  };
+}
+
 function selectRegistration(item: Record<string, unknown>) {
   selectedRegistrationId.value = Number(item.registrationId);
   selectedPatientId.value = Number(item.patientId);
   medicalForm.value.registrationId = Number(item.registrationId);
+  prescription.value.medicalRecordId = 0;
 }
 
 async function generateRecord() {
@@ -124,11 +137,17 @@ async function createPrescription() {
 }
 
 function logout() {
+  socket?.close();
+  socket = null;
   session.value = null;
   localStorage.removeItem("doctor-session");
 }
 
-onMounted(refresh);
+onMounted(async () => {
+  connectSocket();
+  await refresh();
+});
+onBeforeUnmount(() => socket?.close());
 </script>
 
 <template>
@@ -136,7 +155,7 @@ onMounted(refresh);
     <aside class="rail">
       <p class="eyebrow">Doctor Web</p>
       <h1>医生端</h1>
-      <p>接诊患者、确认 AI 病历草稿、完成处方审核。</p>
+      <p>接诊患者，确认 AI 病历草稿，完成处方审核，并接收实时风险通知。</p>
       <div class="session" v-if="session">
         <strong>{{ session.name }}</strong>
         <span>{{ session.role }} #{{ session.userId }}</span>
