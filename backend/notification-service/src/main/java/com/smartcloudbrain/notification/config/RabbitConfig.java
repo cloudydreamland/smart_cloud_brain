@@ -8,6 +8,7 @@ import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.TopicExchange;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 @Configuration
 public class RabbitConfig {
@@ -35,14 +36,20 @@ public class RabbitConfig {
   }
 
   @Bean
-  Binding notificationDispatchBinding(Queue notificationDispatchQueue, TopicExchange domainExchange) {
+  Binding notificationDispatchBinding(
+      @Qualifier("notificationDispatchQueue") Queue notificationDispatchQueue,
+      @Qualifier("domainExchange") TopicExchange domainExchange
+  ) {
     return BindingBuilder.bind(notificationDispatchQueue)
         .to(domainExchange)
         .with(RabbitTopology.ROUTING_NOTIFICATION_DISPATCH);
   }
 
   @Bean
-  Binding deadLetterBinding(Queue deadLetterQueue, TopicExchange deadExchange) {
+  Binding deadLetterBinding(
+      @Qualifier("deadLetterQueue") Queue deadLetterQueue,
+      @Qualifier("deadExchange") TopicExchange deadExchange
+  ) {
     return BindingBuilder.bind(deadLetterQueue).to(deadExchange).with("#");
   }
 }
