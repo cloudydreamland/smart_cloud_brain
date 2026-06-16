@@ -272,15 +272,30 @@ INSERT INTO doctor (id, name, phone, password_hash, department_id, title, specia
   (1, '张医生', '13900000001', '{plain}123456', 1, '主任医师', '胸痛、心悸、高血压', 'ENABLED'),
   (2, '李医生', '13900000002', '{plain}123456', 2, '主治医师', '发热、咽痛、腹泻、皮肤过敏', 'ENABLED'),
   (3, '王医生', '13900000003', '{plain}123456', 3, '副主任医师', '咳嗽、哮喘、肺部感染', 'ENABLED')
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (phone) DO UPDATE SET
+  name = EXCLUDED.name,
+  password_hash = EXCLUDED.password_hash,
+  department_id = EXCLUDED.department_id,
+  title = EXCLUDED.title,
+  specialty = EXCLUDED.specialty,
+  status = EXCLUDED.status;
 
 INSERT INTO patient (id, name, phone, password_hash, gender, age, allergy_history, past_history) VALUES
   (1, '测试患者', '13800000001', '{plain}123456', 'FEMALE', 21, '无明确药物过敏史', '无特殊既往史')
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (phone) DO UPDATE SET
+  name = EXCLUDED.name,
+  password_hash = EXCLUDED.password_hash,
+  gender = EXCLUDED.gender,
+  age = EXCLUDED.age,
+  allergy_history = EXCLUDED.allergy_history,
+  past_history = EXCLUDED.past_history;
 
 INSERT INTO admin_user (id, username, password_hash, name, status) VALUES
   (1, 'admin', '{plain}123456', '系统管理员', 'ENABLED')
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (username) DO UPDATE SET
+  password_hash = EXCLUDED.password_hash,
+  name = EXCLUDED.name,
+  status = EXCLUDED.status;
 
 INSERT INTO drug (id, name, specification, contraindication, interaction_rule, status) VALUES
   (1, '阿司匹林', '100mg', '活动性出血禁用', '与抗凝药同用时出血风险升高', 'ENABLED'),
