@@ -1,4 +1,4 @@
-package com.smartcloudbrain.admin.entity;
+package com.smartcloudbrain.doctor.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

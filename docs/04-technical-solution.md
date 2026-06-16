@@ -1,145 +1,100 @@
-﻿# 鎶€鏈柟妗堟枃妗?
+# 技术方案文档
 
-## 1. 鎺ㄨ崘鎶€鏈爤
+## 1. 推荐技术栈
 
-| 灞傜骇 | 鎶€鏈?|
+| 层级 | 技术 |
 |---|---|
-| 鍓嶇妗嗘灦 | Vue 3銆乀ypeScript銆乂ite |
-| UI 缁勪欢 | Element Plus |
-| 璺敱涓庣姸鎬?| Vue Router銆丳inia |
-| HTTP 瀹㈡埛绔?| Axios |
-| 鍚庣妗嗘灦 | Spring Boot 3銆丼pring MVC銆丼pring Cloud Gateway銆丼pring Cloud OpenFeign銆丼pring Security |
-| 鏁版嵁璁块棶 | Spring Data JPA锛屾垨 SQL-Toy |
-| 鍙傛暟鏍￠獙 | Spring Validation |
-| 鏁版嵁搴?| MySQL 8锛孭ostgreSQL 鍙€?|
-| 璁よ瘉 | Spring Security銆丣WT銆丷BAC |
-| API 鏂囨。 | Knife4j / Swagger3 |
-| 鏈嶅姟娌荤悊 | Nacos 鎴?Eureka銆丯acos Config 鎴?Spring Cloud Config銆丷esilience4j 鎴?Sentinel |
-| AI 闆嗘垚 | 鐙珛 `ai-service`銆丠TTP API銆佸ぇ璇█妯″瀷鏈嶅姟銆丼pring AI銆丆hatClient銆佺粨鏋勫寲杈撳嚭銆丷AG 鍜?Function Calling 鍙綔涓烘帹鑽愬疄鐜?|
-| 瀹炴椂閫氫俊 | WebSocket銆丼SE |
-| 閮ㄧ讲 | Nginx銆丣DK 17銆丮aven銆丏ocker 鍙€?|
+| 前端框架 | Vue 3、TypeScript、Vite、Pinia |
+| Web 三端 | 患者端、医生端、管理端 |
+| 移动端 | uni-app 患者移动端 |
+| HTTP 客户端 | Axios，统一请求拦截和错误处理 |
+| 后端框架 | JDK 17、Spring Boot 3、Spring MVC |
+| 微服务 | Spring Cloud Gateway、OpenFeign、Nacos |
+| 安全认证 | JWT、RBAC、网关鉴权、服务内数据归属校验 |
+| 数据访问 | Spring Data JPA |
+| 数据库 | KingbaseES/PostgreSQL 兼容数据库 |
+| 异步事件 | RabbitMQ、Outbox 事件表 |
+| 实时通信 | WebSocket，必要时使用 SSE |
+| AI 能力 | 独立 `ai-service`，当前使用 Mock Provider |
+| 部署 | Docker Compose、Nginx、Maven、JDK 17 |
 
-## 2. 鍓嶇鏋舵瀯
+## 2. 前端方案
 
-```text
-frontend/
-  src/
-    api/                 鎺ュ彛灏佽
-    assets/              闈欐€佽祫婧?
-    components/          閫氱敤缁勪欢
-    router/              璺敱閰嶇疆
-    stores/              Pinia 鐘舵€佹ā鍧?
-    types/               TypeScript 绫诲瀷
-    utils/
-      request.ts         Axios 瀹炰緥鍜屾嫤鎴櫒
-    views/
-      auth/              鐧诲綍娉ㄥ唽
-      patient/           鎮ｈ€呯椤甸潰
-      doctor/            鍖荤敓绔〉闈?
-      admin/             绠＄悊绔〉闈€丄I 鎺掔彮銆丄I 鍒嗚瘖鍙?
-```
+前端采用 monorepo 管理患者端、医生端、管理端和共享包。三端统一通过 Gateway 访问后端，不在前端写死业务演示数据。
 
-### 2.1 鍓嶇鍏抽敭璁捐
+关键约束：
 
-- 浣跨敤 `request.ts` 缁熶竴灏佽 Axios銆?
-- 璇锋眰鎷︽埅鍣ㄨ嚜鍔ㄨ鍙?Token 骞惰缃?`Authorization: Bearer <token>`銆?
-- 鍝嶅簲鎷︽埅鍣ㄧ粺涓€澶勭悊 `401`銆乣403`銆佷笟鍔￠敊璇拰 AI 閿欒銆?
-- Pinia 鎷嗗垎涓?`userStore`銆乣registrationStore`銆乣doctorStore` 绛夋ā鍧椼€?
-- 璺敱瀹堝崼鏍规嵁鐧诲綍鐘舵€佸拰瑙掕壊鎺у埗璁块棶锛岀鐞嗙璺敱鍙厑璁?ADMIN 瑙掕壊璁块棶銆?
-- AI 璇锋眰缁熶竴灞曠ず Loading锛屽け璐ュ悗淇濈暀鎵嬪姩鎿嶄綔鍏ュ彛銆?
+- 所有请求统一走共享 API 层，并携带 `Authorization: Bearer <token>`。
+- 登录态、当前用户、关键流程状态由 Pinia 管理。
+- 患者端展示分诊、号源、挂号、病历和处方数据，数据来自后端。
+- 医生端展示本人待接诊队列、病历生成、处方审核和风险通知，数据来自后端。
+- 管理端维护科室、医生、药品、Prompt、知识库、字典、排班和分诊工作台，数据写入数据库。
+- AI 结果只展示后端 `ai-service` 返回内容，前端不伪造智能分诊、病历、处方审核或排班建议。
 
-## 3. 鍚庣绾井鏈嶅姟鏋舵瀯
+## 3. 后端方案
 
 ```text
 backend/
-  common-lib/              Result銆侀敊璇爜銆侀€氱敤 DTO銆佸伐鍏风被
-  gateway-service/         缁熶竴鍏ュ彛銆佽矾鐢便€丆ORS銆侀檺娴併€侀壌鏉冨墠缃?
-  auth-service/            鐧诲綍銆丣WT銆佽鑹层€乀oken 鍒锋柊
-  patient-service/         鎮ｈ€呮敞鍐岃祫鏂欍€佹偅鑰呬釜浜轰腑蹇?
-  doctor-service/          鍖荤敓銆佺瀹ゃ€佹帓鐝€佸彿婧?
-  registration-service/    鍒涘缓鎸傚彿銆佸彇娑堟寕鍙枫€佹寕鍙疯褰?
-  triage-service/          鍒嗚瘖涓氬姟缂栨帓銆佸垎璇婅褰曘€佹帹鑽愮粨鏋?
-  medical-record-service/  鐥呭巻鐢熸垚缂栨帓銆佺梾鍘嗕繚瀛樸€佺梾鍘嗘煡璇?
-  prescription-service/    澶勬柟寮€鍏枫€佸鏂规槑缁嗐€佸鏂瑰鏍歌褰?
-  ai-service/              鏅鸿兘鍒嗚瘖銆佺梾鍘嗙敓鎴愩€佸鏂瑰鏍搞€丳rompt銆佹ā鍨嬮€傞厤
-  notification-service/    WebSocket 杩炴帴銆佸疄鏃堕€氱煡銆侀€氱煡鍘嗗彶
-  admin-service/           绠＄悊绔仛鍚堝叆鍙ｃ€佺郴缁熼厤缃€佸悗鍙版搷浣滅紪鎺?
+  common-lib/              通用响应、异常、安全上下文、事件常量
+  ai-api/                  AI 服务间契约 DTO
+  gateway-service/         统一入口、JWT 校验、CORS、路由转发
+  auth-service/            患者、医生、管理员登录
+  patient-service/         患者资料与患者中心
+  doctor-service/          科室、医生、排班和号源
+  registration-service/    挂号创建、取消和状态流转
+  triage-service/          分诊编排、分诊记录和推荐结果落库
+  medical-record-service/  病历生成编排、医生确认保存、病历查询
+  prescription-service/    处方开具、处方审核记录、Outbox 事件
+  ai-service/              Mock AI、Prompt 渲染、结构化结果
+  notification-service/    RabbitMQ 消费、WebSocket 推送、通知历史
+  admin-service/           管理端聚合、基础数据和搜索入口
 ```
 
-### 3.1 鍚庣鍏抽敭璁捐
+后端关键设计：
 
-- Controller 鍙鐞嗚姹傛帴鏀躲€佸弬鏁版牎楠屽拰鍝嶅簲灏佽銆?
-- 鍓嶇鍙闂?`gateway-service`锛屼笉鐩存帴璁块棶涓氬姟鏈嶅姟鎴?`ai-service`銆?
-- 鍚勪笟鍔℃湇鍔℃寜棰嗗煙鍒掑垎锛屽垎鍒礋璐ｈ嚜宸辩殑 Controller銆丼ervice銆丷epository 鍜屾暟鎹簱 schema銆?
-- 鏈嶅姟涔嬮棿閫氳繃 OpenFeign 璋冪敤锛屼笉鍏佽璺ㄦ湇鍔＄洿鎺ヨ闂暟鎹簱銆?
-- 姣忎釜 Feign Client 蹇呴』璁剧疆瓒呮椂銆侀敊璇В鐮併€佺啍鏂拰闄嶇骇銆?
-- `ai-service` 鍙礋璐ｆā鍨嬭皟鐢ㄣ€丳rompt 娓叉煋銆佺粨鏋勫寲杈撳嚭鏍￠獙鍜?AI 闄嶇骇锛屼笉淇濆瓨鎸傚彿銆佺梾鍘嗐€佸鏂圭瓑涓氬姟涓绘暟鎹€?
-- `notification-service` 璐熻矗 WebSocket 杩炴帴鍜岄珮椋庨櫓澶勬柟瀹炴椂鍛婅銆?
-- `admin-service` 鍙綔涓虹鐞嗙鑱氬悎鍜屽悗鍙版搷浣滅紪鎺掑叆鍙ｏ紱绉戝銆佸尰鐢熴€佽嵂鍝併€丳rompt 绛変笟鍔′富鏁版嵁浠嶅啓鍏ュ悇鑷綊灞炴湇鍔°€侫I 鎺掔彮鐢?`admin-service` 缂栨帓 `ai-service` 鍜?`doctor-service`锛孉I 鍒嗚瘖鍙扮敱 `admin-service` 缂栨帓 `triage-service`銆乣doctor-service` 鍜?`ai-service`銆?
-- SSE 鎴?WebSocket 鐢ㄤ簬鐥呭巻鐢熸垚娴佸紡杈撳嚭锛屽彲鐢?`medical-record-service` 閫忎紶 `ai-service` 鐨勬祦寮忕粨鏋溿€?
-- 浣跨敤 `@Transactional` 淇濊瘉鍗曚釜鏈嶅姟鍐呴儴鍐欐搷浣滀竴鑷存€э紱璺ㄦ湇鍔℃祦绋嬩娇鐢ㄧ姸鎬佹祦杞€佽ˉ鍋挎垨骞傜瓑鎺ュ彛澶勭悊銆?
-- 浣跨敤 `@RestControllerAdvice` 缁熶竴澶勭悊寮傚父銆?
+- 前端只访问 `gateway-service`，不直接访问业务服务或 `ai-service`。
+- 服务之间通过 OpenFeign 或内部 HTTP 接口调用。
+- 不允许业务服务跨库直接 join 其他服务表。
+- 每个服务只维护自身领域数据，跨服务流程通过状态流转、补偿和幂等接口保障一致性。
+- `ai-service` 不保存正式病历或处方，只保存 AI 调用日志、Prompt 模板和模型配置。
+- `prescription-service` 先写业务数据和 `outbox_event`，再由发布器投递 RabbitMQ。
+- `notification-service` 消费风险事件并通过 WebSocket 推送给医生端。
 
-## 4. 鏁版嵁搴撹璁℃€濊矾
+## 4. 数据库方案
 
-- 鏁欏鐜鍙互鍏辩敤涓€涓?MySQL 瀹炰緥锛屼絾蹇呴』鎸夋湇鍔″垝鍒嗙嫭绔嬫暟鎹簱鎴?schema銆?
-- `patient-service` 鍙淮鎶ゆ偅鑰呰祫鏂欙紝`doctor-service` 鍙淮鎶ゅ尰鐢熴€佺瀹ゅ拰鎺掔彮銆?
-- `registration-service` 缁存姢鎸傚彿璁板綍锛屼笉鐩存帴 join 鎮ｈ€呰〃鎴栧尰鐢熻〃锛岄渶瑕佹暟鎹椂閫氳繃鏈嶅姟鎺ュ彛鏌ヨ銆?
-- `medical-record-service` 缁存姢鐥呭巻璁板綍锛宍prescription-service` 缁存姢澶勬柟鍜屽鏂瑰鏍歌褰曘€?
-- `ai-service` 缁存姢 AI 璋冪敤鏃ュ織銆丳rompt 妯℃澘鍜屾ā鍨嬮厤缃紝涓嶄繚瀛樻寮忕梾鍘嗘垨澶勬柟銆?
-- 绂佹璺?schema 鐩存帴 join锛岃法鏈嶅姟鑱氬悎鐢辨帴鍙ｇ紪鎺掓垨鏌ヨ妯″瀷瀹屾垚銆?
+验收数据库以 KingbaseES 为准，开发环境可使用 PostgreSQL 兼容模式。表结构集中在 `sql/kingbase_schema.sql`，按领域服务划分数据归属。
 
-## 5. 绗笁鏂规湇鍔℃垨鎺ュ彛
+核心表包括：
 
-| 鏈嶅姟 | 鐢ㄩ€?| MVP 绛栫暐 |
-|---|---|---|
-| Nacos 鎴?Eureka | 鏈嶅姟娉ㄥ唽鍙戠幇 | 蹇呴€?|
-| Spring Cloud Gateway | 缁熶竴 API 鍏ュ彛鍜岃矾鐢?| 蹇呴€?|
-| OpenFeign | 鏈嶅姟闂村悓姝ヨ皟鐢?| 蹇呴€?|
-| Resilience4j 鎴?Sentinel | 鐔旀柇銆侀檺娴併€侀檷绾?| 鎺ㄨ崘 |
-| `ai-service` | 鍒嗚瘖銆佺梾鍘嗙敓鎴愩€佸鏂瑰鏍哥粺涓€鍏ュ彛 | 蹇呴€?|
-| 澶ц瑷€妯″瀷 API | 鍒嗚瘖銆佺梾鍘嗙敓鎴愩€佸鏂瑰鏍?| 鍙厛浣跨敤 Mock 瀹炵幇 |
-| Spring AI / ChatClient | 妯″瀷閫傞厤銆佺粨鏋勫寲杈撳嚭銆佸伐鍏疯皟鐢?| 鎺ㄨ崘 |
-| 鐭ヨ瘑鍥捐氨鏈嶅姟 | 鑽搧鐩镐簰浣滅敤銆佺柧鐥呯瀹ゆ槧灏?| 鍙€?|
-| Knife4j | API 鏂囨。鍜岃仈璋?| 蹇呴€?|
-| Nginx | 鍓嶇閮ㄧ讲鍜屽弽鍚戜唬鐞?| 鐢熶骇鐜浣跨敤 |
+- 用户与主数据：`patient`、`doctor`、`department`、`admin_user`。
+- 诊疗流程：`triage_record`、`doctor_schedule`、`appointment_slot`、`registration`。
+- 医疗记录：`medical_record`、`prescription`、`prescription_item`、`prescription_check_record`。
+- AI 与管理：`prompt_template`、`ai_generation_log`、`knowledge_entry`、`drug`、`system_dict`。
+- 异步通知：`outbox_event`、`notification_message`。
 
-## 6. 绯荤粺妯″潡鍒掑垎
+## 5. AI 与降级
 
-| 妯″潡 | 鍚庣鏈嶅姟 | 鍓嶇椤甸潰 |
-|---|---|---|
-| 缃戝叧 | `gateway-service` | 鎵€鏈夐〉闈㈢粺涓€鍏ュ彛 |
-| 璁よ瘉 | `auth-service` | 鐧诲綍椤点€佹敞鍐岄〉 |
-| 鎮ｈ€?| `patient-service` | 鎮ｈ€呴椤点€佷釜浜轰腑蹇?|
-| 鍖荤敓 | `doctor-service` | 鍖荤敓鍒楄〃銆佸尰鐢熷伐浣滃彴 |
-| 鎸傚彿 | `registration-service` | 鍦ㄧ嚎鎸傚彿銆佹垜鐨勬寕鍙?|
-| 鏅鸿兘鍒嗚瘖 | `triage-service` 璋冪敤 `ai-service` 鍜?`doctor-service` | 鏅鸿兘鍒嗚瘖椤?|
-| 鐥呭巻 | `medical-record-service` 璋冪敤 `ai-service` | 闂瘖鐥呭巻椤点€佺梾鍘嗚鎯?|
-| 澶勬柟 | `prescription-service` 璋冪敤 `ai-service` 鍜?`notification-service` | 澶勬柟寮€鍏烽〉銆佸鏂硅鎯?|
-| 閫氱煡 | `notification-service` | 鍖荤敓绔€氱煡鎶藉眽銆佸疄鏃跺憡璀?|
-| 绠＄悊 | `admin-service` 缂栨帓鍚勫綊灞炴湇鍔?| 绠＄悊绔熀纭€鏁版嵁缁存姢銆丄I 鎺掔彮绠＄悊銆丄I 鍒嗚瘖鍙?|
+AI 当前为 Mock Provider，但链路是真实后端链路：
 
-## 7. 鍏抽敭鎶€鏈毦鐐逛笌瑙ｅ喅鏂规
+```text
+前端 -> gateway-service -> 业务服务 -> ai-service -> MockAiProvider
+```
 
-| 闅剧偣 | 瑙ｅ喅鏂规 |
+答辩时需要明确说明：
+
+- Mock 的是模型输出，不是业务流程。
+- 分诊记录、病历、处方、排班、通知等数据均按真实流程写入数据库。
+- 后续接入真实模型时优先替换 `AiProvider` 实现，不改前端和业务主流程。
+
+## 6. 关键技术难点
+
+| 难点 | 解决方案 |
 |---|---|
-| AI 杩斿洖涓嶇ǔ瀹?| 瑕佹眰 JSON 杈撳嚭锛屽悗绔牎楠屽瓧娈碉紝涓嶅悎娉曞垯杩斿洖闄嶇骇鎻愮ず |
-| AI 璇锋眰鑰楁椂 | 鍓嶇 Loading锛屽悗绔缃秴鏃讹紝蹇呰鏃跺紓姝ュ鐞?|
-| AI 鏈嶅姟涓嶅彲鐢?| 浣跨敤 Mock 鎴栨墜鍔ㄦ祦绋嬪厹搴?|
-| 寰湇鍔¤皟鐢ㄥけ璐?| OpenFeign 璁剧疆瓒呮椂銆侀敊璇В鐮佸拰闄嶇骇锛孯esilience4j/Sentinel 杩涜鐔旀柇闄愭祦 |
-| 楂橀闄╁憡璀﹀疄鏃舵€?| 浣跨敤 WebSocket 鎺ㄩ€佺粰鍖荤敓绔紝鏂嚎鍚庡墠绔噸杩?|
-| 鐥呭巻鐢熸垚绛夊緟鏃堕棿闀?| 浣跨敤 SSE 鎴?WebSocket 娴佸紡杈撳嚭锛屽墠绔€愬瓧灞曠ず |
-| 澶嶆潅鍓嶇娴佺▼鐘舵€佹贩涔?| 浣跨敤 Pinia 妯″潡鍖?Store 鍜屾祦绋嬬姸鎬佹灇涓?|
-| Prompt 闅剧淮鎶?| 浣跨敤鍙厤缃?Prompt 妯℃澘锛屾寜浠诲姟绫诲瀷鍜岀瀹ら€夋嫨 |
-| 绠＄悊绔寖鍥村け鎺?| 灏?P0 闄愬畾涓哄熀纭€鏁版嵁缁存姢銆丄I 鎺掔彮寤鸿 + 浜哄伐纭鍙戝竷銆丄I 鍒嗚瘖鍙版煡鐪?鏀规淳 |
-| 鏉冮檺闅旂 | JWT + 瑙掕壊鏍￠獙 + 鏁版嵁褰掑睘鏍￠獙 |
-| 鍓嶅悗绔法鍩?| Vite 浠ｇ悊 + 鍚庣 CORS 閰嶇疆 |
-| 閲嶅鎸傚彿 | 鏁版嵁搴撳敮涓€绾︽潫鎴栦笟鍔℃牎楠?|
-| 澶勬柟瀹夊叏 | AI 浠呰緟鍔╋紝鍖荤敓纭鍚庢墠鑳戒繚瀛?|
-| 婕旂ず绋冲畾鎬?| 鍑嗗鍥哄畾婕旂ず鏁版嵁鍜?Mock AI 杩斿洖 |
-## RabbitMQ 与 KingbaseES 搜索落地说明
+| AI 输出不稳定 | 后端约束结构化 DTO，失败时返回降级结果 |
+| AI 不能阻塞主流程 | Mock Provider 保证演示稳定，真实 Provider 失败后可回退 |
+| 跨服务一致性 | 单服务事务 + 状态流转 + Outbox 事件 |
+| 权限越权 | JWT 角色校验 + 数据归属校验 |
+| 高风险通知实时性 | RabbitMQ 事件 + WebSocket 推送 |
+| 数据真实性 | 前端无业务假数据，核心数据来自 KingbaseES |
+| 部署复杂 | Docker Compose 编排数据库、消息队列、微服务和三端 Web |
 
-- KingbaseES 是唯一事实库，业务写入以各领域服务的 JPA Repository 为准。
-- RabbitMQ 使用 Topic Exchange `scb.domain`，承载处方风险通知等异步事件。
-- 业务服务先写 `outbox_event`，再由定时发布器投递 RabbitMQ，避免主事务成功但消息丢失。
-- 知识库、药品、Prompt 模板搜索由 `admin-service` 直接查询 KingbaseES 表，无需额外搜索中间件。

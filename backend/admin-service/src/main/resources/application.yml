@@ -28,4 +28,10 @@ management:
       exposure:
         include: health,info
 
+services:
+  doctor:
+    base-url: ${DOCTOR_SERVICE_BASE_URL:http://localhost:8084}
+  triage:
+    base-url: ${TRIAGE_SERVICE_BASE_URL:http://localhost:8086}
+
 

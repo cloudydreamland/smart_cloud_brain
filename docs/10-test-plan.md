@@ -1,58 +1,84 @@
 # 10 测试计划
 
-## 后端验证
+## 1. 后端验证
 
-- 运行 Maven 编译，确认所有服务可编译。
-- 覆盖权限场景：
-  - 患者只能创建、查看、取消自己的挂号。
-  - 医生只能处理自己的挂号、病历和处方。
-  - 管理员才能访问 `/api/admin/**`。
-- 覆盖核心接口：
-  - `/api/triage/consult`
-  - `/api/registration/slots`
-  - `/api/registration/create`
-  - `/api/registration/cancel`
-  - `/api/medical-record/generate`
-  - `/api/medical-record/save`
-  - `/api/prescription/check`
-  - `/api/prescription/create`
-  - `/api/admin/schedule/generate`
-  - `/api/admin/schedule/publish`
-  - `/api/admin/triage-desk/list`
-  - `/api/admin/dict/list`
+统一编译命令：
 
-## 前端验证
+```powershell
+cd D:\smart_cloud_brain\backend
+mvn -s "$env:USERPROFILE\.m2\settings.xml" "-Dmaven.repo.local=D:\DEVELOP\maven" -o -pl gateway-service,auth-service,patient-service,doctor-service,registration-service,triage-service,medical-record-service,prescription-service,notification-service,admin-service,ai-service -am compile -DskipTests
+```
 
-- 运行三个 Web 端构建：
-  - `patient-web`
-  - `doctor-web`
-  - `admin-web`
-- 验证页面无乱码、无明显布局溢出，按钮禁用状态符合当前流程。
-- 验证医生端 WebSocket 可接收处方风险通知，并能刷新通知列表。
+重点验证：
 
-## 数据库验证
+- 所有服务可编译。
+- 患者只能访问自己的挂号、病历和处方。
+- 医生只能访问自己的待接诊数据。
+- 管理端接口必须 ADMIN 角色。
+- AI 请求全部走 `ai-service`。
+- RabbitMQ/WebSocket 通知链路可说明、可演示。
 
-- 使用 `sql/kingbase_schema.sql` 初始化空库。
-- 确认基础数据存在：
-  - 科室、医生、患者、管理员、药品、Prompt、知识库、系统字典。
-  - `doctor_schedule` 有已发布排班。
-  - `appointment_slot` 有可预约号源且 `remaining_capacity > 0`。
+## 2. 前端验证
 
-## 端到端验收
+```powershell
+cd D:\smart_cloud_brain\frontend
+corepack pnpm test
+corepack pnpm --filter patient-web build
+corepack pnpm --filter doctor-web build
+corepack pnpm --filter admin-web build
+```
 
-1. 患者登录后提交 AI 分诊。
-2. 患者选择号源并创建挂号。
-3. 患者取消一条挂号，状态变为 `CANCELLED`。
-4. 患者重新挂号，医生端看到队列。
-5. 医生生成并保存病历。
-6. 医生审核处方并确认处方。
-7. 患者端查看病历和处方。
-8. 管理员生成 AI 排班建议并发布。
-9. 患者端刷新后可看到新发布号源。
-10. 管理员在分诊工作台分配医生并关闭记录。
+重点验证：
 
-## 默认账号
+- 三端均能登录。
+- 页面不展示硬编码业务假数据。
+- 刷新页面后能重新拉取后端数据。
+- 创建、取消、保存、发布后数据状态正确刷新。
 
-- 患者：`13800000001 / 123456`
-- 医生：`doctor1 / 123456`
-- 管理员：`admin / 123456`
+## 3. 接口验证
+
+使用 Postman 或页面操作验证：
+
+- `/api/auth/login`
+- `/api/triage/consult`
+- `/api/registration/slots`
+- `/api/registration/create`
+- `/api/registration/cancel`
+- `/api/medical-record/generate`
+- `/api/medical-record/save`
+- `/api/prescription/check`
+- `/api/prescription/create`
+- `/api/admin/schedule/generate`
+- `/api/admin/schedule/publish`
+- `/api/admin/triage-desk/list`
+
+## 4. 数据库验证
+
+演示前：
+
+- `department`、`doctor`、`patient`、`admin_user` 有默认数据。
+- `appointment_slot` 有可预约号源。
+
+演示后：
+
+- `triage_record` 有分诊记录。
+- `registration` 有挂号记录。
+- `medical_record` 有病历记录。
+- `prescription` 有处方记录。
+- `notification_message` 有通知记录。
+
+## 5. 部署验证
+
+```powershell
+cd D:\smart_cloud_brain
+docker-compose --env-file deploy\env\.env -f deploy\docker-compose.yml --profile embedded-db up -d --build
+```
+
+检查：
+
+- Gateway: `http://localhost:18080`
+- 患者端: `http://localhost:5173`
+- 医生端: `http://localhost:5174`
+- 管理端: `http://localhost:5175`
+- RabbitMQ 管理台: `http://localhost:15672`
+

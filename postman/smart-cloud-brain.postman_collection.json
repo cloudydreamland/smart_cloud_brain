@@ -1,149 +1,764 @@
 {
   "info": {
-    "name": "Smart Cloud Brain - Light Diagnosis Chain",
+    "name": "Smart Cloud Brain - Automated Acceptance Workflows",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
       "name": "Health",
-      "request": {
-        "method": "GET",
-        "url": "{{baseUrl}}/actuator/health"
-      }
+      "item": [
+        {
+          "name": "Gateway Health",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('gateway is healthy', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/actuator/health"
+          }
+        }
+      ]
     },
     {
-      "name": "Patient Register",
-      "request": {
-        "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"name\": \"测试患者\",\n  \"phone\": \"13800000001\",\n  \"password\": \"123456\",\n  \"gender\": \"FEMALE\",\n  \"age\": 21\n}"
+      "name": "Admin schedule workflow",
+      "item": [
+        {
+          "name": "Admin Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('admin login succeeds', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('admin token returned', () => pm.expect(body.data.token).to.be.a('string').and.not.empty);",
+                  "pm.environment.set('adminToken', body.data.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"account\": \"admin\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": "{{baseUrl}}/api/admin/login"
+          }
         },
-        "url": "{{baseUrl}}/api/patient/register"
-      }
-    },
-    {
-      "name": "Patient Login",
-      "request": {
-        "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"account\": \"13800000001\",\n  \"password\": \"123456\"\n}"
+        {
+          "name": "Generate Schedule Suggestions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('schedule suggestions generated', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('at least one suggestion exists', () => pm.expect(body.data.length).to.be.greaterThan(0));",
+                  "pm.environment.set('scheduleSuggestionId', body.data[0].id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"startDate\": \"{{scheduleStartDate}}\",\n  \"days\": 2\n}"
+            },
+            "url": "{{baseUrl}}/api/admin/schedule/generate"
+          }
         },
-        "url": "{{baseUrl}}/api/patient/login"
-      }
-    },
-    {
-      "name": "AI Triage",
-      "request": {
-        "method": "POST",
-        "header": [
-          { "key": "Content-Type", "value": "application/json" },
-          { "key": "Authorization", "value": "Bearer {{patientToken}}" }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"chiefComplaint\": \"咽痛、低热、鼻塞两天，想预约轻症门诊。\"\n}"
+        {
+          "name": "Schedule Suggestion Detail",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('suggestion detail can be read', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('detail matches selected suggestion', () => pm.expect(String(body.data.id)).to.eql(String(pm.environment.get('scheduleSuggestionId'))));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/api/admin/schedule/suggestion/detail?id={{scheduleSuggestionId}}"
+          }
         },
-        "url": "{{baseUrl}}/api/triage/consult"
-      }
-    },
-    {
-      "name": "Create Registration",
-      "request": {
-        "method": "POST",
-        "header": [
-          { "key": "Content-Type", "value": "application/json" },
-          { "key": "Authorization", "value": "Bearer {{patientToken}}" }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"doctorId\": 2,\n  \"departmentId\": 2,\n  \"appointmentTime\": \"2026-06-15T09:00:00\",\n  \"triageRecordId\": 1\n}"
+        {
+          "name": "Publish Schedule",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('schedule publish succeeds', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('published schedules are returned', () => pm.expect(body.data).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"suggestionIds\": [{{scheduleSuggestionId}}]\n}"
+            },
+            "url": "{{baseUrl}}/api/admin/schedule/publish"
+          }
         },
-        "url": "{{baseUrl}}/api/registration/create"
-      }
+        {
+          "name": "System Dict List",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('admin can read dictionaries', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('dictionary response is an array', () => pm.expect(body.data).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/api/admin/dict/list"
+          }
+        }
+      ]
     },
     {
-      "name": "Doctor Login",
-      "request": {
-        "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"account\": \"13900000002\",\n  \"password\": \"123456\"\n}"
+      "name": "Patient closed loop",
+      "item": [
+        {
+          "name": "Patient Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('patient login succeeds', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.environment.set('patientToken', body.data.token);",
+                  "pm.environment.set('patientId', body.data.userId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"account\": \"13800000001\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": "{{baseUrl}}/api/patient/login"
+          }
         },
-        "url": "{{baseUrl}}/api/doctor/login"
-      }
-    },
-    {
-      "name": "Generate Medical Record",
-      "request": {
-        "method": "POST",
-        "header": [
-          { "key": "Content-Type", "value": "application/json" },
-          { "key": "Authorization", "value": "Bearer {{doctorToken}}" }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"registrationId\": 1,\n  \"departmentCode\": \"GENERAL\",\n  \"dialogueText\": \"患者咽痛、鼻塞、低热两天，无胸痛和呼吸困难。\"\n}"
+        {
+          "name": "Patient Info",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('patient profile can be read', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{patientToken}}" }],
+            "url": "{{baseUrl}}/api/patient/info"
+          }
         },
-        "url": "{{baseUrl}}/api/medical-record/generate"
-      }
-    },
-    {
-      "name": "Save Medical Record",
-      "request": {
-        "method": "POST",
-        "header": [
-          { "key": "Content-Type", "value": "application/json" },
-          { "key": "Authorization", "value": "Bearer {{doctorToken}}" }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"registrationId\": 1,\n  \"chiefComplaint\": \"咽痛、鼻塞、低热两天\",\n  \"presentIllness\": \"症状较轻，无危险信号。\",\n  \"physicalExam\": \"咽部轻度充血。\",\n  \"diagnosis\": \"普通感冒待观察\",\n  \"treatmentAdvice\": \"休息、补液，必要时复诊。\",\n  \"aiGenerated\": true\n}"
+        {
+          "name": "AI Triage",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('triage succeeds through backend AI chain', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('triage record is created', () => pm.expect(body.data.triageRecordId).to.exist);",
+                  "pm.environment.set('triageRecordId', body.data.triageRecordId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{patientToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chiefComplaint\": \"chest pain with shortness of breath\"\n}"
+            },
+            "url": "{{baseUrl}}/api/triage/consult"
+          }
         },
-        "url": "{{baseUrl}}/api/medical-record/save"
-      }
-    },
-    {
-      "name": "AI Prescription Check",
-      "request": {
-        "method": "POST",
-        "header": [
-          { "key": "Content-Type", "value": "application/json" },
-          { "key": "Authorization", "value": "Bearer {{doctorToken}}" }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"patientId\": 1,\n  \"doctorId\": 2,\n  \"drugs\": [\n    {\"drugName\":\"对乙酰氨基酚\",\"dosage\":\"0.5g\",\"frequency\":\"必要时\",\"usageMethod\":\"口服\"}\n  ]\n}"
+        {
+          "name": "List Available Slots",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('available slots can be listed', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('at least one bookable slot exists', () => pm.expect(body.data.length).to.be.greaterThan(0));",
+                  "const slot = body.data[0];",
+                  "pm.environment.set('slotId', slot.slotId);",
+                  "pm.environment.set('slotDoctorId', slot.doctorId);",
+                  "pm.environment.set('slotDepartmentId', slot.departmentId);",
+                  "pm.environment.set('slotStartTime', slot.startTime);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{patientToken}}" }],
+            "url": "{{baseUrl}}/api/registration/slots"
+          }
         },
-        "url": "{{baseUrl}}/api/prescription/check"
-      }
-    },
-    {
-      "name": "Create Prescription",
-      "request": {
-        "method": "POST",
-        "header": [
-          { "key": "Content-Type", "value": "application/json" },
-          { "key": "Authorization", "value": "Bearer {{doctorToken}}" }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"patientId\": 1,\n  \"medicalRecordId\": 1,\n  \"riskLevel\": \"LOW\",\n  \"drugs\": [\n    {\"drugName\":\"对乙酰氨基酚\",\"dosage\":\"0.5g\",\"frequency\":\"必要时\",\"usageMethod\":\"口服\"}\n  ]\n}"
+        {
+          "name": "Create Active Registration",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('active registration is created', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('registration status is created', () => pm.expect(body.data.status).to.eql('CREATED'));",
+                  "pm.environment.set('registrationId', body.data.registrationId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{patientToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"doctorId\": {{slotDoctorId}},\n  \"departmentId\": {{slotDepartmentId}},\n  \"appointmentTime\": \"{{slotStartTime}}\",\n  \"triageRecordId\": {{triageRecordId}},\n  \"slotId\": {{slotId}}\n}"
+            },
+            "url": "{{baseUrl}}/api/registration/create"
+          }
         },
-        "url": "{{baseUrl}}/api/prescription/create"
-      }
+        {
+          "name": "Create Registration For Cancellation",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('cancellable registration is created', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.environment.set('cancelRegistrationId', body.data.registrationId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{patientToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"doctorId\": {{slotDoctorId}},\n  \"departmentId\": {{slotDepartmentId}},\n  \"appointmentTime\": \"{{slotStartTime}}\",\n  \"triageRecordId\": {{triageRecordId}}\n}"
+            },
+            "url": "{{baseUrl}}/api/registration/create"
+          }
+        },
+        {
+          "name": "Cancel Registration",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('patient can cancel own registration', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('registration is cancelled', () => pm.expect(body.data.status).to.eql('CANCELLED'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{patientToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"registrationId\": {{cancelRegistrationId}}\n}"
+            },
+            "url": "{{baseUrl}}/api/registration/cancel"
+          }
+        },
+        {
+          "name": "Patient Registration List",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('patient registrations can be listed', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('active registration remains in patient list', () => pm.expect(body.data.some(item => String(item.registrationId) === String(pm.environment.get('registrationId')))).to.eql(true));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{patientToken}}" }],
+            "url": "{{baseUrl}}/api/registration/list"
+          }
+        }
+      ]
     },
     {
-      "name": "Patient Records",
-      "request": {
-        "method": "GET",
-        "header": [{ "key": "Authorization", "value": "Bearer {{patientToken}}" }],
-        "url": "{{baseUrl}}/api/medical-record/list"
-      }
+      "name": "Doctor closed loop",
+      "item": [
+        {
+          "name": "Doctor Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('doctor login succeeds', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.environment.set('doctorToken', body.data.token);",
+                  "pm.environment.set('doctorId', body.data.userId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"account\": \"doctor1\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": "{{baseUrl}}/api/doctor/login"
+          }
+        },
+        {
+          "name": "Doctor Registration List",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('doctor registrations can be listed', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "const existing = body.data.find(item => item.status === 'CREATED') || body.data[0];",
+                  "if (existing) pm.environment.set('registrationId', existing.registrationId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{doctorToken}}" }],
+            "url": "{{baseUrl}}/api/registration/list"
+          }
+        },
+        {
+          "name": "Generate Medical Record",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('medical record draft is generated', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('AI result comes from backend chain', () => pm.expect(body.data.diagnosis).to.be.a('string').and.not.empty);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{doctorToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"registrationId\": {{registrationId}},\n  \"departmentCode\": \"CARDIOLOGY\",\n  \"dialogueText\": \"patient reports chest pain and dyspnea for two days\"\n}"
+            },
+            "url": "{{baseUrl}}/api/medical-record/generate"
+          }
+        },
+        {
+          "name": "Stream Medical Record",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('SSE stream endpoint responds', () => pm.response.to.have.status(200));",
+                  "pm.test('SSE emits done event', () => pm.expect(pm.response.text()).to.include('event:done'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{doctorToken}}" }],
+            "url": "{{baseUrl}}/api/medical-record/generate/stream?registrationId={{registrationId}}"
+          }
+        },
+        {
+          "name": "Save Medical Record",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('medical record is saved', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.environment.set('medicalRecordId', body.data.medicalRecordId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{doctorToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"registrationId\": {{registrationId}},\n  \"chiefComplaint\": \"chest pain\",\n  \"presentIllness\": \"two days, worse after activity\",\n  \"pastHistory\": \"none provided\",\n  \"physicalExam\": \"vital signs stable\",\n  \"diagnosis\": \"chest pain under evaluation\",\n  \"treatmentAdvice\": \"complete ECG and follow up\",\n  \"aiGenerated\": true\n}"
+            },
+            "url": "{{baseUrl}}/api/medical-record/save"
+          }
+        },
+        {
+          "name": "AI Prescription Check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('prescription check succeeds', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('aspirin risk is detected by backend AI chain', () => pm.expect(body.data.riskLevel).to.eql('MEDIUM'));",
+                  "pm.environment.set('prescriptionRiskLevel', body.data.riskLevel);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{doctorToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": {{patientId}},\n  \"doctorId\": {{doctorId}},\n  \"drugs\": [\n    {\"drugName\":\"aspirin\",\"dosage\":\"100mg\",\"frequency\":\"once daily\",\"usageMethod\":\"oral\"}\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/api/prescription/check"
+          }
+        },
+        {
+          "name": "Create Prescription",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('prescription is confirmed', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.environment.set('prescriptionId', body.data.prescriptionId);",
+                  "pm.test('created prescription is confirmed', () => pm.expect(body.data.status).to.eql('CONFIRMED'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{doctorToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": {{patientId}},\n  \"medicalRecordId\": {{medicalRecordId}},\n  \"riskLevel\": \"{{prescriptionRiskLevel}}\",\n  \"drugs\": [\n    {\"drugName\":\"aspirin\",\"dosage\":\"100mg\",\"frequency\":\"once daily\",\"usageMethod\":\"oral\"}\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/api/prescription/create"
+          }
+        },
+        {
+          "name": "Doctor Notification List",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('doctor notification list can be read', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "if (body.data.length) pm.environment.set('notificationId', body.data[0].notificationId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{doctorToken}}" }],
+            "url": "{{baseUrl}}/api/notification/list"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Patient follow-up views",
+      "item": [
+        {
+          "name": "Patient Medical Record List",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('patient can read medical records', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('saved medical record is visible to patient', () => pm.expect(body.data.some(item => String(item.medicalRecordId) === String(pm.environment.get('medicalRecordId')))).to.eql(true));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{patientToken}}" }],
+            "url": "{{baseUrl}}/api/medical-record/list"
+          }
+        },
+        {
+          "name": "Patient Prescription List",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('patient can read prescriptions', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('created prescription is visible to patient', () => pm.expect(body.data.some(item => String(item.prescriptionId) === String(pm.environment.get('prescriptionId')))).to.eql(true));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{patientToken}}" }],
+            "url": "{{baseUrl}}/api/prescription/list"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin triage desk workflow",
+      "item": [
+        {
+          "name": "Triage Desk List",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('triage desk can be listed', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('triage desk contains records', () => pm.expect(body.data.length).to.be.greaterThan(0));",
+                  "const selected = body.data.find(item => String(item.triageRecordId) === String(pm.environment.get('triageRecordId'))) || body.data[0];",
+                  "pm.environment.set('triageRecordId', selected.triageRecordId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/api/admin/triage-desk/list"
+          }
+        },
+        {
+          "name": "Triage Desk Detail",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('triage detail can be read', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/api/admin/triage-desk/detail?id={{triageRecordId}}"
+          }
+        },
+        {
+          "name": "Assign Triage",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('triage can be assigned', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('triage status is ASSIGNED', () => pm.expect(body.data.status).to.eql('ASSIGNED'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"triageRecordId\": {{triageRecordId}},\n  \"doctorId\": {{doctorId}}\n}"
+            },
+            "url": "{{baseUrl}}/api/admin/triage-desk/assign"
+          }
+        },
+        {
+          "name": "Close Triage",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('triage can be closed', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('triage status is CLOSED', () => pm.expect(body.data.status).to.eql('CLOSED'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"triageRecordId\": {{triageRecordId}}\n}"
+            },
+            "url": "{{baseUrl}}/api/admin/triage-desk/close"
+          }
+        }
+      ]
+    },
+    {
+      "name": "AI fallback workflow",
+      "item": [
+        {
+          "name": "Fallback Triage Uses Backend AI Chain",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('fallback triage request succeeds', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('mock provider marks non-cardiology triage as degraded/manual', () => pm.expect(body.data.degraded).to.eql(true));",
+                  "pm.test('manual fallback status is stored', () => pm.expect(body.data.status).to.eql('MANUAL_REQUIRED'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{patientToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chiefComplaint\": \"mild cough and low fever\"\n}"
+            },
+            "url": "{{baseUrl}}/api/triage/consult"
+          }
+        }
+      ]
     }
   ]
 }

@@ -1,6 +1,6 @@
-package com.smartcloudbrain.admin.repository;
+package com.smartcloudbrain.doctor.repository;
 
-import com.smartcloudbrain.admin.entity.DoctorSchedule;
+import com.smartcloudbrain.doctor.entity.DoctorSchedule;
 import java.time.LocalDate;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;

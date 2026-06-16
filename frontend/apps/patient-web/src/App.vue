@@ -1,26 +1,25 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
-import { api, type Session } from "@smart-cloud-brain/shared-api";
+import { storeToRefs } from "pinia";
+import { api, useAuthStore, usePatientWorkflowStore } from "@smart-cloud-brain/shared-api";
 
-const session = ref<Session | null>(JSON.parse(localStorage.getItem("patient-session") || "null"));
+const auth = useAuthStore();
+const workflow = usePatientWorkflowStore();
+const { session } = storeToRefs(auth);
+const { departments, triage, slots, registrations, records, prescriptions } = storeToRefs(workflow);
+
 const message = ref("");
 const busy = ref(false);
 const loginForm = ref({ account: "13800000001", password: "123456" });
 const registerForm = ref({ name: "测试患者", phone: "13800000001", password: "123456", gender: "FEMALE", age: 21 });
 const chiefComplaint = ref("咽痛、低热、鼻塞两天，想预约轻症门诊。");
-const departments = ref<Array<Record<string, unknown>>>([]);
-const triage = ref<Record<string, unknown> | null>(null);
-const slots = ref<Array<Record<string, unknown>>>([]);
 const selectedSlotId = ref<number | null>(null);
-const registrations = ref<Array<Record<string, unknown>>>([]);
-const records = ref<Array<Record<string, unknown>>>([]);
-const prescriptions = ref<Array<Record<string, unknown>>>([]);
 
-const token = () => session.value?.token ?? "";
 const availableSlots = computed(() => {
   const departmentName = String(triage.value?.recommendedDepartment || "");
-  return slots.value.filter((slot) => !departmentName || String(slot.departmentName || "").includes(departmentName) || String(slot.departmentName || "") === departmentName);
+  return slots.value.filter((slot) => !departmentName || String(slot.departmentName || "").includes(departmentName));
 });
+const visibleSlots = computed(() => availableSlots.value.length ? availableSlots.value : slots.value);
 
 async function run(label: string, task: () => Promise<void>) {
   busy.value = true;
@@ -45,31 +44,31 @@ async function register() {
 
 async function login() {
   await run("登录", async () => {
-    session.value = await api.loginPatient(loginForm.value.account, loginForm.value.password);
-    localStorage.setItem("patient-session", JSON.stringify(session.value));
+    const nextSession = await api.loginPatient(loginForm.value.account, loginForm.value.password);
+    auth.save("patient-session", nextSession);
     await refresh();
   });
 }
 
 async function consult() {
   await run("智能分诊", async () => {
-    triage.value = await api.triage(token(), chiefComplaint.value);
-    await refreshSlots();
-    selectedSlotId.value = Number(availableSlots.value[0]?.slotId || slots.value[0]?.slotId || 0) || null;
+    triage.value = await api.triage(auth.token(), chiefComplaint.value);
+    await workflow.refreshAuthenticated(auth.token());
+    selectedSlotId.value = Number(visibleSlots.value[0]?.slotId || 0) || null;
+    if (!selectedSlotId.value) {
+      message.value = "暂无可预约号源，请先让管理员发布排班。";
+    }
   });
-}
-
-async function refreshSlots() {
-  if (session.value) {
-    slots.value = await api.registrationSlots(token());
-  }
 }
 
 async function createRegistration() {
   const slot = slots.value.find((item) => Number(item.slotId) === selectedSlotId.value);
-  if (!slot) return;
+  if (!slot) {
+    message.value = "请选择可预约号源。";
+    return;
+  }
   await run("预约挂号", async () => {
-    await api.createRegistration(token(), {
+    await api.createRegistration(auth.token(), {
       doctorId: Number(slot.doctorId),
       departmentId: Number(slot.departmentId),
       appointmentTime: String(slot.startTime),
@@ -82,27 +81,29 @@ async function createRegistration() {
 
 async function cancelRegistration(registrationId: unknown) {
   await run("取消挂号", async () => {
-    await api.cancelRegistration(token(), Number(registrationId));
+    await api.cancelRegistration(auth.token(), Number(registrationId));
     await refresh();
   });
 }
 
 async function refresh() {
-  departments.value = await api.departments();
+  await workflow.refreshPublicData();
   if (session.value) {
-    await refreshSlots();
-    registrations.value = await api.registrations(token());
-    records.value = await api.medicalRecords(token());
-    prescriptions.value = await api.prescriptions(token());
+    await workflow.refreshAuthenticated(auth.token());
+    if (!selectedSlotId.value) {
+      selectedSlotId.value = Number(visibleSlots.value[0]?.slotId || 0) || null;
+    }
   }
 }
 
 function logout() {
-  session.value = null;
-  localStorage.removeItem("patient-session");
+  auth.logout();
 }
 
-onMounted(refresh);
+onMounted(async () => {
+  auth.load("patient-session");
+  await refresh();
+});
 </script>
 
 <template>
@@ -158,13 +159,14 @@ onMounted(refresh);
               </select>
             </label>
             <label>号源
-              <select v-model.number="selectedSlotId">
-                <option v-for="item in (availableSlots.length ? availableSlots : slots)" :key="String(item.slotId)" :value="Number(item.slotId)">
+              <select v-model.number="selectedSlotId" :disabled="!visibleSlots.length">
+                <option v-for="item in visibleSlots" :key="String(item.slotId)" :value="Number(item.slotId)">
                   {{ item.departmentName }} · {{ item.doctorName }} · {{ item.startTime }} · 余号 {{ item.remainingCapacity }}
                 </option>
               </select>
             </label>
           </div>
+          <p v-if="!visibleSlots.length">暂无可预约号源，请管理员先生成并发布排班。</p>
           <button class="primary" :disabled="busy || !selectedSlotId" @click="createRegistration">确认预约</button>
         </section>
 

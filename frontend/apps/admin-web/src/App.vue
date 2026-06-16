@@ -1,22 +1,28 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
-import { api, type Session } from "@smart-cloud-brain/shared-api";
+import { storeToRefs } from "pinia";
+import { api, useAdminWorkflowStore, useAuthStore } from "@smart-cloud-brain/shared-api";
 
-const session = ref<Session | null>(JSON.parse(localStorage.getItem("admin-session") || "null"));
+const auth = useAuthStore();
+const workflow = useAdminWorkflowStore();
+const { session } = storeToRefs(auth);
+const {
+  departments,
+  doctors,
+  drugs,
+  prompts,
+  knowledge,
+  dicts,
+  suggestions,
+  schedules,
+  triageDesk,
+  selectedScheduleSuggestion,
+  selectedTriage,
+} = storeToRefs(workflow);
+
 const message = ref("");
 const busy = ref(false);
 const loginForm = ref({ account: "admin", password: "123456" });
-
-const departments = ref<Array<Record<string, unknown>>>([]);
-const doctors = ref<Array<Record<string, unknown>>>([]);
-const drugs = ref<Array<Record<string, unknown>>>([]);
-const prompts = ref<Array<Record<string, unknown>>>([]);
-const knowledge = ref<Array<Record<string, unknown>>>([]);
-const dicts = ref<Array<Record<string, unknown>>>([]);
-const suggestions = ref<Array<Record<string, unknown>>>([]);
-const schedules = ref<Array<Record<string, unknown>>>([]);
-const triageDesk = ref<Array<Record<string, unknown>>>([]);
-
 const departmentForm = ref({ code: "GENERAL", name: "全科门诊", description: "常见轻症初诊与复诊" });
 const doctorForm = ref({ name: "李医生", phone: "13900000002", password: "", departmentId: 2, title: "主治医师", specialty: "发热、咽痛、腹泻、皮肤过敏", status: "ENABLED" });
 const drugForm = ref({ name: "对乙酰氨基酚", specification: "0.5g", contraindication: "严重肝功能不全慎用", interactionRule: "避免与其他含同成分复方药重复使用", status: "ENABLED" });
@@ -31,8 +37,6 @@ const searchResults = ref({
   drugs: [] as Array<Record<string, unknown>>,
   prompts: [] as Array<Record<string, unknown>>,
 });
-
-const token = () => session.value?.token ?? "";
 
 async function run(label: string, task: () => Promise<void>) {
   busy.value = true;
@@ -49,34 +53,27 @@ async function run(label: string, task: () => Promise<void>) {
 
 async function login() {
   await run("登录", async () => {
-    session.value = await api.loginAdmin(loginForm.value.account, loginForm.value.password);
-    localStorage.setItem("admin-session", JSON.stringify(session.value));
+    const nextSession = await api.loginAdmin(loginForm.value.account, loginForm.value.password);
+    auth.save("admin-session", nextSession);
     await refresh();
   });
 }
 
 async function refresh() {
   if (!session.value) return;
-  departments.value = await api.adminDepartments(token());
-  doctors.value = await api.doctors();
-  drugs.value = await api.drugs(token());
-  prompts.value = await api.prompts(token());
-  knowledge.value = await api.knowledgeEntries(token());
-  dicts.value = await api.dicts(token());
-  schedules.value = await api.schedules(token());
-  triageDesk.value = await api.triageDesk(token());
+  await workflow.refresh(auth.token());
 }
 
 async function saveDepartment() {
   await run("保存科室", async () => {
-    await api.saveDepartment(token(), departmentForm.value);
+    await api.saveDepartment(auth.token(), departmentForm.value);
     await refresh();
   });
 }
 
 async function saveDoctor() {
   await run("保存医生", async () => {
-    await api.saveDoctor(token(), doctorForm.value);
+    await api.saveDoctor(auth.token(), doctorForm.value);
     doctorForm.value.password = "";
     await refresh();
   });
@@ -84,35 +81,35 @@ async function saveDoctor() {
 
 async function saveDrug() {
   await run("保存药品", async () => {
-    await api.saveDrug(token(), drugForm.value);
+    await api.saveDrug(auth.token(), drugForm.value);
     await refresh();
   });
 }
 
 async function savePrompt() {
   await run("保存 Prompt", async () => {
-    await api.savePrompt(token(), promptForm.value);
+    await api.savePrompt(auth.token(), promptForm.value);
     await refresh();
   });
 }
 
 async function saveKnowledge() {
   await run("保存知识库", async () => {
-    await api.saveKnowledgeEntry(token(), knowledgeForm.value);
+    await api.saveKnowledgeEntry(auth.token(), knowledgeForm.value);
     await refresh();
   });
 }
 
 async function saveDict() {
   await run("保存字典", async () => {
-    await api.saveDict(token(), dictForm.value);
+    await api.saveDict(auth.token(), dictForm.value);
     await refresh();
   });
 }
 
 async function generateSchedule() {
   await run("生成 AI 排班建议", async () => {
-    suggestions.value = await api.generateSchedule(token(), scheduleForm.value);
+    suggestions.value = await api.generateSchedule(auth.token(), scheduleForm.value);
     await refresh();
   });
 }
@@ -120,22 +117,30 @@ async function generateSchedule() {
 async function publishSchedule() {
   await run("发布排班", async () => {
     const suggestionIds = suggestions.value.map((item) => Number(item.id)).filter(Boolean);
-    schedules.value = await api.publishSchedule(token(), { suggestionIds });
+    schedules.value = await api.publishSchedule(auth.token(), { suggestionIds });
     suggestions.value = [];
     await refresh();
   });
 }
 
+async function showScheduleSuggestion(id: unknown) {
+  selectedScheduleSuggestion.value = await api.scheduleSuggestionDetail(auth.token(), Number(id));
+}
+
 async function assignTriage() {
   await run("分配分诊", async () => {
-    await api.assignTriage(token(), assignForm.value);
+    await api.assignTriage(auth.token(), assignForm.value);
     await refresh();
   });
 }
 
+async function showTriage(id: unknown) {
+  selectedTriage.value = await api.triageDetail(auth.token(), Number(id));
+}
+
 async function closeTriage(id: unknown) {
   await run("关闭分诊", async () => {
-    await api.closeTriage(token(), Number(id));
+    await api.closeTriage(auth.token(), Number(id));
     await refresh();
   });
 }
@@ -143,9 +148,9 @@ async function closeTriage(id: unknown) {
 async function doSearch() {
   await run("搜索", async () => {
     const [knowledgeList, drugList, promptList] = await Promise.all([
-      api.searchKnowledge(token(), search.value.q, search.value.departmentCode),
-      api.searchDrugs(token(), search.value.q),
-      api.searchPrompts(token(), search.value.q),
+      api.searchKnowledge(auth.token(), search.value.q, search.value.departmentCode),
+      api.searchDrugs(auth.token(), search.value.q),
+      api.searchPrompts(auth.token(), search.value.q),
     ]);
     searchResults.value = { knowledge: knowledgeList, drugs: drugList, prompts: promptList };
   });
@@ -157,11 +162,13 @@ function useTriage(item: Record<string, unknown>) {
 }
 
 function logout() {
-  session.value = null;
-  localStorage.removeItem("admin-session");
+  auth.logout();
 }
 
-onMounted(refresh);
+onMounted(async () => {
+  auth.load("admin-session");
+  await refresh();
+});
 </script>
 
 <template>
@@ -220,7 +227,8 @@ onMounted(refresh);
             </div>
           </div>
           <div class="data-grid">
-            <div><h3>待发布建议</h3><p v-for="item in suggestions" :key="String(item.id)">#{{ item.id }} {{ item.workDate }} {{ item.timeRange }} {{ item.doctorName }}</p></div>
+            <div><h3>待发布建议</h3><p v-for="item in suggestions" :key="String(item.id)" @click="showScheduleSuggestion(item.id)">#{{ item.id }} {{ item.workDate }} {{ item.timeRange }} {{ item.doctorName }}</p></div>
+            <div><h3>建议详情</h3><p v-if="selectedScheduleSuggestion">#{{ selectedScheduleSuggestion.id }} {{ selectedScheduleSuggestion.doctorName }} · {{ selectedScheduleSuggestion.reason }}</p></div>
             <div><h3>已发布排班</h3><p v-for="item in schedules" :key="String(item.id)">#{{ item.id }} {{ item.workDate }} {{ item.timeRange }} {{ item.doctorName }}</p></div>
           </div>
         </section>
@@ -244,10 +252,15 @@ onMounted(refresh);
                 <td>{{ item.recommendedDepartment }}</td>
                 <td>{{ item.assignedDoctorName || "-" }}</td>
                 <td>{{ item.status }}</td>
+                <td><button @click.stop="showTriage(item.triageRecordId)">详情</button></td>
                 <td><button @click.stop="closeTriage(item.triageRecordId)">关闭</button></td>
               </tr>
             </tbody>
           </table>
+          <div class="result" v-if="selectedTriage">
+            <strong>分诊详情 #{{ selectedTriage.triageRecordId }}</strong>
+            <span>{{ selectedTriage.chiefComplaint }} · {{ selectedTriage.reason }}</span>
+          </div>
         </section>
 
         <section class="panel">

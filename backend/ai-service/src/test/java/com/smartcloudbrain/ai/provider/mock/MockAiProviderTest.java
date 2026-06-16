@@ -16,7 +16,7 @@ class MockAiProviderTest {
 
   @Test
   void triageRecommendsCardiologyForChestPain() {
-    var response = provider.triage(new TriageRequest(1L, "胸痛伴气短"));
+    var response = provider.triage(new TriageRequest(1L, "chest pain with shortness of breath"));
 
     assertEquals("CARDIOLOGY", response.departmentCode());
     assertFalse(response.degraded());
@@ -27,7 +27,7 @@ class MockAiProviderTest {
     var response = provider.checkPrescription(new PrescriptionCheckRequest(
         1L,
         1L,
-        List.of(new DrugItem("阿司匹林", "100mg", "每日一次", "口服"))
+        List.of(new DrugItem("aspirin", "100mg", "once daily", "oral"))
     ));
 
     assertEquals("MEDIUM", response.riskLevel());

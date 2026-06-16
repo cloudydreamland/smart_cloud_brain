@@ -1,3 +1,5 @@
+SET client_encoding = 'UTF8';
+
 INSERT INTO department (id, code, name, description) VALUES
   (1, 'CARDIOLOGY', 'Cardiology', 'Chest pain, palpitation and hypertension clinic'),
   (2, 'GENERAL', 'General Clinic', 'Common mild symptoms and follow-up clinic'),

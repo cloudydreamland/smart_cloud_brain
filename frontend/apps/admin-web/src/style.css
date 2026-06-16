@@ -148,11 +148,17 @@ label {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.notice {
+.notice,
+.result {
   border-radius: 8px;
   padding: 14px 16px;
   background: #fff0cf;
   color: #624000;
+}
+
+.result {
+  display: grid;
+  gap: 6px;
 }
 
 .data-grid {

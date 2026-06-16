@@ -1,5 +1,6 @@
 param(
-  [switch]$NoBuild
+  [switch]$NoBuild,
+  [switch]$ExternalDb
 )
 
 $ErrorActionPreference = "Stop"
@@ -14,9 +15,12 @@ if (-not (Test-Path $EnvFile)) {
 
 $args = @(
   "--env-file", $EnvFile,
-  "-f", $ComposeFile,
-  "up", "-d"
+  "-f", $ComposeFile
 )
+if (-not $ExternalDb) {
+  $args += @("--profile", "embedded-db")
+}
+$args += @("up", "-d")
 if (-not $NoBuild) {
   $args += "--build"
 }

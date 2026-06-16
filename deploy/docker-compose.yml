@@ -9,6 +9,7 @@ services:
       DB_NAME: ${DB_NAME:-smart_cloud_brain}
       DB_USER: ${DB_USERNAME:-scb}
       DB_PASSWORD: ${DB_PASSWORD:-scb_password}
+      DB_INTERNAL_PORT: ${DB_INTERNAL_PORT:-5432}
       SYSTEM_PWD: ${KINGBASE_SYSTEM_PASSWORD:-kingbase_password}
       POSTGRES_DB: ${DB_NAME:-smart_cloud_brain}
       POSTGRES_USER: ${DB_USERNAME:-scb}
@@ -19,6 +20,36 @@ services:
     volumes:
       - kingbase-data:${DB_DATA_DIR:-/var/lib/postgresql/data}
       - ../sql/kingbase_schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -p $${DB_INTERNAL_PORT:-5432} -U $${POSTGRES_USER:-scb} -d $${POSTGRES_DB:-smart_cloud_brain} || ksql -h 127.0.0.1 -p $${DB_INTERNAL_PORT:-5432} -U $${DB_USER:-scb} -d $${DB_NAME:-smart_cloud_brain} -c 'select 1'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  db-init:
+    image: postgres:16-alpine
+    container_name: scb-db-init
+    restart: "no"
+    environment:
+      DB_HOST: ${DB_SERVICE_HOST:-kingbase}
+      DB_PORT: ${DB_SERVICE_PORT:-5432}
+      DB_NAME: ${DB_NAME:-smart_cloud_brain}
+      DB_USERNAME: ${DB_USERNAME:-scb}
+      DB_PASSWORD: ${DB_PASSWORD:-scb_password}
+      PGPASSWORD: ${DB_PASSWORD:-scb_password}
+      TZ: Asia/Shanghai
+    volumes:
+      - ../sql/kingbase_schema.sql:/sql/kingbase_schema.sql:ro
+    command: >
+      sh -ec '
+        echo "Waiting for database $${DB_HOST}:$${DB_PORT}/$${DB_NAME} ...";
+        until pg_isready -h "$${DB_HOST}" -p "$${DB_PORT}" -U "$${DB_USERNAME}" -d "$${DB_NAME}" >/dev/null 2>&1; do
+          sleep 2;
+        done;
+        echo "Running sql/kingbase_schema.sql ...";
+        psql -v ON_ERROR_STOP=1 -h "$${DB_HOST}" -p "$${DB_PORT}" -U "$${DB_USERNAME}" -d "$${DB_NAME}" -f /sql/kingbase_schema.sql;
+      '
 
   nacos:
     image: nacos/nacos-server:v2.4.3
@@ -34,6 +65,12 @@ services:
     ports:
       - "8848:8848"
       - "9848:9848"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8848/nacos/v1/console/health/readiness >/dev/null || curl -fsS http://127.0.0.1:8848/nacos/actuator/health >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
 
   rabbitmq:
     image: rabbitmq:3.13-management
@@ -48,6 +85,12 @@ services:
       - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
 
   gateway-service:
     build:
@@ -73,6 +116,33 @@ services:
       TZ: Asia/Shanghai
     ports:
       - "${GATEWAY_PORT:-18080}:8080"
+    depends_on:
+      auth-service:
+        condition: service_healthy
+      patient-service:
+        condition: service_healthy
+      doctor-service:
+        condition: service_healthy
+      registration-service:
+        condition: service_healthy
+      triage-service:
+        condition: service_healthy
+      medical-record-service:
+        condition: service_healthy
+      prescription-service:
+        condition: service_healthy
+      notification-service:
+        condition: service_healthy
+      admin-service:
+        condition: service_healthy
+      ai-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/actuator/health >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
 
   auth-service: &domain-service
     build:
@@ -83,8 +153,12 @@ services:
     container_name: scb-auth-service
     restart: unless-stopped
     depends_on:
-      - rabbitmq
+      db-init:
+        condition: service_completed_successfully
+      rabbitmq:
+        condition: service_healthy
     environment: &domain-env
+      SERVER_PORT: 8082
       DB_HOST: ${DB_SERVICE_HOST:-kingbase}
       DB_PORT: ${DB_SERVICE_PORT:-5432}
       DB_NAME: ${DB_NAME:-smart_cloud_brain}
@@ -96,6 +170,12 @@ services:
       RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-scb}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-scb_password}
       TZ: Asia/Shanghai
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:$${SERVER_PORT:-8082}/actuator/health >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
 
   patient-service:
     <<: *domain-service
@@ -210,6 +290,12 @@ services:
       AI_BASE_URL: ${AI_BASE_URL:-}
       AI_API_KEY: ${AI_API_KEY:-}
       TZ: Asia/Shanghai
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8081/actuator/health >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
 
   patient-web:
     build:
@@ -220,9 +306,16 @@ services:
     container_name: scb-patient-web
     restart: unless-stopped
     depends_on:
-      - gateway-service
+      gateway-service:
+        condition: service_healthy
     ports:
       - "5173:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1/"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
 
   doctor-web:
     build:
@@ -233,9 +326,16 @@ services:
     container_name: scb-doctor-web
     restart: unless-stopped
     depends_on:
-      - gateway-service
+      gateway-service:
+        condition: service_healthy
     ports:
       - "5174:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1/"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
 
   admin-web:
     build:
@@ -246,21 +346,35 @@ services:
     container_name: scb-admin-web
     restart: unless-stopped
     depends_on:
-      - gateway-service
+      gateway-service:
+        condition: service_healthy
     ports:
       - "5175:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1/"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
 
   nginx:
     image: nginx:1.27-alpine
     container_name: scb-nginx
     restart: unless-stopped
     depends_on:
-      - gateway-service
+      gateway-service:
+        condition: service_healthy
     ports:
       - "80:80"
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
       - ./nginx/html:/usr/share/nginx/html:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1/"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
 
 volumes:
   kingbase-data:

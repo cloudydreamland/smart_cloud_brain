@@ -1,7 +1,7 @@
 package com.smartcloudbrain.admin.service;
 
-import com.smartcloudbrain.common.error.ErrorCode;
-import com.smartcloudbrain.common.exception.BusinessException;
+import com.smartcloudbrain.admin.client.InternalDoctorClient;
+import com.smartcloudbrain.admin.client.InternalTriageClient;
 import com.smartcloudbrain.admin.dto.admin.DepartmentSaveRequest;
 import com.smartcloudbrain.admin.dto.admin.DoctorSaveRequest;
 import com.smartcloudbrain.admin.dto.admin.DrugSaveRequest;
@@ -12,30 +12,26 @@ import com.smartcloudbrain.admin.dto.admin.SchedulePublishRequest;
 import com.smartcloudbrain.admin.dto.admin.SystemDictSaveRequest;
 import com.smartcloudbrain.admin.entity.Department;
 import com.smartcloudbrain.admin.entity.AiScheduleSuggestion;
-import com.smartcloudbrain.admin.entity.AppointmentSlot;
 import com.smartcloudbrain.admin.entity.Doctor;
-import com.smartcloudbrain.admin.entity.DoctorSchedule;
 import com.smartcloudbrain.admin.entity.Drug;
 import com.smartcloudbrain.admin.entity.KnowledgeEntry;
 import com.smartcloudbrain.admin.entity.PromptTemplate;
 import com.smartcloudbrain.admin.entity.SystemDict;
-import com.smartcloudbrain.admin.entity.TriageRecord;
 import com.smartcloudbrain.admin.repository.AiScheduleSuggestionRepository;
-import com.smartcloudbrain.admin.repository.AppointmentSlotRepository;
 import com.smartcloudbrain.admin.repository.DepartmentRepository;
 import com.smartcloudbrain.admin.repository.DoctorRepository;
-import com.smartcloudbrain.admin.repository.DoctorScheduleRepository;
 import com.smartcloudbrain.admin.repository.DrugRepository;
 import com.smartcloudbrain.admin.repository.KnowledgeEntryRepository;
 import com.smartcloudbrain.admin.repository.PromptTemplateRepository;
 import com.smartcloudbrain.admin.repository.SystemDictRepository;
-import com.smartcloudbrain.admin.repository.TriageRecordRepository;
+import com.smartcloudbrain.common.error.ErrorCode;
+import com.smartcloudbrain.common.exception.BusinessException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,10 +44,9 @@ public class AdminCatalogService {
   private final PromptTemplateRepository promptTemplateRepository;
   private final KnowledgeEntryRepository knowledgeEntryRepository;
   private final SystemDictRepository systemDictRepository;
-  private final DoctorScheduleRepository doctorScheduleRepository;
-  private final AppointmentSlotRepository appointmentSlotRepository;
   private final AiScheduleSuggestionRepository aiScheduleSuggestionRepository;
-  private final TriageRecordRepository triageRecordRepository;
+  private final InternalDoctorClient internalDoctorClient;
+  private final InternalTriageClient internalTriageClient;
 
   public AdminCatalogService(
       DepartmentRepository departmentRepository,
@@ -60,10 +55,9 @@ public class AdminCatalogService {
       PromptTemplateRepository promptTemplateRepository,
       KnowledgeEntryRepository knowledgeEntryRepository,
       SystemDictRepository systemDictRepository,
-      DoctorScheduleRepository doctorScheduleRepository,
-      AppointmentSlotRepository appointmentSlotRepository,
       AiScheduleSuggestionRepository aiScheduleSuggestionRepository,
-      TriageRecordRepository triageRecordRepository
+      InternalDoctorClient internalDoctorClient,
+      InternalTriageClient internalTriageClient
   ) {
     this.departmentRepository = departmentRepository;
     this.doctorRepository = doctorRepository;
@@ -71,10 +65,9 @@ public class AdminCatalogService {
     this.promptTemplateRepository = promptTemplateRepository;
     this.knowledgeEntryRepository = knowledgeEntryRepository;
     this.systemDictRepository = systemDictRepository;
-    this.doctorScheduleRepository = doctorScheduleRepository;
-    this.appointmentSlotRepository = appointmentSlotRepository;
     this.aiScheduleSuggestionRepository = aiScheduleSuggestionRepository;
-    this.triageRecordRepository = triageRecordRepository;
+    this.internalDoctorClient = internalDoctorClient;
+    this.internalTriageClient = internalTriageClient;
   }
 
   public List<Map<String, Object>> departments() {
@@ -258,38 +251,26 @@ public class AdminCatalogService {
         : aiScheduleSuggestionRepository.findAllById(request.suggestionIds()).stream()
             .filter(suggestion -> "DRAFT".equalsIgnoreCase(suggestion.getStatus()))
             .toList();
+    List<Map<String, Object>> schedulesToPublish = suggestions.stream()
+        .map(suggestion -> Map.<String, Object>of(
+            "doctorId", suggestion.getDoctorId(),
+            "departmentId", suggestion.getDepartmentId(),
+            "workDate", suggestion.getWorkDate().toString(),
+            "timeRange", suggestion.getTimeRange(),
+            "capacity", suggestion.getCapacity()
+        ))
+        .toList();
+    List<Map<String, Object>> publishedSchedules = internalDoctorClient.publishSchedules(schedulesToPublish);
     for (AiScheduleSuggestion suggestion : suggestions) {
-      DoctorSchedule schedule = new DoctorSchedule();
-      schedule.setDoctorId(suggestion.getDoctorId());
-      schedule.setDepartmentId(suggestion.getDepartmentId());
-      schedule.setWorkDate(suggestion.getWorkDate());
-      schedule.setTimeRange(suggestion.getTimeRange());
-      schedule.setCapacity(suggestion.getCapacity());
-      schedule.setStatus("PUBLISHED");
-      schedule.setUpdatedAt(LocalDateTime.now());
-      DoctorSchedule savedSchedule = doctorScheduleRepository.save(schedule);
-      AppointmentSlot slot = new AppointmentSlot();
-      slot.setScheduleId(savedSchedule.getId());
-      slot.setDoctorId(savedSchedule.getDoctorId());
-      slot.setDepartmentId(savedSchedule.getDepartmentId());
-      slot.setStartTime(slotStart(savedSchedule.getWorkDate(), savedSchedule.getTimeRange()));
-      slot.setEndTime(slotEnd(savedSchedule.getWorkDate(), savedSchedule.getTimeRange()));
-      slot.setCapacity(savedSchedule.getCapacity());
-      slot.setRemainingCapacity(savedSchedule.getCapacity());
-      slot.setStatus("AVAILABLE");
-      slot.setUpdatedAt(LocalDateTime.now());
-      appointmentSlotRepository.save(slot);
       suggestion.setStatus("PUBLISHED");
       suggestion.setUpdatedAt(LocalDateTime.now());
       aiScheduleSuggestionRepository.save(suggestion);
     }
-    return schedules();
+    return publishedSchedules;
   }
 
   public List<Map<String, Object>> schedules() {
-    return doctorScheduleRepository.findByWorkDateGreaterThanEqualOrderByWorkDateAscDoctorIdAsc(LocalDate.now()).stream()
-        .map(this::scheduleView)
-        .toList();
+    return internalDoctorClient.schedules();
   }
 
   public Map<String, Object> scheduleSuggestionDetail(Long id) {
@@ -298,29 +279,20 @@ public class AdminCatalogService {
   }
 
   public List<Map<String, Object>> triageDesk() {
-    return triageRecordRepository.findAllByOrderByIdDesc().stream().map(this::triageView).toList();
+    return internalTriageClient.list().stream().map(this::enrichTriageView).toList();
   }
 
   public Map<String, Object> triageDetail(Long id) {
-    return triageView(triageRecordRepository.findById(id).orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND)));
+    return enrichTriageView(internalTriageClient.detail(id));
   }
 
-  @Transactional
   public Map<String, Object> assignTriage(Long triageRecordId, Long doctorId) {
     doctorRepository.findById(doctorId).orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
-    TriageRecord record = triageRecordRepository.findById(triageRecordId)
-        .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
-    record.setAssignedDoctorId(doctorId);
-    record.setStatus("ASSIGNED");
-    return triageView(triageRecordRepository.save(record));
+    return enrichTriageView(internalTriageClient.assign(triageRecordId, doctorId));
   }
 
-  @Transactional
   public Map<String, Object> closeTriage(Long triageRecordId) {
-    TriageRecord record = triageRecordRepository.findById(triageRecordId)
-        .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
-    record.setStatus("CLOSED");
-    return triageView(triageRecordRepository.save(record));
+    return enrichTriageView(internalTriageClient.close(triageRecordId));
   }
 
   private boolean contains(String value, String query) {
@@ -414,33 +386,10 @@ public class AdminCatalogService {
     );
   }
 
-  private Map<String, Object> scheduleView(DoctorSchedule schedule) {
-    return Map.of(
-        "id", schedule.getId(),
-        "doctorId", schedule.getDoctorId(),
-        "doctorName", doctorName(schedule.getDoctorId()),
-        "departmentId", schedule.getDepartmentId(),
-        "departmentName", departmentName(schedule.getDepartmentId()),
-        "workDate", schedule.getWorkDate().toString(),
-        "timeRange", schedule.getTimeRange(),
-        "capacity", schedule.getCapacity(),
-        "status", schedule.getStatus()
-    );
-  }
-
-  private Map<String, Object> triageView(TriageRecord record) {
-    return Map.of(
-        "triageRecordId", record.getId(),
-        "patientId", record.getPatientId(),
-        "chiefComplaint", record.getChiefComplaint(),
-        "recommendedDepartment", record.getRecommendedDepartment() == null ? "" : record.getRecommendedDepartment(),
-        "recommendedDoctorIds", record.getRecommendedDoctorIds() == null ? "" : record.getRecommendedDoctorIds(),
-        "assignedDoctorId", record.getAssignedDoctorId() == null ? 0L : record.getAssignedDoctorId(),
-        "assignedDoctorName", doctorName(record.getAssignedDoctorId()),
-        "reason", record.getReason() == null ? "" : record.getReason(),
-        "status", record.getStatus(),
-        "createdAt", record.getCreatedAt() == null ? "" : record.getCreatedAt().toString()
-    );
+  private Map<String, Object> enrichTriageView(Map<String, Object> record) {
+    Map<String, Object> view = new LinkedHashMap<>(record);
+    view.put("assignedDoctorName", doctorName(numberValue(record.get("assignedDoctorId"))));
+    return view;
   }
 
   private String doctorName(Long doctorId) {
@@ -457,15 +406,12 @@ public class AdminCatalogService {
     return departmentRepository.findById(departmentId).map(Department::getName).orElse("");
   }
 
-  private LocalDateTime slotStart(LocalDate workDate, String timeRange) {
-    String start = Objects.requireNonNullElse(timeRange, "09:00-12:00").split("-")[0];
-    return LocalDateTime.parse(workDate + "T" + start + ":00");
-  }
-
-  private LocalDateTime slotEnd(LocalDate workDate, String timeRange) {
-    String[] parts = Objects.requireNonNullElse(timeRange, "09:00-12:00").split("-");
-    String end = parts.length > 1 ? parts[1] : "12:00";
-    return LocalDateTime.parse(workDate + "T" + end + ":00");
+  private Long numberValue(Object value) {
+    if (value instanceof Number number) {
+      long longValue = number.longValue();
+      return longValue == 0L ? null : longValue;
+    }
+    return null;
   }
 }
 

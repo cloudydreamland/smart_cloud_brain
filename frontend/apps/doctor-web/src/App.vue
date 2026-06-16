@@ -1,15 +1,22 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from "vue";
-import { api, notificationWebSocketUrl, type Session } from "@smart-cloud-brain/shared-api";
+import { storeToRefs } from "pinia";
+import {
+  api,
+  medicalRecordStreamUrl,
+  notificationWebSocketUrl,
+  useAuthStore,
+  useDoctorWorkflowStore,
+} from "@smart-cloud-brain/shared-api";
 
-const session = ref<Session | null>(JSON.parse(localStorage.getItem("doctor-session") || "null"));
+const auth = useAuthStore();
+const workflow = useDoctorWorkflowStore();
+const { session } = storeToRefs(auth);
+const { registrations, records, drugs, notifications, streamText, streamStatus } = storeToRefs(workflow);
+
 const message = ref("");
 const busy = ref(false);
 const loginForm = ref({ account: "doctor1", password: "123456" });
-const registrations = ref<Array<Record<string, unknown>>>([]);
-const records = ref<Array<Record<string, unknown>>>([]);
-const drugs = ref<Array<Record<string, unknown>>>([]);
-const notifications = ref<Array<Record<string, unknown>>>([]);
 const selectedRegistrationId = ref<number | null>(null);
 const selectedPatientId = ref<number | null>(null);
 const dialogueText = ref("患者自述咽痛、鼻塞、低热两天，无明显胸痛和呼吸困难。");
@@ -30,8 +37,7 @@ const prescription = ref({
 });
 const checkResult = ref<Record<string, unknown> | null>(null);
 let socket: WebSocket | null = null;
-
-const token = () => session.value?.token ?? "";
+let recordStream: EventSource | null = null;
 
 async function run(label: string, task: () => Promise<void>) {
   busy.value = true;
@@ -48,8 +54,8 @@ async function run(label: string, task: () => Promise<void>) {
 
 async function login() {
   await run("登录", async () => {
-    session.value = await api.loginDoctor(loginForm.value.account, loginForm.value.password);
-    localStorage.setItem("doctor-session", JSON.stringify(session.value));
+    const nextSession = await api.loginDoctor(loginForm.value.account, loginForm.value.password);
+    auth.save("doctor-session", nextSession);
     connectSocket();
     await refresh();
   });
@@ -57,17 +63,14 @@ async function login() {
 
 async function refresh() {
   if (session.value) {
-    drugs.value = await api.searchDrugs(token(), "");
-    registrations.value = await api.registrations(token());
-    records.value = await api.medicalRecords(token());
-    notifications.value = await api.notifications(token());
+    await workflow.refresh(auth.token());
   }
 }
 
 function connectSocket() {
   if (!session.value) return;
   socket?.close();
-  socket = new WebSocket(notificationWebSocketUrl(session.value.userId));
+  socket = new WebSocket(notificationWebSocketUrl(session.value.userId, auth.token()));
   socket.onmessage = async () => {
     await refresh();
     message.value = "收到新的处方风险通知";
@@ -79,32 +82,82 @@ function selectRegistration(item: Record<string, unknown>) {
   selectedPatientId.value = Number(item.patientId);
   medicalForm.value.registrationId = Number(item.registrationId);
   prescription.value.medicalRecordId = 0;
+  streamText.value = "";
+  streamStatus.value = "DIALOGUE_READY";
+}
+
+function applyDraft(draft: Record<string, unknown>) {
+  medicalForm.value = {
+    registrationId: selectedRegistrationId.value ?? 0,
+    chiefComplaint: String(draft.chiefComplaint || ""),
+    presentIllness: String(draft.presentIllness || ""),
+    pastHistory: String(draft.pastHistory || ""),
+    physicalExam: String(draft.physicalExam || medicalForm.value.physicalExam),
+    diagnosis: String(draft.diagnosis || ""),
+    treatmentAdvice: String(draft.treatmentAdvice || ""),
+    aiGenerated: true,
+  };
 }
 
 async function generateRecord() {
   if (!selectedRegistrationId.value) return;
   await run("AI 生成病历", async () => {
-    const draft = await api.generateMedicalRecord(token(), {
-      registrationId: selectedRegistrationId.value,
-      departmentCode: "GENERAL",
-      dialogueText: dialogueText.value,
-    });
-    medicalForm.value = {
-      registrationId: selectedRegistrationId.value ?? 0,
-      chiefComplaint: String(draft.chiefComplaint || ""),
-      presentIllness: String(draft.presentIllness || ""),
-      pastHistory: String(draft.pastHistory || ""),
-      physicalExam: String(draft.physicalExam || medicalForm.value.physicalExam),
-      diagnosis: String(draft.diagnosis || ""),
-      treatmentAdvice: String(draft.treatmentAdvice || ""),
-      aiGenerated: true,
-    };
+    streamText.value = "";
+    streamStatus.value = "GENERATING";
+    try {
+      await generateRecordByStream(selectedRegistrationId.value);
+    } catch {
+      const draft = await api.generateMedicalRecord(auth.token(), {
+        registrationId: selectedRegistrationId.value,
+        departmentCode: "GENERAL",
+        dialogueText: dialogueText.value,
+      });
+      applyDraft(draft);
+      streamStatus.value = "DRAFT_READY";
+      streamText.value = "流式生成不可用，已使用普通生成接口完成病历草稿。";
+    }
   });
+}
+
+function generateRecordByStream(registrationId: number) {
+  return new Promise<void>((resolve, reject) => {
+    recordStream?.close();
+    recordStream = new EventSource(medicalRecordStreamUrl(registrationId, auth.token()));
+    recordStream.addEventListener("delta", (event) => {
+      const data = parseEventData(event);
+      streamText.value += `${String(data.text || event.data)}\n`;
+    });
+    recordStream.addEventListener("structured", (event) => {
+      const data = parseEventData(event);
+      applyDraft(data);
+      streamStatus.value = "DRAFT_READY";
+    });
+    recordStream.addEventListener("done", () => {
+      recordStream?.close();
+      recordStream = null;
+      streamStatus.value = "DRAFT_READY";
+      resolve();
+    });
+    recordStream.addEventListener("error", () => {
+      recordStream?.close();
+      recordStream = null;
+      streamStatus.value = "FAILED";
+      reject(new Error("stream failed"));
+    });
+  });
+}
+
+function parseEventData(event: MessageEvent) {
+  try {
+    return JSON.parse(event.data) as Record<string, unknown>;
+  } catch {
+    return { text: event.data };
+  }
 }
 
 async function saveRecord() {
   await run("保存病历", async () => {
-    const saved = await api.saveMedicalRecord(token(), medicalForm.value);
+    const saved = await api.saveMedicalRecord(auth.token(), medicalForm.value);
     prescription.value.medicalRecordId = Number(saved.medicalRecordId);
     await refresh();
   });
@@ -113,7 +166,7 @@ async function saveRecord() {
 async function checkPrescription() {
   if (!selectedPatientId.value) return;
   await run("AI 审核处方", async () => {
-    checkResult.value = await api.checkPrescription(token(), {
+    checkResult.value = await api.checkPrescription(auth.token(), {
       patientId: selectedPatientId.value,
       doctorId: session.value?.userId,
       drugs: prescription.value.drugs,
@@ -126,7 +179,7 @@ async function checkPrescription() {
 async function createPrescription() {
   if (!selectedPatientId.value) return;
   await run("确认处方", async () => {
-    await api.createPrescription(token(), {
+    await api.createPrescription(auth.token(), {
       patientId: selectedPatientId.value,
       medicalRecordId: prescription.value.medicalRecordId,
       riskLevel: prescription.value.riskLevel,
@@ -139,15 +192,20 @@ async function createPrescription() {
 function logout() {
   socket?.close();
   socket = null;
-  session.value = null;
-  localStorage.removeItem("doctor-session");
+  recordStream?.close();
+  recordStream = null;
+  auth.logout();
 }
 
 onMounted(async () => {
+  auth.load("doctor-session");
   connectSocket();
   await refresh();
 });
-onBeforeUnmount(() => socket?.close());
+onBeforeUnmount(() => {
+  socket?.close();
+  recordStream?.close();
+});
 </script>
 
 <template>
@@ -155,7 +213,7 @@ onBeforeUnmount(() => socket?.close());
     <aside class="rail">
       <p class="eyebrow">Doctor Web</p>
       <h1>医生端</h1>
-      <p>接诊患者，确认 AI 病历草稿，完成处方审核，并接收实时风险通知。</p>
+      <p>接诊患者，流式生成并确认 AI 病历草稿，完成处方审核，并接收实时风险通知。</p>
       <div class="session" v-if="session">
         <strong>{{ session.name }}</strong>
         <span>{{ session.role }} #{{ session.userId }}</span>
@@ -194,7 +252,11 @@ onBeforeUnmount(() => socket?.close());
         <section class="panel">
           <h2>AI 病历草稿</h2>
           <textarea v-model="dialogueText" rows="3" />
-          <button :disabled="busy || !selectedRegistrationId" @click="generateRecord">生成病历</button>
+          <button :disabled="busy || !selectedRegistrationId" @click="generateRecord">流式生成病历</button>
+          <div class="result" v-if="streamText || streamStatus !== 'IDLE'">
+            <strong>生成状态：{{ streamStatus }}</strong>
+            <span style="white-space: pre-line">{{ streamText }}</span>
+          </div>
           <div class="grid two">
             <label>主诉<input v-model="medicalForm.chiefComplaint" /></label>
             <label>诊断<input v-model="medicalForm.diagnosis" /></label>

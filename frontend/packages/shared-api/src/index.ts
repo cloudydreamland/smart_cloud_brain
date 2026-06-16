@@ -1,3 +1,6 @@
+import { defineStore } from "pinia";
+import { ref } from "vue";
+
 export type ApiResult<T> = {
   code: number;
   message: string;
@@ -79,9 +82,132 @@ export const api = {
     request<Array<Record<string, unknown>>>(`/admin/search/prompts?q=${encodeURIComponent(q)}`, {}, token),
 };
 
-export function notificationWebSocketUrl(doctorId: number) {
-  const base = API_BASE.startsWith("http")
+function gatewayBase() {
+  return API_BASE.startsWith("http")
+    ? API_BASE.replace(/\/api$/, "")
+    : `${location.protocol}//${location.host}`;
+}
+
+function websocketBase() {
+  return API_BASE.startsWith("http")
     ? API_BASE.replace(/^http/, "ws").replace(/\/api$/, "")
     : `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}`;
-  return `${base}/ws/notifications?doctorId=${doctorId}`;
 }
+
+export function notificationWebSocketUrl(doctorId: number, token = "") {
+  const params = new URLSearchParams({ doctorId: String(doctorId) });
+  if (token) params.set("token", token);
+  return `${websocketBase()}/ws/notifications?${params.toString()}`;
+}
+
+export function medicalRecordStreamUrl(registrationId: number, token: string) {
+  const params = new URLSearchParams({ registrationId: String(registrationId), token });
+  return `${gatewayBase()}/api/medical-record/generate/stream?${params.toString()}`;
+}
+
+export const useAuthStore = defineStore("auth", () => {
+  const session = ref<Session | null>(null);
+  const storageKey = ref("smart-cloud-brain-session");
+
+  function load(key: string) {
+    storageKey.value = key;
+    session.value = JSON.parse(localStorage.getItem(key) || "null");
+  }
+
+  function save(key: string, nextSession: Session) {
+    storageKey.value = key;
+    session.value = nextSession;
+    localStorage.setItem(key, JSON.stringify(nextSession));
+  }
+
+  function logout() {
+    session.value = null;
+    localStorage.removeItem(storageKey.value);
+  }
+
+  function token() {
+    return session.value?.token ?? "";
+  }
+
+  return { session, load, save, logout, token };
+});
+
+export const usePatientWorkflowStore = defineStore("patientWorkflow", () => {
+  const departments = ref<Array<Record<string, unknown>>>([]);
+  const triage = ref<Record<string, unknown> | null>(null);
+  const slots = ref<Array<Record<string, unknown>>>([]);
+  const registrations = ref<Array<Record<string, unknown>>>([]);
+  const records = ref<Array<Record<string, unknown>>>([]);
+  const prescriptions = ref<Array<Record<string, unknown>>>([]);
+
+  async function refreshPublicData() {
+    departments.value = await api.departments();
+  }
+
+  async function refreshAuthenticated(token: string) {
+    slots.value = await api.registrationSlots(token);
+    registrations.value = await api.registrations(token);
+    records.value = await api.medicalRecords(token);
+    prescriptions.value = await api.prescriptions(token);
+  }
+
+  return { departments, triage, slots, registrations, records, prescriptions, refreshPublicData, refreshAuthenticated };
+});
+
+export const useDoctorWorkflowStore = defineStore("doctorWorkflow", () => {
+  const registrations = ref<Array<Record<string, unknown>>>([]);
+  const records = ref<Array<Record<string, unknown>>>([]);
+  const drugs = ref<Array<Record<string, unknown>>>([]);
+  const notifications = ref<Array<Record<string, unknown>>>([]);
+  const streamText = ref("");
+  const streamStatus = ref("IDLE");
+
+  async function refresh(token: string) {
+    drugs.value = await api.searchDrugs(token, "");
+    registrations.value = await api.registrations(token);
+    records.value = await api.medicalRecords(token);
+    notifications.value = await api.notifications(token);
+  }
+
+  return { registrations, records, drugs, notifications, streamText, streamStatus, refresh };
+});
+
+export const useAdminWorkflowStore = defineStore("adminWorkflow", () => {
+  const departments = ref<Array<Record<string, unknown>>>([]);
+  const doctors = ref<Array<Record<string, unknown>>>([]);
+  const drugs = ref<Array<Record<string, unknown>>>([]);
+  const prompts = ref<Array<Record<string, unknown>>>([]);
+  const knowledge = ref<Array<Record<string, unknown>>>([]);
+  const dicts = ref<Array<Record<string, unknown>>>([]);
+  const suggestions = ref<Array<Record<string, unknown>>>([]);
+  const schedules = ref<Array<Record<string, unknown>>>([]);
+  const triageDesk = ref<Array<Record<string, unknown>>>([]);
+  const selectedScheduleSuggestion = ref<Record<string, unknown> | null>(null);
+  const selectedTriage = ref<Record<string, unknown> | null>(null);
+
+  async function refresh(token: string) {
+    departments.value = await api.adminDepartments(token);
+    doctors.value = await api.doctors();
+    drugs.value = await api.drugs(token);
+    prompts.value = await api.prompts(token);
+    knowledge.value = await api.knowledgeEntries(token);
+    dicts.value = await api.dicts(token);
+    schedules.value = await api.schedules(token);
+    triageDesk.value = await api.triageDesk(token);
+  }
+
+  return {
+    departments,
+    doctors,
+    drugs,
+    prompts,
+    knowledge,
+    dicts,
+    suggestions,
+    schedules,
+    triageDesk,
+    selectedScheduleSuggestion,
+    selectedTriage,
+    refresh,
+  };
+});
