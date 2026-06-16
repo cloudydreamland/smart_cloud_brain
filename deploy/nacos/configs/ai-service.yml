@@ -1,0 +1,11 @@
+server:
+  port: ${SERVER_PORT:8081}
+
+ai:
+  provider: ${AI_PROVIDER:mock}
+  base-url: ${AI_BASE_URL:}
+  api-key: ${AI_API_KEY:}
+  timeout-ms: ${AI_TIMEOUT_MS:8000}
+
+knife4j:
+  enable: true

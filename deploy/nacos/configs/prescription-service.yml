@@ -1,0 +1,6 @@
+server:
+  port: ${SERVER_PORT:8088}
+
+events:
+  outbox:
+    fixed-delay-ms: ${OUTBOX_FIXED_DELAY_MS:5000}
