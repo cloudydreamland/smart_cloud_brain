@@ -1,12 +1,27 @@
 services:
+  kingbase-volume-init:
+    image: ${KINGBASE_IMAGE:-kingbase_v009r001c010b0004_single_x86:v1}
+    container_name: scb-kingbase-volume-init
+    user: "0:0"
+    entrypoint: ["/bin/bash", "-lc"]
+    command:
+      - mkdir -p /home/kingbase/userdata/data /home/kingbase/userdata/etc && chown -R 1000:1000 /home/kingbase/userdata && chmod 700 /home/kingbase/userdata/data
+    volumes:
+      - kingbase-data:/home/kingbase/userdata
+
   kingbase:
     image: ${KINGBASE_IMAGE:-kingbase_v009r001c010b0004_single_x86:v1}
     container_name: scb-kingbase
     restart: unless-stopped
+    depends_on:
+      kingbase-volume-init:
+        condition: service_completed_successfully
     environment:
       DB_NAME: ${DB_NAME:-smart_cloud_brain}
       DB_USER: ${DB_USERNAME:-scb}
       DB_PASSWORD: ${DB_PASSWORD:-scb_password}
+      DATA_DIR: ${DB_DATA_DIR:-/home/kingbase/userdata/data}
+      DB_MODE: ${KINGBASE_DB_MODE:-pg}
       SYSTEM_PWD: ${KINGBASE_SYSTEM_PASSWORD:-kingbase_password}
       POSTGRES_DB: ${DB_NAME:-smart_cloud_brain}
       POSTGRES_USER: ${DB_USERNAME:-scb}
@@ -15,8 +30,47 @@ services:
     ports:
       - "${DB_PORT:-54321}:${DB_INTERNAL_PORT:-54321}"
     volumes:
-      - kingbase-data:${DB_DATA_DIR:-/home/kingbase/userdata/data}
-      - ../sql/kingbase_schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
+      - kingbase-data:/home/kingbase/userdata
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "KINGBASE_PASSWORD=$$DB_PASSWORD /home/kingbase/install/kingbase/bin/ksql -h 127.0.0.1 -p ${DB_INTERNAL_PORT:-54321} -U $$DB_USER -d kingbase -c 'SELECT 1' >/dev/null 2>&1"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  db-init:
+    image: ${KINGBASE_IMAGE:-kingbase_v009r001c010b0004_single_x86:v1}
+    container_name: scb-db-init
+    depends_on:
+      kingbase:
+        condition: service_healthy
+    environment:
+      DB_HOST: ${DB_SERVICE_HOST:-kingbase}
+      DB_PORT: ${DB_SERVICE_PORT:-54321}
+      DB_NAME: ${DB_NAME:-smart_cloud_brain}
+      DB_USER: ${DB_USERNAME:-scb}
+      DB_PASSWORD: ${DB_PASSWORD:-scb_password}
+      TZ: Asia/Shanghai
+    entrypoint: ["/bin/bash", "-lc"]
+    command:
+      - |
+        set -e
+        BIN=/home/kingbase/install/kingbase/bin
+        export KINGBASE_PASSWORD="$${DB_PASSWORD}"
+        until "$${BIN}/ksql" -h "$${DB_HOST}" -p "$${DB_PORT}" -U "$${DB_USER}" -d kingbase -c "SELECT 1" >/dev/null 2>&1; do
+          echo "waiting for kingbase..."
+          sleep 2
+        done
+        if ! "$${BIN}/ksql" -h "$${DB_HOST}" -p "$${DB_PORT}" -U "$${DB_USER}" -d kingbase -Atc "SELECT 1 FROM pg_database WHERE datname = '$${DB_NAME}'" | grep -q 1; then
+          "$${BIN}/createdb" -h "$${DB_HOST}" -p "$${DB_PORT}" -U "$${DB_USER}" "$${DB_NAME}"
+        fi
+        "$${BIN}/ksql" -v ON_ERROR_STOP=1 -h "$${DB_HOST}" -p "$${DB_PORT}" -U "$${DB_USER}" -d "$${DB_NAME}" -f /sql/kingbase_schema.sql
+    volumes:
+      - ../sql/kingbase_schema.sql:/sql/kingbase_schema.sql:ro
 
   nacos:
     image: nacos/nacos-server:v2.4.3
@@ -55,6 +109,9 @@ services:
         SERVICE: gateway-service
     container_name: scb-gateway-service
     restart: unless-stopped
+    depends_on:
+      auth-service:
+        condition: service_healthy
     environment:
       SERVER_PORT: 8080
       JWT_SECRET: ${JWT_SECRET:-smart-cloud-brain-local-secret-please-change}
@@ -71,6 +128,12 @@ services:
       TZ: Asia/Shanghai
     ports:
       - "${GATEWAY_PORT:-18080}:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
 
   auth-service: &domain-service
     build:
@@ -81,9 +144,12 @@ services:
     container_name: scb-auth-service
     restart: unless-stopped
     depends_on:
-      - kingbase
-      - rabbitmq
+      db-init:
+        condition: service_completed_successfully
+      rabbitmq:
+        condition: service_started
     environment: &domain-env
+      SERVER_PORT: 8082
       DB_HOST: ${DB_SERVICE_HOST:-kingbase}
       DB_PORT: ${DB_SERVICE_PORT:-54321}
       DB_NAME: ${DB_NAME:-smart_cloud_brain}
@@ -95,6 +161,12 @@ services:
       RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-scb}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-scb_password}
       TZ: Asia/Shanghai
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:$${SERVER_PORT}/actuator/health >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
 
   patient-service:
     <<: *domain-service
@@ -219,7 +291,8 @@ services:
     container_name: scb-patient-web
     restart: unless-stopped
     depends_on:
-      - gateway-service
+      gateway-service:
+        condition: service_healthy
     ports:
       - "5173:80"
 
@@ -232,7 +305,8 @@ services:
     container_name: scb-doctor-web
     restart: unless-stopped
     depends_on:
-      - gateway-service
+      gateway-service:
+        condition: service_healthy
     ports:
       - "5174:80"
 
@@ -245,7 +319,8 @@ services:
     container_name: scb-admin-web
     restart: unless-stopped
     depends_on:
-      - gateway-service
+      gateway-service:
+        condition: service_healthy
     ports:
       - "5175:80"
 
@@ -254,7 +329,8 @@ services:
     container_name: scb-nginx
     restart: unless-stopped
     depends_on:
-      - gateway-service
+      gateway-service:
+        condition: service_healthy
     ports:
       - "80:80"
     volumes:
