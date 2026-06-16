@@ -1,9 +1,7 @@
 services:
   kingbase:
-    image: ${KINGBASE_IMAGE:-postgres:16-alpine}
+    image: ${KINGBASE_IMAGE:-kingbase_v009r001c010b0004_single_x86:v1}
     container_name: scb-kingbase
-    profiles:
-      - embedded-db
     restart: unless-stopped
     environment:
       DB_NAME: ${DB_NAME:-smart_cloud_brain}
@@ -15,9 +13,9 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-scb_password}
       TZ: Asia/Shanghai
     ports:
-      - "${DB_PORT:-54321}:${DB_INTERNAL_PORT:-5432}"
+      - "${DB_PORT:-54321}:${DB_INTERNAL_PORT:-54321}"
     volumes:
-      - kingbase-data:${DB_DATA_DIR:-/var/lib/postgresql/data}
+      - kingbase-data:${DB_DATA_DIR:-/home/kingbase/userdata/data}
       - ../sql/kingbase_schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
 
   nacos:
@@ -83,10 +81,11 @@ services:
     container_name: scb-auth-service
     restart: unless-stopped
     depends_on:
+      - kingbase
       - rabbitmq
     environment: &domain-env
       DB_HOST: ${DB_SERVICE_HOST:-kingbase}
-      DB_PORT: ${DB_SERVICE_PORT:-5432}
+      DB_PORT: ${DB_SERVICE_PORT:-54321}
       DB_NAME: ${DB_NAME:-smart_cloud_brain}
       DB_USERNAME: ${DB_USERNAME:-scb}
       DB_PASSWORD: ${DB_PASSWORD:-scb_password}

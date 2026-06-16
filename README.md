@@ -40,8 +40,10 @@ cd D:\smart_cloud_brain
 也可以直接使用 Docker Compose：
 
 ```powershell
-docker-compose -f deploy\docker-compose.yml --profile embedded-db up -d --build
+docker-compose --env-file deploy\env\.env -f deploy\docker-compose.yml up -d --build
 ```
+
+默认配置为纯 Docker 运行：KingbaseES、Nacos、RabbitMQ、后端微服务和三个前端都会由 Docker Compose 启动，不需要本机安装数据库服务。
 
 常用地址：
 
