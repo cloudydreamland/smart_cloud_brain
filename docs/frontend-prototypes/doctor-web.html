@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>医生端工作台原型 - Smart Cloud Brain</title>
+    <link rel="stylesheet" href="./shared-style.css" />
+  </head>
+  <body>
+    <nav class="prototype-nav prototype-nav-single" aria-label="原型标识">
+      <strong>Smart Cloud Brain 医生端静态原型</strong>
+      <span>诊疗工作台审阅版</span>
+    </nav>
+
+    <main class="app">
+      <aside class="sidebar">
+        <div class="sidebar-inner">
+          <div class="brand-mark">
+            <div class="brand-icon">医</div>
+            <div>
+              <h1>医生诊疗工作台</h1>
+              <span>接诊 · AI 病历 · 处方审核</span>
+            </div>
+          </div>
+
+          <div class="user-box">
+            <strong>李文清</strong>
+            <span>全科门诊 · 主治医师 · doctor1</span>
+            <div class="row-meta">
+              <span class="tag success">在线接诊</span>
+              <span class="tag warning">2 条风险通知</span>
+            </div>
+          </div>
+
+          <div class="nav-group">
+            <span>诊疗任务</span>
+            <a class="nav-item active" href="#queue">待接诊 <b>7</b></a>
+            <a class="nav-item" href="#patient">患者上下文 <b>1</b></a>
+            <a class="nav-item" href="#record">病历草稿 <b>AI</b></a>
+            <a class="nav-item" href="#prescription">处方审核 <b>3</b></a>
+            <span>诊后</span>
+            <a class="nav-item" href="#notifications">风险通知 <b>2</b></a>
+            <a class="nav-item" href="#saved">已保存病历 <b>12</b></a>
+          </div>
+
+          <div class="sidebar-footer">
+            <button class="ghost">退出登录</button>
+          </div>
+        </div>
+      </aside>
+
+      <section class="workspace">
+        <header class="topbar">
+          <div class="page-title">
+            <p class="eyebrow">Doctor Web</p>
+            <h2>医生接诊与病历处方确认</h2>
+            <p>减少页面跳转，把队列、患者信息、AI 草稿和处方风险放在同一工作区。</p>
+          </div>
+          <div class="toolbar">
+            <button>同步队列</button>
+            <button class="primary">开始接诊</button>
+          </div>
+        </header>
+
+        <div class="metrics" aria-label="医生概览">
+          <div class="metric"><span>待接诊</span><strong>7</strong></div>
+          <div class="metric"><span>AI 草稿待确认</span><strong>3</strong></div>
+          <div class="metric"><span>处方待审核</span><strong>4</strong></div>
+          <div class="metric"><span>今日已保存</span><strong>16</strong></div>
+        </div>
+
+        <div class="main-grid">
+          <div class="stack">
+            <section id="queue" class="panel">
+              <div class="panel-header">
+                <div class="panel-title">
+                  <h3>待接诊挂号列表</h3>
+                  <p>按预约时间排序，点击后更新右侧患者上下文和病历草稿区。</p>
+                </div>
+                <div class="segmented">
+                  <button class="active">全部</button>
+                  <button>待接诊</button>
+                  <button>复诊</button>
+                </div>
+              </div>
+              <div class="panel-body tight table-scroll">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>序号</th>
+                      <th>患者</th>
+                      <th>推荐科室</th>
+                      <th>预约时间</th>
+                      <th>状态</th>
+                      <th class="actions-cell">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>#1028</td>
+                      <td>林若晴 · 32 岁</td>
+                      <td>全科门诊</td>
+                      <td>09:00</td>
+                      <td><span class="tag success">已到诊</span></td>
+                      <td><button class="primary">接诊</button></td>
+                    </tr>
+                    <tr>
+                      <td>#1029</td>
+                      <td>郑启明 · 44 岁</td>
+                      <td>呼吸内科</td>
+                      <td>09:20</td>
+                      <td><span class="tag warning">候诊中</span></td>
+                      <td><button>查看</button></td>
+                    </tr>
+                    <tr>
+                      <td>#1030</td>
+                      <td>王嘉 · 28 岁</td>
+                      <td>全科门诊</td>
+                      <td>09:40</td>
+                      <td><span class="tag">未签到</span></td>
+                      <td><button disabled>未到诊</button></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="section-band">
+                <div class="empty-state">
+                  <strong>空状态：暂无待接诊患者</strong>
+                  <span>队列清空时显示当前医生、日期和刷新入口，避免误判为加载失败。</span>
+                  <button>刷新队列</button>
+                </div>
+              </div>
+            </section>
+
+            <section id="record" class="panel">
+              <div class="panel-header">
+                <div class="panel-title">
+                  <h3>AI 病历草稿生成区</h3>
+                  <p>保留流式生成状态，医生必须确认后才能保存。</p>
+                </div>
+                <span class="tag info">DRAFT_READY</span>
+              </div>
+              <div class="panel-body">
+                <div class="field">
+                  <label for="dialogue">问诊对话摘要</label>
+                  <textarea id="dialogue">患者自述咽痛、鼻塞、低热两天，夜间咳嗽明显。否认胸痛、呼吸困难，既往无哮喘史，未使用抗生素。</textarea>
+                </div>
+                <div class="toolbar" style="margin: 12px 0">
+                  <button class="primary">流式生成病历</button>
+                  <button>应用上次模板</button>
+                  <button disabled>生成中</button>
+                </div>
+                <div class="clinical-note">
+                  <p><strong>AI 草稿片段</strong></p>
+                  <p>主诉：咽痛、鼻塞、低热 2 天。</p>
+                  <p>初步诊断：上呼吸道感染可能。建议对症治疗，若高热持续或呼吸困难需及时复诊。</p>
+                  <div class="row-meta">
+                    <span class="tag warning">AI 辅助建议</span>
+                    <span class="tag">需医生确认</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-header">
+                <div class="panel-title">
+                  <h3>病历确认保存区</h3>
+                  <p>把 AI 草稿拆成可编辑字段，保存前展示关键缺项。</p>
+                </div>
+              </div>
+              <div class="panel-body">
+                <div class="form-grid">
+                  <div class="field">
+                    <label>主诉</label>
+                    <input value="咽痛、鼻塞、低热 2 天" />
+                  </div>
+                  <div class="field">
+                    <label>诊断</label>
+                    <input value="上呼吸道感染" />
+                  </div>
+                  <div class="field">
+                    <label>现病史</label>
+                    <textarea>症状自两天前出现，夜间咳嗽较明显，无胸痛和呼吸困难。</textarea>
+                  </div>
+                  <div class="field">
+                    <label>处理建议</label>
+                    <textarea>休息补液，对症治疗，若发热超过三天或症状加重建议复诊。</textarea>
+                  </div>
+                </div>
+                <div class="toolbar" style="margin-top: 12px">
+                  <button class="primary">医生确认保存</button>
+                  <button>保存草稿</button>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <div class="stack">
+            <section id="patient" class="panel">
+              <div class="panel-header">
+                <div class="panel-title">
+                  <h3>当前患者上下文</h3>
+                  <p>接诊过程中始终可见患者、挂号、分诊和过敏信息。</p>
+                </div>
+                <span class="tag success">当前接诊</span>
+              </div>
+              <div class="panel-body">
+                <div class="summary-strip">
+                  <div class="summary-item"><span>患者</span><strong>林若晴</strong></div>
+                  <div class="summary-item"><span>挂号</span><strong>#1028</strong></div>
+                  <div class="summary-item"><span>科室</span><strong>全科门诊</strong></div>
+                </div>
+                <div class="timeline" style="margin-top: 12px">
+                  <div class="timeline-item">
+                    <div class="timeline-time">分诊</div>
+                    <div>AI 推荐全科门诊，提示关注持续高热、呼吸困难。</div>
+                  </div>
+                  <div class="timeline-item">
+                    <div class="timeline-time">既往</div>
+                    <div>无慢病记录；青霉素过敏未确认。</div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section id="prescription" class="panel">
+              <div class="panel-header">
+                <div class="panel-title">
+                  <h3>处方录入和 AI 审核</h3>
+                  <p>录入药品后先审核风险，再确认处方。</p>
+                </div>
+                <span class="tag warning">UNREVIEWED</span>
+              </div>
+              <div class="panel-body">
+                <div class="drug-row">
+                  <div class="field"><label>药品</label><input value="对乙酰氨基酚片" /></div>
+                  <div class="field"><label>剂量</label><input value="0.5g" /></div>
+                  <div class="field"><label>频次</label><input value="必要时" /></div>
+                  <div class="field"><label>用法</label><input value="口服" /></div>
+                  <button class="danger">移除</button>
+                </div>
+                <div class="drug-row">
+                  <div class="field"><label>药品</label><input value="氯雷他定片" /></div>
+                  <div class="field"><label>剂量</label><input value="10mg" /></div>
+                  <div class="field"><label>频次</label><input value="每日一次" /></div>
+                  <div class="field"><label>用法</label><input value="口服" /></div>
+                  <button class="danger">移除</button>
+                </div>
+                <div class="toolbar">
+                  <button>新增药品</button>
+                  <button class="primary">AI 审核</button>
+                  <button disabled>确认处方</button>
+                </div>
+                <div class="notice warning" style="margin-top: 12px">
+                  AI 审核提示：若患者存在肝功能异常，对乙酰氨基酚需限制日剂量。
+                </div>
+              </div>
+            </section>
+
+            <section id="notifications" class="panel">
+              <div class="panel-header">
+                <div class="panel-title">
+                  <h3>风险通知</h3>
+                  <p>处方审核与 WebSocket 通知集中展示。</p>
+                </div>
+              </div>
+              <div class="list">
+                <div class="list-row">
+                  <div class="row-main">
+                    <strong>重复成分风险</strong>
+                    <p>患者郑启明的复方感冒药与退热药存在重复成分。</p>
+                    <div class="row-meta"><span class="tag danger">高风险</span><span class="tag">未读</span></div>
+                  </div>
+                  <button>处理</button>
+                </div>
+                <div class="list-row">
+                  <div class="row-main">
+                    <strong>过敏史待确认</strong>
+                    <p>林若晴未确认青霉素过敏史，保存处方前需核对。</p>
+                    <div class="row-meta"><span class="tag warning">中风险</span></div>
+                  </div>
+                  <button>标记已读</button>
+                </div>
+              </div>
+            </section>
+
+            <section id="saved" class="panel">
+              <div class="panel-header">
+                <div class="panel-title">
+                  <h3>已保存病历</h3>
+                  <p>用于快速回看当天已完成诊疗记录。</p>
+                </div>
+              </div>
+              <div class="panel-body">
+                <div class="timeline">
+                  <div class="timeline-item">
+                    <div class="timeline-time">08:42</div>
+                    <div><strong>赵一鸣</strong><p>急性胃肠炎 · 已保存病历 #MR-9061</p></div>
+                  </div>
+                  <div class="timeline-item">
+                    <div class="timeline-time">08:18</div>
+                    <div><strong>刘悦</strong><p>过敏性鼻炎 · 已保存病历 #MR-9058</p></div>
+                  </div>
+                </div>
+                <div class="notice error" style="margin-top: 14px">
+                  错误状态：病历流式生成服务暂不可用，已切换普通生成接口。
+                </div>
+                <div class="empty-state" style="margin-top: 14px">
+                  <strong>空状态：暂无已保存病历</strong>
+                  <span>当筛选条件无结果时，保留清空筛选和刷新按钮。</span>
+                  <button>清空筛选</button>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>患者端原型 - Smart Cloud Brain</title>
+    <link rel="stylesheet" href="./shared-style.css" />
+  </head>
+  <body class="patient-page mayo-clone">
+    <header class="mayo-header">
+      <div class="mayo-utility">
+        <a href="#care">患者服务</a>
+        <a href="#symptoms">症状索引</a>
+        <a href="#records">病历处方</a>
+        <span>林若晴 · 已登录</span>
+      </div>
+      <div class="mayo-mainbar">
+        <a class="mayo-brand" href="#top" aria-label="Smart Cloud Brain 患者端">
+          <span class="mayo-symbol">SCB</span>
+          <span>Smart Cloud Brain</span>
+        </a>
+        <nav class="mayo-nav" aria-label="患者服务导航">
+          <a href="#triage">Request appointment</a>
+          <a href="#slots">Find a doctor</a>
+          <a href="#symptoms">Diseases & conditions</a>
+          <a href="#records">Patient portal</a>
+        </nav>
+        <div class="mayo-actions">
+          <button>Search</button>
+          <button>Menu</button>
+          <button class="primary">开始预约</button>
+        </div>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="mayo-hero mayo-home-hero" aria-label="患者端首屏">
+        <div class="mayo-hero-content">
+          <p class="eyebrow">PATIENT WEB</p>
+          <h1>让就诊从正确分诊开始</h1>
+          <p class="mayo-lead">描述症状，获取 AI 推荐科室，查看可预约号源，并在同一页面确认挂号与诊后记录。</p>
+          <div class="mayo-hero-actions">
+            <a class="button primary" href="#triage">Request appointment</a>
+            <a class="button" href="#symptoms">查看症状索引</a>
+          </div>
+        </div>
+        <div class="mayo-image-placeholder" aria-label="空白图片占位"></div>
+      </section>
+
+      <section class="mayo-alert" aria-label="患者状态">
+        <span class="tag success">已登录</span>
+        <strong>林若晴</strong>
+        <span>女 · 32 岁 · 患者 #10021 · 13800000001</span>
+        <button class="ghost">退出登录</button>
+      </section>
+
+      <section class="mayo-task-strip" aria-label="快捷入口">
+        <a href="#triage">
+          <strong>Request appointment</strong>
+          <span>从 AI 分诊开始预约</span>
+        </a>
+        <a href="#slots">
+          <strong>Find a doctor</strong>
+          <span>按推荐科室选择医生号源</span>
+        </a>
+        <a href="#registrations">
+          <strong>Appointments</strong>
+          <span>查看我的挂号与候诊提醒</span>
+        </a>
+        <a href="#records">
+          <strong>Patient portal</strong>
+          <span>查看病历、处方和审核结果</span>
+        </a>
+      </section>
+
+      <section id="symptoms" class="mayo-alpha-section">
+        <div class="mayo-section-header">
+          <h2>Find symptoms by first letter</h2>
+          <p>用 Mayo Clinic 首页常见的字母索引形式承载患者端症状入口，静态原型中展示 mock 内容。</p>
+        </div>
+        <div class="mayo-alpha-list" aria-label="症状首字母索引">
+          <a>A</a><a>B</a><a>C</a><a>D</a><a>E</a><a>F</a><a>G</a><a>H</a><a>I</a><a>J</a><a>K</a><a>L</a><a>M</a><a>N</a><a>O</a><a>P</a><a>R</a><a>S</a><a>T</a><a>U</a><a>V</a><a>W</a><a>X</a><a>Y</a><a>Z</a><a>#</a>
+        </div>
+      </section>
+
+      <section class="mayo-feature-band">
+        <div class="mayo-image-placeholder small" aria-label="空白图片占位"></div>
+        <div class="mayo-feature-copy">
+          <h2>Healing starts here</h2>
+          <div class="mayo-feature-items">
+            <div>
+              <strong>AI 分诊推荐结果</strong>
+              <p>推荐科室：全科门诊 / 呼吸内科。理由：症状更符合上呼吸道感染轻症表现，暂无明确急诊危险信号。</p>
+            </div>
+            <div>
+              <strong>正确的下一步</strong>
+              <p>系统优先推荐可预约号源，保留医生确认与人工复核提示，避免患者误把 AI 建议当作最终诊断。</p>
+            </div>
+          </div>
+          <a class="button primary" href="#triage">开始智能问诊</a>
+        </div>
+      </section>
+
+      <section class="mayo-overview" aria-label="患者概览">
+        <div class="metric"><span>今日可约号源</span><strong>18</strong></div>
+        <div class="metric"><span>推荐科室置信度</span><strong>86%</strong></div>
+        <div class="metric"><span>进行中挂号</span><strong>2</strong></div>
+        <div class="metric"><span>诊后记录</span><strong>5</strong></div>
+      </section>
+
+      <section id="care" class="mayo-content-grid">
+        <div class="stack">
+          <section id="triage" class="panel">
+            <div class="panel-header">
+              <div class="panel-title">
+                <h3>AI 智能问诊与分诊输入区</h3>
+                <p>患者输入主诉后展示推荐科室、理由和人工确认提示。</p>
+              </div>
+              <span class="tag info">建议需医生确认</span>
+            </div>
+            <div class="panel-body">
+              <div class="form-grid">
+                <div class="field">
+                  <label for="chief-complaint">主诉与症状</label>
+                  <textarea id="chief-complaint">咽痛、低热、鼻塞两天，夜间咳嗽明显，无胸痛和呼吸困难，希望预约轻症门诊。</textarea>
+                  <span class="field-hint">支持补充持续时间、伴随症状、既往病史和用药情况。</span>
+                </div>
+                <div class="clinical-note">
+                  <p><strong>分诊推荐结果</strong></p>
+                  <p>推荐科室：全科门诊 / 呼吸内科</p>
+                  <p>理由：症状更符合上呼吸道感染轻症表现，暂无明确急诊危险信号。</p>
+                  <div class="row-meta">
+                    <span class="tag success">轻症优先</span>
+                    <span class="tag warning">注意高热持续</span>
+                    <span class="tag">记录 #TR-20260616-018</span>
+                  </div>
+                </div>
+              </div>
+              <div class="toolbar" style="margin-top: 12px">
+                <button class="primary">提交分诊</button>
+                <button>补充既往史</button>
+                <button disabled>正在分析</button>
+              </div>
+            </div>
+          </section>
+
+          <section id="slots" class="panel">
+            <div class="panel-header">
+              <div class="panel-title">
+                <h3>可预约号源列表</h3>
+                <p>按推荐科室、时间和剩余号源组织，降低患者选择成本。</p>
+              </div>
+              <div class="segmented" aria-label="号源筛选">
+                <button class="active">推荐</button>
+                <button>今天</button>
+                <button>近三天</button>
+              </div>
+            </div>
+            <div class="panel-body tight table-scroll">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>时间</th>
+                    <th>科室</th>
+                    <th>医生</th>
+                    <th>余号</th>
+                    <th>匹配</th>
+                    <th class="actions-cell">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>06-17 09:00</td>
+                    <td>全科门诊</td>
+                    <td>李文清 · 主治</td>
+                    <td><span class="tag success">6</span></td>
+                    <td>咽痛低热</td>
+                    <td><button class="primary">选择</button></td>
+                  </tr>
+                  <tr>
+                    <td>06-17 14:30</td>
+                    <td>呼吸内科</td>
+                    <td>周岚 · 副主任</td>
+                    <td><span class="tag warning">2</span></td>
+                    <td>咳嗽鼻塞</td>
+                    <td><button>选择</button></td>
+                  </tr>
+                  <tr>
+                    <td>06-18 10:15</td>
+                    <td>全科门诊</td>
+                    <td>王泽 · 主治</td>
+                    <td><span class="tag">12</span></td>
+                    <td>普通复诊</td>
+                    <td><button>选择</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="section-band">
+              <div class="empty-state">
+                <strong>暂无号源状态</strong>
+                <span>当推荐科室无可预约号源时，显示候补提醒和切换科室入口，而不是空白表格。</span>
+                <button disabled>加入候补</button>
+              </div>
+            </div>
+          </section>
+
+          <section id="registrations" class="panel">
+            <div class="panel-header">
+              <div class="panel-title">
+                <h3>我的挂号</h3>
+                <p>集中展示待就诊、已取消和已完成的挂号记录。</p>
+              </div>
+              <button>查看全部</button>
+            </div>
+            <div class="list">
+              <div class="list-row selected">
+                <div class="row-main">
+                  <strong>全科门诊 · 李文清</strong>
+                  <p>2026-06-17 09:00 · 挂号 #REG-20260616-1028</p>
+                  <div class="row-meta"><span class="tag success">已预约</span><span class="tag">候诊提醒已开启</span></div>
+                </div>
+                <button class="danger">取消</button>
+              </div>
+              <div class="list-row">
+                <div class="row-main">
+                  <strong>皮肤科 · 陈敏</strong>
+                  <p>2026-06-10 15:00 · 挂号 #REG-20260609-0812</p>
+                  <div class="row-meta"><span class="tag">已完成</span><span class="tag info">有处方</span></div>
+                </div>
+                <button>详情</button>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <aside class="stack">
+          <section id="confirm" class="panel">
+            <div class="panel-header">
+              <div class="panel-title">
+                <h3>预约确认区</h3>
+                <p>确认患者、科室、医生和分诊记录。</p>
+              </div>
+              <span class="tag accent">待确认</span>
+            </div>
+            <div class="panel-body">
+              <div class="summary-strip">
+                <div class="summary-item"><span>科室</span><strong>全科门诊</strong></div>
+                <div class="summary-item"><span>医生</span><strong>李文清</strong></div>
+                <div class="summary-item"><span>时间</span><strong>06-17 09:00</strong></div>
+              </div>
+              <div class="form-grid" style="margin-top: 12px">
+                <div class="field">
+                  <label>就诊人</label>
+                  <select>
+                    <option>林若晴 · 本人</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>联系电话</label>
+                  <input value="13800000001" />
+                </div>
+              </div>
+              <div class="notice warning" style="margin-top: 12px">
+                分诊结果仅作为挂号推荐，最终诊断以医生接诊结论为准。
+              </div>
+              <div class="toolbar" style="margin-top: 12px">
+                <button class="primary">确认预约</button>
+                <button>更换号源</button>
+              </div>
+            </div>
+          </section>
+
+          <section id="records" class="panel">
+            <div class="panel-header">
+              <div class="panel-title">
+                <h3>病历与处方记录</h3>
+                <p>诊后信息按时间线组织，突出诊断、建议和处方审核状态。</p>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="timeline">
+                <div class="timeline-item">
+                  <div class="timeline-time">06-10</div>
+                  <div>
+                    <strong>急性荨麻疹</strong>
+                    <p>处理建议：避免已知过敏源，必要时口服抗组胺药。</p>
+                    <div class="row-meta"><span class="tag success">处方已通过</span><span class="tag">氯雷他定片</span></div>
+                  </div>
+                </div>
+                <div class="timeline-item">
+                  <div class="timeline-time">05-22</div>
+                  <div>
+                    <strong>上呼吸道感染</strong>
+                    <p>处理建议：休息补液，三日未缓解复诊。</p>
+                    <div class="row-meta"><span class="tag info">无处方</span></div>
+                  </div>
+                </div>
+              </div>
+              <div class="empty-state" style="margin-top: 14px">
+                <strong>暂无病历状态</strong>
+                <span>新用户或医生尚未保存病历时，提供清晰提示并保留刷新入口。</span>
+                <button>刷新记录</button>
+              </div>
+            </div>
+          </section>
+
+          <section id="errors" class="panel">
+            <div class="panel-header">
+              <div class="panel-title">
+                <h3>错误与服务状态</h3>
+                <p>请求失败、服务不可用和禁用按钮状态在同一规范下呈现。</p>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="notice error">
+                请求失败：号源服务暂不可用，请稍后重试或联系导诊台。
+              </div>
+              <div class="toolbar" style="margin-top: 12px">
+                <button class="primary">重试</button>
+                <button disabled>提交中</button>
+              </div>
+            </div>
+          </section>
+        </aside>
+      </section>
+    </main>
+  </body>
+</html>

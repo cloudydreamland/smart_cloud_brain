@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>管理端工作台原型 - Smart Cloud Brain</title>
+    <link rel="stylesheet" href="./shared-style.css" />
+  </head>
+  <body>
+    <nav class="prototype-nav prototype-nav-single" aria-label="原型标识">
+      <strong>Smart Cloud Brain 管理端静态原型</strong>
+      <span>运营维护工作台审阅版</span>
+    </nav>
+
+    <main class="app">
+      <aside class="sidebar">
+        <div class="sidebar-inner">
+          <div class="brand-mark">
+            <div class="brand-icon">管</div>
+            <div>
+              <h1>运营管理工作台</h1>
+              <span>基础数据 · 号源 · 知识库</span>
+            </div>
+          </div>
+
+          <div class="user-box">
+            <strong>系统管理员</strong>
+            <span>admin · 数据维护与分诊调度</span>
+            <div class="row-meta">
+              <span class="tag success">已登录</span>
+              <span class="tag">管理员 #1</span>
+            </div>
+          </div>
+
+          <div class="nav-group">
+            <span>运维入口</span>
+            <a class="nav-item active" href="#catalog">科室医生 <b>24</b></a>
+            <a class="nav-item" href="#schedule">AI 排班 <b>待发布</b></a>
+            <a class="nav-item" href="#triage">分诊工作台 <b>9</b></a>
+            <a class="nav-item" href="#maintenance">配置维护 <b>4</b></a>
+            <span>数据</span>
+            <a class="nav-item" href="#search">金仓搜索 <b>KB</b></a>
+            <a class="nav-item" href="#table">批量编辑 <b>12</b></a>
+          </div>
+
+          <div class="sidebar-footer">
+            <button class="ghost">退出登录</button>
+          </div>
+        </div>
+      </aside>
+
+      <section class="workspace">
+        <header class="topbar">
+          <div class="page-title">
+            <p class="eyebrow">Admin Web</p>
+            <h2>基础数据、号源与 AI 配置统一维护</h2>
+            <p>管理端强调批量浏览、快速编辑、分诊改派和数据发布状态。</p>
+          </div>
+          <div class="toolbar">
+            <button>导出本页</button>
+            <button class="primary">发布变更</button>
+          </div>
+        </header>
+
+        <div class="metrics" aria-label="管理概览">
+          <div class="metric"><span>启用科室</span><strong>8</strong></div>
+          <div class="metric"><span>在岗医生</span><strong>36</strong></div>
+          <div class="metric"><span>待发布号源</span><strong>124</strong></div>
+          <div class="metric"><span>待分配分诊</span><strong>9</strong></div>
+        </div>
+
+        <div class="main-grid admin-grid">
+          <div class="stack">
+            <section id="catalog" class="panel">
+              <div class="panel-header">
+                <div class="panel-title">
+                  <h3>科室与医生维护</h3>
+                  <p>基础资料左侧表单编辑，右侧表格批量浏览和状态管理。</p>
+                </div>
+                <span class="tag success">自动保存草稿</span>
+              </div>
+              <div class="panel-body">
+                <div class="form-grid three">
+                  <div class="field">
+                    <label>科室编码</label>
+                    <input value="GENERAL" />
+                  </div>
+                  <div class="field">
+                    <label>科室名称</label>
+                    <input value="全科门诊" />
+                  </div>
+                  <div class="field">
+                    <label>科室状态</label>
+                    <select><option>启用</option><option>停用</option></select>
+                  </div>
+                  <div class="field">
+                    <label>医生姓名</label>
+                    <input value="李文清" />
+                  </div>
+                  <div class="field">
+                    <label>职称</label>
+                    <input value="主治医师" />
+                  </div>
+                  <div class="field">
+                    <label>专长</label>
+                    <input value="发热、咽痛、腹泻、皮肤过敏" />
+                  </div>
+                </div>
+                <div class="toolbar" style="margin-top: 12px">
+                  <button>保存科室</button>
+                  <button class="primary">保存医生</button>
+                  <button disabled>保存中</button>
+                </div>
+              </div>
+              <div class="panel-body tight table-scroll">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>医生</th>
+                      <th>科室</th>
+                      <th>职称</th>
+                      <th>状态</th>
+                      <th>更新时间</th>
+                      <th class="actions-cell">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>李文清</td>
+                      <td>全科门诊</td>
+                      <td>主治医师</td>
+                      <td><span class="tag success">启用</span></td>
+                      <td>06-16 10:12</td>
+                      <td><button>编辑</button></td>
+                    </tr>
+                    <tr>
+                      <td>周岚</td>
+                      <td>呼吸内科</td>
+                      <td>副主任医师</td>
+                      <td><span class="tag success">启用</span></td>
+                      <td>06-15 18:20</td>
+                      <td><button>编辑</button></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section id="schedule" class="panel">
+              <div class="panel-header">
+                <div class="panel-title">
+                  <h3>AI 排班与号源发布</h3>
+                  <p>生成建议、审阅原因、批量发布号源，发布前保留可回退状态。</p>
+                </div>
+                <span class="tag warning">3 天建议待审</span>
+              </div>
+              <div class="panel-body">
+                <div class="form-grid three">
+                  <div class="field">
+                    <label>开始日期</label>
+                    <input type="date" value="2026-06-17" />
+                  </div>
+                  <div class="field">
+                    <label>生成天数</label>
+                    <input type="number" value="3" />
+                  </div>
+                  <div class="field">
+                    <label>发布策略</label>
+                    <select><option>仅发布已勾选建议</option><option>全部发布</option></select>
+                  </div>
+                </div>
+                <div class="toolbar" style="margin-top: 12px">
+                  <button>生成 AI 建议</button>
+                  <button class="primary">发布号源</button>
+                  <button class="warning">撤回草稿</button>
+                </div>
+              </div>
+              <div class="list">
+                <div class="list-row selected">
+                  <div class="row-main">
+                    <strong>06-17 上午 · 全科门诊 · 李文清</strong>
+                    <p>建议发布 30 个号源，原因：历史周三上午轻症问诊量较高。</p>
+                    <div class="row-meta"><span class="tag info">AI 建议</span><span class="tag success">可发布</span></div>
+                  </div>
+                  <button>详情</button>
+                </div>
+                <div class="list-row">
+                  <div class="row-main">
+                    <strong>06-17 下午 · 呼吸内科 · 周岚</strong>
+                    <p>建议发布 18 个号源，保留 4 个加急号源。</p>
+                    <div class="row-meta"><span class="tag warning">需人工复核</span></div>
+                  </div>
+                  <button>调整</button>
+                </div>
+              </div>
+            </section>
+
+            <section id="triage" class="panel">
+              <div class="panel-header">
+                <div class="panel-title">
+                  <h3>分诊工作台</h3>
+                  <p>查看分诊详情、人工改派医生、关闭异常分诊记录。</p>
+                </div>
+              </div>
+              <div class="panel-body">
+                <div class="form-grid three">
+                  <div class="field">
+                    <label>分诊记录 ID</label>
+                    <input value="TR-20260616-018" />
+                  </div>
+                  <div class="field">
+                    <label>改派医生</label>
+                    <select><option>李文清 · 全科门诊</option><option>周岚 · 呼吸内科</option></select>
+                  </div>
+                  <div class="field">
+                    <label>处理状态</label>
+                    <select><option>待分配</option><option>已分配</option><option>已关闭</option></select>
+                  </div>
+                </div>
+                <div class="toolbar" style="margin-top: 12px">
+                  <button class="primary">分配医生</button>
+                  <button class="danger">关闭分诊</button>
+                </div>
+              </div>
+              <div class="panel-body tight table-scroll">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>记录</th>
+                      <th>主诉</th>
+                      <th>推荐科室</th>
+                      <th>当前医生</th>
+                      <th>状态</th>
+                      <th class="actions-cell">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>#018</td>
+                      <td>咽痛、低热、鼻塞两天</td>
+                      <td>全科门诊</td>
+                      <td>李文清</td>
+                      <td><span class="tag success">已分配</span></td>
+                      <td><button>详情</button></td>
+                    </tr>
+                    <tr>
+                      <td>#019</td>
+                      <td>胸闷伴气短半日</td>
+                      <td>急诊建议</td>
+                      <td>-</td>
+                      <td><span class="tag danger">待人工处理</span></td>
+                      <td><button class="warning">改派</button></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+
+          <div class="stack">
+            <section id="maintenance" class="panel">
+              <div class="panel-header">
+                <div class="panel-title">
+                  <h3>字典、药品、Prompt、知识库维护</h3>
+                  <p>用标签页收敛配置项，保留表单和发布状态。</p>
+                </div>
+              </div>
+              <div class="tabs">
+                <button class="active">字典</button>
+                <button>药品</button>
+                <button>Prompt</button>
+                <button>知识库</button>
+              </div>
+              <div class="panel-body">
+                <div class="form-grid">
+                  <div class="field">
+                    <label>字典类型</label>
+                    <input value="REGISTRATION_STATUS" />
+                  </div>
+                  <div class="field">
+                    <label>字典键</label>
+                    <input value="CREATED" />
+                  </div>
+                  <div class="field">
+                    <label>药品名称</label>
+                    <input value="对乙酰氨基酚片" />
+                  </div>
+                  <div class="field">
+                    <label>Prompt 模板</label>
+                    <input value="GENERAL_MEDICAL_RECORD_v1" />
+                  </div>
+                  <div class="field">
+                    <label>禁忌与相互作用</label>
+                    <textarea>严重肝功能不全慎用；避免与其他含同成分复方药重复使用。</textarea>
+                  </div>
+                  <div class="field">
+                    <label>知识库建议</label>
+                    <textarea>普通感冒建议休息补液，持续高热、胸痛、呼吸困难需线下就医。</textarea>
+                  </div>
+                </div>
+                <div class="toolbar" style="margin-top: 12px">
+                  <button>保存草稿</button>
+                  <button class="primary">启用配置</button>
+                </div>
+              </div>
+            </section>
+
+            <section id="search" class="panel">
+              <div class="panel-header">
+                <div class="panel-title">
+                  <h3>金仓搜索与当前数据概览</h3>
+                  <p>用于核对知识库、药品、Prompt 和基础数据是否一致。</p>
+                </div>
+              </div>
+              <div class="panel-body">
+                <div class="form-grid">
+                  <div class="field">
+                    <label>关键词</label>
+                    <input value="感冒" />
+                  </div>
+                  <div class="field">
+                    <label>科室编码</label>
+                    <input value="GENERAL" />
+                  </div>
+                </div>
+                <div class="toolbar" style="margin-top: 12px">
+                  <button class="primary">搜索</button>
+                  <button>重置</button>
+                </div>
+                <div class="summary-strip" style="margin-top: 12px">
+                  <div class="summary-item"><span>知识库</span><strong>42 条</strong></div>
+                  <div class="summary-item"><span>药品</span><strong>126 条</strong></div>
+                  <div class="summary-item"><span>Prompt</span><strong>9 个</strong></div>
+                </div>
+                <div class="notice error" style="margin-top: 12px">
+                  错误状态：金仓搜索连接超时，当前显示最近一次缓存结果。
+                </div>
+              </div>
+            </section>
+
+            <section id="table" class="panel">
+              <div class="panel-header">
+                <div class="panel-title">
+                  <h3>表格批量浏览和编辑状态</h3>
+                  <p>支持选中、编辑中、待发布、禁用等状态识别。</p>
+                </div>
+                <button>批量保存</button>
+              </div>
+              <div class="panel-body tight table-scroll">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>选择</th>
+                      <th>对象</th>
+                      <th>类型</th>
+                      <th>状态</th>
+                      <th>编辑状态</th>
+                      <th class="actions-cell">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><input type="checkbox" checked /></td>
+                      <td>普通感冒知识条目</td>
+                      <td>知识库</td>
+                      <td><span class="tag success">启用</span></td>
+                      <td><span class="tag warning">待发布</span></td>
+                      <td><button>审阅</button></td>
+                    </tr>
+                    <tr>
+                      <td><input type="checkbox" /></td>
+                      <td>GENERAL_MEDICAL_RECORD_v1</td>
+                      <td>Prompt</td>
+                      <td><span class="tag success">启用</span></td>
+                      <td><span class="tag info">编辑中</span></td>
+                      <td><button>继续编辑</button></td>
+                    </tr>
+                    <tr>
+                      <td><input type="checkbox" disabled /></td>
+                      <td>旧版感冒分诊规则</td>
+                      <td>字典</td>
+                      <td><span class="tag">停用</span></td>
+                      <td><span class="tag">只读</span></td>
+                      <td><button disabled>不可编辑</button></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="section-band">
+                <div class="empty-state">
+                  <strong>空状态：当前筛选无数据</strong>
+                  <span>当批量表格无结果时，提示清空筛选或新建数据。</span>
+                  <div class="toolbar">
+                    <button>清空筛选</button>
+                    <button class="primary">新建条目</button>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
