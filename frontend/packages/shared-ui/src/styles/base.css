@@ -1,0 +1,147 @@
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  line-height: 1.5;
+}
+
+body {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button,
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  color: var(--ink);
+  cursor: pointer;
+  font-weight: 700;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+button:hover,
+.button:hover {
+  border-color: var(--primary);
+  background: var(--surface-alt);
+}
+
+button:focus-visible,
+.button:focus-visible {
+  box-shadow: var(--focus);
+  outline: none;
+}
+
+button.primary,
+.button.primary {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #fff;
+}
+
+button.primary:hover,
+.button.primary:hover {
+  border-color: var(--primary-strong);
+  background: var(--primary-strong);
+}
+
+button.warning {
+  border-color: #d7a036;
+  background: var(--accent-soft);
+  color: #6f4300;
+}
+
+button.danger {
+  border-color: #e2aca5;
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+button.ghost {
+  background: transparent;
+}
+
+button:disabled {
+  border-color: var(--line);
+  background: #edf1ef;
+  color: var(--subtle);
+  cursor: not-allowed;
+}
+
+input,
+textarea,
+select {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  color: var(--ink);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+input,
+select {
+  height: 36px;
+  padding: 0 10px;
+}
+
+textarea {
+  min-height: 92px;
+  padding: 9px 10px;
+  resize: vertical;
+}
+
+input:hover,
+textarea:hover,
+select:hover,
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--primary);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  box-shadow: var(--focus);
+  outline: none;
+}
+
+input:disabled,
+textarea:disabled,
+select:disabled {
+  background: #eef2f1;
+  color: var(--subtle);
+  cursor: not-allowed;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}

@@ -8,6 +8,7 @@
     "preview": "vite preview --host 0.0.0.0"
   },
   "dependencies": {
-    "@smart-cloud-brain/shared-api": "workspace:*"
+    "@smart-cloud-brain/shared-api": "workspace:*",
+    "@smart-cloud-brain/shared-ui": "workspace:*"
   }
 }

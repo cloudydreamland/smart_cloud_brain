@@ -45,12 +45,18 @@ importers:
       '@smart-cloud-brain/shared-api':
         specifier: workspace:*
         version: link:../../packages/shared-api
+      '@smart-cloud-brain/shared-ui':
+        specifier: workspace:*
+        version: link:../../packages/shared-ui
 
   apps/doctor-web:
     dependencies:
       '@smart-cloud-brain/shared-api':
         specifier: workspace:*
         version: link:../../packages/shared-api
+      '@smart-cloud-brain/shared-ui':
+        specifier: workspace:*
+        version: link:../../packages/shared-ui
 
   apps/patient-mobile: {}
 
@@ -59,12 +65,19 @@ importers:
       '@smart-cloud-brain/shared-api':
         specifier: workspace:*
         version: link:../../packages/shared-api
+      '@smart-cloud-brain/shared-ui':
+        specifier: workspace:*
+        version: link:../../packages/shared-ui
 
   packages/shared-api: {}
 
   packages/shared-types: {}
 
-  packages/shared-ui: {}
+  packages/shared-ui:
+    dependencies:
+      vue:
+        specifier: ^3.5.13
+        version: 3.5.38(typescript@5.9.3)
 
   packages/shared-utils: {}
 

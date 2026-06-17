@@ -1,0 +1,416 @@
+.workspace-shell {
+  display: grid;
+  grid-template-columns: 248px minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.workspace-sidebar {
+  border-right: 1px solid var(--line);
+  background: #102926;
+  color: #eff8f5;
+}
+
+.workspace-sidebar-inner {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 100vh;
+  padding: 22px 18px;
+}
+
+.brand-mark {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-icon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: var(--radius-sm);
+  background: #1f4c47;
+  color: #bde7df;
+  font-weight: 700;
+}
+
+.brand-mark h1 {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.brand-mark span,
+.workspace-sidebar .nav-group span,
+.workspace-sidebar .user-box span {
+  color: #aac7c1;
+  font-size: 12px;
+}
+
+.user-box {
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.user-box strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 15px;
+}
+
+.nav-group {
+  display: grid;
+  gap: 6px;
+}
+
+.nav-group span {
+  margin: 10px 8px 2px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 34px;
+  padding: 7px 9px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: #e7f0ed;
+  font-size: 14px;
+}
+
+.nav-item:hover,
+.nav-item.router-link-active,
+.nav-item.active {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.sidebar-footer {
+  margin-top: auto;
+}
+
+.workspace {
+  min-width: 0;
+  padding: 22px 28px 36px;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.page-title {
+  margin-right: auto;
+}
+
+.page-title h2 {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.25;
+}
+
+.page-title p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.main-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(320px, 0.9fr);
+  gap: 16px;
+}
+
+.main-grid.admin-grid {
+  grid-template-columns: minmax(0, 1.25fr) minmax(360px, 0.95fr);
+}
+
+.stack {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+
+.patient-page {
+  min-height: 100vh;
+  background: #fff;
+}
+
+.mayo-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  border-bottom: 1px solid #d8dde3;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(12px);
+}
+
+.mayo-utility {
+  display: flex;
+  justify-content: flex-end;
+  gap: 22px;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 8px 24px 0;
+  color: #475569;
+  font-size: 13px;
+}
+
+.mayo-mainbar {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  max-width: 1180px;
+  min-height: 72px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.mayo-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-right: auto;
+  color: #12385b;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.mayo-symbol {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 4px;
+  background: #0057b8;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.mayo-nav,
+.mayo-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mayo-nav {
+  gap: 22px;
+  color: #243746;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.mayo-nav a:hover,
+.mayo-nav a.router-link-active {
+  color: #0057b8;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.mayo-container {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 28px 24px 48px;
+}
+
+.mayo-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 0.82fr);
+  gap: 42px;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 56px 24px 42px;
+  border-bottom: 1px solid #d8dde3;
+}
+
+.mayo-hero h1 {
+  max-width: 760px;
+  margin: 0;
+  color: #12385b;
+  font-size: 52px;
+  line-height: 1.05;
+}
+
+.mayo-lead {
+  max-width: 660px;
+  margin: 18px 0 0;
+  color: #3e5367;
+  font-size: 19px;
+}
+
+.mayo-image-placeholder {
+  min-height: 360px;
+  border: 1px solid #d8dde3;
+  background:
+    linear-gradient(135deg, transparent 49.6%, #d8dde3 49.8%, #d8dde3 50.2%, transparent 50.4%),
+    linear-gradient(45deg, transparent 49.6%, #d8dde3 49.8%, #d8dde3 50.2%, transparent 50.4%),
+    #f4f7f9;
+}
+
+.mayo-task-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  max-width: 1180px;
+  margin: 0 auto;
+  border-top: 1px solid #d8dde3;
+  border-bottom: 1px solid #d8dde3;
+}
+
+.mayo-task-strip a {
+  min-width: 0;
+  padding: 18px 20px;
+  border-right: 1px solid #d8dde3;
+  background: #fff;
+}
+
+.mayo-task-strip a:last-child {
+  border-right: 0;
+}
+
+.mayo-task-strip strong {
+  display: block;
+  color: #12385b;
+}
+
+.mayo-task-strip span {
+  display: block;
+  margin-top: 4px;
+  color: #5b6d7d;
+  font-size: 13px;
+}
+
+@media (max-width: 1180px) {
+  .workspace-shell {
+    grid-template-columns: 214px minmax(0, 1fr);
+  }
+
+  .main-grid,
+  .main-grid.admin-grid,
+  .mayo-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .workspace-shell {
+    display: block;
+  }
+
+  .workspace-sidebar-inner {
+    position: static;
+    min-height: 0;
+    padding: 16px;
+  }
+
+  .nav-group {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .nav-group span {
+    grid-column: 1 / -1;
+  }
+
+  .workspace,
+  .mayo-container {
+    padding: 16px;
+  }
+
+  .topbar,
+  .panel-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .toolbar,
+  .toolbar button {
+    width: 100%;
+  }
+
+  .form-grid,
+  .form-grid.three,
+  .form-grid.four,
+  .summary-strip,
+  .metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .data-table {
+    min-width: 680px;
+  }
+
+  .mayo-utility,
+  .mayo-nav {
+    display: none;
+  }
+
+  .mayo-mainbar {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 0;
+    padding: 14px 16px;
+  }
+
+  .mayo-brand {
+    margin-right: 0;
+  }
+
+  .mayo-actions,
+  .mayo-actions button {
+    width: 100%;
+  }
+
+  .mayo-hero {
+    gap: 24px;
+    padding: 34px 16px 28px;
+  }
+
+  .mayo-hero h1 {
+    font-size: 36px;
+  }
+
+  .mayo-lead {
+    font-size: 16px;
+  }
+
+  .mayo-task-strip {
+    grid-template-columns: 1fr;
+    margin: 0 16px;
+    border: 1px solid #d8dde3;
+  }
+
+  .mayo-task-strip a {
+    border-right: 0;
+    border-bottom: 1px solid #d8dde3;
+  }
+
+  .mayo-task-strip a:last-child {
+    border-bottom: 0;
+  }
+}
+
+@media (max-width: 460px) {
+  .nav-group,
+  .list-row {
+    grid-template-columns: 1fr;
+  }
+
+  .page-title h2 {
+    font-size: 21px;
+  }
+}
