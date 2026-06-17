@@ -6,6 +6,7 @@ import {
   fieldText,
   formatApiError,
   medicalRecordStreamUrl,
+  notificationWebSocketProtocols,
   notificationWebSocketUrl,
   statusClass,
   toNumber,
@@ -52,7 +53,7 @@ const prescription = reactive({
 });
 const checkResult = ref<DataRow | null>(null);
 let socket: WebSocket | null = null;
-let recordStream: EventSource | null = null;
+let recordStream: AbortController | null = null;
 let pollTimer: number | null = null;
 let reconnectTimer: number | null = null;
 let unbindUnauthorized: (() => void) | null = null;
@@ -202,36 +203,55 @@ async function generateRecord() {
 
 function generateRecordByStream(registrationId: number) {
   return new Promise<void>((resolve, reject) => {
-    recordStream?.close();
-    recordStream = new EventSource(medicalRecordStreamUrl(registrationId, auth.token()));
-    recordStream.addEventListener("delta", (event) => {
-      const data = parseEventData(event);
-      streamText.value += `${fieldText(data, "text", event.data)}\n`;
-    });
-    recordStream.addEventListener("structured", (event) => {
-      applyDraft(parseEventData(event));
-      streamStatus.value = "DRAFT_READY";
-    });
-    recordStream.addEventListener("done", () => {
-      recordStream?.close();
+    recordStream?.abort();
+    recordStream = new AbortController();
+    fetch(medicalRecordStreamUrl(registrationId), {
+      headers: { Authorization: `Bearer ${auth.token()}` },
+      signal: recordStream.signal,
+    }).then(async (response) => {
+      if (!response.ok || !response.body) throw new Error("stream failed");
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const blocks = buffer.split("\n\n");
+        buffer = blocks.pop() ?? "";
+        blocks.forEach(handleStreamBlock);
+      }
+      if (buffer.trim()) handleStreamBlock(buffer);
       recordStream = null;
       streamStatus.value = "DRAFT_READY";
       resolve();
-    });
-    recordStream.addEventListener("error", () => {
-      recordStream?.close();
+    }).catch((err) => {
       recordStream = null;
       streamStatus.value = "FAILED";
-      reject(new Error("stream failed"));
+      reject(err);
     });
   });
 }
 
-function parseEventData(event: MessageEvent) {
+function parseEventData(raw: string) {
   try {
-    return JSON.parse(event.data) as DataRow;
+    return JSON.parse(raw) as DataRow;
   } catch {
-    return { text: event.data };
+    return { text: raw };
+  }
+}
+
+function handleStreamBlock(block: string) {
+  const lines = block.split(/\r?\n/);
+  const eventName = lines.find((line) => line.startsWith("event:"))?.slice("event:".length).trim();
+  const dataText = lines.filter((line) => line.startsWith("data:")).map((line) => line.slice("data:".length).trim()).join("\n");
+  if (!dataText) return;
+  if (eventName === "delta") {
+    const data = parseEventData(dataText);
+    streamText.value += `${fieldText(data, "text", dataText)}\n`;
+  } else if (eventName === "structured") {
+    applyDraft(parseEventData(dataText));
+    streamStatus.value = "DRAFT_READY";
   }
 }
 
@@ -286,11 +306,15 @@ async function createPrescription() {
     await api.createPrescription(auth.token(), {
       patientId: toNumber(selectedRegistration.value?.patientId),
       medicalRecordId: prescription.medicalRecordId,
+      registrationId: toNumber(selectedRegistration.value?.registrationId),
       riskLevel: prescription.riskLevel,
       drugs: prescription.drugs,
     });
+    if (selectedRegistrationId.value) {
+      await api.completeRegistration(auth.token(), selectedRegistrationId.value);
+    }
     await workflow.refresh(auth.token());
-    setNotice("处方已确认。当前后端未提供完成接诊接口，队列状态不会在前端伪造变更。");
+    setNotice("处方已确认，接诊状态已完成。");
   });
 }
 
@@ -305,7 +329,7 @@ function connectNotifications() {
   if (!session.value || !auth.requireRole("DOCTOR")) return;
   stopRealtime();
   socketStatus.value = "连接中";
-  socket = new WebSocket(notificationWebSocketUrl(session.value.userId, auth.token()));
+  socket = new WebSocket(notificationWebSocketUrl(), notificationWebSocketProtocols(auth.token()));
   socket.onopen = () => {
     socketStatus.value = "实时通知已连接";
     stopPolling();
@@ -342,7 +366,7 @@ function stopPolling() {
 function stopRealtime() {
   socket?.close();
   socket = null;
-  recordStream?.close();
+  recordStream?.abort();
   recordStream = null;
   stopPolling();
   if (reconnectTimer) window.clearTimeout(reconnectTimer);
@@ -420,6 +444,7 @@ onBeforeUnmount(() => {
               <option value="">全部</option>
               <option value="CREATED">已创建</option>
               <option value="CONFIRMED">已确认</option>
+              <option value="COMPLETED">已完成</option>
               <option value="PENDING">待处理</option>
             </select>
           </label>

@@ -63,6 +63,8 @@ export type DrugItem = {
   dosage: string;
   frequency: string;
   usageMethod: string;
+  days?: number;
+  remark?: string;
 };
 
 export type PrescriptionCheckRequest = {
@@ -74,6 +76,7 @@ export type PrescriptionCheckRequest = {
 export type PrescriptionCreateRequest = {
   patientId: number;
   medicalRecordId: number;
+  registrationId?: number;
   riskLevel?: string;
   drugs: DrugItem[];
 };
@@ -254,6 +257,7 @@ export const patientApi = {
   registrations: (token: string) => get<DataRow[]>("/registration/list", token),
   createRegistration: (token: string, body: RegistrationCreateRequest) => post<DataRow>("/registration/create", body, token),
   cancelRegistration: (token: string, registrationId: number) => post<DataRow>("/registration/cancel", { registrationId }, token),
+  completeRegistration: (token: string, registrationId: number) => post<DataRow>("/registration/complete", { registrationId }, token),
   medicalRecords: (token: string) => get<DataRow[]>("/medical-record/list", token),
   medicalRecordDetail: (token: string, id: number) => get<DataRow>(`/medical-record/detail${query({ id })}`, token),
   prescriptions: (token: string) => get<DataRow[]>("/prescription/list", token),
@@ -263,6 +267,7 @@ export const doctorApi = {
   login: authApi.loginDoctor,
   departments: patientApi.departments,
   registrations: (token: string) => get<DataRow[]>("/registration/list", token),
+  completeRegistration: (token: string, registrationId: number) => post<DataRow>("/registration/complete", { registrationId }, token),
   triageList: (token: string) => get<DataRow[]>("/triage/list", token),
   medicalRecords: (token: string) => get<DataRow[]>("/medical-record/list", token),
   medicalRecordDetail: (token: string, id: number) => get<DataRow>(`/medical-record/detail${query({ id })}`, token),
@@ -320,6 +325,7 @@ export const api = {
   registrationSlots: patientApi.registrationSlots,
   registrations: patientApi.registrations,
   cancelRegistration: patientApi.cancelRegistration,
+  completeRegistration: doctorApi.completeRegistration,
   generateMedicalRecord: doctorApi.generateMedicalRecord,
   saveMedicalRecord: doctorApi.saveMedicalRecord,
   medicalRecords: patientApi.medicalRecords,
@@ -364,14 +370,16 @@ function websocketBase() {
     : `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}`;
 }
 
-export function notificationWebSocketUrl(doctorId: number, token = "") {
-  const params = new URLSearchParams({ doctorId: String(doctorId) });
-  if (token) params.set("token", token);
-  return `${websocketBase()}/ws/notifications?${params.toString()}`;
+export function notificationWebSocketUrl() {
+  return `${websocketBase()}/ws/notifications`;
 }
 
-export function medicalRecordStreamUrl(registrationId: number, token: string) {
-  const params = new URLSearchParams({ registrationId: String(registrationId), token });
+export function notificationWebSocketProtocols(token: string) {
+  return token ? ["bearer", token] : [];
+}
+
+export function medicalRecordStreamUrl(registrationId: number) {
+  const params = new URLSearchParams({ registrationId: String(registrationId) });
   return `${gatewayBase()}/api/medical-record/generate/stream?${params.toString()}`;
 }
 
@@ -393,7 +401,7 @@ export function fieldText(item: DataRow | null | undefined, key: string, fallbac
 
 export function statusClass(status: unknown) {
   const value = String(status || "").toUpperCase();
-  if (["CREATED", "CONFIRMED", "AVAILABLE", "ENABLED", "PUBLISHED", "AI_RECOMMENDED", "LOW", "READ"].includes(value)) {
+  if (["CREATED", "CONFIRMED", "COMPLETED", "AVAILABLE", "ENABLED", "PUBLISHED", "AI_RECOMMENDED", "LOW", "READ"].includes(value)) {
     return "success";
   }
   if (["CANCELLED", "FAILED", "DISABLED", "HIGH", "CLOSED", "FULL"].includes(value)) {
