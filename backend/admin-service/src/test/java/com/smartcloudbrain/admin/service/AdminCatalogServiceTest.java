@@ -18,6 +18,7 @@ import com.smartcloudbrain.admin.repository.DrugRepository;
 import com.smartcloudbrain.admin.repository.KnowledgeEntryRepository;
 import com.smartcloudbrain.admin.repository.PromptTemplateRepository;
 import com.smartcloudbrain.admin.repository.SystemDictRepository;
+import com.smartcloudbrain.common.security.PasswordHashService;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +42,7 @@ class AdminCatalogServiceTest {
   @Mock private AiScheduleSuggestionRepository aiScheduleSuggestionRepository;
   @Mock private InternalDoctorClient internalDoctorClient;
   @Mock private InternalTriageClient internalTriageClient;
+  @Mock private PasswordHashService passwordHashService;
   @InjectMocks private AdminCatalogService adminCatalogService;
 
   @Test

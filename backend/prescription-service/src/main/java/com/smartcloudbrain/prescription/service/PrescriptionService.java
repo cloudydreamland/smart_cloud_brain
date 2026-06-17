@@ -95,6 +95,7 @@ public class PrescriptionService {
     prescription.setPatientId(request.patientId());
     prescription.setDoctorId(user.userId());
     prescription.setMedicalRecordId(request.medicalRecordId());
+    prescription.setRegistrationId(medicalRecord.getRegistrationId());
     prescription.setRiskLevel(request.riskLevel() == null ? "UNREVIEWED" : request.riskLevel());
     prescription.setStatus("CONFIRMED");
     Prescription saved = prescriptionRepository.save(prescription);
@@ -105,7 +106,17 @@ public class PrescriptionService {
       item.setDosage(drug.dosage());
       item.setFrequency(drug.frequency());
       item.setUsageMethod(drug.usageMethod());
+      item.setDays(drug.days());
+      item.setRemark(drug.remark());
       prescriptionItemRepository.save(item);
+    }
+    if ("HIGH".equalsIgnoreCase(saved.getRiskLevel()) || "MEDIUM".equalsIgnoreCase(saved.getRiskLevel())) {
+      publishRiskNotification(user.userId(), request.patientId(), saved.getId(), new PrescriptionCheckResponse(
+          saved.getRiskLevel(),
+          "Confirmed prescription requires risk follow-up.",
+          List.of(),
+          false
+      ));
     }
     return prescriptionView(saved);
   }
@@ -129,7 +140,9 @@ public class PrescriptionService {
             "drugName", item.getDrugName(),
             "dosage", item.getDosage(),
             "frequency", item.getFrequency(),
-            "usageMethod", item.getUsageMethod()
+            "usageMethod", item.getUsageMethod(),
+            "days", item.getDays() == null ? 0 : item.getDays(),
+            "remark", item.getRemark() == null ? "" : item.getRemark()
         ))
         .toList();
     return Map.of(
@@ -137,6 +150,7 @@ public class PrescriptionService {
         "patientId", prescription.getPatientId(),
         "doctorId", prescription.getDoctorId(),
         "medicalRecordId", prescription.getMedicalRecordId() == null ? 0L : prescription.getMedicalRecordId(),
+        "registrationId", prescription.getRegistrationId() == null ? 0L : prescription.getRegistrationId(),
         "riskLevel", prescription.getRiskLevel() == null ? "" : prescription.getRiskLevel(),
         "status", prescription.getStatus(),
         "items", items,

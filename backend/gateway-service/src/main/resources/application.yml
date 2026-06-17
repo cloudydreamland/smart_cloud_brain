@@ -10,27 +10,27 @@ spring:
         - id: auth-service
           uri: ${AUTH_SERVICE_URI:http://localhost:8082}
           predicates:
-            - Path=/api/patient/register,/api/patient/login,/api/doctor/login,/api/admin/login,/internal/auth/**
+            - Path=/api/patient/register,/api/patient/login,/api/doctor/login,/api/admin/login
         - id: patient-service
           uri: ${PATIENT_SERVICE_URI:http://localhost:8083}
           predicates:
-            - Path=/api/patient/**,/internal/patients/**
+            - Path=/api/patient/**
         - id: doctor-service
           uri: ${DOCTOR_SERVICE_URI:http://localhost:8084}
           predicates:
-            - Path=/api/doctor/**,/internal/doctors/**
+            - Path=/api/doctor/**
         - id: registration-service
           uri: ${REGISTRATION_SERVICE_URI:http://localhost:8085}
           predicates:
-            - Path=/api/registration/**,/internal/registrations/**
+            - Path=/api/registration/**
         - id: triage-service
           uri: ${TRIAGE_SERVICE_URI:http://localhost:8086}
           predicates:
-            - Path=/api/triage/**,/internal/triage-records/**
+            - Path=/api/triage/**
         - id: medical-record-service
           uri: ${MEDICAL_RECORD_SERVICE_URI:http://localhost:8087}
           predicates:
-            - Path=/api/medical-record/**,/internal/medical-records/**
+            - Path=/api/medical-record/**
         - id: prescription-service
           uri: ${PRESCRIPTION_SERVICE_URI:http://localhost:8088}
           predicates:
@@ -38,7 +38,7 @@ spring:
         - id: notification-service
           uri: ${NOTIFICATION_SERVICE_URI:http://localhost:8089}
           predicates:
-            - Path=/api/notification/**,/internal/notifications/**
+            - Path=/api/notification/**
         - id: notification-websocket
           uri: ${NOTIFICATION_WS_URI:ws://localhost:8089}
           predicates:
@@ -50,9 +50,22 @@ spring:
       globalcors:
         cors-configurations:
           "[/**]":
-            allowedOriginPatterns: "*"
-            allowedMethods: "*"
-            allowedHeaders: "*"
+            allowedOriginPatterns:
+              - ${PATIENT_WEB_ORIGIN:http://localhost:5173}
+              - ${DOCTOR_WEB_ORIGIN:http://localhost:5174}
+              - ${ADMIN_WEB_ORIGIN:http://localhost:5175}
+              - ${PUBLIC_WEB_ORIGIN:http://localhost}
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders:
+              - Authorization
+              - Content-Type
+              - X-Requested-With
+              - Sec-WebSocket-Protocol
             allowCredentials: true
 
 management:

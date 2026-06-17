@@ -2,6 +2,7 @@ package com.smartcloudbrain.notification.service;
 
 import com.smartcloudbrain.common.error.ErrorCode;
 import com.smartcloudbrain.common.exception.BusinessException;
+import com.smartcloudbrain.common.security.RoleType;
 import com.smartcloudbrain.notification.dto.NotificationCreateRequest;
 import com.smartcloudbrain.notification.entity.NotificationMessage;
 import com.smartcloudbrain.notification.repository.NotificationMessageRepository;
@@ -31,7 +32,7 @@ public class NotificationService {
   }
 
   public List<Map<String, Object>> list(String readStatus) {
-    AuthenticatedUser user = currentUserService.get();
+    AuthenticatedUser user = currentUserService.require(RoleType.DOCTOR);
     List<NotificationMessage> messages = readStatus == null || readStatus.isBlank()
         ? notificationRepository.findByDoctorId(user.userId())
         : notificationRepository.findByDoctorIdAndReadStatus(user.userId(), readStatus);
@@ -40,8 +41,12 @@ public class NotificationService {
 
   @Transactional
   public Map<String, Object> markRead(Long notificationId) {
+    AuthenticatedUser user = currentUserService.require(RoleType.DOCTOR);
     NotificationMessage message = notificationRepository.findById(notificationId)
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+    if (!message.getDoctorId().equals(user.userId())) {
+      throw new BusinessException(ErrorCode.FORBIDDEN);
+    }
     message.setReadStatus("READ");
     return notificationView(notificationRepository.save(message));
   }

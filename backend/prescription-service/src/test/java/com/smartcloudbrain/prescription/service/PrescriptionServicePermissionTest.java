@@ -51,7 +51,7 @@ class PrescriptionServicePermissionTest {
         1L,
         30L,
         "LOW",
-        List.of(new DrugItem("acetaminophen", "0.5g", "when needed", "oral"))
+        List.of(new DrugItem("acetaminophen", "0.5g", "when needed", "oral", 3, ""))
     );
 
     assertThrows(BusinessException.class, () -> prescriptionService.create(request));

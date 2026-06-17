@@ -26,6 +26,7 @@ import com.smartcloudbrain.admin.repository.PromptTemplateRepository;
 import com.smartcloudbrain.admin.repository.SystemDictRepository;
 import com.smartcloudbrain.common.error.ErrorCode;
 import com.smartcloudbrain.common.exception.BusinessException;
+import com.smartcloudbrain.common.security.PasswordHashService;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
@@ -49,6 +50,7 @@ public class AdminCatalogService {
   private final AiScheduleSuggestionRepository aiScheduleSuggestionRepository;
   private final InternalDoctorClient internalDoctorClient;
   private final InternalTriageClient internalTriageClient;
+  private final PasswordHashService passwordHashService;
 
   public AdminCatalogService(
       DepartmentRepository departmentRepository,
@@ -59,7 +61,8 @@ public class AdminCatalogService {
       SystemDictRepository systemDictRepository,
       AiScheduleSuggestionRepository aiScheduleSuggestionRepository,
       InternalDoctorClient internalDoctorClient,
-      InternalTriageClient internalTriageClient
+      InternalTriageClient internalTriageClient,
+      PasswordHashService passwordHashService
   ) {
     this.departmentRepository = departmentRepository;
     this.doctorRepository = doctorRepository;
@@ -70,6 +73,7 @@ public class AdminCatalogService {
     this.aiScheduleSuggestionRepository = aiScheduleSuggestionRepository;
     this.internalDoctorClient = internalDoctorClient;
     this.internalTriageClient = internalTriageClient;
+    this.passwordHashService = passwordHashService;
   }
 
   public List<Map<String, Object>> departments() {
@@ -95,9 +99,9 @@ public class AdminCatalogService {
     doctor.setName(request.name());
     doctor.setPhone(request.phone());
     if (request.password() != null && !request.password().isBlank()) {
-      doctor.setPasswordHash("{plain}" + request.password());
+      doctor.setPasswordHash(passwordHashService.encode(request.password()));
     } else if (doctor.getPasswordHash() == null || doctor.getPasswordHash().isBlank()) {
-      doctor.setPasswordHash("{plain}123456");
+      doctor.setPasswordHash(passwordHashService.encode("123456"));
     }
     doctor.setDepartmentId(request.departmentId());
     doctor.setTitle(request.title());

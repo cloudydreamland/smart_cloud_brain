@@ -16,11 +16,14 @@ public class NotificationWebSocketHandler extends TextWebSocketHandler {
   private final Map<Long, WebSocketSession> doctorSessions = new ConcurrentHashMap<>();
 
   @Override
-  public void afterConnectionEstablished(WebSocketSession session) {
+  public void afterConnectionEstablished(WebSocketSession session) throws IOException {
     Long doctorId = resolveDoctorId(session);
-    if (doctorId != null) {
-      doctorSessions.put(doctorId, session);
+    String role = session.getHandshakeHeaders().getFirst(UserContextHeaders.USER_ROLE);
+    if (doctorId == null || !"DOCTOR".equals(role)) {
+      session.close(CloseStatus.POLICY_VIOLATION);
+      return;
     }
+    doctorSessions.put(doctorId, session);
   }
 
   @Override
@@ -45,15 +48,6 @@ public class NotificationWebSocketHandler extends TextWebSocketHandler {
 
   private Long resolveDoctorId(WebSocketSession session) {
     String doctorId = session.getHandshakeHeaders().getFirst(UserContextHeaders.USER_ID);
-    if (doctorId == null && session.getUri() != null && session.getUri().getQuery() != null) {
-      for (String part : session.getUri().getQuery().split("&")) {
-        String[] pair = part.split("=", 2);
-        if (pair.length == 2 && "doctorId".equals(pair[0])) {
-          doctorId = pair[1];
-          break;
-        }
-      }
-    }
     if (doctorId == null) {
       return null;
     }

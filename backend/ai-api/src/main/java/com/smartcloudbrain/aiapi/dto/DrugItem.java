@@ -6,6 +6,8 @@ public record DrugItem(
     @NotBlank String drugName,
     @NotBlank String dosage,
     @NotBlank String frequency,
-    @NotBlank String usageMethod
+    @NotBlank String usageMethod,
+    Integer days,
+    String remark
 ) {
 }

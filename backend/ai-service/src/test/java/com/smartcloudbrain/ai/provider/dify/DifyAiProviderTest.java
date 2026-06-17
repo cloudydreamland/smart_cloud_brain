@@ -54,7 +54,7 @@ class DifyAiProviderTest {
     var prescription = provider.checkPrescription(new PrescriptionCheckRequest(
         1L,
         1L,
-        List.of(new DrugItem("阿司匹林", "100mg", "每日一次", "口服"))
+        List.of(new DrugItem("阿司匹林", "100mg", "每日一次", "口服", 7, ""))
     ));
 
     assertEquals("CARDIOLOGY", triage.departmentCode());

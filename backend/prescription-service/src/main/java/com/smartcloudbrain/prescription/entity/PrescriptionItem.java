@@ -16,6 +16,8 @@ public class PrescriptionItem extends BaseEntity {
   private String frequency;
   @Column(name = "usage_method")
   private String usageMethod;
+  private Integer days;
+  private String remark;
 
   public Long getPrescriptionId() {
     return prescriptionId;
@@ -55,6 +57,22 @@ public class PrescriptionItem extends BaseEntity {
 
   public void setUsageMethod(String usageMethod) {
     this.usageMethod = usageMethod;
+  }
+
+  public Integer getDays() {
+    return days;
+  }
+
+  public void setDays(Integer days) {
+    this.days = days;
+  }
+
+  public String getRemark() {
+    return remark;
+  }
+
+  public void setRemark(String remark) {
+    this.remark = remark;
   }
 }
 

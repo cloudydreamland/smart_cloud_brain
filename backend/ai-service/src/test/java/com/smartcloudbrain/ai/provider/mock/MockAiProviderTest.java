@@ -27,7 +27,7 @@ class MockAiProviderTest {
     var response = provider.checkPrescription(new PrescriptionCheckRequest(
         1L,
         1L,
-        List.of(new DrugItem("aspirin", "100mg", "once daily", "oral"))
+        List.of(new DrugItem("aspirin", "100mg", "once daily", "oral", 7, ""))
     ));
 
     assertEquals("MEDIUM", response.riskLevel());

@@ -17,6 +17,7 @@ import com.smartcloudbrain.registration.repository.RegistrationRepository;
 import com.smartcloudbrain.common.security.AuthenticatedUser;
 import com.smartcloudbrain.common.security.CurrentUserService;
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.springframework.stereotype.Service;
@@ -57,8 +58,11 @@ public class RegistrationService {
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
     AppointmentSlot slot = null;
     if (request.slotId() != null) {
-      slot = appointmentSlotRepository.findById(request.slotId())
+      slot = appointmentSlotRepository.findByIdForUpdate(request.slotId())
           .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+      if (registrationRepository.existsByPatientIdAndSlotIdAndStatusNot(user.userId(), slot.getId(), "CANCELLED")) {
+        throw new BusinessException(ErrorCode.CONFLICT);
+      }
       if (!"AVAILABLE".equalsIgnoreCase(slot.getStatus())
           || slot.getRemainingCapacity() == null
           || slot.getRemainingCapacity() <= 0
@@ -78,6 +82,7 @@ public class RegistrationService {
     registration.setDoctorId(doctor.getId());
     registration.setDepartmentId(request.departmentId());
     registration.setTriageRecordId(request.triageRecordId());
+    registration.setSlotId(slot == null ? null : slot.getId());
     registration.setAppointmentTime(slot == null ? request.appointmentTime() : slot.getStartTime());
     registration.setStatus("CREATED");
     registration.setUpdatedAt(LocalDateTime.now());
@@ -108,7 +113,28 @@ public class RegistrationService {
     if (user.role() == RoleType.DOCTOR && !registration.getDoctorId().equals(user.userId())) {
       throw new BusinessException(ErrorCode.FORBIDDEN);
     }
+    if ("CANCELLED".equalsIgnoreCase(registration.getStatus())) {
+      return registrationView(registration);
+    }
     registration.setStatus("CANCELLED");
+    registration.setUpdatedAt(LocalDateTime.now());
+    Registration saved = registrationRepository.save(registration);
+    restoreSlotCapacity(saved.getSlotId());
+    return registrationView(saved);
+  }
+
+  @Transactional
+  public Map<String, Object> complete(Long registrationId) {
+    AuthenticatedUser user = currentUserService.require(RoleType.DOCTOR);
+    Registration registration = registrationRepository.findById(registrationId)
+        .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+    if (!registration.getDoctorId().equals(user.userId())) {
+      throw new BusinessException(ErrorCode.FORBIDDEN);
+    }
+    if ("CANCELLED".equalsIgnoreCase(registration.getStatus())) {
+      throw new BusinessException(ErrorCode.CONFLICT);
+    }
+    registration.setStatus("COMPLETED");
     registration.setUpdatedAt(LocalDateTime.now());
     return registrationView(registrationRepository.save(registration));
   }
@@ -128,18 +154,37 @@ public class RegistrationService {
     Patient patient = patientRepository.findById(registration.getPatientId()).orElse(null);
     Doctor doctor = doctorRepository.findById(registration.getDoctorId()).orElse(null);
     Department department = departmentRepository.findById(registration.getDepartmentId()).orElse(null);
-    return Map.of(
-        "registrationId", registration.getId(),
-        "patientId", registration.getPatientId(),
-        "patientName", patient == null ? "" : patient.getName(),
-        "doctorId", registration.getDoctorId(),
-        "doctorName", doctor == null ? "" : doctor.getName(),
-        "departmentId", registration.getDepartmentId(),
-        "departmentName", department == null ? "" : department.getName(),
-        "appointmentTime", registration.getAppointmentTime() == null ? "" : registration.getAppointmentTime().toString(),
-        "status", registration.getStatus(),
-        "triageRecordId", registration.getTriageRecordId() == null ? 0L : registration.getTriageRecordId()
-    );
+    Map<String, Object> view = new LinkedHashMap<>();
+    view.put("registrationId", registration.getId());
+    view.put("patientId", registration.getPatientId());
+    view.put("patientName", patient == null ? "" : patient.getName());
+    view.put("doctorId", registration.getDoctorId());
+    view.put("doctorName", doctor == null ? "" : doctor.getName());
+    view.put("departmentId", registration.getDepartmentId());
+    view.put("departmentName", department == null ? "" : department.getName());
+    view.put("appointmentTime", registration.getAppointmentTime() == null ? "" : registration.getAppointmentTime().toString());
+    view.put("slotId", registration.getSlotId() == null ? 0L : registration.getSlotId());
+    view.put("status", registration.getStatus());
+    view.put("triageRecordId", registration.getTriageRecordId() == null ? 0L : registration.getTriageRecordId());
+    return view;
+  }
+
+  private void restoreSlotCapacity(Long slotId) {
+    if (slotId == null) {
+      return;
+    }
+    AppointmentSlot slot = appointmentSlotRepository.findByIdForUpdate(slotId).orElse(null);
+    if (slot == null || slot.getCapacity() == null || slot.getRemainingCapacity() == null) {
+      return;
+    }
+    if (slot.getRemainingCapacity() < slot.getCapacity()) {
+      slot.setRemainingCapacity(slot.getRemainingCapacity() + 1);
+      if (slot.getRemainingCapacity() > 0 && !"DISABLED".equalsIgnoreCase(slot.getStatus())) {
+        slot.setStatus("AVAILABLE");
+      }
+      slot.setUpdatedAt(LocalDateTime.now());
+      appointmentSlotRepository.save(slot);
+    }
   }
 
   private Map<String, Object> slotView(AppointmentSlot slot) {

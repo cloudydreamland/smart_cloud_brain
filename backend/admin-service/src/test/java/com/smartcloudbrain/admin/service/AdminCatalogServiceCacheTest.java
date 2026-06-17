@@ -23,6 +23,7 @@ import com.smartcloudbrain.admin.repository.DrugRepository;
 import com.smartcloudbrain.admin.repository.KnowledgeEntryRepository;
 import com.smartcloudbrain.admin.repository.PromptTemplateRepository;
 import com.smartcloudbrain.admin.repository.SystemDictRepository;
+import com.smartcloudbrain.common.security.PasswordHashService;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -172,7 +173,8 @@ class AdminCatalogServiceCacheTest {
         SystemDictRepository systemDictRepository,
         AiScheduleSuggestionRepository aiScheduleSuggestionRepository,
         InternalDoctorClient internalDoctorClient,
-        InternalTriageClient internalTriageClient
+        InternalTriageClient internalTriageClient,
+        PasswordHashService passwordHashService
     ) {
       return new AdminCatalogService(
           departmentRepository,
@@ -183,7 +185,8 @@ class AdminCatalogServiceCacheTest {
           systemDictRepository,
           aiScheduleSuggestionRepository,
           internalDoctorClient,
-          internalTriageClient
+          internalTriageClient,
+          passwordHashService
       );
     }
 
@@ -196,5 +199,6 @@ class AdminCatalogServiceCacheTest {
     @Bean AiScheduleSuggestionRepository aiScheduleSuggestionRepository() { return mock(AiScheduleSuggestionRepository.class); }
     @Bean InternalDoctorClient internalDoctorClient() { return mock(InternalDoctorClient.class); }
     @Bean InternalTriageClient internalTriageClient() { return mock(InternalTriageClient.class); }
+    @Bean PasswordHashService passwordHashService() { return mock(PasswordHashService.class); }
   }
 }

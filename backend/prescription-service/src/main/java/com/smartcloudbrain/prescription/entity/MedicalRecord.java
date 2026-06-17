@@ -12,6 +12,8 @@ public class MedicalRecord extends BaseEntity {
   private Long patientId;
   @Column(name = "doctor_id")
   private Long doctorId;
+  @Column(name = "registration_id")
+  private Long registrationId;
 
   public Long getPatientId() {
     return patientId;
@@ -27,5 +29,13 @@ public class MedicalRecord extends BaseEntity {
 
   public void setDoctorId(Long doctorId) {
     this.doctorId = doctorId;
+  }
+
+  public Long getRegistrationId() {
+    return registrationId;
+  }
+
+  public void setRegistrationId(Long registrationId) {
+    this.registrationId = registrationId;
   }
 }

@@ -72,7 +72,7 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered {
   }
 
   private boolean isPublic(String path) {
-    return PUBLIC_PATHS.contains(path) || path.startsWith("/internal/auth/");
+    return PUBLIC_PATHS.contains(path);
   }
 
   private String resolveToken(ServerHttpRequest request) {
@@ -80,7 +80,18 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered {
     if (authorization != null && authorization.startsWith("Bearer ")) {
       return authorization.substring("Bearer ".length());
     }
-    return request.getQueryParams().getFirst("token");
+    List<String> protocols = request.getHeaders().get("Sec-WebSocket-Protocol");
+    if (protocols != null) {
+      for (String header : protocols) {
+        String[] parts = header.split(",");
+        for (int i = 0; i < parts.length - 1; i++) {
+          if ("bearer".equalsIgnoreCase(parts[i].trim())) {
+            return parts[i + 1].trim();
+          }
+        }
+      }
+    }
+    return null;
   }
 }
 

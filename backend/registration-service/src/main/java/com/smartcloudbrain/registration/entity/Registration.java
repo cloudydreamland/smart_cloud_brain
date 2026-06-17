@@ -17,6 +17,8 @@ public class Registration extends BaseEntity {
   private Long departmentId;
   @Column(name = "triage_record_id")
   private Long triageRecordId;
+  @Column(name = "slot_id")
+  private Long slotId;
   @Column(name = "appointment_time")
   private LocalDateTime appointmentTime;
   private String status;
@@ -53,6 +55,14 @@ public class Registration extends BaseEntity {
 
   public void setTriageRecordId(Long triageRecordId) {
     this.triageRecordId = triageRecordId;
+  }
+
+  public Long getSlotId() {
+    return slotId;
+  }
+
+  public void setSlotId(Long slotId) {
+    this.slotId = slotId;
   }
 
   public LocalDateTime getAppointmentTime() {

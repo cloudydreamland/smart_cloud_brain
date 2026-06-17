@@ -40,6 +40,11 @@ public class RegistrationController {
   public Result<?> cancel(@RequestBody Map<String, Long> request) {
     return Result.success(registrationService.cancel(request.get("registrationId")));
   }
+
+  @PostMapping("/complete")
+  public Result<?> complete(@RequestBody Map<String, Long> request) {
+    return Result.success(registrationService.complete(request.get("registrationId")));
+  }
 }
 
 

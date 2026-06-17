@@ -10,9 +10,9 @@ ON CONFLICT (id) DO UPDATE SET
   description = EXCLUDED.description;
 
 INSERT INTO doctor (id, name, phone, password_hash, department_id, title, specialty, status) VALUES
-  (1, 'Dr Zhang', '13900000001', '{plain}123456', 1, 'Chief Physician', 'Chest pain, palpitation, hypertension', 'ENABLED'),
-  (2, 'Dr Li', '13900000002', '{plain}123456', 2, 'Attending Physician', 'Fever, sore throat, diarrhea, allergy', 'ENABLED'),
-  (3, 'Dr Wang', '13900000003', '{plain}123456', 3, 'Associate Chief Physician', 'Cough, asthma, lung infection', 'ENABLED')
+  (1, 'Dr Zhang', '13900000001', '{sha256}8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', 1, 'Chief Physician', 'Chest pain, palpitation, hypertension', 'ENABLED'),
+  (2, 'Dr Li', '13900000002', '{sha256}8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', 2, 'Attending Physician', 'Fever, sore throat, diarrhea, allergy', 'ENABLED'),
+  (3, 'Dr Wang', '13900000003', '{sha256}8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', 3, 'Associate Chief Physician', 'Cough, asthma, lung infection', 'ENABLED')
 ON CONFLICT (id) DO UPDATE SET
   name = EXCLUDED.name,
   phone = EXCLUDED.phone,
@@ -23,7 +23,7 @@ ON CONFLICT (id) DO UPDATE SET
   status = EXCLUDED.status;
 
 INSERT INTO patient (id, name, phone, password_hash, gender, age, allergy_history, past_history) VALUES
-  (1, 'Test Patient', '13800000001', '{plain}123456', 'FEMALE', 21, 'No known drug allergy', 'No special medical history')
+  (1, 'Test Patient', '13800000001', '{sha256}8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', 'FEMALE', 21, 'No known drug allergy', 'No special medical history')
 ON CONFLICT (id) DO UPDATE SET
   name = EXCLUDED.name,
   phone = EXCLUDED.phone,
@@ -34,7 +34,7 @@ ON CONFLICT (id) DO UPDATE SET
   past_history = EXCLUDED.past_history;
 
 INSERT INTO admin_user (id, username, password_hash, name, status) VALUES
-  (1, 'admin', '{plain}123456', 'System Admin', 'ENABLED')
+  (1, 'admin', '{sha256}8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', 'System Admin', 'ENABLED')
 ON CONFLICT (id) DO UPDATE SET
   username = EXCLUDED.username,
   password_hash = EXCLUDED.password_hash,

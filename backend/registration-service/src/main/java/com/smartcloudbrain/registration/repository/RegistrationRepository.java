@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface RegistrationRepository extends JpaRepository<Registration, Long> {
   List<Registration> findByPatientId(Long patientId);
   List<Registration> findByDoctorId(Long doctorId);
+  boolean existsByPatientIdAndSlotIdAndStatusNot(Long patientId, Long slotId, String status);
 }
 
 
