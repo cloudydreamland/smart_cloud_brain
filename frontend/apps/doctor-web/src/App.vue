@@ -31,6 +31,8 @@ const error = ref("");
 const notice = ref("");
 const selectedRegistrationId = ref<number | null>(null);
 const socketStatus = ref("未连接");
+const queueKeyword = ref("");
+const queueStatus = ref("");
 const loginForm = reactive({ account: "", password: "" });
 const dialogueText = ref("");
 const medicalForm = reactive({
@@ -63,6 +65,15 @@ const selectedTriage = computed(() => {
   return triageRecords.value.find((item) => toNumber(item.triageRecordId) === triageId) ?? null;
 });
 const todayQueue = computed(() => registrations.value.filter((item) => fieldText(item, "status") !== "CANCELLED"));
+const filteredQueue = computed(() => {
+  const keyword = queueKeyword.value.trim().toLowerCase();
+  return todayQueue.value.filter((item) => {
+    const statusMatched = !queueStatus.value || fieldText(item, "status") === queueStatus.value;
+    const haystack = `${fieldText(item, "patientName", "")} ${fieldText(item, "patientId", "")} ${fieldText(item, "departmentName", "")}`.toLowerCase();
+    const keywordMatched = !keyword || haystack.includes(keyword);
+    return statusMatched && keywordMatched;
+  });
+});
 const unreadNotifications = computed(() => notifications.value.filter((item) => fieldText(item, "readStatus") !== "READ"));
 const canSaveRecord = computed(() =>
   medicalForm.registrationId > 0 && medicalForm.chiefComplaint.trim().length > 0 && medicalForm.diagnosis.trim().length > 0
@@ -73,6 +84,7 @@ const canCheckPrescription = computed(() =>
   )
 );
 const canCreatePrescription = computed(() => prescription.medicalRecordId > 0 && canCheckPrescription.value);
+const checkInteractions = computed(() => (checkResult.value?.interactions as string[] | undefined) ?? []);
 
 function text(item: DataRow | null | undefined, key: string, fallback = "-") {
   return fieldText(item, key, fallback);
@@ -112,7 +124,7 @@ async function login() {
     if (!auth.requireRole("DOCTOR")) return;
     await refresh();
     connectNotifications();
-    setNotice("已进入医生工作台。");
+    setNotice("已进入医生接诊工作台。");
   });
 }
 
@@ -278,7 +290,7 @@ async function createPrescription() {
       drugs: prescription.drugs,
     });
     await workflow.refresh(auth.token());
-    setNotice("处方已确认。后端当前未提供完成接诊接口，队列状态不会在前端伪造变更。");
+    setNotice("处方已确认。当前后端未提供完成接诊接口，队列状态不会在前端伪造变更。");
   });
 }
 
@@ -355,233 +367,225 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <main class="app-shell">
-    <aside class="sidebar">
-      <div class="brand">
-        <span>医</span>
-        <div>
-          <h1>医生工作台</h1>
-          <p>队列 / 病历 / 处方审核</p>
-        </div>
+  <main class="doctor-shell">
+    <header class="doctor-topbar">
+      <div>
+        <p class="eyebrow">医生工作台</p>
+        <h1>接诊处理</h1>
+        <p>今日队列、病历文书和处方审核集中处理。</p>
       </div>
-      <div v-if="session" class="user-card">
-        <strong>{{ session.name }}</strong>
-        <span>{{ session.role }} #{{ session.userId }}</span>
-        <div class="row-meta">
-          <span class="tag success">{{ socketStatus }}</span>
-          <span class="tag warning">{{ unreadNotifications.length }} 未读</span>
-        </div>
+      <div v-if="session" class="topbar-actions">
+        <span class="tag info">{{ socketStatus }}</span>
+        <span>{{ session.name }} · {{ session.role }} #{{ session.userId }}</span>
+        <button type="button" :disabled="loading.data" @click="refresh">同步队列</button>
+        <button type="button" @click="logout">退出</button>
       </div>
-      <nav class="side-nav">
-        <a class="active" href="#queue">待接诊 <b>{{ todayQueue.length }}</b></a>
-        <a href="#patient">患者摘要</a>
-        <a href="#record">病历</a>
-        <a href="#prescription">处方审核</a>
-        <a href="#notifications">通知 <b>{{ notifications.length }}</b></a>
-      </nav>
-      <button v-if="session" type="button" @click="logout">退出</button>
-    </aside>
+    </header>
 
-    <section class="workspace">
-      <header class="topbar">
-        <div>
-          <p class="eyebrow">Doctor Web</p>
-          <h2>接诊处理</h2>
-          <p>从挂号队列进入患者上下文，完成病历保存和处方审核。</p>
-        </div>
-        <div class="toolbar">
-          <button type="button" :disabled="loading.data" @click="refresh">同步队列</button>
-          <button class="primary" type="button" :disabled="!selectedRegistration" @click="selectedRegistration && selectRegistration(selectedRegistration)">开始接诊</button>
-        </div>
-      </header>
+    <div v-if="error" class="notice error">{{ error }}</div>
+    <div v-if="notice" class="notice success">{{ notice }}</div>
+    <div v-if="permissionError" class="notice error">
+      <span>{{ permissionError }}</span>
+      <button type="button" @click="logout">切换账号</button>
+    </div>
 
-      <div v-if="error" class="notice error">{{ error }}</div>
-      <div v-if="notice" class="notice success">{{ notice }}</div>
-      <div v-if="permissionError" class="notice error">
-        {{ permissionError }}
-        <button type="button" @click="logout">切换账号</button>
+    <section v-if="loading.boot" class="panel">
+      <div class="loading-state">正在加载医生端配置...</div>
+    </section>
+
+    <form v-else-if="!session || permissionError" class="panel login-panel" @submit.prevent="login">
+      <div class="panel-title">
+        <p class="eyebrow">医生登录</p>
+        <h2>进入接诊工作台</h2>
+        <p>登录后可查看今日队列、生成病历并进行处方审核。</p>
       </div>
+      <div class="form-grid">
+        <label>账号<input v-model.trim="loginForm.account" autocomplete="username" /></label>
+        <label>密码<input v-model="loginForm.password" type="password" autocomplete="current-password" /></label>
+      </div>
+      <button class="primary" type="submit" :disabled="loading.auth">进入工作台</button>
+    </form>
 
-      <section v-if="loading.boot" class="panel">
-        <div class="loading-state">正在加载医生端配置...</div>
-      </section>
-
-      <form v-else-if="!session || permissionError" class="panel login-panel" @submit.prevent="login">
-        <h2>医生登录</h2>
-        <div class="form-grid">
-          <label>账号<input v-model.trim="loginForm.account" autocomplete="username" /></label>
-          <label>密码<input v-model="loginForm.password" type="password" autocomplete="current-password" /></label>
+    <section v-else class="doctor-workspace">
+      <aside class="queue-column panel">
+        <div class="panel-title">
+          <p class="eyebrow">今日队列</p>
+          <h2>待接诊患者</h2>
+          <p>{{ filteredQueue.length }} / {{ todayQueue.length }} 条记录</p>
         </div>
-        <button class="primary" type="submit" :disabled="loading.auth">进入工作台</button>
-      </form>
+        <div class="queue-filters">
+          <label>搜索<input v-model.trim="queueKeyword" placeholder="姓名、患者ID、科室" /></label>
+          <label>状态
+            <select v-model="queueStatus">
+              <option value="">全部</option>
+              <option value="CREATED">已创建</option>
+              <option value="CONFIRMED">已确认</option>
+              <option value="PENDING">待处理</option>
+            </select>
+          </label>
+        </div>
+        <div v-if="loading.data" class="loading-state">正在同步队列...</div>
+        <div v-else-if="filteredQueue.length" class="queue-list">
+          <button
+            v-for="item in filteredQueue"
+            :key="String(item.registrationId)"
+            type="button"
+            class="queue-item"
+            :class="{ active: toNumber(item.registrationId) === selectedRegistrationId }"
+            @click="selectRegistration(item)"
+          >
+            <span>
+              <strong>{{ text(item, "patientName", `患者${text(item, "patientId")}`) }}</strong>
+              <small>#{{ text(item, "registrationId") }} · {{ text(item, "departmentName") }}</small>
+              <small>{{ text(item, "appointmentTime") }}</small>
+            </span>
+            <span class="tag" :class="statusClass(item.status)">{{ text(item, "status") }}</span>
+          </button>
+        </div>
+        <div v-else class="empty-state">当前筛选条件下暂无待接诊患者。</div>
+      </aside>
 
-      <template v-else>
-        <section class="metrics">
-          <div class="metric"><span>待接诊</span><strong>{{ todayQueue.length }}</strong></div>
-          <div class="metric"><span>当前病历状态</span><strong>{{ streamStatus }}</strong></div>
-          <div class="metric"><span>处方风险</span><strong>{{ prescription.riskLevel }}</strong></div>
-          <div class="metric"><span>未读通知</span><strong>{{ unreadNotifications.length }}</strong></div>
-        </section>
-
-        <section class="main-grid">
-          <div class="stack">
-            <section id="queue" class="panel">
-              <div class="panel-header">
-                <div>
-                  <h2>今日挂号队列</h2>
-                  <p>来自 `/api/registration/list`，按当前医生权限过滤。</p>
-                </div>
-                <span class="tag info">无分页</span>
-              </div>
-              <div v-if="loading.data" class="loading-state">正在同步队列...</div>
-              <div v-else-if="todayQueue.length" class="table-scroll">
-                <table>
-                  <thead><tr><th>挂号</th><th>患者</th><th>科室</th><th>时间</th><th>状态</th></tr></thead>
-                  <tbody>
-                    <tr v-for="item in todayQueue" :key="String(item.registrationId)" :class="{ selected: toNumber(item.registrationId) === selectedRegistrationId }" @click="selectRegistration(item)">
-                      <td>#{{ text(item, "registrationId") }}</td>
-                      <td>{{ text(item, "patientName", `患者 ${text(item, "patientId")}`) }}</td>
-                      <td>{{ text(item, "departmentName") }}</td>
-                      <td>{{ text(item, "appointmentTime") }}</td>
-                      <td><span class="tag" :class="statusClass(item.status)">{{ text(item, "status") }}</span></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              <div v-else class="empty-state">
-                <strong>暂无待接诊患者</strong>
-                <span>当前医生没有可处理的挂号记录。</span>
-              </div>
-            </section>
-
-            <section id="record" class="panel">
-              <div class="panel-header">
-                <div>
-                  <h2>病历生成与保存</h2>
-                  <p>流式不可用时自动降级到普通生成接口，医生确认后保存。</p>
-                </div>
-                <span class="tag info">{{ streamStatus }}</span>
-              </div>
-              <label>问诊对话摘要<textarea v-model.trim="dialogueText" rows="4" /></label>
-              <div class="toolbar">
-                <button class="primary" type="button" :disabled="loading.record || !selectedRegistrationId" @click="generateRecord">生成病历草稿</button>
-                <button type="button" :disabled="loading.record || !canSaveRecord" @click="saveRecord">保存病历</button>
-              </div>
-              <div v-if="streamText" class="clinical-note">
-                <strong>生成过程</strong>
-                <p>{{ streamText }}</p>
-              </div>
-              <div class="form-grid">
-                <label>主诉<input v-model.trim="medicalForm.chiefComplaint" /></label>
-                <label>诊断<input v-model.trim="medicalForm.diagnosis" /></label>
-                <label>现病史<textarea v-model.trim="medicalForm.presentIllness" rows="3" /></label>
-                <label>既往史<textarea v-model.trim="medicalForm.pastHistory" rows="3" /></label>
-                <label>体格检查<textarea v-model.trim="medicalForm.physicalExam" rows="3" /></label>
-                <label>处理建议<textarea v-model.trim="medicalForm.treatmentAdvice" rows="3" /></label>
-              </div>
-            </section>
+      <section class="encounter-column">
+        <section class="panel patient-panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <p class="eyebrow">当前患者</p>
+              <h2>{{ selectedRegistration ? text(selectedRegistration, "patientName", `患者${text(selectedRegistration, "patientId")}`) : "未选择患者" }}</h2>
+              <p>{{ selectedRegistration ? `${text(selectedRegistration, "departmentName")} · ${text(selectedRegistration, "appointmentTime")}` : "请从左侧队列选择患者开始接诊。" }}</p>
+            </div>
+            <span v-if="selectedRegistration" class="tag" :class="statusClass(selectedRegistration.status)">{{ text(selectedRegistration, "status") }}</span>
           </div>
 
-          <aside class="stack">
-            <section id="patient" class="panel">
-              <div class="panel-header">
-                <div>
-                  <h2>患者和分诊摘要</h2>
-                  <p>来自挂号记录和分诊记录。</p>
-                </div>
-              </div>
-              <div v-if="selectedRegistration" class="summary-strip">
-                <div><span>患者</span><strong>{{ text(selectedRegistration, "patientName") }}</strong></div>
-                <div><span>挂号</span><strong>#{{ text(selectedRegistration, "registrationId") }}</strong></div>
-                <div><span>科室</span><strong>{{ text(selectedRegistration, "departmentName") }}</strong></div>
-              </div>
-              <div v-else class="empty-state">请选择队列中的患者。</div>
-              <div v-if="selectedTriage" class="clinical-note">
-                <strong>{{ text(selectedTriage, "recommendedDepartment", "分诊科室待确认") }}</strong>
-                <p>{{ text(selectedTriage, "chiefComplaint") }}</p>
-                <p>{{ text(selectedTriage, "reason") }}</p>
-                <span class="tag" :class="statusClass(selectedTriage.status)">{{ text(selectedTriage, "status") }}</span>
-              </div>
-              <div v-else class="empty-state">当前挂号未关联分诊记录。</div>
-            </section>
-
-            <section id="prescription" class="panel">
-              <div class="panel-header">
-                <div>
-                  <h2>处方审核</h2>
-                  <p>药品明细与后端 `DrugItem` 对齐。</p>
-                </div>
-                <span class="tag" :class="statusClass(prescription.riskLevel)">{{ prescription.riskLevel }}</span>
-              </div>
-              <div v-for="(drug, index) in prescription.drugs" :key="index" class="drug-row">
-                <label>药品<input v-model.trim="drug.drugName" list="drug-options" /></label>
-                <label>剂量<input v-model.trim="drug.dosage" /></label>
-                <label>频次<input v-model.trim="drug.frequency" /></label>
-                <label>用法<input v-model.trim="drug.usageMethod" /></label>
-                <button class="danger" type="button" @click="removeDrug(index)">移除</button>
-              </div>
-              <datalist id="drug-options">
-                <option v-for="drug in drugs" :key="String(drug.id)" :value="String(drug.name)" />
-              </datalist>
-              <div class="toolbar">
-                <button type="button" @click="addDrug">新增药品</button>
-                <button class="primary" type="button" :disabled="loading.prescription || !canCheckPrescription" @click="checkPrescription">审核处方</button>
-                <button type="button" :disabled="loading.prescription || !canCreatePrescription" @click="createPrescription">确认处方</button>
-              </div>
-              <div v-if="checkResult" class="notice warning">
-                <strong>风险等级：{{ text(checkResult, "riskLevel", "未返回") }}</strong>
-                <span>{{ text(checkResult, "suggestions", "请医生复核用药风险。") }}</span>
-                <span v-if="(checkResult.interactions as string[] || []).length">相互作用：{{ (checkResult.interactions as string[]).join("、") }}</span>
-              </div>
-            </section>
-
-            <section id="notifications" class="panel">
-              <div class="panel-header">
-                <div>
-                  <h2>通知</h2>
-                  <p>WebSocket 不可用时每 15 秒轮询。</p>
-                </div>
-                <button type="button" :disabled="loading.notification" @click="refresh">刷新</button>
-              </div>
-              <div v-if="notifications.length" class="mini-list">
-                <article v-for="item in notifications" :key="String(item.notificationId)" class="notification-row">
-                  <div>
-                    <strong>{{ text(item, "title") }}</strong>
-                    <p>{{ text(item, "content") }}</p>
-                    <span class="tag" :class="statusClass(item.riskLevel)">{{ text(item, "riskLevel", "INFO") }}</span>
-                    <span class="tag" :class="statusClass(item.readStatus)">{{ text(item, "readStatus") }}</span>
-                  </div>
-                  <button type="button" :disabled="text(item, 'readStatus') === 'READ'" @click="markRead(item)">已读</button>
-                </article>
-              </div>
-              <div v-else class="empty-state">暂无通知。</div>
-            </section>
-          </aside>
+          <div v-if="selectedRegistration" class="patient-summary">
+            <div><span>挂号号</span><strong>#{{ text(selectedRegistration, "registrationId") }}</strong></div>
+            <div><span>患者ID</span><strong>{{ text(selectedRegistration, "patientId") }}</strong></div>
+            <div><span>医生</span><strong>{{ text(selectedRegistration, "doctorName", session.name) }}</strong></div>
+          </div>
+          <div v-else class="empty-state">未选择患者时不会生成病历或处方。</div>
         </section>
 
         <section class="panel">
+          <div class="panel-title">
+            <h2>分诊记录</h2>
+            <p>接诊前快速查看主诉、推荐科室和处理建议。</p>
+          </div>
+          <div v-if="selectedTriage" class="clinical-note">
+            <div class="note-head">
+              <strong>{{ text(selectedTriage, "recommendedDepartment", "分诊科室待确认") }}</strong>
+              <span class="tag" :class="statusClass(selectedTriage.status)">{{ text(selectedTriage, "status") }}</span>
+            </div>
+            <p>{{ text(selectedTriage, "chiefComplaint") }}</p>
+            <p>{{ text(selectedTriage, "reason") }}</p>
+          </div>
+          <div v-else class="empty-state">当前挂号未关联分诊记录。</div>
+        </section>
+
+        <section class="panel record-editor">
           <div class="panel-header">
-            <div>
-              <h2>已保存病历和处方</h2>
-              <p>用于医生复核当前账号下的诊疗输出。</p>
+            <div class="panel-title">
+              <h2>病历生成与编辑</h2>
+              <p>先填写问诊摘要，可生成结构化草稿；医生确认后保存。</p>
+            </div>
+            <span class="tag info">{{ streamStatus }}</span>
+          </div>
+          <label>问诊摘要<textarea v-model.trim="dialogueText" rows="4" placeholder="记录患者主诉、现病史、查体要点和医嘱考虑" /></label>
+          <div class="toolbar">
+            <button class="primary" type="button" :disabled="loading.record || !selectedRegistrationId" @click="generateRecord">生成病历草稿</button>
+            <button type="button" :disabled="loading.record || !canSaveRecord" @click="saveRecord">保存病历</button>
+          </div>
+          <div v-if="streamText" class="stream-box">
+            <strong>生成状态</strong>
+            <p>{{ streamText }}</p>
+          </div>
+          <div class="medical-form">
+            <label class="wide">主诉<input v-model.trim="medicalForm.chiefComplaint" /></label>
+            <label class="wide">诊断<input v-model.trim="medicalForm.diagnosis" /></label>
+            <label>现病史<textarea v-model.trim="medicalForm.presentIllness" rows="4" /></label>
+            <label>既往史<textarea v-model.trim="medicalForm.pastHistory" rows="4" /></label>
+            <label>体格检查<textarea v-model.trim="medicalForm.physicalExam" rows="4" /></label>
+            <label>处理建议<textarea v-model.trim="medicalForm.treatmentAdvice" rows="4" /></label>
+          </div>
+        </section>
+      </section>
+
+      <aside class="right-column">
+        <section class="panel prescription-panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <p class="eyebrow">处方审核</p>
+              <h2>药品录入</h2>
+              <p>保存病历后可确认处方；审核结果来自处方审核接口。</p>
+            </div>
+            <span class="tag" :class="statusClass(prescription.riskLevel)">{{ prescription.riskLevel }}</span>
+          </div>
+          <div class="drug-list">
+            <div v-for="(drug, index) in prescription.drugs" :key="index" class="drug-row">
+              <label>药品<input v-model.trim="drug.drugName" list="drug-options" /></label>
+              <label>剂量<input v-model.trim="drug.dosage" /></label>
+              <label>频次<input v-model.trim="drug.frequency" /></label>
+              <label>用法<input v-model.trim="drug.usageMethod" /></label>
+              <button class="danger subtle" type="button" @click="removeDrug(index)">删除</button>
             </div>
           </div>
-          <div class="table-scroll">
-            <table>
-              <thead><tr><th>类型</th><th>编号</th><th>患者</th><th>摘要</th><th>状态</th></tr></thead>
-              <tbody>
-                <tr v-for="item in records" :key="`r-${String(item.medicalRecordId)}`">
-                  <td>病历</td><td>#{{ text(item, "medicalRecordId") }}</td><td>{{ text(item, "patientName") }}</td><td>{{ text(item, "diagnosis") }}</td><td>{{ item.aiGenerated ? "AI 草稿已确认" : "医生录入" }}</td>
-                </tr>
-                <tr v-for="item in prescriptions" :key="`p-${String(item.prescriptionId)}`">
-                  <td>处方</td><td>#{{ text(item, "prescriptionId") }}</td><td>{{ text(item, "patientId") }}</td><td>{{ text(item, "riskLevel", "未审核") }}</td><td>{{ text(item, "status") }}</td>
-                </tr>
-              </tbody>
-            </table>
+          <datalist id="drug-options">
+            <option v-for="drug in drugs" :key="String(drug.id)" :value="String(drug.name)" />
+          </datalist>
+          <div class="toolbar">
+            <button type="button" @click="addDrug">新增药品</button>
+            <button class="primary" type="button" :disabled="loading.prescription || !canCheckPrescription" @click="checkPrescription">审核处方</button>
+            <button type="button" :disabled="loading.prescription || !canCreatePrescription" @click="createPrescription">确认处方</button>
+          </div>
+          <div v-if="checkResult" class="risk-panel" :class="statusClass(checkResult.riskLevel)">
+            <strong>风险等级：{{ text(checkResult, "riskLevel", "未返回") }}</strong>
+            <p>{{ text(checkResult, "suggestions", "请医生复核用药风险。") }}</p>
+            <p v-if="checkInteractions.length">相互作用：{{ checkInteractions.join("、") }}</p>
+          </div>
+          <div v-else class="empty-state">处方审核结果会显示在这里。</div>
+        </section>
+
+        <section class="panel notification-panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <p class="eyebrow">通知</p>
+              <h2>风险与系统通知</h2>
+              <p>{{ unreadNotifications.length }} 条未读</p>
+            </div>
+            <button type="button" :disabled="loading.notification" @click="refresh">刷新</button>
+          </div>
+          <div v-if="notifications.length" class="notification-list">
+            <article v-for="item in notifications" :key="String(item.notificationId)" class="notification-row">
+              <div>
+                <strong>{{ text(item, "title") }}</strong>
+                <p>{{ text(item, "content") }}</p>
+                <div class="tag-row">
+                  <span class="tag" :class="statusClass(item.riskLevel)">{{ text(item, "riskLevel", "INFO") }}</span>
+                  <span class="tag" :class="statusClass(item.readStatus)">{{ text(item, "readStatus") }}</span>
+                </div>
+              </div>
+              <button type="button" :disabled="text(item, 'readStatus') === 'READ'" @click="markRead(item)">已读</button>
+            </article>
+          </div>
+          <div v-else class="empty-state">暂无通知。</div>
+        </section>
+
+        <section class="panel output-panel">
+          <div class="panel-title">
+            <h2>已保存输出</h2>
+            <p>用于快速核对当前账号下近期病历和处方。</p>
+          </div>
+          <div class="mini-table">
+            <div v-for="item in records.slice(0, 4)" :key="`r-${String(item.medicalRecordId)}`">
+              <span>病历 #{{ text(item, "medicalRecordId") }}</span>
+              <strong>{{ text(item, "diagnosis") }}</strong>
+            </div>
+            <div v-for="item in prescriptions.slice(0, 4)" :key="`p-${String(item.prescriptionId)}`">
+              <span>处方 #{{ text(item, "prescriptionId") }}</span>
+              <strong>{{ text(item, "riskLevel", "未审核") }}</strong>
+            </div>
           </div>
           <div v-if="!records.length && !prescriptions.length" class="empty-state">暂无已保存病历或处方。</div>
         </section>
-      </template>
+      </aside>
     </section>
   </main>
 </template>

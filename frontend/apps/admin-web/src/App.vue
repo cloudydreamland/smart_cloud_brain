@@ -39,7 +39,9 @@ const loading = reactive({
 });
 const error = ref("");
 const notice = ref("");
+const activeModule = ref<"dashboard" | "catalog" | "schedule" | "triage" | "search">("dashboard");
 const activeCatalog = ref<"department" | "doctor" | "drug" | "knowledge" | "prompt" | "dict">("department");
+const catalogKeyword = ref("");
 const loginForm = reactive({ account: "", password: "" });
 const departmentForm = reactive({ id: undefined as number | undefined, code: "", name: "", description: "" });
 const doctorForm = reactive({ id: undefined as number | undefined, name: "", phone: "", password: "", departmentId: 0, title: "", specialty: "", status: "ENABLED" });
@@ -58,12 +60,26 @@ const searchResults = reactive({
 });
 let unbindUnauthorized: (() => void) | null = null;
 
+const moduleTitle = computed(() => ({
+  dashboard: "工作台",
+  catalog: "基础数据",
+  schedule: "排班管理",
+  triage: "分诊工作台",
+  search: "检索维护",
+}[activeModule.value]));
 const enabledDepartments = computed(() => departments.value);
+const keyword = computed(() => catalogKeyword.value.trim().toLowerCase());
+const filteredDepartments = computed(() => departments.value.filter((item) => matchCatalog(item, ["code", "name", "description"])));
+const filteredDoctors = computed(() => doctors.value.filter((item) => matchCatalog(item, ["name", "phone", "departmentName", "title", "specialty"])));
+const filteredDrugs = computed(() => drugs.value.filter((item) => matchCatalog(item, ["name", "specification", "contraindication", "status"])));
+const filteredKnowledge = computed(() => knowledge.value.filter((item) => matchCatalog(item, ["title", "symptoms", "riskSignals", "departmentCode", "status"])));
+const filteredPrompts = computed(() => prompts.value.filter((item) => matchCatalog(item, ["taskType", "templateName", "departmentCode", "version"])));
+const filteredDicts = computed(() => dicts.value.filter((item) => matchCatalog(item, ["dictType", "dictKey", "dictValue", "status"])));
 const filteredTriage = computed(() => triageDesk.value.filter((item) => {
   const haystack = `${fieldText(item, "chiefComplaint", "")} ${fieldText(item, "reason", "")}`.toLowerCase();
-  const keyword = triageFilter.keyword.trim().toLowerCase();
+  const filterKeyword = triageFilter.keyword.trim().toLowerCase();
   const departmentMatched = !triageFilter.department || fieldText(item, "recommendedDepartment", "").includes(triageFilter.department);
-  const keywordMatched = !keyword || haystack.includes(keyword);
+  const keywordMatched = !filterKeyword || haystack.includes(filterKeyword);
   const riskMatched = !triageFilter.risk || fieldText(item, "status", "").includes(triageFilter.risk);
   return departmentMatched && keywordMatched && riskMatched;
 }));
@@ -78,6 +94,11 @@ function nextDate() {
 
 function text(item: DataRow | null | undefined, key: string, fallback = "-") {
   return fieldText(item, key, fallback);
+}
+
+function matchCatalog(item: DataRow, keys: string[]) {
+  if (!keyword.value) return true;
+  return keys.some((key) => fieldText(item, key, "").toLowerCase().includes(keyword.value));
 }
 
 function setError(message: string) {
@@ -136,6 +157,26 @@ async function refresh() {
 
 function resetDepartment() {
   Object.assign(departmentForm, { id: undefined, code: "", name: "", description: "" });
+}
+
+function resetDoctor() {
+  Object.assign(doctorForm, { id: undefined, name: "", phone: "", password: "", departmentId: toNumber(departments.value[0]?.id), title: "", specialty: "", status: "ENABLED" });
+}
+
+function resetDrug() {
+  Object.assign(drugForm, { id: undefined, name: "", specification: "", contraindication: "", interactionRule: "", status: "ENABLED" });
+}
+
+function resetKnowledge() {
+  Object.assign(knowledgeForm, { id: undefined, title: "", symptoms: "", riskSignals: "", advice: "", departmentCode: "", status: "ENABLED" });
+}
+
+function resetPrompt() {
+  Object.assign(promptForm, { id: undefined, taskType: "MEDICAL_RECORD", departmentCode: "", templateName: "", templateContent: "", outputSchema: "{\"type\":\"object\"}", version: "v1", enabled: true });
+}
+
+function resetDict() {
+  Object.assign(dictForm, { id: undefined, dictType: "", dictKey: "", dictValue: "", sort: 0, status: "ENABLED" });
 }
 
 function editDepartment(item: DataRow) {
@@ -387,29 +428,29 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <main class="app-shell">
+  <main class="admin-shell">
     <aside class="sidebar">
       <div class="brand">
         <span>管</span>
         <div>
-          <h1>管理工作台</h1>
-          <p>基础数据 / 排班 / 分诊</p>
+          <h1>医疗管理端</h1>
+          <p>基础数据 · 排班 · 分诊</p>
         </div>
       </div>
+
+      <nav v-if="session && !permissionError" class="side-nav" aria-label="管理端导航">
+        <button type="button" :class="{ active: activeModule === 'dashboard' }" @click="activeModule = 'dashboard'">工作台</button>
+        <button type="button" :class="{ active: activeModule === 'catalog' }" @click="activeModule = 'catalog'">基础数据</button>
+        <button type="button" :class="{ active: activeModule === 'schedule' }" @click="activeModule = 'schedule'">排班管理</button>
+        <button type="button" :class="{ active: activeModule === 'triage' }" @click="activeModule = 'triage'">分诊工作台</button>
+        <button type="button" :class="{ active: activeModule === 'search' }" @click="activeModule = 'search'">检索维护</button>
+      </nav>
+
       <div v-if="session" class="user-card">
         <strong>{{ session.name }}</strong>
         <span>{{ session.role }} #{{ session.userId }}</span>
-        <div class="row-meta">
-          <span class="tag success">已登录</span>
-          <span class="tag warning">{{ highRiskCount }} 需关注</span>
-        </div>
+        <span class="tag warning">{{ highRiskCount }} 条需关注</span>
       </div>
-      <nav class="side-nav">
-        <a class="active" href="#catalog">基础数据 <b>{{ departments.length + doctors.length }}</b></a>
-        <a href="#schedule">排班 <b>{{ suggestions.length || schedules.length }}</b></a>
-        <a href="#triage">分诊 <b>{{ filteredTriage.length }}</b></a>
-        <a href="#search">检索</a>
-      </nav>
       <button v-if="session" type="button" @click="logout">退出</button>
     </aside>
 
@@ -417,10 +458,11 @@ onBeforeUnmount(() => {
       <header class="topbar">
         <div>
           <p class="eyebrow">Admin Web</p>
-          <h2>运营管理</h2>
-          <p>维护基础资料、排班号源和分诊分配。</p>
+          <h2>{{ moduleTitle }}</h2>
+          <p>维护基础资料、排班号源、分诊分配和检索内容。</p>
         </div>
-        <div class="toolbar">
+        <div v-if="session" class="toolbar">
+          <span>{{ session.name }}</span>
           <button type="button" :disabled="loading.data" @click="refresh">刷新数据</button>
         </div>
       </header>
@@ -428,7 +470,7 @@ onBeforeUnmount(() => {
       <div v-if="error" class="notice error">{{ error }}</div>
       <div v-if="notice" class="notice success">{{ notice }}</div>
       <div v-if="permissionError" class="notice error">
-        {{ permissionError }}
+        <span>{{ permissionError }}</span>
         <button type="button" @click="logout">切换账号</button>
       </div>
 
@@ -437,7 +479,11 @@ onBeforeUnmount(() => {
       </section>
 
       <form v-else-if="!session || permissionError" class="panel login-panel" @submit.prevent="login">
-        <h2>管理员登录</h2>
+        <div class="panel-title">
+          <p class="eyebrow">管理员登录</p>
+          <h2>进入管理端</h2>
+          <p>登录后可维护基础数据、排班建议和分诊分配。</p>
+        </div>
         <div class="form-grid">
           <label>账号<input v-model.trim="loginForm.account" autocomplete="username" /></label>
           <label>密码<input v-model="loginForm.password" type="password" autocomplete="current-password" /></label>
@@ -446,20 +492,52 @@ onBeforeUnmount(() => {
       </form>
 
       <template v-else>
-        <section class="metrics">
-          <div class="metric"><span>科室</span><strong>{{ departments.length }}</strong></div>
-          <div class="metric"><span>医生</span><strong>{{ doctors.length }}</strong></div>
-          <div class="metric"><span>药品</span><strong>{{ drugs.length }}</strong></div>
-          <div class="metric"><span>分诊记录</span><strong>{{ triageDesk.length }}</strong></div>
+        <section v-show="activeModule === 'dashboard'" class="page-stack">
+          <div class="metrics">
+            <div class="metric"><span>科室</span><strong>{{ departments.length }}</strong></div>
+            <div class="metric"><span>医生</span><strong>{{ doctors.length }}</strong></div>
+            <div class="metric"><span>药品</span><strong>{{ drugs.length }}</strong></div>
+            <div class="metric"><span>分诊记录</span><strong>{{ triageDesk.length }}</strong></div>
+          </div>
+          <div class="dashboard-grid">
+            <section class="panel">
+              <div class="panel-title">
+                <h2>待处理分诊</h2>
+                <p>高风险或需人工处理的记录应优先分配医生。</p>
+              </div>
+              <div v-if="highRiskCount" class="focus-list">
+                <article v-for="item in triageDesk.filter((row) => ['MANUAL_REQUIRED', 'HIGH'].includes(text(row, 'status'))).slice(0, 5)" :key="String(item.triageRecordId)">
+                  <span class="tag" :class="statusClass(item.status)">{{ text(item, "status") }}</span>
+                  <strong>#{{ text(item, "triageRecordId") }} {{ text(item, "recommendedDepartment") }}</strong>
+                  <button type="button" @click="activeModule = 'triage'; showTriage(item)">处理</button>
+                </article>
+              </div>
+              <div v-else class="empty-state">暂无高风险或需人工处理的分诊记录。</div>
+            </section>
+            <section class="panel">
+              <div class="panel-title">
+                <h2>排班概况</h2>
+                <p>查看待发布建议和已发布排班数量。</p>
+              </div>
+              <div class="summary-grid">
+                <div><span>待发布建议</span><strong>{{ suggestions.length }}</strong></div>
+                <div><span>已发布排班</span><strong>{{ schedules.length }}</strong></div>
+              </div>
+              <button type="button" @click="activeModule = 'schedule'">进入排班管理</button>
+            </section>
+          </div>
         </section>
 
-        <section id="catalog" class="panel">
+        <section v-show="activeModule === 'catalog'" class="panel catalog-section">
           <div class="panel-header">
-            <div>
-              <h2>基础数据管理</h2>
-              <p>字段与后端保存 DTO 对齐；后端未提供删除接口，危险操作以停用实现。</p>
+            <div class="panel-title">
+              <p class="eyebrow">基础数据</p>
+              <h2>批量维护</h2>
+              <p>使用上方标签切换维护对象，右侧面板复用新增和编辑。</p>
             </div>
+            <label class="search-field">搜索<input v-model.trim="catalogKeyword" placeholder="输入关键词筛选当前标签" /></label>
           </div>
+
           <div class="tabs">
             <button type="button" :class="{ active: activeCatalog === 'department' }" @click="activeCatalog = 'department'">科室</button>
             <button type="button" :class="{ active: activeCatalog === 'doctor' }" @click="activeCatalog = 'doctor'">医生</button>
@@ -469,318 +547,303 @@ onBeforeUnmount(() => {
             <button type="button" :class="{ active: activeCatalog === 'dict' }" @click="activeCatalog = 'dict'">字典</button>
           </div>
 
-          <div v-show="activeCatalog === 'department'" class="catalog-grid">
-            <form class="sub-panel" @submit.prevent="saveDepartment">
-              <h3>{{ departmentForm.id ? "编辑科室" : "新增科室" }}</h3>
-              <div class="form-grid">
-                <label>编码<input v-model.trim="departmentForm.code" /></label>
-                <label>名称<input v-model.trim="departmentForm.name" /></label>
-              </div>
-              <label>说明<textarea v-model.trim="departmentForm.description" rows="3" /></label>
-              <div class="toolbar">
-                <button class="primary" type="submit" :disabled="loading.save">保存科室</button>
-                <button type="button" @click="resetDepartment">清空</button>
-              </div>
-            </form>
+          <div class="catalog-grid">
             <div class="table-scroll">
-              <table>
+              <table v-show="activeCatalog === 'department'">
                 <thead><tr><th>ID</th><th>编码</th><th>名称</th><th>说明</th><th>操作</th></tr></thead>
                 <tbody>
-                  <tr v-for="item in departments" :key="String(item.id)">
+                  <tr v-for="item in filteredDepartments" :key="String(item.id)">
                     <td>{{ text(item, "id") }}</td><td>{{ text(item, "code") }}</td><td>{{ text(item, "name") }}</td><td>{{ text(item, "description") }}</td>
                     <td><button type="button" @click="editDepartment(item)">编辑</button></td>
                   </tr>
                 </tbody>
               </table>
-              <div v-if="!departments.length" class="empty-state">暂无科室数据。</div>
-            </div>
-          </div>
-
-          <div v-show="activeCatalog === 'doctor'" class="catalog-grid">
-            <form class="sub-panel" @submit.prevent="saveDoctor">
-              <h3>{{ doctorForm.id ? "编辑医生" : "新增医生" }}</h3>
-              <div class="form-grid three">
-                <label>姓名<input v-model.trim="doctorForm.name" /></label>
-                <label>手机号<input v-model.trim="doctorForm.phone" /></label>
-                <label>科室
-                  <select v-model.number="doctorForm.departmentId">
-                    <option :value="0">请选择</option>
-                    <option v-for="item in enabledDepartments" :key="String(item.id)" :value="toNumber(item.id)">{{ item.name }}</option>
-                  </select>
-                </label>
-                <label>职称<input v-model.trim="doctorForm.title" /></label>
-                <label>状态
-                  <select v-model="doctorForm.status">
-                    <option value="ENABLED">启用</option>
-                    <option value="DISABLED">停用</option>
-                  </select>
-                </label>
-                <label>新密码<input v-model="doctorForm.password" type="password" autocomplete="new-password" /></label>
-              </div>
-              <label>专长<textarea v-model.trim="doctorForm.specialty" rows="3" /></label>
-              <button class="primary" type="submit" :disabled="loading.save">保存医生</button>
-            </form>
-            <div class="table-scroll">
-              <table>
+              <table v-show="activeCatalog === 'doctor'">
                 <thead><tr><th>医生</th><th>科室</th><th>职称</th><th>专长</th><th>状态</th><th>操作</th></tr></thead>
                 <tbody>
-                  <tr v-for="item in doctors" :key="String(item.id)">
+                  <tr v-for="item in filteredDoctors" :key="String(item.id)">
                     <td>{{ text(item, "name") }}</td><td>{{ text(item, "departmentName") }}</td><td>{{ text(item, "title") }}</td><td>{{ text(item, "specialty") }}</td>
                     <td><span class="tag" :class="statusClass(item.status)">{{ text(item, "status") }}</span></td>
                     <td><button type="button" @click="editDoctor(item)">编辑</button></td>
                   </tr>
                 </tbody>
               </table>
-              <div v-if="!doctors.length" class="empty-state">暂无医生数据。</div>
-            </div>
-          </div>
-
-          <div v-show="activeCatalog === 'drug'" class="catalog-grid">
-            <form class="sub-panel" @submit.prevent="saveDrug">
-              <h3>{{ drugForm.id ? "编辑药品" : "新增药品" }}</h3>
-              <div class="form-grid">
-                <label>名称<input v-model.trim="drugForm.name" /></label>
-                <label>规格<input v-model.trim="drugForm.specification" /></label>
-                <label>状态
-                  <select v-model="drugForm.status">
-                    <option value="ENABLED">启用</option>
-                    <option value="DISABLED">停用</option>
-                  </select>
-                </label>
-              </div>
-              <label>禁忌<textarea v-model.trim="drugForm.contraindication" rows="3" /></label>
-              <label>相互作用规则<textarea v-model.trim="drugForm.interactionRule" rows="3" /></label>
-              <button class="primary" type="submit" :disabled="loading.save">保存药品</button>
-            </form>
-            <div class="table-scroll">
-              <table>
+              <table v-show="activeCatalog === 'drug'">
                 <thead><tr><th>药品</th><th>规格</th><th>禁忌</th><th>状态</th><th>操作</th></tr></thead>
                 <tbody>
-                  <tr v-for="item in drugs" :key="String(item.id)">
+                  <tr v-for="item in filteredDrugs" :key="String(item.id)">
                     <td>{{ text(item, "name") }}</td><td>{{ text(item, "specification") }}</td><td>{{ text(item, "contraindication") }}</td>
                     <td><span class="tag" :class="statusClass(item.status)">{{ text(item, "status") }}</span></td>
-                    <td class="table-actions"><button type="button" @click="editDrug(item)">编辑</button><button class="danger" type="button" @click="disableDrug(item)">停用</button></td>
+                    <td class="table-actions"><button type="button" @click="editDrug(item)">编辑</button><button class="danger subtle" type="button" @click="disableDrug(item)">停用</button></td>
                   </tr>
                 </tbody>
               </table>
-              <div v-if="!drugs.length" class="empty-state">暂无药品数据。</div>
-            </div>
-          </div>
-
-          <div v-show="activeCatalog === 'knowledge'" class="catalog-grid">
-            <form class="sub-panel" @submit.prevent="saveKnowledge">
-              <h3>{{ knowledgeForm.id ? "编辑知识库" : "新增知识库" }}</h3>
-              <div class="form-grid">
-                <label>标题<input v-model.trim="knowledgeForm.title" /></label>
-                <label>科室编码<input v-model.trim="knowledgeForm.departmentCode" /></label>
-                <label>状态
-                  <select v-model="knowledgeForm.status">
-                    <option value="ENABLED">启用</option>
-                    <option value="DISABLED">停用</option>
-                  </select>
-                </label>
-              </div>
-              <label>症状<textarea v-model.trim="knowledgeForm.symptoms" rows="3" /></label>
-              <label>风险信号<textarea v-model.trim="knowledgeForm.riskSignals" rows="3" /></label>
-              <label>建议<textarea v-model.trim="knowledgeForm.advice" rows="3" /></label>
-              <button class="primary" type="submit" :disabled="loading.save">保存知识库</button>
-            </form>
-            <div class="table-scroll">
-              <table>
+              <table v-show="activeCatalog === 'knowledge'">
                 <thead><tr><th>标题</th><th>科室</th><th>症状</th><th>状态</th><th>操作</th></tr></thead>
                 <tbody>
-                  <tr v-for="item in knowledge" :key="String(item.id)">
+                  <tr v-for="item in filteredKnowledge" :key="String(item.id)">
                     <td>{{ text(item, "title") }}</td><td>{{ text(item, "departmentCode") }}</td><td>{{ text(item, "symptoms") }}</td>
                     <td><span class="tag" :class="statusClass(item.status)">{{ text(item, "status") }}</span></td>
                     <td><button type="button" @click="editKnowledge(item)">编辑</button></td>
                   </tr>
                 </tbody>
               </table>
-              <div v-if="!knowledge.length" class="empty-state">暂无知识库数据。</div>
-            </div>
-          </div>
-
-          <div v-show="activeCatalog === 'prompt'" class="catalog-grid">
-            <form class="sub-panel" @submit.prevent="savePrompt">
-              <h3>{{ promptForm.id ? "编辑 Prompt" : "新增 Prompt" }}</h3>
-              <div class="form-grid">
-                <label>任务类型<input v-model.trim="promptForm.taskType" /></label>
-                <label>科室编码<input v-model.trim="promptForm.departmentCode" /></label>
-                <label>模板名称<input v-model.trim="promptForm.templateName" /></label>
-                <label>版本<input v-model.trim="promptForm.version" /></label>
-                <label>启用
-                  <select v-model="promptForm.enabled">
-                    <option :value="true">启用</option>
-                    <option :value="false">停用</option>
-                  </select>
-                </label>
-              </div>
-              <label>输出 Schema<textarea v-model.trim="promptForm.outputSchema" rows="3" /></label>
-              <label>模板内容<textarea v-model.trim="promptForm.templateContent" rows="5" /></label>
-              <button class="primary" type="submit" :disabled="loading.save">保存 Prompt</button>
-            </form>
-            <div class="table-scroll">
-              <table>
+              <table v-show="activeCatalog === 'prompt'">
                 <thead><tr><th>任务</th><th>模板</th><th>科室</th><th>版本</th><th>状态</th><th>操作</th></tr></thead>
                 <tbody>
-                  <tr v-for="item in prompts" :key="String(item.id)">
+                  <tr v-for="item in filteredPrompts" :key="String(item.id)">
                     <td>{{ text(item, "taskType") }}</td><td>{{ text(item, "templateName") }}</td><td>{{ text(item, "departmentCode") }}</td><td>{{ text(item, "version") }}</td>
                     <td><span class="tag" :class="item.enabled ? 'success' : 'danger'">{{ item.enabled ? "启用" : "停用" }}</span></td>
                     <td><button type="button" @click="editPrompt(item)">编辑</button></td>
                   </tr>
                 </tbody>
               </table>
-              <div v-if="!prompts.length" class="empty-state">暂无 Prompt 数据。</div>
-            </div>
-          </div>
-
-          <div v-show="activeCatalog === 'dict'" class="catalog-grid">
-            <form class="sub-panel" @submit.prevent="saveDict">
-              <h3>{{ dictForm.id ? "编辑字典" : "新增字典" }}</h3>
-              <div class="form-grid three">
-                <label>类型<input v-model.trim="dictForm.dictType" /></label>
-                <label>键<input v-model.trim="dictForm.dictKey" /></label>
-                <label>值<input v-model.trim="dictForm.dictValue" /></label>
-                <label>排序<input v-model.number="dictForm.sort" type="number" /></label>
-                <label>状态
-                  <select v-model="dictForm.status">
-                    <option value="ENABLED">启用</option>
-                    <option value="DISABLED">停用</option>
-                  </select>
-                </label>
-              </div>
-              <button class="primary" type="submit" :disabled="loading.save">保存字典</button>
-            </form>
-            <div class="table-scroll">
-              <table>
+              <table v-show="activeCatalog === 'dict'">
                 <thead><tr><th>类型</th><th>键</th><th>值</th><th>排序</th><th>状态</th><th>操作</th></tr></thead>
                 <tbody>
-                  <tr v-for="item in dicts" :key="String(item.id)">
+                  <tr v-for="item in filteredDicts" :key="String(item.id)">
                     <td>{{ text(item, "dictType") }}</td><td>{{ text(item, "dictKey") }}</td><td>{{ text(item, "dictValue") }}</td><td>{{ text(item, "sort") }}</td>
                     <td><span class="tag" :class="statusClass(item.status)">{{ text(item, "status") }}</span></td>
                     <td><button type="button" @click="editDict(item)">编辑</button></td>
                   </tr>
                 </tbody>
               </table>
-              <div v-if="!dicts.length" class="empty-state">暂无字典数据。</div>
             </div>
+
+            <aside class="editor-panel">
+              <form v-show="activeCatalog === 'department'" @submit.prevent="saveDepartment">
+                <h3>{{ departmentForm.id ? "编辑科室" : "新增科室" }}</h3>
+                <label>编码<input v-model.trim="departmentForm.code" /></label>
+                <label>名称<input v-model.trim="departmentForm.name" /></label>
+                <label>说明<textarea v-model.trim="departmentForm.description" rows="4" /></label>
+                <div class="toolbar"><button class="primary" type="submit" :disabled="loading.save">保存</button><button type="button" @click="resetDepartment">新增</button></div>
+              </form>
+
+              <form v-show="activeCatalog === 'doctor'" @submit.prevent="saveDoctor">
+                <h3>{{ doctorForm.id ? "编辑医生" : "新增医生" }}</h3>
+                <div class="form-grid">
+                  <label>姓名<input v-model.trim="doctorForm.name" /></label>
+                  <label>手机号<input v-model.trim="doctorForm.phone" /></label>
+                  <label>科室
+                    <select v-model.number="doctorForm.departmentId">
+                      <option :value="0">请选择</option>
+                      <option v-for="item in enabledDepartments" :key="String(item.id)" :value="toNumber(item.id)">{{ item.name }}</option>
+                    </select>
+                  </label>
+                  <label>职称<input v-model.trim="doctorForm.title" /></label>
+                  <label>状态
+                    <select v-model="doctorForm.status">
+                      <option value="ENABLED">启用</option>
+                      <option value="DISABLED">停用</option>
+                    </select>
+                  </label>
+                  <label>新密码<input v-model="doctorForm.password" type="password" autocomplete="new-password" /></label>
+                </div>
+                <label>专长<textarea v-model.trim="doctorForm.specialty" rows="4" /></label>
+                <div class="toolbar"><button class="primary" type="submit" :disabled="loading.save">保存</button><button type="button" @click="resetDoctor">新增</button></div>
+              </form>
+
+              <form v-show="activeCatalog === 'drug'" @submit.prevent="saveDrug">
+                <h3>{{ drugForm.id ? "编辑药品" : "新增药品" }}</h3>
+                <div class="form-grid">
+                  <label>名称<input v-model.trim="drugForm.name" /></label>
+                  <label>规格<input v-model.trim="drugForm.specification" /></label>
+                  <label>状态
+                    <select v-model="drugForm.status">
+                      <option value="ENABLED">启用</option>
+                      <option value="DISABLED">停用</option>
+                    </select>
+                  </label>
+                </div>
+                <label>禁忌<textarea v-model.trim="drugForm.contraindication" rows="4" /></label>
+                <label>相互作用规则<textarea v-model.trim="drugForm.interactionRule" rows="4" /></label>
+                <div class="toolbar"><button class="primary" type="submit" :disabled="loading.save">保存</button><button type="button" @click="resetDrug">新增</button></div>
+              </form>
+
+              <form v-show="activeCatalog === 'knowledge'" @submit.prevent="saveKnowledge">
+                <h3>{{ knowledgeForm.id ? "编辑知识库" : "新增知识库" }}</h3>
+                <div class="form-grid">
+                  <label>标题<input v-model.trim="knowledgeForm.title" /></label>
+                  <label>科室编码<input v-model.trim="knowledgeForm.departmentCode" /></label>
+                  <label>状态
+                    <select v-model="knowledgeForm.status">
+                      <option value="ENABLED">启用</option>
+                      <option value="DISABLED">停用</option>
+                    </select>
+                  </label>
+                </div>
+                <label>症状<textarea v-model.trim="knowledgeForm.symptoms" rows="3" /></label>
+                <label>风险信号<textarea v-model.trim="knowledgeForm.riskSignals" rows="3" /></label>
+                <label>建议<textarea v-model.trim="knowledgeForm.advice" rows="4" /></label>
+                <div class="toolbar"><button class="primary" type="submit" :disabled="loading.save">保存</button><button type="button" @click="resetKnowledge">新增</button></div>
+              </form>
+
+              <form v-show="activeCatalog === 'prompt'" @submit.prevent="savePrompt">
+                <h3>{{ promptForm.id ? "编辑 Prompt" : "新增 Prompt" }}</h3>
+                <div class="form-grid">
+                  <label>任务类型<input v-model.trim="promptForm.taskType" /></label>
+                  <label>科室编码<input v-model.trim="promptForm.departmentCode" /></label>
+                  <label>模板名称<input v-model.trim="promptForm.templateName" /></label>
+                  <label>版本<input v-model.trim="promptForm.version" /></label>
+                  <label>启用
+                    <select v-model="promptForm.enabled">
+                      <option :value="true">启用</option>
+                      <option :value="false">停用</option>
+                    </select>
+                  </label>
+                </div>
+                <label>输出 Schema<textarea v-model.trim="promptForm.outputSchema" rows="3" /></label>
+                <label>模板内容<textarea v-model.trim="promptForm.templateContent" rows="6" /></label>
+                <div class="toolbar"><button class="primary" type="submit" :disabled="loading.save">保存</button><button type="button" @click="resetPrompt">新增</button></div>
+              </form>
+
+              <form v-show="activeCatalog === 'dict'" @submit.prevent="saveDict">
+                <h3>{{ dictForm.id ? "编辑字典" : "新增字典" }}</h3>
+                <div class="form-grid">
+                  <label>类型<input v-model.trim="dictForm.dictType" /></label>
+                  <label>键<input v-model.trim="dictForm.dictKey" /></label>
+                  <label>值<input v-model.trim="dictForm.dictValue" /></label>
+                  <label>排序<input v-model.number="dictForm.sort" type="number" /></label>
+                  <label>状态
+                    <select v-model="dictForm.status">
+                      <option value="ENABLED">启用</option>
+                      <option value="DISABLED">停用</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="toolbar"><button class="primary" type="submit" :disabled="loading.save">保存</button><button type="button" @click="resetDict">新增</button></div>
+              </form>
+            </aside>
           </div>
         </section>
 
-        <section id="schedule" class="panel">
+        <section v-show="activeModule === 'schedule'" class="panel">
           <div class="panel-header">
-            <div>
-              <h2>排班管理</h2>
-              <p>生成的是后端规则建议，发布后由医生服务生成排班和号源。</p>
+            <div class="panel-title">
+              <p class="eyebrow">排班管理</p>
+              <h2>排班建议与发布</h2>
+              <p>生成的是排班建议，发布前需要管理员人工审核。</p>
             </div>
-            <span class="tag warning">发布前需人工审核</span>
+            <span class="tag warning">排班建议</span>
           </div>
-          <div class="form-grid three">
+          <div class="schedule-toolbar">
             <label>开始日期<input v-model="scheduleForm.startDate" type="date" /></label>
             <label>天数<input v-model.number="scheduleForm.days" type="number" min="1" max="14" /></label>
-            <div class="actions">
+            <div class="toolbar">
               <button type="button" :disabled="loading.schedule" @click="generateSchedule">生成建议</button>
               <button class="primary" type="button" :disabled="loading.schedule || !suggestions.length" @click="publishSchedule">发布号源</button>
             </div>
           </div>
           <div class="schedule-grid">
-            <div>
+            <section>
               <h3>待发布建议</h3>
-              <p v-for="item in suggestions" :key="String(item.id)" @click="showScheduleSuggestion(item.id)">
-                #{{ text(item, "id") }} {{ text(item, "workDate") }} {{ text(item, "timeRange") }} {{ text(item, "doctorName") }} 容量 {{ text(item, "capacity") }}
-              </p>
+              <article v-for="item in suggestions" :key="String(item.id)" class="schedule-item" @click="showScheduleSuggestion(item.id)">
+                <strong>{{ text(item, "workDate") }} {{ text(item, "timeRange") }}</strong>
+                <span>{{ text(item, "doctorName") }} · 容量 {{ text(item, "capacity") }}</span>
+              </article>
               <div v-if="!suggestions.length" class="empty-state">暂无待发布建议。</div>
-            </div>
-            <div>
-              <h3>建议详情</h3>
-              <p v-if="selectedScheduleSuggestion">
-                {{ selectedScheduleSuggestion.doctorName }} / {{ selectedScheduleSuggestion.departmentName }} / {{ selectedScheduleSuggestion.reason }}
-              </p>
-              <div v-else class="empty-state">请选择一条建议查看详情。</div>
-            </div>
-            <div>
+            </section>
+            <section>
+              <h3>建议原因</h3>
+              <div v-if="selectedScheduleSuggestion" class="detail-note">
+                <strong>{{ text(selectedScheduleSuggestion, "doctorName") }} / {{ text(selectedScheduleSuggestion, "departmentName") }}</strong>
+                <p>{{ text(selectedScheduleSuggestion, "reason", "暂无原因说明") }}</p>
+              </div>
+              <div v-else class="empty-state">请选择一条建议查看原因。</div>
+            </section>
+            <section>
               <h3>已发布排班</h3>
-              <p v-for="item in schedules" :key="String(item.id)">
-                #{{ text(item, "id") }} {{ text(item, "workDate") }} {{ text(item, "timeRange") }} {{ text(item, "doctorName") }} 容量 {{ text(item, "capacity") }}
-              </p>
+              <article v-for="item in schedules" :key="String(item.id)" class="schedule-item">
+                <strong>{{ text(item, "workDate") }} {{ text(item, "timeRange") }}</strong>
+                <span>{{ text(item, "doctorName") }} · 容量 {{ text(item, "capacity") }}</span>
+              </article>
               <div v-if="!schedules.length" class="empty-state">暂无已发布排班。</div>
-            </div>
+            </section>
           </div>
         </section>
 
-        <section id="triage" class="panel">
-          <div class="panel-header">
-            <div>
-              <h2>分诊工作台</h2>
-              <p>支持按状态、科室和关键词筛选，高风险或需人工处理记录会突出显示。</p>
+        <section v-show="activeModule === 'triage'" class="triage-grid">
+          <section class="panel">
+            <div class="panel-title">
+              <p class="eyebrow">分诊工作台</p>
+              <h2>分诊列表</h2>
+              <p>高风险或需人工处理记录会突出显示。</p>
             </div>
-          </div>
-          <div class="form-grid three">
-            <label>状态筛选
-              <select v-model="triageFilter.risk">
-                <option value="">全部</option>
-                <option value="MANUAL_REQUIRED">需人工处理</option>
-                <option value="AI_RECOMMENDED">AI 已推荐</option>
-                <option value="CLOSED">已关闭</option>
-              </select>
-            </label>
-            <label>推荐科室<input v-model.trim="triageFilter.department" /></label>
-            <label>关键词<input v-model.trim="triageFilter.keyword" /></label>
-          </div>
-          <div class="form-grid three">
-            <label>分诊记录 ID<input v-model.number="assignForm.triageRecordId" type="number" /></label>
-            <label>分配医生
-              <select v-model.number="assignForm.doctorId">
-                <option :value="0">请选择</option>
-                <option v-for="doctor in doctors" :key="String(doctor.id)" :value="toNumber(doctor.id)">{{ doctor.name }} / {{ doctor.departmentName }}</option>
-              </select>
-            </label>
-            <div class="actions"><button class="primary" type="button" :disabled="loading.triage" @click="assignTriage">分配医生</button></div>
-          </div>
-          <div v-if="filteredTriage.length" class="table-scroll">
-            <table>
-              <thead><tr><th>记录</th><th>主诉</th><th>推荐科室</th><th>医生</th><th>状态</th><th>操作</th></tr></thead>
-              <tbody>
-                <tr v-for="item in filteredTriage" :key="String(item.triageRecordId)" :class="{ dangerRow: ['MANUAL_REQUIRED', 'HIGH'].includes(text(item, 'status')) }" @click="useTriage(item)">
-                  <td>#{{ text(item, "triageRecordId") }}</td><td>{{ text(item, "chiefComplaint") }}</td><td>{{ text(item, "recommendedDepartment") }}</td><td>{{ text(item, "assignedDoctorName", "未分配") }}</td>
-                  <td><span class="tag" :class="statusClass(item.status)">{{ text(item, "status") }}</span></td>
-                  <td class="table-actions"><button type="button" @click.stop="showTriage(item)">详情</button><button class="danger" type="button" @click.stop="closeTriage(item)">关闭</button></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div v-else class="empty-state">当前筛选条件下暂无分诊记录。</div>
-          <div v-if="selectedTriage" class="notice">
-            <strong>分诊详情 #{{ selectedTriage.triageRecordId }}</strong>
-            <span>{{ selectedTriage.chiefComplaint }} / {{ selectedTriage.reason }}</span>
-          </div>
+            <div class="filter-grid">
+              <label>状态
+                <select v-model="triageFilter.risk">
+                  <option value="">全部</option>
+                  <option value="MANUAL_REQUIRED">需人工处理</option>
+                  <option value="AI_RECOMMENDED">AI已推荐</option>
+                  <option value="CLOSED">已关闭</option>
+                </select>
+              </label>
+              <label>推荐科室<input v-model.trim="triageFilter.department" /></label>
+              <label>关键词<input v-model.trim="triageFilter.keyword" /></label>
+            </div>
+            <div v-if="filteredTriage.length" class="table-scroll">
+              <table>
+                <thead><tr><th>记录</th><th>主诉</th><th>推荐科室</th><th>医生</th><th>状态</th><th>操作</th></tr></thead>
+                <tbody>
+                  <tr v-for="item in filteredTriage" :key="String(item.triageRecordId)" :class="{ dangerRow: ['MANUAL_REQUIRED', 'HIGH'].includes(text(item, 'status')) }" @click="useTriage(item)">
+                    <td>#{{ text(item, "triageRecordId") }}</td><td>{{ text(item, "chiefComplaint") }}</td><td>{{ text(item, "recommendedDepartment") }}</td><td>{{ text(item, "assignedDoctorName", "未分配") }}</td>
+                    <td><span class="tag" :class="statusClass(item.status)">{{ text(item, "status") }}</span></td>
+                    <td class="table-actions"><button type="button" @click.stop="showTriage(item)">详情</button><button class="danger subtle" type="button" @click.stop="closeTriage(item)">关闭</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div v-else class="empty-state">当前筛选条件下暂无分诊记录。</div>
+          </section>
+
+          <aside class="panel">
+            <div class="panel-title">
+              <h2>详情与分配</h2>
+              <p>选择记录后分配给合适医生。</p>
+            </div>
+            <div v-if="selectedTriage" class="detail-note">
+              <strong>#{{ text(selectedTriage, "triageRecordId") }} {{ text(selectedTriage, "recommendedDepartment") }}</strong>
+              <p>{{ text(selectedTriage, "chiefComplaint") }}</p>
+              <p>{{ text(selectedTriage, "reason") }}</p>
+            </div>
+            <div v-else class="empty-state">请选择一条分诊记录。</div>
+            <div class="form-grid">
+              <label>分诊记录 ID<input v-model.number="assignForm.triageRecordId" type="number" /></label>
+              <label>分配医生
+                <select v-model.number="assignForm.doctorId">
+                  <option :value="0">请选择</option>
+                  <option v-for="doctor in doctors" :key="String(doctor.id)" :value="toNumber(doctor.id)">{{ doctor.name }} / {{ doctor.departmentName }}</option>
+                </select>
+              </label>
+            </div>
+            <button class="primary" type="button" :disabled="loading.triage" @click="assignTriage">分配医生</button>
+          </aside>
         </section>
 
-        <section id="search" class="panel">
-          <div class="panel-header">
-            <div>
-              <h2>知识、药品和 Prompt 检索</h2>
-              <p>统一使用后端公开检索接口。</p>
-            </div>
+        <section v-show="activeModule === 'search'" class="panel">
+          <div class="panel-title">
+            <p class="eyebrow">检索维护</p>
+            <h2>知识、药品和 Prompt 检索</h2>
+            <p>统一使用后端检索接口，便于维护基础内容一致性。</p>
           </div>
-          <div class="form-grid three">
+          <div class="filter-grid">
             <label>关键词<input v-model.trim="search.q" /></label>
             <label>科室编码<input v-model.trim="search.departmentCode" /></label>
-            <div class="actions"><button class="primary" type="button" :disabled="loading.search" @click="doSearch">检索</button></div>
+            <div class="toolbar end"><button class="primary" type="button" :disabled="loading.search" @click="doSearch">检索</button></div>
           </div>
           <div v-if="searchCount" class="search-grid">
-            <div>
+            <section>
               <h3>知识库</h3>
-              <p v-for="item in searchResults.knowledge" :key="`k-${String(item.id)}`">#{{ text(item, "id") }} {{ text(item, "title") }}</p>
-            </div>
-            <div>
+              <article v-for="item in searchResults.knowledge" :key="`k-${String(item.id)}`">#{{ text(item, "id") }} {{ text(item, "title") }}</article>
+            </section>
+            <section>
               <h3>药品</h3>
-              <p v-for="item in searchResults.drugs" :key="`d-${String(item.id)}`">#{{ text(item, "id") }} {{ text(item, "name") }}</p>
-            </div>
-            <div>
+              <article v-for="item in searchResults.drugs" :key="`d-${String(item.id)}`">#{{ text(item, "id") }} {{ text(item, "name") }}</article>
+            </section>
+            <section>
               <h3>Prompt</h3>
-              <p v-for="item in searchResults.prompts" :key="`p-${String(item.id)}`">#{{ text(item, "id") }} {{ text(item, "templateName") }}</p>
-            </div>
+              <article v-for="item in searchResults.prompts" :key="`p-${String(item.id)}`">#{{ text(item, "id") }} {{ text(item, "templateName") }}</article>
+            </section>
           </div>
           <div v-else class="empty-state">请输入关键词后检索。</div>
         </section>
