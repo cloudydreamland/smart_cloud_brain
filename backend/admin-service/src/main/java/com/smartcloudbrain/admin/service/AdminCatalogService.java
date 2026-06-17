@@ -32,6 +32,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -74,6 +76,7 @@ public class AdminCatalogService {
     return departmentRepository.findAll().stream().map(this::departmentView).toList();
   }
 
+  @CacheEvict(cacheNames = "adminCatalog", allEntries = true)
   @Transactional
   public Map<String, Object> saveDepartment(DepartmentSaveRequest request) {
     Department department = request.id() == null
@@ -85,6 +88,7 @@ public class AdminCatalogService {
     return departmentView(departmentRepository.save(department));
   }
 
+  @CacheEvict(cacheNames = "adminCatalog", allEntries = true)
   @Transactional
   public Map<String, Object> saveDoctor(DoctorSaveRequest request) {
     Doctor doctor = request.id() == null ? new Doctor() : doctorRepository.findById(request.id()).orElseGet(Doctor::new);
@@ -102,10 +106,12 @@ public class AdminCatalogService {
     return doctorView(doctorRepository.save(doctor));
   }
 
+  @Cacheable(cacheNames = "adminCatalog", key = "'drugs'")
   public List<Map<String, Object>> drugs() {
     return drugRepository.findAll().stream().map(this::drugView).toList();
   }
 
+  @CacheEvict(cacheNames = "adminCatalog", allEntries = true)
   @Transactional
   public Map<String, Object> saveDrug(DrugSaveRequest request) {
     Drug drug = request.id() == null ? new Drug() : drugRepository.findById(request.id()).orElseGet(Drug::new);
@@ -123,6 +129,7 @@ public class AdminCatalogService {
     return promptTemplateRepository.findAll().stream().map(this::promptView).toList();
   }
 
+  @CacheEvict(cacheNames = "adminCatalog", allEntries = true)
   @Transactional
   public Map<String, Object> savePrompt(PromptTemplateSaveRequest request) {
     PromptTemplate prompt = request.id() == null ? new PromptTemplate() : promptTemplateRepository.findById(request.id()).orElseGet(PromptTemplate::new);
@@ -142,6 +149,7 @@ public class AdminCatalogService {
     return knowledgeEntryRepository.findAll().stream().map(this::knowledgeView).toList();
   }
 
+  @CacheEvict(cacheNames = "adminCatalog", allEntries = true)
   @Transactional
   public Map<String, Object> saveKnowledgeEntry(KnowledgeEntrySaveRequest request) {
     KnowledgeEntry entry = request.id() == null ? new KnowledgeEntry() : knowledgeEntryRepository.findById(request.id()).orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
@@ -156,6 +164,7 @@ public class AdminCatalogService {
     return knowledgeView(saved);
   }
 
+  @Cacheable(cacheNames = "adminCatalog", key = "'knowledge:' + #q + ':' + #departmentCode")
   public List<Map<String, Object>> searchKnowledge(String q, String departmentCode) {
     String query = normalize(q);
     String department = normalize(departmentCode);
@@ -196,6 +205,7 @@ public class AdminCatalogService {
         .toList();
   }
 
+  @Cacheable(cacheNames = "adminCatalog", key = "'dicts:' + #dictType")
   public List<Map<String, Object>> dicts(String dictType) {
     List<SystemDict> dicts = normalize(dictType).isBlank()
         ? systemDictRepository.findAll()
@@ -203,6 +213,7 @@ public class AdminCatalogService {
     return dicts.stream().map(this::dictView).toList();
   }
 
+  @CacheEvict(cacheNames = "adminCatalog", allEntries = true)
   @Transactional
   public Map<String, Object> saveDict(SystemDictSaveRequest request) {
     SystemDict dict = request.id() == null
