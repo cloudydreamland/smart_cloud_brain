@@ -373,5 +373,4 @@ volumes:
 
 networks:
   dify:
-    external: true
     name: ${DIFY_DOCKER_NETWORK:-docker_default}
