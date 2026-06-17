@@ -126,7 +126,7 @@ label { display: grid; gap: 6px; color: #2c3b38; font-size: 13px; font-weight: 7
 .panel-header p { color: var(--muted); font-size: 13px; }
 .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 
-.notice, .clinical-note {
+.notice, .clinical-note, .loading-state {
   padding: 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -190,6 +190,15 @@ tr:hover td, tr.selected td { background: #f8fbfa; }
 .drug-row { display: grid; grid-template-columns: minmax(140px, 1fr) 90px 90px minmax(100px, 1fr) auto; gap: 8px; align-items: end; }
 .split { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .mini-list p { margin: 8px 0; color: var(--muted); font-size: 13px; }
+.notification-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+.notification-row:last-child { border-bottom: 0; }
 .login-panel { max-width: 760px; }
 
 @media (max-width: 1180px) {
@@ -203,5 +212,6 @@ tr:hover td, tr.selected td { background: #f8fbfa; }
   .topbar, .panel-header { align-items: stretch; flex-direction: column; }
   .form-grid, .summary-strip, .split, .metrics { grid-template-columns: 1fr; }
   .drug-row { grid-template-columns: 1fr; }
+  .notification-row { grid-template-columns: 1fr; }
   table { min-width: 680px; }
 }

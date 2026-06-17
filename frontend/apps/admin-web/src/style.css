@@ -110,7 +110,7 @@ label { display: grid; gap: 6px; color: #2c3b38; font-size: 13px; font-weight: 7
 .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .form-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
-.notice {
+.notice, .loading-state {
   display: grid;
   gap: 6px;
   padding: 12px;
@@ -146,6 +146,7 @@ table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 
 th, td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; word-break: break-word; }
 th { background: #f1f5f4; color: var(--muted); font-size: 12px; }
 tr:hover td { background: #f8fbfa; }
+tr.dangerRow td { background: #fff7f5; }
 .table-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 
 .empty-state {
@@ -160,7 +161,24 @@ tr:hover td { background: #f8fbfa; }
   font-size: 13px;
 }
 .schedule-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-.schedule-grid > div { min-width: 0; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: #fbfcfb; }
+.schedule-grid > div, .sub-panel, .search-grid > div {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfb;
+}
+.catalog-grid {
+  display: grid;
+  grid-template-columns: minmax(300px, .75fr) minmax(0, 1.25fr);
+  gap: 14px;
+  align-items: start;
+}
+.search-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
 .tabs { display: flex; gap: 4px; overflow-x: auto; border-bottom: 1px solid var(--line); }
 .tabs button { border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: transparent; color: var(--muted); }
 .tabs button.active { border-bottom-color: var(--primary); color: var(--primary-strong); }
@@ -176,7 +194,7 @@ tr:hover td { background: #f8fbfa; }
   .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 900px) {
-  .schedule-grid, .form-grid.three { grid-template-columns: 1fr; }
+  .schedule-grid, .form-grid.three, .catalog-grid, .search-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 760px) {
   .app-shell { display: block; }

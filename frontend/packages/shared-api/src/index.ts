@@ -1,5 +1,7 @@
 import { defineStore } from "pinia";
-import { ref } from "vue";
+import { computed, ref } from "vue";
+
+export type Role = "PATIENT" | "DOCTOR" | "ADMIN";
 
 export type ApiResult<T> = {
   code: number;
@@ -10,79 +12,347 @@ export type ApiResult<T> = {
 export type Session = {
   token: string;
   userId: number;
-  role: "PATIENT" | "DOCTOR" | "ADMIN";
+  role: Role;
   name: string;
 };
 
-const API_BASE = import.meta.env?.VITE_API_BASE ?? "/api";
+export type DataRow = Record<string, unknown>;
 
-async function request<T>(path: string, options: RequestInit = {}, token = ""): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(options.headers ?? {}),
-    },
+export type PatientRegisterRequest = {
+  name: string;
+  phone: string;
+  password: string;
+  gender?: string;
+  age?: number;
+  allergyHistory?: string;
+  pastHistory?: string;
+};
+
+export type TriageRequest = {
+  patientId?: number;
+  chiefComplaint: string;
+};
+
+export type RegistrationCreateRequest = {
+  doctorId: number;
+  departmentId: number;
+  appointmentTime: string;
+  triageRecordId?: number | null;
+  slotId?: number | null;
+};
+
+export type MedicalRecordGenerateRequest = {
+  registrationId: number;
+  departmentCode?: string;
+  dialogueText: string;
+};
+
+export type MedicalRecordSaveRequest = {
+  registrationId: number;
+  chiefComplaint: string;
+  presentIllness?: string;
+  pastHistory?: string;
+  physicalExam?: string;
+  diagnosis: string;
+  treatmentAdvice?: string;
+  aiGenerated?: boolean;
+};
+
+export type DrugItem = {
+  drugName: string;
+  dosage: string;
+  frequency: string;
+  usageMethod: string;
+};
+
+export type PrescriptionCheckRequest = {
+  patientId?: number;
+  doctorId?: number;
+  drugs: DrugItem[];
+};
+
+export type PrescriptionCreateRequest = {
+  patientId: number;
+  medicalRecordId: number;
+  riskLevel?: string;
+  drugs: DrugItem[];
+};
+
+export type DepartmentSaveRequest = {
+  id?: number;
+  code: string;
+  name: string;
+  description?: string;
+};
+
+export type DoctorSaveRequest = {
+  id?: number;
+  name: string;
+  phone: string;
+  password?: string;
+  departmentId: number;
+  title?: string;
+  specialty?: string;
+  status?: string;
+};
+
+export type DrugSaveRequest = {
+  id?: number;
+  name: string;
+  specification?: string;
+  contraindication?: string;
+  interactionRule?: string;
+  status?: string;
+};
+
+export type KnowledgeEntrySaveRequest = {
+  id?: number;
+  title: string;
+  symptoms: string;
+  riskSignals?: string;
+  advice: string;
+  departmentCode?: string;
+  status?: string;
+};
+
+export type PromptTemplateSaveRequest = {
+  id?: number;
+  taskType: string;
+  departmentCode?: string;
+  templateName: string;
+  templateContent: string;
+  outputSchema?: string;
+  version?: string;
+  enabled?: boolean;
+};
+
+export type SystemDictSaveRequest = {
+  id?: number;
+  dictType: string;
+  dictKey: string;
+  dictValue: string;
+  sort?: number;
+  status?: string;
+};
+
+export type ScheduleGenerateRequest = {
+  startDate?: string;
+  days?: number;
+};
+
+export type SchedulePublishRequest = {
+  suggestionIds?: number[];
+};
+
+export type TriageAssignRequest = {
+  triageRecordId: number;
+  doctorId: number;
+};
+
+export class ApiError extends Error {
+  code: number;
+  status: number;
+
+  constructor(message: string, code: number, status: number) {
+    super(message);
+    this.name = "ApiError";
+    this.code = code;
+    this.status = status;
+  }
+}
+
+const API_BASE = normalizeBase(import.meta.env?.VITE_API_BASE ?? "/api");
+const SESSION_EVENT = "smart-cloud-brain:unauthorized";
+
+function normalizeBase(base: string) {
+  const value = base.trim() || "/api";
+  return value.endsWith("/") ? value.slice(0, -1) : value;
+}
+
+function endpoint(path: string) {
+  return path.startsWith("/api") ? `${API_BASE}${path.slice(4)}` : `${API_BASE}${path}`;
+}
+
+function query(params: Record<string, string | number | boolean | null | undefined>) {
+  const search = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      search.set(key, String(value));
+    }
   });
-  const payload = (await response.json()) as ApiResult<T>;
-  if (!response.ok || payload.code !== 0) {
-    throw new Error(payload.message || "请求失败");
+  const text = search.toString();
+  return text ? `?${text}` : "";
+}
+
+function jsonOptions(method: string, body?: unknown): RequestInit {
+  return body === undefined ? { method } : { method, body: JSON.stringify(body) };
+}
+
+async function parsePayload<T>(response: Response): Promise<ApiResult<T>> {
+  if (typeof response.text !== "function" && typeof response.json === "function") {
+    return response.json() as Promise<ApiResult<T>>;
+  }
+  const text = await response.text();
+  if (!text) {
+    return { code: response.ok ? 0 : response.status, message: response.statusText, data: undefined as T };
+  }
+  try {
+    return JSON.parse(text) as ApiResult<T>;
+  } catch {
+    throw new ApiError("服务返回的数据格式无法解析", response.status || 500, response.status || 500);
+  }
+}
+
+export async function request<T>(path: string, options: RequestInit = {}, token = ""): Promise<T> {
+  const headers = new Headers(options.headers ?? {});
+  if (!headers.has("Content-Type") && options.body !== undefined) {
+    headers.set("Content-Type", "application/json");
+  }
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(endpoint(path), { ...options, headers });
+  } catch {
+    throw new ApiError("无法连接到网关服务，请确认后端 gateway 已启动", 0, 0);
+  }
+
+  const payload = await parsePayload<T>(response);
+  const code = payload.code ?? response.status;
+  if (!response.ok || code !== 0) {
+    const message = payload.message || response.statusText || "请求失败";
+    const error = new ApiError(message, code, response.status);
+    if ((response.status === 401 || code === 401) && typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent(SESSION_EVENT));
+    }
+    throw error;
   }
   return payload.data;
 }
 
-const post = (body: unknown) => ({ method: "POST", body: JSON.stringify(body) });
+const get = <T>(path: string, token = "") => request<T>(path, jsonOptions("GET"), token);
+const post = <T>(path: string, body?: unknown, token = "") => request<T>(path, jsonOptions("POST", body), token);
 
-export const api = {
-  registerPatient: (body: unknown) => request<{ patientId: number }>("/patient/register", post(body)),
-  loginPatient: (account: string, password: string) => request<Session>("/patient/login", post({ account, password })),
-  loginDoctor: (account: string, password: string) => request<Session>("/doctor/login", post({ account, password })),
-  loginAdmin: (account: string, password: string) => request<Session>("/admin/login", post({ account, password })),
-  patientInfo: (token: string) => request<Record<string, unknown>>("/patient/info", {}, token),
-  departments: () => request<Array<Record<string, unknown>>>("/doctor/department/list"),
-  adminDepartments: (token: string) => request<Array<Record<string, unknown>>>("/admin/department/list", {}, token),
-  doctors: (departmentId = "") => request<Array<Record<string, unknown>>>(`/doctor/list${departmentId ? `?departmentId=${departmentId}` : ""}`),
-  drugs: (token: string) => request<Array<Record<string, unknown>>>("/admin/drug/list", {}, token),
-  triage: (token: string, chiefComplaint: string) => request<Record<string, unknown>>("/triage/consult", post({ chiefComplaint }), token),
-  triageList: (token: string) => request<Array<Record<string, unknown>>>("/triage/list", {}, token),
-  createRegistration: (token: string, body: unknown) => request<Record<string, unknown>>("/registration/create", post(body), token),
-  registrationSlots: (token: string) => request<Array<Record<string, unknown>>>("/registration/slots", {}, token),
-  registrations: (token: string) => request<Array<Record<string, unknown>>>("/registration/list", {}, token),
-  cancelRegistration: (token: string, registrationId: number) => request<Record<string, unknown>>("/registration/cancel", post({ registrationId }), token),
-  generateMedicalRecord: (token: string, body: unknown) => request<Record<string, unknown>>("/medical-record/generate", post(body), token),
-  saveMedicalRecord: (token: string, body: unknown) => request<Record<string, unknown>>("/medical-record/save", post(body), token),
-  medicalRecords: (token: string) => request<Array<Record<string, unknown>>>("/medical-record/list", {}, token),
-  checkPrescription: (token: string, body: unknown) => request<Record<string, unknown>>("/prescription/check", post(body), token),
-  createPrescription: (token: string, body: unknown) => request<Record<string, unknown>>("/prescription/create", post(body), token),
-  prescriptions: (token: string) => request<Array<Record<string, unknown>>>("/prescription/list", {}, token),
-  notifications: (token: string) => request<Array<Record<string, unknown>>>("/notification/list", {}, token),
-  saveDepartment: (token: string, body: unknown) => request<Record<string, unknown>>("/admin/department/save", post(body), token),
-  saveDoctor: (token: string, body: unknown) => request<Record<string, unknown>>("/admin/doctor/save", post(body), token),
-  saveDrug: (token: string, body: unknown) => request<Record<string, unknown>>("/admin/drug/save", post(body), token),
-  prompts: (token: string) => request<Array<Record<string, unknown>>>("/admin/prompt-template/list", {}, token),
-  savePrompt: (token: string, body: unknown) => request<Record<string, unknown>>("/admin/prompt-template/save", post(body), token),
-  knowledgeEntries: (token: string) => request<Array<Record<string, unknown>>>("/admin/knowledge/list", {}, token),
-  saveKnowledgeEntry: (token: string, body: unknown) => request<Record<string, unknown>>("/admin/knowledge/save", post(body), token),
-  dicts: (token: string, dictType = "") => request<Array<Record<string, unknown>>>(`/admin/dict/list${dictType ? `?dictType=${encodeURIComponent(dictType)}` : ""}`, {}, token),
-  saveDict: (token: string, body: unknown) => request<Record<string, unknown>>("/admin/dict/save", post(body), token),
-  generateSchedule: (token: string, body: unknown) => request<Array<Record<string, unknown>>>("/admin/schedule/generate", post(body), token),
-  publishSchedule: (token: string, body: unknown) => request<Array<Record<string, unknown>>>("/admin/schedule/publish", post(body), token),
-  schedules: (token: string) => request<Array<Record<string, unknown>>>("/admin/schedule/list", {}, token),
-  scheduleSuggestionDetail: (token: string, id: number) => request<Record<string, unknown>>(`/admin/schedule/suggestion/detail?id=${id}`, {}, token),
-  triageDesk: (token: string) => request<Array<Record<string, unknown>>>("/admin/triage-desk/list", {}, token),
-  triageDetail: (token: string, id: number) => request<Record<string, unknown>>(`/admin/triage-desk/detail?id=${id}`, {}, token),
-  assignTriage: (token: string, body: unknown) => request<Record<string, unknown>>("/admin/triage-desk/assign", post(body), token),
-  closeTriage: (token: string, triageRecordId: number) => request<Record<string, unknown>>("/admin/triage-desk/close", post({ triageRecordId }), token),
-  searchKnowledge: (token: string, q: string, departmentCode = "") =>
-    request<Array<Record<string, unknown>>>(`/search/knowledge?q=${encodeURIComponent(q)}${departmentCode ? `&departmentCode=${encodeURIComponent(departmentCode)}` : ""}`, {}, token),
-  searchDrugs: (token: string, q: string) =>
-    request<Array<Record<string, unknown>>>(`/search/drugs?q=${encodeURIComponent(q)}`, {}, token),
-  searchPrompts: (token: string, q: string) =>
-    request<Array<Record<string, unknown>>>(`/admin/search/prompts?q=${encodeURIComponent(q)}`, {}, token),
+export const authApi = {
+  registerPatient: (body: PatientRegisterRequest) => post<DataRow>("/patient/register", body),
+  loginPatient: (account: string, password: string) => post<Session>("/patient/login", { account, password }),
+  loginDoctor: (account: string, password: string) => post<Session>("/doctor/login", { account, password }),
+  loginAdmin: (account: string, password: string) => post<Session>("/admin/login", { account, password }),
 };
 
-function gatewayBase() {
+export const patientApi = {
+  info: (token: string) => get<DataRow>("/patient/info", token),
+  departments: () => get<DataRow[]>("/doctor/department/list"),
+  doctors: (departmentId?: number | string) => get<DataRow[]>(`/doctor/list${query({ departmentId })}`),
+  doctorDetail: (id: number) => get<DataRow>(`/doctor/detail${query({ id })}`),
+  triage: (token: string, body: TriageRequest | string) =>
+    post<DataRow>("/triage/consult", typeof body === "string" ? { chiefComplaint: body } : body, token),
+  triageList: (token: string) => get<DataRow[]>("/triage/list", token),
+  registrationSlots: (token: string) => get<DataRow[]>("/registration/slots", token),
+  registrations: (token: string) => get<DataRow[]>("/registration/list", token),
+  createRegistration: (token: string, body: RegistrationCreateRequest) => post<DataRow>("/registration/create", body, token),
+  cancelRegistration: (token: string, registrationId: number) => post<DataRow>("/registration/cancel", { registrationId }, token),
+  medicalRecords: (token: string) => get<DataRow[]>("/medical-record/list", token),
+  medicalRecordDetail: (token: string, id: number) => get<DataRow>(`/medical-record/detail${query({ id })}`, token),
+  prescriptions: (token: string) => get<DataRow[]>("/prescription/list", token),
+};
+
+export const doctorApi = {
+  login: authApi.loginDoctor,
+  departments: patientApi.departments,
+  registrations: (token: string) => get<DataRow[]>("/registration/list", token),
+  triageList: (token: string) => get<DataRow[]>("/triage/list", token),
+  medicalRecords: (token: string) => get<DataRow[]>("/medical-record/list", token),
+  medicalRecordDetail: (token: string, id: number) => get<DataRow>(`/medical-record/detail${query({ id })}`, token),
+  generateMedicalRecord: (token: string, body: MedicalRecordGenerateRequest) => post<DataRow>("/medical-record/generate", body, token),
+  saveMedicalRecord: (token: string, body: MedicalRecordSaveRequest) => post<DataRow>("/medical-record/save", body, token),
+  checkPrescription: (token: string, body: PrescriptionCheckRequest) => post<DataRow>("/prescription/check", body, token),
+  createPrescription: (token: string, body: PrescriptionCreateRequest) => post<DataRow>("/prescription/create", body, token),
+  prescriptions: (token: string) => get<DataRow[]>("/prescription/list", token),
+  searchDrugs: (token: string, q = "") => get<DataRow[]>(`/search/drugs${query({ q })}`, token),
+  notifications: (token: string, readStatus?: string) => get<DataRow[]>(`/notification/list${query({ readStatus })}`, token),
+  markNotificationRead: (token: string, notificationId: number) => post<DataRow>("/notification/read", { notificationId }, token),
+};
+
+export const adminApi = {
+  login: authApi.loginAdmin,
+  departments: (token: string) => get<DataRow[]>("/admin/department/list", token),
+  publicDoctors: patientApi.doctors,
+  saveDepartment: (token: string, body: DepartmentSaveRequest) => post<DataRow>("/admin/department/save", body, token),
+  saveDoctor: (token: string, body: DoctorSaveRequest) => post<DataRow>("/admin/doctor/save", body, token),
+  drugs: (token: string) => get<DataRow[]>("/admin/drug/list", token),
+  saveDrug: (token: string, body: DrugSaveRequest) => post<DataRow>("/admin/drug/save", body, token),
+  prompts: (token: string) => get<DataRow[]>("/admin/prompt-template/list", token),
+  savePrompt: (token: string, body: PromptTemplateSaveRequest) => post<DataRow>("/admin/prompt-template/save", body, token),
+  knowledgeEntries: (token: string) => get<DataRow[]>("/admin/knowledge/list", token),
+  saveKnowledgeEntry: (token: string, body: KnowledgeEntrySaveRequest) => post<DataRow>("/admin/knowledge/save", body, token),
+  dicts: (token: string, dictType = "") => get<DataRow[]>(`/admin/dict/list${query({ dictType })}`, token),
+  saveDict: (token: string, body: SystemDictSaveRequest) => post<DataRow>("/admin/dict/save", body, token),
+  generateSchedule: (token: string, body: ScheduleGenerateRequest) => post<DataRow[]>("/admin/schedule/generate", body, token),
+  publishSchedule: (token: string, body: SchedulePublishRequest) => post<DataRow[]>("/admin/schedule/publish", body, token),
+  schedules: (token: string) => get<DataRow[]>("/admin/schedule/list", token),
+  scheduleSuggestionDetail: (token: string, id: number) => get<DataRow>(`/admin/schedule/suggestion/detail${query({ id })}`, token),
+  triageDesk: (token: string) => get<DataRow[]>("/admin/triage-desk/list", token),
+  triageDetail: (token: string, id: number) => get<DataRow>(`/admin/triage-desk/detail${query({ id })}`, token),
+  assignTriage: (token: string, body: TriageAssignRequest) => post<DataRow>("/admin/triage-desk/assign", body, token),
+  closeTriage: (token: string, triageRecordId: number) => post<DataRow>("/admin/triage-desk/close", { triageRecordId }, token),
+  searchKnowledge: (token: string, q: string, departmentCode = "") =>
+    get<DataRow[]>(`/search/knowledge${query({ q, departmentCode })}`, token),
+  searchDrugs: (token: string, q: string) => get<DataRow[]>(`/search/drugs${query({ q })}`, token),
+  searchPrompts: (token: string, q: string) => get<DataRow[]>(`/admin/search/prompts${query({ q })}`, token),
+};
+
+export const api = {
+  registerPatient: authApi.registerPatient,
+  loginPatient: authApi.loginPatient,
+  loginDoctor: authApi.loginDoctor,
+  loginAdmin: authApi.loginAdmin,
+  patientInfo: patientApi.info,
+  departments: patientApi.departments,
+  doctors: patientApi.doctors,
+  doctorDetail: patientApi.doctorDetail,
+  drugs: adminApi.drugs,
+  triage: patientApi.triage,
+  triageList: patientApi.triageList,
+  createRegistration: patientApi.createRegistration,
+  registrationSlots: patientApi.registrationSlots,
+  registrations: patientApi.registrations,
+  cancelRegistration: patientApi.cancelRegistration,
+  generateMedicalRecord: doctorApi.generateMedicalRecord,
+  saveMedicalRecord: doctorApi.saveMedicalRecord,
+  medicalRecords: patientApi.medicalRecords,
+  medicalRecordDetail: patientApi.medicalRecordDetail,
+  checkPrescription: doctorApi.checkPrescription,
+  createPrescription: doctorApi.createPrescription,
+  prescriptions: patientApi.prescriptions,
+  notifications: doctorApi.notifications,
+  markNotificationRead: doctorApi.markNotificationRead,
+  saveDepartment: adminApi.saveDepartment,
+  adminDepartments: adminApi.departments,
+  saveDoctor: adminApi.saveDoctor,
+  saveDrug: adminApi.saveDrug,
+  prompts: adminApi.prompts,
+  savePrompt: adminApi.savePrompt,
+  knowledgeEntries: adminApi.knowledgeEntries,
+  saveKnowledgeEntry: adminApi.saveKnowledgeEntry,
+  dicts: adminApi.dicts,
+  saveDict: adminApi.saveDict,
+  generateSchedule: adminApi.generateSchedule,
+  publishSchedule: adminApi.publishSchedule,
+  schedules: adminApi.schedules,
+  scheduleSuggestionDetail: adminApi.scheduleSuggestionDetail,
+  triageDesk: adminApi.triageDesk,
+  triageDetail: adminApi.triageDetail,
+  assignTriage: adminApi.assignTriage,
+  closeTriage: adminApi.closeTriage,
+  searchKnowledge: adminApi.searchKnowledge,
+  searchDrugs: adminApi.searchDrugs,
+  searchPrompts: adminApi.searchPrompts,
+};
+
+export function gatewayBase() {
   return API_BASE.startsWith("http")
     ? API_BASE.replace(/\/api$/, "")
     : `${location.protocol}//${location.host}`;
@@ -105,23 +375,65 @@ export function medicalRecordStreamUrl(registrationId: number, token: string) {
   return `${gatewayBase()}/api/medical-record/generate/stream?${params.toString()}`;
 }
 
+export function formatApiError(error: unknown, fallback: string) {
+  if (error instanceof ApiError) return error.message;
+  if (error instanceof Error) return error.message;
+  return fallback;
+}
+
+export function toNumber(value: unknown, fallback = 0) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : fallback;
+}
+
+export function fieldText(item: DataRow | null | undefined, key: string, fallback = "-") {
+  const value = item?.[key];
+  return value === undefined || value === null || value === "" ? fallback : String(value);
+}
+
+export function statusClass(status: unknown) {
+  const value = String(status || "").toUpperCase();
+  if (["CREATED", "CONFIRMED", "AVAILABLE", "ENABLED", "PUBLISHED", "AI_RECOMMENDED", "LOW", "READ"].includes(value)) {
+    return "success";
+  }
+  if (["CANCELLED", "FAILED", "DISABLED", "HIGH", "CLOSED", "FULL"].includes(value)) {
+    return "danger";
+  }
+  if (["PENDING", "DRAFT", "UNPUBLISHED", "UNREVIEWED", "MEDIUM", "MANUAL_REQUIRED", "UNREAD"].includes(value)) {
+    return "warning";
+  }
+  return "info";
+}
+
 export const useAuthStore = defineStore("auth", () => {
   const session = ref<Session | null>(null);
   const storageKey = ref("smart-cloud-brain-session");
+  const permissionError = ref("");
 
-  function load(key: string) {
+  const isAuthenticated = computed(() => Boolean(session.value?.token));
+
+  function load(key: string, expectedRole?: Role) {
     storageKey.value = key;
-    session.value = JSON.parse(localStorage.getItem(key) || "null");
+    const raw = localStorage.getItem(key);
+    session.value = raw ? JSON.parse(raw) as Session : null;
+    permissionError.value = "";
+    if (session.value && expectedRole && session.value.role !== expectedRole) {
+      permissionError.value = `当前登录角色为 ${session.value.role}，无权访问 ${expectedRole} 端业务。`;
+    }
   }
 
-  function save(key: string, nextSession: Session) {
+  function save(key: string, nextSession: Session, expectedRole?: Role) {
     storageKey.value = key;
     session.value = nextSession;
     localStorage.setItem(key, JSON.stringify(nextSession));
+    permissionError.value = expectedRole && nextSession.role !== expectedRole
+      ? `当前登录角色为 ${nextSession.role}，无权访问 ${expectedRole} 端业务。`
+      : "";
   }
 
   function logout() {
     session.value = null;
+    permissionError.value = "";
     localStorage.removeItem(storageKey.value);
   }
 
@@ -129,71 +441,139 @@ export const useAuthStore = defineStore("auth", () => {
     return session.value?.token ?? "";
   }
 
-  return { session, load, save, logout, token };
+  function requireRole(role: Role) {
+    if (!session.value) return false;
+    if (session.value.role !== role) {
+      permissionError.value = `当前登录角色为 ${session.value.role}，无权访问 ${role} 端业务。`;
+      return false;
+    }
+    permissionError.value = "";
+    return true;
+  }
+
+  function bindUnauthorized() {
+    const handler = () => logout();
+    if (typeof window === "undefined") {
+      return () => undefined;
+    }
+    window.addEventListener(SESSION_EVENT, handler);
+    return () => window.removeEventListener(SESSION_EVENT, handler);
+  }
+
+  return { session, permissionError, isAuthenticated, load, save, logout, token, requireRole, bindUnauthorized };
 });
 
 export const usePatientWorkflowStore = defineStore("patientWorkflow", () => {
-  const departments = ref<Array<Record<string, unknown>>>([]);
-  const triage = ref<Record<string, unknown> | null>(null);
-  const slots = ref<Array<Record<string, unknown>>>([]);
-  const registrations = ref<Array<Record<string, unknown>>>([]);
-  const records = ref<Array<Record<string, unknown>>>([]);
-  const prescriptions = ref<Array<Record<string, unknown>>>([]);
+  const patient = ref<DataRow | null>(null);
+  const departments = ref<DataRow[]>([]);
+  const doctors = ref<DataRow[]>([]);
+  const triage = ref<DataRow | null>(null);
+  const triageHistory = ref<DataRow[]>([]);
+  const slots = ref<DataRow[]>([]);
+  const registrations = ref<DataRow[]>([]);
+  const records = ref<DataRow[]>([]);
+  const prescriptions = ref<DataRow[]>([]);
 
   async function refreshPublicData() {
-    departments.value = await api.departments();
+    departments.value = await patientApi.departments();
+    doctors.value = await patientApi.doctors();
   }
 
   async function refreshAuthenticated(token: string) {
-    slots.value = await api.registrationSlots(token);
-    registrations.value = await api.registrations(token);
-    records.value = await api.medicalRecords(token);
-    prescriptions.value = await api.prescriptions(token);
+    const [info, triages, slotList, registrationList, recordList, prescriptionList] = await Promise.all([
+      patientApi.info(token),
+      patientApi.triageList(token),
+      patientApi.registrationSlots(token),
+      patientApi.registrations(token),
+      patientApi.medicalRecords(token),
+      patientApi.prescriptions(token),
+    ]);
+    patient.value = info;
+    triageHistory.value = triages;
+    slots.value = slotList;
+    registrations.value = registrationList;
+    records.value = recordList;
+    prescriptions.value = prescriptionList;
+    triage.value = triages[0] ?? triage.value;
   }
 
-  return { departments, triage, slots, registrations, records, prescriptions, refreshPublicData, refreshAuthenticated };
+  return {
+    patient,
+    departments,
+    doctors,
+    triage,
+    triageHistory,
+    slots,
+    registrations,
+    records,
+    prescriptions,
+    refreshPublicData,
+    refreshAuthenticated,
+  };
 });
 
 export const useDoctorWorkflowStore = defineStore("doctorWorkflow", () => {
-  const registrations = ref<Array<Record<string, unknown>>>([]);
-  const records = ref<Array<Record<string, unknown>>>([]);
-  const drugs = ref<Array<Record<string, unknown>>>([]);
-  const notifications = ref<Array<Record<string, unknown>>>([]);
+  const registrations = ref<DataRow[]>([]);
+  const triageRecords = ref<DataRow[]>([]);
+  const records = ref<DataRow[]>([]);
+  const prescriptions = ref<DataRow[]>([]);
+  const drugs = ref<DataRow[]>([]);
+  const notifications = ref<DataRow[]>([]);
   const streamText = ref("");
   const streamStatus = ref("IDLE");
 
   async function refresh(token: string) {
-    drugs.value = await api.searchDrugs(token, "");
-    registrations.value = await api.registrations(token);
-    records.value = await api.medicalRecords(token);
-    notifications.value = await api.notifications(token);
+    const [registrationList, triageList, recordList, prescriptionList, drugList, notificationList] = await Promise.all([
+      doctorApi.registrations(token),
+      doctorApi.triageList(token),
+      doctorApi.medicalRecords(token),
+      doctorApi.prescriptions(token),
+      doctorApi.searchDrugs(token, ""),
+      doctorApi.notifications(token),
+    ]);
+    registrations.value = registrationList;
+    triageRecords.value = triageList;
+    records.value = recordList;
+    prescriptions.value = prescriptionList;
+    drugs.value = drugList;
+    notifications.value = notificationList;
   }
 
-  return { registrations, records, drugs, notifications, streamText, streamStatus, refresh };
+  return { registrations, triageRecords, records, prescriptions, drugs, notifications, streamText, streamStatus, refresh };
 });
 
 export const useAdminWorkflowStore = defineStore("adminWorkflow", () => {
-  const departments = ref<Array<Record<string, unknown>>>([]);
-  const doctors = ref<Array<Record<string, unknown>>>([]);
-  const drugs = ref<Array<Record<string, unknown>>>([]);
-  const prompts = ref<Array<Record<string, unknown>>>([]);
-  const knowledge = ref<Array<Record<string, unknown>>>([]);
-  const dicts = ref<Array<Record<string, unknown>>>([]);
-  const suggestions = ref<Array<Record<string, unknown>>>([]);
-  const schedules = ref<Array<Record<string, unknown>>>([]);
-  const triageDesk = ref<Array<Record<string, unknown>>>([]);
-  const selectedScheduleSuggestion = ref<Record<string, unknown> | null>(null);
-  const selectedTriage = ref<Record<string, unknown> | null>(null);
+  const departments = ref<DataRow[]>([]);
+  const doctors = ref<DataRow[]>([]);
+  const drugs = ref<DataRow[]>([]);
+  const prompts = ref<DataRow[]>([]);
+  const knowledge = ref<DataRow[]>([]);
+  const dicts = ref<DataRow[]>([]);
+  const suggestions = ref<DataRow[]>([]);
+  const schedules = ref<DataRow[]>([]);
+  const triageDesk = ref<DataRow[]>([]);
+  const selectedScheduleSuggestion = ref<DataRow | null>(null);
+  const selectedTriage = ref<DataRow | null>(null);
 
   async function refresh(token: string) {
-    departments.value = await api.adminDepartments(token);
-    doctors.value = await api.doctors();
-    drugs.value = await api.drugs(token);
-    prompts.value = await api.prompts(token);
-    knowledge.value = await api.knowledgeEntries(token);
-    dicts.value = await api.dicts(token);
-    schedules.value = await api.schedules(token);
-    triageDesk.value = await api.triageDesk(token);
+    const [departmentList, doctorList, drugList, promptList, knowledgeList, dictList, scheduleList, triageList] = await Promise.all([
+      adminApi.departments(token),
+      adminApi.publicDoctors(),
+      adminApi.drugs(token),
+      adminApi.prompts(token),
+      adminApi.knowledgeEntries(token),
+      adminApi.dicts(token),
+      adminApi.schedules(token),
+      adminApi.triageDesk(token),
+    ]);
+    departments.value = departmentList;
+    doctors.value = doctorList;
+    drugs.value = drugList;
+    prompts.value = promptList;
+    knowledge.value = knowledgeList;
+    dicts.value = dictList;
+    schedules.value = scheduleList;
+    triageDesk.value = triageList;
   }
 
   return {

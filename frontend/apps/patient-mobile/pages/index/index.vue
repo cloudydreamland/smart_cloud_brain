@@ -109,7 +109,7 @@
 </template>
 
 <script>
-const DEFAULT_API_BASE = "http://localhost:18080/api";
+const DEFAULT_API_BASE = "/api";
 const API_BASE_KEY = "patient-mobile-api-base";
 const SESSION_KEY = "patient-session";
 
@@ -156,9 +156,9 @@ export default {
     return {
       apiBase: configuredApiBase(),
       session: uni.getStorageSync(SESSION_KEY) || null,
-      account: "13800000001",
-      password: "123456",
-      chiefComplaint: "咽痛、低热、鼻塞两天，想预约轻症门诊。",
+      account: "",
+      password: "",
+      chiefComplaint: "",
       triageResult: null,
       slots: [],
       selectedSlotIndex: -1,
