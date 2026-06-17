@@ -69,9 +69,9 @@ mvn -pl gateway-service,auth-service,patient-service,doctor-service,registration
 cd frontend
 corepack pnpm install
 corepack pnpm test
-corepack pnpm --filter patient-web build
-corepack pnpm --filter doctor-web build
-corepack pnpm --filter admin-web build
+corepack pnpm --filter @smart-cloud-brain/patient-web build
+corepack pnpm --filter @smart-cloud-brain/doctor-web build
+corepack pnpm --filter @smart-cloud-brain/admin-web build
 ```
 
 ## 数据库

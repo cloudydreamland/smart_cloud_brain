@@ -19,6 +19,9 @@ if (-not $NoBuild) {
   Write-Host "Packaging backend jars ..."
   $BackendPom = Join-Path $Root "backend\pom.xml"
   & mvn -f $BackendPom clean package -DskipTests
+  if ($LASTEXITCODE -ne 0) {
+    throw "Backend packaging failed with exit code $LASTEXITCODE."
+  }
 }
 
 $args = @(
@@ -35,6 +38,9 @@ if (-not $NoBuild) {
 
 Write-Host "Starting Docker Compose services with profile '$Profile' ..."
 & docker-compose @args
+if ($LASTEXITCODE -ne 0) {
+  throw "Docker Compose startup failed with exit code $LASTEXITCODE."
+}
 
 Write-Host ""
 Write-Host "Done."

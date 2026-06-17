@@ -20,7 +20,7 @@ RUN corepack enable \
     && pnpm config set fetch-timeout 120000 \
     && pnpm install --frozen-lockfile
 ENV VITE_API_BASE=/api
-RUN pnpm --filter ${APP_NAME} build
+RUN pnpm --filter @smart-cloud-brain/${APP_NAME} build
 
 FROM nginx:1.27-alpine
 ARG APP_NAME
