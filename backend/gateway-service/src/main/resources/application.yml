@@ -30,7 +30,7 @@ spring:
         - id: medical-record-service
           uri: ${MEDICAL_RECORD_SERVICE_URI:http://localhost:8087}
           predicates:
-            - Path=/api/medical-record/**
+            - Path=/api/medical-record/**,/internal/medical-records/**
         - id: prescription-service
           uri: ${PRESCRIPTION_SERVICE_URI:http://localhost:8088}
           predicates:
@@ -64,4 +64,3 @@ management:
 jwt:
   secret: ${JWT_SECRET:smart-cloud-brain-local-secret-please-change}
   expire-hours: ${JWT_EXPIRE_HOURS:24}
-

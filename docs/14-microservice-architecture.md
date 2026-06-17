@@ -28,7 +28,7 @@
 | `prescription-service` | 处方开具、审核、Outbox 事件 | 处方和审核记录 |
 | `ai-service` | AI Provider、Prompt、结构化结果 | AI 日志和 Prompt |
 | `notification-service` | RabbitMQ 消费、WebSocket、通知历史 | 通知消息 |
-| `admin-service` | 管理端聚合、基础数据、搜索 | 管理配置和聚合入口 |
+| `admin-service` | 管理端聚合、基础数据管理 | 管理配置和聚合入口 |
 | `common-lib` | 通用响应、安全上下文、事件常量 | 无业务数据 |
 | `ai-api` | AI 服务间 DTO 契约 | 无业务数据 |
 

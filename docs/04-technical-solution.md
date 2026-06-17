@@ -47,7 +47,7 @@ backend/
   prescription-service/    处方开具、处方审核记录、Outbox 事件
   ai-service/              Mock AI、Prompt 渲染、结构化结果
   notification-service/    RabbitMQ 消费、WebSocket 推送、通知历史
-  admin-service/           管理端聚合、基础数据和搜索入口
+  admin-service/           管理端聚合、基础数据管理
 ```
 
 后端关键设计：

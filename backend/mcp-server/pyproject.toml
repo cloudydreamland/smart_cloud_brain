@@ -1,0 +1,12 @@
+[project]
+name = "smart-cloud-brain-mcp-server"
+version = "0.1.0"
+description = "FastMCP tools for Smart Cloud Brain backend data lookup"
+requires-python = ">=3.11"
+dependencies = [
+  "fastmcp>=2.0.0",
+  "httpx>=0.27.0",
+]
+
+[tool.uv]
+package = false

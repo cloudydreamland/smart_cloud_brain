@@ -9,6 +9,10 @@ import com.smartcloudbrain.aiapi.dto.TriageResponse;
 
 public interface AiProvider {
 
+  default String providerName() {
+    return getClass().getSimpleName();
+  }
+
   TriageResponse triage(TriageRequest request);
 
   MedicalRecordGenerateResponse generateMedicalRecord(MedicalRecordGenerateRequest request);

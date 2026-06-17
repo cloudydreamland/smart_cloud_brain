@@ -9,10 +9,17 @@ import com.smartcloudbrain.aiapi.dto.PrescriptionCheckResponse;
 import com.smartcloudbrain.aiapi.dto.TriageRequest;
 import com.smartcloudbrain.aiapi.dto.TriageResponse;
 import java.util.List;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 @Component
+@ConditionalOnProperty(prefix = "ai", name = "provider", havingValue = "mock", matchIfMissing = true)
 public class MockAiProvider implements AiProvider {
+
+  @Override
+  public String providerName() {
+    return "mock";
+  }
 
   @Override
   public TriageResponse triage(TriageRequest request) {

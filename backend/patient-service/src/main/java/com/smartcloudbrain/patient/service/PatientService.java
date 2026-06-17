@@ -27,6 +27,12 @@ public class PatientService {
     return patientView(patient);
   }
 
+  public Map<String, Object> patientSummary(Long patientId) {
+    Patient patient = patientRepository.findById(patientId)
+        .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+    return patientView(patient);
+  }
+
   public Map<String, Object> patientView(Patient patient) {
     return Map.of(
         "id", patient.getId(),
@@ -39,5 +45,4 @@ public class PatientService {
     );
   }
 }
-
 

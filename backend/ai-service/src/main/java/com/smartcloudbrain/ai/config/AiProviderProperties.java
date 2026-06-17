@@ -7,6 +7,14 @@ public record AiProviderProperties(
     String provider,
     String baseUrl,
     String apiKey,
-    int timeoutMs
+    int timeoutMs,
+    Dify dify
 ) {
+  public record Dify(
+      String baseUrl,
+      String triageApiKey,
+      String medicalRecordApiKey,
+      String prescriptionCheckApiKey
+  ) {
+  }
 }

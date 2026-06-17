@@ -73,6 +73,12 @@ public class MedicalRecordService {
     return records.stream().map(this::recordView).toList();
   }
 
+  public List<Map<String, Object>> recordsByPatient(Long patientId) {
+    return medicalRecordRepository.findByPatientId(patientId).stream()
+        .map(this::recordView)
+        .toList();
+  }
+
   public Map<String, Object> detail(Long id) {
     MedicalRecord record = medicalRecordRepository.findById(id).orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
     AuthenticatedUser user = currentUserService.get();
@@ -113,5 +119,4 @@ public class MedicalRecordService {
     return view;
   }
 }
-
 

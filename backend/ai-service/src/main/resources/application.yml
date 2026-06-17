@@ -19,3 +19,8 @@ ai:
   base-url: ${AI_BASE_URL:}
   api-key: ${AI_API_KEY:}
   timeout-ms: ${AI_TIMEOUT_MS:8000}
+  dify:
+    base-url: ${DIFY_BASE_URL:http://localhost/v1}
+    triage-api-key: ${DIFY_TRIAGE_API_KEY:}
+    medical-record-api-key: ${DIFY_MEDICAL_RECORD_API_KEY:}
+    prescription-check-api-key: ${DIFY_PRESCRIPTION_CHECK_API_KEY:}
