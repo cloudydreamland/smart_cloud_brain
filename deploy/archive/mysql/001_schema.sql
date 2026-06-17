@@ -1,3 +1,4 @@
+-- Archived legacy MySQL schema. Current database migration source is sql/flyway.
 CREATE TABLE IF NOT EXISTS patient (
   id BIGINT PRIMARY KEY AUTO_INCREMENT,
   name VARCHAR(50) NOT NULL,
@@ -206,11 +207,11 @@ VALUES (1, '张医生', '13900000001', '$2a$mock', 1, '主任医师', '胸痛、
 ON DUPLICATE KEY UPDATE name = VALUES(name);
 
 INSERT INTO doctor (id, name, phone, password_hash, department_id, title, specialty, status)
-VALUES (2, '李医生', '13900000002', '{plain}123456', 2, '主治医师', '感冒发热、咽痛、腹泻、皮肤过敏', 'ENABLED')
+VALUES (2, '李医生', '13900000002', '{bcrypt}$2a$12$u7TPtMrkgSKTxjIj7cACBOW1CdobARmBR0Hr8CwCMDxYMwsypQiiu', 2, '主治医师', '感冒发热、咽痛、腹泻、皮肤过敏', 'ENABLED')
 ON DUPLICATE KEY UPDATE name = VALUES(name);
 
 INSERT INTO admin_user (id, username, password_hash, name, status)
-VALUES (1, 'admin', '{plain}123456', '系统管理员', 'ENABLED')
+VALUES (1, 'admin', '{bcrypt}$2a$12$u7TPtMrkgSKTxjIj7cACBOW1CdobARmBR0Hr8CwCMDxYMwsypQiiu', '系统管理员', 'ENABLED')
 ON DUPLICATE KEY UPDATE name = VALUES(name);
 
 INSERT INTO drug (id, name, specification, contraindication, interaction_rule, status)

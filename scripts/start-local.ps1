@@ -1,16 +1,24 @@
 param(
+  [ValidateSet("dev", "demo", "prod")]
+  [string]$Profile = "dev",
   [switch]$NoBuild,
   [switch]$ExternalDb
 )
 
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
-$EnvFile = Join-Path $Root "deploy\env\.env"
-$EnvExample = Join-Path $Root "deploy\env\.env.example"
+$EnvFile = Join-Path $Root "deploy\env\.env.$Profile"
+$EnvExample = Join-Path $Root "deploy\env\.env.$Profile.example"
 $ComposeFile = Join-Path $Root "deploy\docker-compose.yml"
 
 if (-not (Test-Path $EnvFile)) {
   Copy-Item -LiteralPath $EnvExample -Destination $EnvFile
+}
+
+if (-not $NoBuild) {
+  Write-Host "Packaging backend jars ..."
+  $BackendPom = Join-Path $Root "backend\pom.xml"
+  & mvn -f $BackendPom clean package -DskipTests
 }
 
 $args = @(
@@ -25,7 +33,7 @@ if (-not $NoBuild) {
   $args += "--build"
 }
 
-Write-Host "Starting Docker Compose services ..."
+Write-Host "Starting Docker Compose services with profile '$Profile' ..."
 & docker-compose @args
 
 Write-Host ""
