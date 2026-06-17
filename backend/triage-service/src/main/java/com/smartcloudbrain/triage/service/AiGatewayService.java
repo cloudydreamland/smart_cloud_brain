@@ -9,7 +9,9 @@ import com.smartcloudbrain.aiapi.dto.PromptResolveRequest;
 import com.smartcloudbrain.aiapi.dto.PromptResolveResponse;
 import com.smartcloudbrain.aiapi.dto.TriageRequest;
 import com.smartcloudbrain.aiapi.dto.TriageResponse;
-import java.util.List;
+import com.smartcloudbrain.common.exception.BusinessException;
+import com.smartcloudbrain.common.result.Result;
+import java.util.function.Supplier;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -22,35 +24,39 @@ public class AiGatewayService {
   }
 
   public TriageResponse triage(TriageRequest request) {
-    try {
-      return aiServiceClient.triage(request).data();
-    } catch (RuntimeException ex) {
-      return new TriageResponse("General Practice", "GENERAL", List.of(), "AI service is unavailable. Manual triage is recommended.", true);
-    }
+    return call(() -> aiServiceClient.triage(request));
   }
 
   public MedicalRecordGenerateResponse generateMedicalRecord(MedicalRecordGenerateRequest request) {
-    try {
-      return aiServiceClient.generateMedicalRecord(request).data();
-    } catch (RuntimeException ex) {
-      return new MedicalRecordGenerateResponse("", "", "", "", "Manual input required", "AI service is unavailable. Please complete the record manually.", true);
-    }
+    return call(() -> aiServiceClient.generateMedicalRecord(request));
   }
 
   public PrescriptionCheckResponse checkPrescription(PrescriptionCheckRequest request) {
-    try {
-      return aiServiceClient.checkPrescription(request).data();
-    } catch (RuntimeException ex) {
-      return new PrescriptionCheckResponse("UNKNOWN", "AI review is unavailable. Doctor manual review is required before saving.", List.of(), true);
-    }
+    return call(() -> aiServiceClient.checkPrescription(request));
   }
 
   public PromptResolveResponse resolvePrompt(PromptResolveRequest request) {
+    return call(() -> aiServiceClient.resolvePrompt(request));
+  }
+
+  private <T> T call(Supplier<Result<T>> supplier) {
     try {
-      return aiServiceClient.resolvePrompt(request).data();
+      return unwrap(supplier.get());
+    } catch (BusinessException ex) {
+      throw ex;
     } catch (RuntimeException ex) {
-      return new PromptResolveResponse(request.taskType(), request.departmentCode(), "fallback", "AI prompt service unavailable.", "{}", "fallback");
+      throw new BusinessException(600, "AI service request failed: " + ex.getMessage());
     }
+  }
+
+  private <T> T unwrap(Result<T> result) {
+    if (result == null) {
+      throw new BusinessException(600, "AI service returned an empty response");
+    }
+    if (result.code() != 0) {
+      throw new BusinessException(result.code(), result.message());
+    }
+    return result.data();
   }
 }
 

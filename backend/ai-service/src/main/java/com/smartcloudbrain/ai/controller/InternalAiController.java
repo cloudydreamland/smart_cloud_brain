@@ -10,7 +10,6 @@ import com.smartcloudbrain.ai.service.PromptTemplateService;
 import com.smartcloudbrain.common.result.Result;
 import jakarta.validation.Valid;
 import java.io.IOException;
-import java.util.List;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -43,21 +42,26 @@ public class InternalAiController {
   }
 
   @GetMapping(value = "/medical-record/generate/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-  public SseEmitter streamMedicalRecord(@RequestParam Long registrationId) {
+  public SseEmitter streamMedicalRecord(
+      @RequestParam Long registrationId,
+      @RequestParam String dialogueText,
+      @RequestParam(required = false) String departmentCode
+  ) {
     SseEmitter emitter = new SseEmitter(30_000L);
     new Thread(() -> {
       try {
         emitter.send(SseEmitter.event().name("start").data("{\"taskId\":\"mr-" + registrationId + "\"}"));
-        for (String text : List.of("Chief complaint: chest pain and dyspnea for two days.", "Present illness: worse after activity and relieved by rest.", "Advice: complete ECG and cardiac enzyme checks.")) {
-          emitter.send(SseEmitter.event().name("delta").data("{\"text\":\"" + text + "\"}"));
-          Thread.sleep(350L);
-        }
-        emitter.send(SseEmitter.event().name("structured").data(aiOrchestrationService.generateMedicalRecord(new MedicalRecordGenerateRequest(registrationId, "CARDIOLOGY", "stream"))));
+        emitter.send(SseEmitter.event().name("delta").data("{\"text\":\"AI medical record request submitted.\"}"));
+        emitter.send(SseEmitter.event().name("structured").data(aiOrchestrationService.generateMedicalRecord(new MedicalRecordGenerateRequest(registrationId, departmentCode, dialogueText))));
         emitter.send(SseEmitter.event().name("done").data("{\"taskId\":\"mr-" + registrationId + "\"}"));
         emitter.complete();
-      } catch (IOException | InterruptedException ex) {
-        emitter.completeWithError(ex);
-        Thread.currentThread().interrupt();
+      } catch (Exception ex) {
+        try {
+          emitter.send(SseEmitter.event().name("error").data("{\"message\":\"" + ex.getMessage() + "\"}"));
+          emitter.complete();
+        } catch (IOException ioException) {
+          emitter.completeWithError(ioException);
+        }
       }
     }, "ai-medical-record-sse-" + registrationId).start();
     return emitter;

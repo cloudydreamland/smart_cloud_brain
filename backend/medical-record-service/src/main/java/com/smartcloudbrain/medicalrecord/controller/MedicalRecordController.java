@@ -7,7 +7,7 @@ import com.smartcloudbrain.common.result.Result;
 import com.smartcloudbrain.medicalrecord.service.MedicalRecordService;
 import jakarta.validation.Valid;
 import java.io.IOException;
-import java.util.List;
+import java.util.Map;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,8 +31,7 @@ public class MedicalRecordController {
 
   @PostMapping("/generate")
   public Result<?> generate(@Valid @RequestBody MedicalRecordGenerateRequest request) {
-    medicalRecordService.requireDoctorRegistration(request.registrationId());
-    return Result.success(aiGatewayService.generateMedicalRecord(request));
+    return Result.success(aiGatewayService.generateMedicalRecord(medicalRecordService.buildGenerateRequest(request)));
   }
 
   @PostMapping("/save")
@@ -51,23 +50,30 @@ public class MedicalRecordController {
   }
 
   @GetMapping(value = "/generate/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-  public SseEmitter generateStream(@RequestParam Long registrationId) {
-    medicalRecordService.requireDoctorRegistration(registrationId);
+  public SseEmitter generateStream(
+      @RequestParam Long registrationId,
+      @RequestParam String dialogueText,
+      @RequestParam(required = false) String departmentCode
+  ) {
+    MedicalRecordGenerateRequest aiRequest = medicalRecordService.buildGenerateRequest(
+        new MedicalRecordGenerateRequest(registrationId, departmentCode, dialogueText)
+    );
     SseEmitter emitter = new SseEmitter(30_000L);
     new Thread(() -> {
       try {
         emitter.send(SseEmitter.event().name("start").data("{\"taskId\":\"mr-" + registrationId + "\"}"));
-        for (String text : List.of("Connecting to AI medical record service.", "Organizing consultation text.", "Structured medical record draft generated.")) {
-          emitter.send(SseEmitter.event().name("delta").data("{\"text\":\"" + text + "\"}"));
-          Thread.sleep(300L);
-        }
+        emitter.send(SseEmitter.event().name("delta").data("{\"text\":\"AI medical record request submitted.\"}"));
         emitter.send(SseEmitter.event().name("structured").data(aiGatewayService.generateMedicalRecord(
-            new MedicalRecordGenerateRequest(registrationId, "CARDIOLOGY", "stream request"))));
+            aiRequest)));
         emitter.send(SseEmitter.event().name("done").data("{\"taskId\":\"mr-" + registrationId + "\"}"));
         emitter.complete();
-      } catch (IOException | InterruptedException ex) {
-        emitter.completeWithError(ex);
-        Thread.currentThread().interrupt();
+      } catch (Exception ex) {
+        try {
+          emitter.send(SseEmitter.event().name("error").data(Map.of("message", ex.getMessage())));
+          emitter.complete();
+        } catch (IOException ioException) {
+          emitter.completeWithError(ioException);
+        }
       }
     }, "medical-record-sse-" + registrationId).start();
     return emitter;

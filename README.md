@@ -82,3 +82,30 @@ corepack pnpm --filter @smart-cloud-brain/admin-web build
 - 已发布医生排班和可预约号源。
 
 挂号、病历、处方、通知等交易数据通过实际演示流程生成。
+
+## Real AI API configuration
+
+`ai-service` now defaults to a real OpenAI-compatible provider. For DeepSeek, set:
+
+```env
+AI_PROVIDER=openai
+OPENAI_API_KEY=sk-...
+OPENAI_BASE_URL=https://api.deepseek.com/v1
+OPENAI_MODEL=deepseek-chat
+```
+
+Dify is also supported:
+
+```env
+AI_PROVIDER=dify
+DIFY_BASE_URL=http://your-dify/v1
+DIFY_API_KEY=app-...
+```
+
+If required variables are missing, `ai-service` fails during startup and reports the missing variable. Mock is for local test/demo only and must be explicitly enabled:
+
+```env
+AI_PROVIDER=mock
+```
+
+Triage, medical-record generation, and prescription checks read enabled templates from `prompt_template`; admin changes affect later AI output. Successful and failed AI calls are written to `ai_generation_log` with summaries only, not full private medical text.

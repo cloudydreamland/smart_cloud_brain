@@ -9,6 +9,7 @@ import com.smartcloudbrain.common.error.ErrorCode;
 import com.smartcloudbrain.common.exception.BusinessException;
 import com.smartcloudbrain.common.security.RoleType;
 import com.smartcloudbrain.prescription.entity.MedicalRecord;
+import com.smartcloudbrain.prescription.entity.Patient;
 import com.smartcloudbrain.prescription.dto.prescription.PrescriptionCreateRequest;
 import com.smartcloudbrain.prescription.entity.Prescription;
 import com.smartcloudbrain.prescription.entity.PrescriptionCheckRecord;
@@ -18,6 +19,7 @@ import com.smartcloudbrain.prescription.repository.PrescriptionCheckRecordReposi
 import com.smartcloudbrain.prescription.repository.PrescriptionItemRepository;
 import com.smartcloudbrain.prescription.repository.PrescriptionRepository;
 import com.smartcloudbrain.prescription.repository.MedicalRecordRepository;
+import com.smartcloudbrain.prescription.repository.PatientRepository;
 import com.smartcloudbrain.common.security.AuthenticatedUser;
 import com.smartcloudbrain.common.security.CurrentUserService;
 import java.util.LinkedHashMap;
@@ -34,6 +36,7 @@ public class PrescriptionService {
   private final PrescriptionItemRepository prescriptionItemRepository;
   private final PrescriptionCheckRecordRepository checkRecordRepository;
   private final MedicalRecordRepository medicalRecordRepository;
+  private final PatientRepository patientRepository;
   private final OutboxEventPublisher outboxEventPublisher;
   private final CurrentUserService currentUserService;
 
@@ -43,6 +46,7 @@ public class PrescriptionService {
       PrescriptionItemRepository prescriptionItemRepository,
       PrescriptionCheckRecordRepository checkRecordRepository,
       MedicalRecordRepository medicalRecordRepository,
+      PatientRepository patientRepository,
       OutboxEventPublisher outboxEventPublisher,
       CurrentUserService currentUserService
   ) {
@@ -51,6 +55,7 @@ public class PrescriptionService {
     this.prescriptionItemRepository = prescriptionItemRepository;
     this.checkRecordRepository = checkRecordRepository;
     this.medicalRecordRepository = medicalRecordRepository;
+    this.patientRepository = patientRepository;
     this.outboxEventPublisher = outboxEventPublisher;
     this.currentUserService = currentUserService;
   }
@@ -62,7 +67,19 @@ public class PrescriptionService {
     if (!doctorId.equals(user.userId())) {
       throw new BusinessException(ErrorCode.FORBIDDEN);
     }
-    PrescriptionCheckResponse response = aiGatewayService.checkPrescription(new PrescriptionCheckRequest(request.patientId(), doctorId, request.drugs()));
+    Patient patient = patientRepository.findById(request.patientId()).orElse(null);
+    MedicalRecord medicalRecord = resolveMedicalRecord(request, doctorId);
+    PrescriptionCheckResponse response = aiGatewayService.checkPrescription(new PrescriptionCheckRequest(
+        request.patientId(),
+        doctorId,
+        medicalRecord == null ? request.medicalRecordId() : medicalRecord.getId(),
+        medicalRecord == null ? request.diagnosis() : medicalRecord.getDiagnosis(),
+        patient == null ? request.patientAge() : patient.getAge(),
+        patient == null ? request.patientGender() : patient.getGender(),
+        patient == null ? request.allergyHistory() : patient.getAllergyHistory(),
+        combinedPastHistory(request.pastHistory(), patient, medicalRecord),
+        request.drugs()
+    ));
     PrescriptionCheckRecord record = new PrescriptionCheckRecord();
     record.setPatientId(request.patientId());
     record.setDoctorId(doctorId);
@@ -76,8 +93,11 @@ public class PrescriptionService {
     }
     return Map.of(
         "riskLevel", response.riskLevel(),
+        "riskDescription", response.riskDescription(),
         "suggestions", response.suggestions(),
         "interactions", safeInteractions(response),
+        "contraindications", response.contraindications() == null ? List.of() : response.contraindications(),
+        "adjustmentSuggestions", response.adjustmentSuggestions() == null ? List.of() : response.adjustmentSuggestions(),
         "degraded", response.degraded(),
         "checkRecordId", record.getId()
     );
@@ -186,6 +206,36 @@ public class PrescriptionService {
 
   private List<String> safeInteractions(PrescriptionCheckResponse response) {
     return response.interactions() == null ? List.of() : response.interactions();
+  }
+
+  private MedicalRecord resolveMedicalRecord(PrescriptionCheckRequest request, Long doctorId) {
+    if (request.medicalRecordId() != null) {
+      MedicalRecord record = medicalRecordRepository.findById(request.medicalRecordId())
+          .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+      if (!record.getDoctorId().equals(doctorId) || !record.getPatientId().equals(request.patientId())) {
+        throw new BusinessException(ErrorCode.FORBIDDEN);
+      }
+      return record;
+    }
+    return medicalRecordRepository.findFirstByPatientIdAndDoctorIdOrderByIdDesc(request.patientId(), doctorId).orElse(null);
+  }
+
+  private String combinedPastHistory(String requestPastHistory, Patient patient, MedicalRecord record) {
+    StringBuilder builder = new StringBuilder();
+    append(builder, requestPastHistory);
+    append(builder, patient == null ? "" : patient.getPastHistory());
+    append(builder, record == null ? "" : record.getPastHistory());
+    return builder.toString();
+  }
+
+  private void append(StringBuilder builder, String value) {
+    if (value == null || value.isBlank()) {
+      return;
+    }
+    if (!builder.isEmpty()) {
+      builder.append("\n");
+    }
+    builder.append(value);
   }
 
   private String nullToEmpty(String value) {

@@ -35,11 +35,13 @@ class MedicalRecordControllerSseTest {
             "follow up",
             false
         ));
+    when(medicalRecordService.buildGenerateRequest(any(MedicalRecordGenerateRequest.class)))
+        .thenReturn(new MedicalRecordGenerateRequest(42L, "CARDIOLOGY", "dialogue"));
 
-    SseEmitter emitter = controller.generateStream(42L);
+    SseEmitter emitter = controller.generateStream(42L, "dialogue", "CARDIOLOGY");
 
     assertNotNull(emitter);
-    verify(medicalRecordService).requireDoctorRegistration(42L);
+    verify(medicalRecordService).buildGenerateRequest(any(MedicalRecordGenerateRequest.class));
     verify(aiGatewayService, timeout(2500)).generateMedicalRecord(any(MedicalRecordGenerateRequest.class));
   }
 }

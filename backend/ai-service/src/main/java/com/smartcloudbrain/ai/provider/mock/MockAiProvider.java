@@ -6,6 +6,7 @@ import com.smartcloudbrain.aiapi.dto.MedicalRecordGenerateRequest;
 import com.smartcloudbrain.aiapi.dto.MedicalRecordGenerateResponse;
 import com.smartcloudbrain.aiapi.dto.PrescriptionCheckRequest;
 import com.smartcloudbrain.aiapi.dto.PrescriptionCheckResponse;
+import com.smartcloudbrain.aiapi.dto.PromptResolveResponse;
 import com.smartcloudbrain.aiapi.dto.TriageRequest;
 import com.smartcloudbrain.aiapi.dto.TriageResponse;
 import java.util.List;
@@ -13,7 +14,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 @Component
-@ConditionalOnProperty(prefix = "ai", name = "provider", havingValue = "mock", matchIfMissing = true)
+@ConditionalOnProperty(prefix = "ai", name = "provider", havingValue = "mock")
 public class MockAiProvider implements AiProvider {
 
   @Override
@@ -22,7 +23,7 @@ public class MockAiProvider implements AiProvider {
   }
 
   @Override
-  public TriageResponse triage(TriageRequest request) {
+  public TriageResponse triage(TriageRequest request, PromptResolveResponse prompt) {
     boolean cardiology = request.chiefComplaint().contains("胸痛")
         || request.chiefComplaint().toLowerCase().contains("chest");
     if (cardiology) {
@@ -32,7 +33,7 @@ public class MockAiProvider implements AiProvider {
   }
 
   @Override
-  public MedicalRecordGenerateResponse generateMedicalRecord(MedicalRecordGenerateRequest request) {
+  public MedicalRecordGenerateResponse generateMedicalRecord(MedicalRecordGenerateRequest request, PromptResolveResponse prompt) {
     return new MedicalRecordGenerateResponse(
         "Chest pain with dyspnea for two days",
         "Symptoms worsen after activity and are relieved by rest.",
@@ -45,7 +46,7 @@ public class MockAiProvider implements AiProvider {
   }
 
   @Override
-  public PrescriptionCheckResponse checkPrescription(PrescriptionCheckRequest request) {
+  public PrescriptionCheckResponse checkPrescription(PrescriptionCheckRequest request, PromptResolveResponse prompt) {
     boolean aspirin = request.drugs().stream()
         .map(DrugItem::drugName)
         .anyMatch(name -> name.contains("阿司匹林") || name.toLowerCase().contains("aspirin"));

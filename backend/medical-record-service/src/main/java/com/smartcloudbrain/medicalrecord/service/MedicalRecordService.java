@@ -3,6 +3,7 @@ package com.smartcloudbrain.medicalrecord.service;
 import com.smartcloudbrain.common.error.ErrorCode;
 import com.smartcloudbrain.common.exception.BusinessException;
 import com.smartcloudbrain.common.security.RoleType;
+import com.smartcloudbrain.aiapi.dto.MedicalRecordGenerateRequest;
 import com.smartcloudbrain.medicalrecord.dto.medical.MedicalRecordSaveRequest;
 import com.smartcloudbrain.medicalrecord.entity.MedicalRecord;
 import com.smartcloudbrain.medicalrecord.entity.Patient;
@@ -98,6 +99,30 @@ public class MedicalRecordService {
     if (!registration.getDoctorId().equals(user.userId())) {
       throw new BusinessException(ErrorCode.FORBIDDEN);
     }
+  }
+
+  public MedicalRecordGenerateRequest buildGenerateRequest(MedicalRecordGenerateRequest request) {
+    AuthenticatedUser user = currentUserService.require(RoleType.DOCTOR);
+    Registration registration = registrationRepository.findById(request.registrationId())
+        .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+    if (!registration.getDoctorId().equals(user.userId())) {
+      throw new BusinessException(ErrorCode.FORBIDDEN);
+    }
+    Patient patient = patientRepository.findById(registration.getPatientId()).orElse(null);
+    return new MedicalRecordGenerateRequest(
+        registration.getId(),
+        request.departmentCode(),
+        request.dialogueText(),
+        registration.getPatientId(),
+        patient == null ? "" : patient.getName(),
+        patient == null ? null : patient.getAge(),
+        patient == null ? "" : patient.getGender(),
+        patient == null ? "" : patient.getAllergyHistory(),
+        patient == null ? "" : patient.getPastHistory(),
+        registration.getDoctorId(),
+        "",
+        registration.getAppointmentTime() == null ? "" : registration.getAppointmentTime().toString()
+    );
   }
 
   public Map<String, Object> recordView(MedicalRecord record) {

@@ -70,6 +70,12 @@ export type DrugItem = {
 export type PrescriptionCheckRequest = {
   patientId?: number;
   doctorId?: number;
+  medicalRecordId?: number;
+  diagnosis?: string;
+  patientAge?: number;
+  patientGender?: string;
+  allergyHistory?: string;
+  pastHistory?: string;
   drugs: DrugItem[];
 };
 
@@ -378,8 +384,11 @@ export function notificationWebSocketProtocols(token: string) {
   return token ? ["bearer", token] : [];
 }
 
-export function medicalRecordStreamUrl(registrationId: number) {
-  const params = new URLSearchParams({ registrationId: String(registrationId) });
+export function medicalRecordStreamUrl(registrationId: number, dialogueText: string, departmentCode = "") {
+  const params = new URLSearchParams({ registrationId: String(registrationId), dialogueText });
+  if (departmentCode) {
+    params.set("departmentCode", departmentCode);
+  }
   return `${gatewayBase()}/api/medical-record/generate/stream?${params.toString()}`;
 }
 

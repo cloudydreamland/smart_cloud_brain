@@ -24,9 +24,21 @@ public class HealthController {
         "service", "ai-service",
         "status", "UP",
         "provider", aiProvider.providerName(),
+        "model", aiProvider.modelName(),
+        "openaiConfigured", openaiConfigured(),
         "difyConfigured", difyConfigured(),
-        "difyBaseUrl", properties.dify() == null ? "" : blankToDefault(properties.dify().baseUrl(), "http://localhost/v1")
+        "openaiBaseUrl", properties.openai() == null ? "" : blankToDefault(properties.openai().baseUrl(), ""),
+        "difyBaseUrl", properties.dify() == null ? "" : blankToDefault(properties.dify().baseUrl(), "")
     ));
+  }
+
+  private boolean openaiConfigured() {
+    if (properties.openai() == null) {
+      return false;
+    }
+    return hasText(properties.openai().baseUrl())
+        && hasText(properties.openai().apiKey())
+        && hasText(properties.openai().model());
   }
 
   private boolean difyConfigured() {
@@ -34,9 +46,7 @@ public class HealthController {
       return false;
     }
     return hasText(properties.dify().baseUrl())
-        && hasText(properties.dify().triageApiKey())
-        && hasText(properties.dify().medicalRecordApiKey())
-        && hasText(properties.dify().prescriptionCheckApiKey());
+        && hasText(properties.dify().apiKey());
   }
 
   private boolean hasText(String value) {

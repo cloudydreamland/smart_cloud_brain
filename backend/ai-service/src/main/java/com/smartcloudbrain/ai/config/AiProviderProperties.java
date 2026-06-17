@@ -5,16 +5,20 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "ai")
 public record AiProviderProperties(
     String provider,
-    String baseUrl,
-    String apiKey,
     int timeoutMs,
+    OpenAi openai,
     Dify dify
 ) {
+  public record OpenAi(
+      String baseUrl,
+      String apiKey,
+      String model
+  ) {
+  }
+
   public record Dify(
       String baseUrl,
-      String triageApiKey,
-      String medicalRecordApiKey,
-      String prescriptionCheckApiKey
+      String apiKey
   ) {
   }
 }

@@ -171,6 +171,9 @@ function applyDraft(draft: DataRow) {
   medicalForm.diagnosis = fieldText(draft, "diagnosis", medicalForm.diagnosis);
   medicalForm.treatmentAdvice = fieldText(draft, "treatmentAdvice", medicalForm.treatmentAdvice);
   medicalForm.aiGenerated = true;
+  if (draft.degraded) {
+    streamText.value += "Mode: degraded/mock\n";
+  }
 }
 
 async function generateRecord() {
@@ -185,18 +188,7 @@ async function generateRecord() {
   await run("record", "病历生成失败", async () => {
     streamText.value = "";
     streamStatus.value = "GENERATING";
-    try {
-      await generateRecordByStream(selectedRegistrationId.value);
-    } catch {
-      const draft = await api.generateMedicalRecord(auth.token(), {
-        registrationId: selectedRegistrationId.value,
-        departmentCode: fieldText(selectedTriage.value, "departmentCode", ""),
-        dialogueText: dialogueText.value,
-      });
-      applyDraft(draft);
-      streamText.value = "流式生成不可用，已使用普通生成接口返回结构化草稿。";
-      streamStatus.value = "DRAFT_READY";
-    }
+    await generateRecordByStream(selectedRegistrationId.value);
     setNotice("病历草稿已生成，请医生确认后保存。");
   });
 }
@@ -205,7 +197,7 @@ function generateRecordByStream(registrationId: number) {
   return new Promise<void>((resolve, reject) => {
     recordStream?.abort();
     recordStream = new AbortController();
-    fetch(medicalRecordStreamUrl(registrationId), {
+    fetch(medicalRecordStreamUrl(registrationId, dialogueText.value, fieldText(selectedTriage.value, "departmentCode", "")), {
       headers: { Authorization: `Bearer ${auth.token()}` },
       signal: recordStream.signal,
     }).then(async (response) => {
@@ -252,6 +244,10 @@ function handleStreamBlock(block: string) {
   } else if (eventName === "structured") {
     applyDraft(parseEventData(dataText));
     streamStatus.value = "DRAFT_READY";
+  } else if (eventName === "error") {
+    const data = parseEventData(dataText);
+    streamStatus.value = "FAILED";
+    throw new Error(fieldText(data, "message", "AI generation failed"));
   }
 }
 
@@ -289,6 +285,9 @@ async function checkPrescription() {
     checkResult.value = await api.checkPrescription(auth.token(), {
       patientId: toNumber(selectedRegistration.value?.patientId),
       doctorId: session.value?.userId,
+      medicalRecordId: prescription.medicalRecordId || undefined,
+      diagnosis: medicalForm.diagnosis,
+      pastHistory: medicalForm.pastHistory,
       drugs: prescription.drugs,
     });
     prescription.riskLevel = fieldText(checkResult.value, "riskLevel", "UNREVIEWED");
@@ -562,6 +561,7 @@ onBeforeUnmount(() => {
           </div>
           <div v-if="checkResult" class="risk-panel" :class="statusClass(checkResult.riskLevel)">
             <strong>风险等级：{{ text(checkResult, "riskLevel", "未返回") }}</strong>
+            <p v-if="checkResult.degraded">Mode: degraded/mock</p>
             <p>{{ text(checkResult, "suggestions", "请医生复核用药风险。") }}</p>
             <p v-if="checkInteractions.length">相互作用：{{ checkInteractions.join("、") }}</p>
           </div>

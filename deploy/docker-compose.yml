@@ -279,19 +279,26 @@ services:
     restart: unless-stopped
     environment:
       SERVER_PORT: 8081
-      AI_PROVIDER: ${AI_PROVIDER:-mock}
-      AI_BASE_URL: ${AI_BASE_URL:-}
-      AI_API_KEY: ${AI_API_KEY:-}
+      DB_HOST: ${DB_SERVICE_HOST:-kingbase}
+      DB_PORT: ${DB_SERVICE_PORT:-54321}
+      DB_NAME: ${DB_NAME:-smart_cloud_brain}
+      DB_USERNAME: ${DB_USERNAME:-scb}
+      DB_PASSWORD: ${DB_PASSWORD:-scb_password}
+      AI_PROVIDER: ${AI_PROVIDER:-openai}
       AI_TIMEOUT_MS: ${AI_TIMEOUT_MS:-8000}
-      DIFY_BASE_URL: ${DIFY_BASE_URL:-http://localhost/v1}
-      DIFY_TRIAGE_API_KEY: ${DIFY_TRIAGE_API_KEY:-}
-      DIFY_MEDICAL_RECORD_API_KEY: ${DIFY_MEDICAL_RECORD_API_KEY:-}
-      DIFY_PRESCRIPTION_CHECK_API_KEY: ${DIFY_PRESCRIPTION_CHECK_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      OPENAI_MODEL: ${OPENAI_MODEL:-}
+      DIFY_BASE_URL: ${DIFY_BASE_URL:-}
+      DIFY_API_KEY: ${DIFY_API_KEY:-}
       NO_PROXY: ${NO_PROXY:-localhost,127.0.0.1,ai-service,docker-nginx-1,docker-api-1,nginx,api}
       no_proxy: ${NO_PROXY:-localhost,127.0.0.1,ai-service,docker-nginx-1,docker-api-1,nginx,api}
       TZ: Asia/Shanghai
     ports:
       - "${AI_SERVICE_PORT:-8081}:8081"
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
     networks:
       - default
       - dify

@@ -6,9 +6,12 @@ import com.smartcloudbrain.common.error.ErrorCode;
 import com.smartcloudbrain.common.exception.BusinessException;
 import com.smartcloudbrain.common.security.RoleType;
 import com.smartcloudbrain.triage.entity.TriageRecord;
+import com.smartcloudbrain.triage.entity.Patient;
+import com.smartcloudbrain.triage.repository.PatientRepository;
 import com.smartcloudbrain.triage.repository.TriageRecordRepository;
 import com.smartcloudbrain.common.security.AuthenticatedUser;
 import com.smartcloudbrain.common.security.CurrentUserService;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -20,15 +23,18 @@ public class TriageService {
 
   private final AiGatewayService aiGatewayService;
   private final TriageRecordRepository triageRecordRepository;
+  private final PatientRepository patientRepository;
   private final CurrentUserService currentUserService;
 
   public TriageService(
       AiGatewayService aiGatewayService,
       TriageRecordRepository triageRecordRepository,
+      PatientRepository patientRepository,
       CurrentUserService currentUserService
   ) {
     this.aiGatewayService = aiGatewayService;
     this.triageRecordRepository = triageRecordRepository;
+    this.patientRepository = patientRepository;
     this.currentUserService = currentUserService;
   }
 
@@ -39,7 +45,16 @@ public class TriageService {
     if (!patientId.equals(user.userId())) {
       throw new BusinessException(ErrorCode.FORBIDDEN);
     }
-    TriageResponse response = aiGatewayService.triage(new TriageRequest(patientId, request.chiefComplaint()));
+    Patient patient = patientRepository.findById(patientId).orElse(null);
+    TriageResponse response = aiGatewayService.triage(new TriageRequest(
+        patientId,
+        request.chiefComplaint(),
+        request.symptoms(),
+        patient == null ? request.age() : patient.getAge(),
+        patient == null ? request.gender() : patient.getGender(),
+        patient == null ? request.allergyHistory() : patient.getAllergyHistory(),
+        patient == null ? request.pastHistory() : patient.getPastHistory()
+    ));
     TriageRecord record = new TriageRecord();
     record.setPatientId(patientId);
     record.setChiefComplaint(request.chiefComplaint());
@@ -47,8 +62,14 @@ public class TriageService {
     record.setRecommendedDoctorIds(response.recommendedDoctorIds().stream().map(String::valueOf).collect(Collectors.joining(",")));
     record.setReason(response.reason());
     record.setAiResultJson("""
-        {"departmentCode":"%s","degraded":%s}
-        """.formatted(response.departmentCode(), response.degraded()).trim());
+        {"departmentCode":"%s","recommendedDoctorDirection":"%s","urgencyLevel":"%s","confidence":%s,"degraded":%s}
+        """.formatted(
+        response.departmentCode(),
+        response.recommendedDoctorDirection(),
+        response.urgencyLevel(),
+        response.confidence(),
+        response.degraded()
+    ).trim());
     record.setStatus(response.degraded() ? "MANUAL_REQUIRED" : "AI_RECOMMENDED");
     return triageView(triageRecordRepository.save(record), response);
   }
@@ -62,18 +83,21 @@ public class TriageService {
   }
 
   private Map<String, Object> triageView(TriageRecord record, TriageResponse response) {
-    return Map.of(
-        "triageRecordId", record.getId(),
-        "patientId", record.getPatientId(),
-        "chiefComplaint", record.getChiefComplaint(),
-        "recommendedDepartment", record.getRecommendedDepartment() == null ? "" : record.getRecommendedDepartment(),
-        "departmentCode", response == null ? "" : response.departmentCode(),
-        "recommendedDoctorIds", response == null ? record.getRecommendedDoctorIds() : response.recommendedDoctorIds(),
-        "assignedDoctorId", record.getAssignedDoctorId() == null ? 0L : record.getAssignedDoctorId(),
-        "reason", record.getReason() == null ? "" : record.getReason(),
-        "status", record.getStatus(),
-        "degraded", response != null && response.degraded()
-    );
+    Map<String, Object> view = new LinkedHashMap<>();
+    view.put("triageRecordId", record.getId());
+    view.put("patientId", record.getPatientId());
+    view.put("chiefComplaint", record.getChiefComplaint());
+    view.put("recommendedDepartment", record.getRecommendedDepartment() == null ? "" : record.getRecommendedDepartment());
+    view.put("departmentCode", response == null ? "" : response.departmentCode());
+    view.put("recommendedDoctorDirection", response == null ? "" : response.recommendedDoctorDirection());
+    view.put("urgencyLevel", response == null ? "" : response.urgencyLevel());
+    view.put("confidence", response == null || response.confidence() == null ? 0 : response.confidence());
+    view.put("recommendedDoctorIds", response == null ? record.getRecommendedDoctorIds() : response.recommendedDoctorIds());
+    view.put("assignedDoctorId", record.getAssignedDoctorId() == null ? 0L : record.getAssignedDoctorId());
+    view.put("reason", record.getReason() == null ? "" : record.getReason());
+    view.put("status", record.getStatus());
+    view.put("degraded", response != null && response.degraded());
+    return view;
   }
 }
 
