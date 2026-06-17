@@ -21,7 +21,7 @@ public class NotificationController {
   }
 
   @GetMapping("/list")
-  public Result<?> list(@RequestParam(required = false) String readStatus) {
+  public Result<?> list(@RequestParam(name = "readStatus", required = false) String readStatus) {
     return Result.success(notificationService.list(readStatus));
   }
 

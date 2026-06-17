@@ -18,7 +18,7 @@ public class InternalMedicalRecordController {
   }
 
   @GetMapping("/patient/{patientId}")
-  public Result<?> byPatient(@PathVariable Long patientId) {
+  public Result<?> byPatient(@PathVariable("patientId") Long patientId) {
     return Result.success(medicalRecordService.recordsByPatient(patientId));
   }
 }

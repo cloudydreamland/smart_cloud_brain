@@ -18,7 +18,7 @@ public class InternalPatientController {
   }
 
   @GetMapping("/{patientId}/summary")
-  public Result<?> summary(@PathVariable Long patientId) {
+  public Result<?> summary(@PathVariable("patientId") Long patientId) {
     return Result.success(patientService.patientSummary(patientId));
   }
 }

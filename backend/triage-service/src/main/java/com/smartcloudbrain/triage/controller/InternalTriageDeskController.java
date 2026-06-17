@@ -27,7 +27,7 @@ public class InternalTriageDeskController {
   }
 
   @GetMapping("/detail")
-  public Result<?> detail(@RequestParam Long id) {
+  public Result<?> detail(@RequestParam("id") Long id) {
     return Result.success(triageDeskService.detail(id));
   }
 

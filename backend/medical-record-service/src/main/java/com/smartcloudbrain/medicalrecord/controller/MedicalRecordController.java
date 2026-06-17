@@ -45,15 +45,15 @@ public class MedicalRecordController {
   }
 
   @GetMapping("/detail")
-  public Result<?> detail(@RequestParam Long id) {
+  public Result<?> detail(@RequestParam("id") Long id) {
     return Result.success(medicalRecordService.detail(id));
   }
 
   @GetMapping(value = "/generate/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
   public SseEmitter generateStream(
-      @RequestParam Long registrationId,
-      @RequestParam String dialogueText,
-      @RequestParam(required = false) String departmentCode
+      @RequestParam("registrationId") Long registrationId,
+      @RequestParam("dialogueText") String dialogueText,
+      @RequestParam(name = "departmentCode", required = false) String departmentCode
   ) {
     MedicalRecordGenerateRequest aiRequest = medicalRecordService.buildGenerateRequest(
         new MedicalRecordGenerateRequest(registrationId, departmentCode, dialogueText)

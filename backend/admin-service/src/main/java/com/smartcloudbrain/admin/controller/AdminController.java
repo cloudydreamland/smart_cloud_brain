@@ -88,7 +88,7 @@ public class AdminController {
   }
 
   @GetMapping("/dict/list")
-  public Result<?> dicts(@RequestParam(required = false) String dictType) {
+  public Result<?> dicts(@RequestParam(name = "dictType", required = false) String dictType) {
     requireAdmin();
     return Result.success(adminCatalogService.dicts(dictType));
   }
@@ -118,7 +118,7 @@ public class AdminController {
   }
 
   @GetMapping("/schedule/suggestion/detail")
-  public Result<?> scheduleSuggestionDetail(@RequestParam Long id) {
+  public Result<?> scheduleSuggestionDetail(@RequestParam("id") Long id) {
     requireAdmin();
     return Result.success(adminCatalogService.scheduleSuggestionDetail(id));
   }
@@ -130,7 +130,7 @@ public class AdminController {
   }
 
   @GetMapping("/triage-desk/detail")
-  public Result<?> triageDetail(@RequestParam Long id) {
+  public Result<?> triageDetail(@RequestParam("id") Long id) {
     requireAdmin();
     return Result.success(adminCatalogService.triageDetail(id));
   }

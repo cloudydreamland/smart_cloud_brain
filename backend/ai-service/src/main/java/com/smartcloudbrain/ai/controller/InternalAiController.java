@@ -43,9 +43,9 @@ public class InternalAiController {
 
   @GetMapping(value = "/medical-record/generate/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
   public SseEmitter streamMedicalRecord(
-      @RequestParam Long registrationId,
-      @RequestParam String dialogueText,
-      @RequestParam(required = false) String departmentCode
+      @RequestParam("registrationId") Long registrationId,
+      @RequestParam("dialogueText") String dialogueText,
+      @RequestParam(name = "departmentCode", required = false) String departmentCode
   ) {
     SseEmitter emitter = new SseEmitter(30_000L);
     new Thread(() -> {

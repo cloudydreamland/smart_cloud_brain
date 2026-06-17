@@ -18,7 +18,7 @@ public class DoctorController {
   }
 
   @GetMapping("/list")
-  public Result<?> list(@RequestParam(required = false) Long departmentId) {
+  public Result<?> list(@RequestParam(name = "departmentId", required = false) Long departmentId) {
     return Result.success(doctorService.listDoctors(departmentId));
   }
 
@@ -28,7 +28,7 @@ public class DoctorController {
   }
 
   @GetMapping("/detail")
-  public Result<?> detail(@RequestParam Long id) {
+  public Result<?> detail(@RequestParam("id") Long id) {
     return Result.success(doctorService.doctorDetail(id));
   }
 }

@@ -21,21 +21,21 @@ public class CatalogSearchController {
 
   @GetMapping("/api/search/knowledge")
   public Result<?> searchKnowledge(
-      @RequestParam(defaultValue = "") String q,
-      @RequestParam(defaultValue = "") String departmentCode
+      @RequestParam(name = "q", defaultValue = "") String q,
+      @RequestParam(name = "departmentCode", defaultValue = "") String departmentCode
   ) {
     currentUserService.get();
     return Result.success(adminCatalogService.searchKnowledge(q, departmentCode));
   }
 
   @GetMapping("/api/search/drugs")
-  public Result<?> searchDrugs(@RequestParam(defaultValue = "") String q) {
+  public Result<?> searchDrugs(@RequestParam(name = "q", defaultValue = "") String q) {
     currentUserService.get();
     return Result.success(adminCatalogService.searchDrugs(q));
   }
 
   @GetMapping("/api/admin/search/prompts")
-  public Result<?> searchPrompts(@RequestParam(defaultValue = "") String q) {
+  public Result<?> searchPrompts(@RequestParam(name = "q", defaultValue = "") String q) {
     currentUserService.require(RoleType.ADMIN);
     return Result.success(adminCatalogService.searchPrompts(q));
   }
