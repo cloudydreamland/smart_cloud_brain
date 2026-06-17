@@ -72,21 +72,6 @@ services:
     volumes:
       - ../sql/kingbase_schema.sql:/sql/kingbase_schema.sql:ro
 
-  nacos:
-    image: nacos/nacos-server:v2.4.3
-    container_name: scb-nacos
-    restart: unless-stopped
-    environment:
-      MODE: standalone
-      NACOS_AUTH_ENABLE: "false"
-      JVM_XMS: 256m
-      JVM_XMX: 512m
-      JVM_XMN: 128m
-      TZ: Asia/Shanghai
-    ports:
-      - "8848:8848"
-      - "9848:9848"
-
   rabbitmq:
     image: rabbitmq:3.13-management
     container_name: scb-rabbitmq

@@ -519,7 +519,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"patientId\": {{patientId}},\n  \"doctorId\": {{doctorId}},\n  \"drugs\": [\n    {\"drugName\":\"aspirin\",\"dosage\":\"100mg\",\"frequency\":\"once daily\",\"usageMethod\":\"oral\"}\n  ]\n}"
+              "raw": "{\n  \"patientId\": {{patientId}},\n  \"doctorId\": {{doctorId}},\n  \"drugs\": [\n    {\"drugName\":\"aspirin\",\"dosage\":\"100mg\",\"frequency\":\"once daily\",\"usageMethod\":\"oral\",\"days\":7,\"remark\":\"take after meals\"}\n  ]\n}"
             },
             "url": "{{baseUrl}}/api/prescription/check"
           }
@@ -548,9 +548,37 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"patientId\": {{patientId}},\n  \"medicalRecordId\": {{medicalRecordId}},\n  \"riskLevel\": \"{{prescriptionRiskLevel}}\",\n  \"drugs\": [\n    {\"drugName\":\"aspirin\",\"dosage\":\"100mg\",\"frequency\":\"once daily\",\"usageMethod\":\"oral\"}\n  ]\n}"
+              "raw": "{\n  \"patientId\": {{patientId}},\n  \"medicalRecordId\": {{medicalRecordId}},\n  \"registrationId\": {{registrationId}},\n  \"riskLevel\": \"{{prescriptionRiskLevel}}\",\n  \"drugs\": [\n    {\"drugName\":\"aspirin\",\"dosage\":\"100mg\",\"frequency\":\"once daily\",\"usageMethod\":\"oral\",\"days\":7,\"remark\":\"take after meals\"}\n  ]\n}"
             },
             "url": "{{baseUrl}}/api/prescription/create"
+          }
+        },
+        {
+          "name": "Complete Registration",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('doctor can complete registration', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('registration is completed', () => pm.expect(body.data.status).to.eql('COMPLETED'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{doctorToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"registrationId\": {{registrationId}}\n}"
+            },
+            "url": "{{baseUrl}}/api/registration/complete"
           }
         },
         {

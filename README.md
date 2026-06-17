@@ -9,7 +9,7 @@ docs/       项目文档
 backend/    Spring Boot 多模块微服务
 frontend/   Vue 3 前端 monorepo
 sql/        Kingbase 建表和演示种子数据
-deploy/     Docker Compose、Nacos、RabbitMQ、Nginx
+deploy/     Docker Compose、RabbitMQ、Nginx
 postman/    接口调试集合
 ```
 
@@ -43,7 +43,7 @@ cd D:\smart_cloud_brain
 docker-compose --env-file deploy\env\.env -f deploy\docker-compose.yml up -d --build
 ```
 
-默认配置为纯 Docker 运行：KingbaseES、Nacos、RabbitMQ、后端微服务和三个前端都会由 Docker Compose 启动，不需要本机安装数据库服务。
+默认配置为纯 Docker 运行：KingbaseES、RabbitMQ、后端微服务和三个前端都会由 Docker Compose 启动，不需要本机安装数据库服务。当前 Compose 不包含未实际接入的服务治理组件。
 
 常用地址：
 
@@ -51,7 +51,6 @@ docker-compose --env-file deploy\env\.env -f deploy\docker-compose.yml up -d --b
 - 患者端: `http://localhost:5173`
 - 医生端: `http://localhost:5174`
 - 管理端: `http://localhost:5175`
-- Nacos: `http://localhost:8848`
 - RabbitMQ 管理台: `http://localhost:15672`
 
 ## 本地编译
