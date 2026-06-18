@@ -41,12 +41,20 @@ public class HealthController {
         && hasText(properties.openai().model());
   }
 
+  @SuppressWarnings("deprecation")
   private boolean difyConfigured() {
     if (properties.dify() == null) {
       return false;
     }
+    String fallbackKey = properties.dify().apiKey();
     return hasText(properties.dify().baseUrl())
-        && hasText(properties.dify().apiKey());
+        && hasTaskOrFallbackKey(properties.difyTriage(), fallbackKey)
+        && hasTaskOrFallbackKey(properties.difyMedicalRecord(), fallbackKey)
+        && hasTaskOrFallbackKey(properties.difyPrescriptionCheck(), fallbackKey);
+  }
+
+  private boolean hasTaskOrFallbackKey(AiProviderProperties.DifyWorkflow workflow, String fallbackKey) {
+    return (workflow != null && hasText(workflow.apiKey())) || hasText(fallbackKey);
   }
 
   private boolean hasText(String value) {

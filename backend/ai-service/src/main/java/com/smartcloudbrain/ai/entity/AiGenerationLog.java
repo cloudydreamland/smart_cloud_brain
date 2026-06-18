@@ -20,6 +20,7 @@ public class AiGenerationLog extends BaseEntity {
   @Column(name = "output_summary")
   private String outputSummary;
   private Boolean success;
+  private String status;
   @Column(name = "error_message")
   private String errorMessage;
   @Column(name = "latency_ms")
@@ -55,6 +56,14 @@ public class AiGenerationLog extends BaseEntity {
 
   public void setSuccess(Boolean success) {
     this.success = success;
+  }
+
+  public String getStatus() {
+    return status;
+  }
+
+  public void setStatus(String status) {
+    this.status = status;
   }
 
   public void setErrorMessage(String errorMessage) {

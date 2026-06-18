@@ -83,18 +83,22 @@ public class AiOrchestrationService {
       );
       return result;
     } catch (RuntimeException ex) {
-      aiTaskLogService.record(
-          taskType,
-          aiProvider.providerName(),
-          aiProvider.modelName(),
-          requestId,
-          input,
-          null,
-          prompt,
-          System.currentTimeMillis() - start,
-          false,
-          rootMessage(ex)
-      );
+      try {
+        aiTaskLogService.record(
+            taskType,
+            aiProvider.providerName(),
+            aiProvider.modelName(),
+            requestId,
+            input,
+            null,
+            prompt,
+            System.currentTimeMillis() - start,
+            false,
+            rootMessage(ex)
+        );
+      } catch (RuntimeException logException) {
+        ex.addSuppressed(logException);
+      }
       if (ex instanceof BusinessException businessException) {
         throw businessException;
       }

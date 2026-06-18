@@ -1,8 +1,7 @@
 param(
   [ValidateSet("dev", "demo", "prod")]
   [string]$Profile = "dev",
-  [switch]$NoBuild,
-  [switch]$ExternalDb
+  [switch]$NoBuild
 )
 
 $ErrorActionPreference = "Stop"
@@ -11,9 +10,27 @@ $EnvFile = Join-Path $Root "deploy\env\.env.$Profile"
 $EnvExample = Join-Path $Root "deploy\env\.env.$Profile.example"
 $ComposeFile = Join-Path $Root "deploy\docker-compose.yml"
 
+if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
+  throw "Docker is not installed or not available on PATH."
+}
+& docker info *> $null
+if ($LASTEXITCODE -ne 0) {
+  throw "Docker daemon is not running. Start Docker Desktop first."
+}
+
 if (-not (Test-Path $EnvFile)) {
   Copy-Item -LiteralPath $EnvExample -Destination $EnvFile
+  Write-Host "Created local environment file: $EnvFile"
 }
+
+$Architecture = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString()
+$KingbaseImage = if ($Architecture -eq "Arm64") {
+  "kingbase_v009r001c010b0004_single_arm:v1"
+} else {
+  "kingbase_v009r001c010b0004_single_x86:v1"
+}
+$env:KINGBASE_IMAGE = $KingbaseImage
+Write-Host "Using Kingbase image: $KingbaseImage"
 
 if (-not $NoBuild) {
   Write-Host "Packaging backend jars ..."
@@ -28,16 +45,13 @@ $args = @(
   "--env-file", $EnvFile,
   "-f", $ComposeFile
 )
-if (-not $ExternalDb) {
-  $args += @("--profile", "embedded-db")
-}
 $args += @("up", "-d")
 if (-not $NoBuild) {
   $args += "--build"
 }
 
-Write-Host "Starting Docker Compose services with profile '$Profile' ..."
-& docker-compose @args
+Write-Host "Starting Docker Compose services with environment '$Profile' ..."
+& docker compose @args
 if ($LASTEXITCODE -ne 0) {
   throw "Docker Compose startup failed with exit code $LASTEXITCODE."
 }

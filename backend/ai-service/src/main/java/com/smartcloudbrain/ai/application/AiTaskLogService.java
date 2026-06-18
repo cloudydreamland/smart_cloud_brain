@@ -47,6 +47,7 @@ public class AiTaskLogService {
       entry.setInputSummary(summary(input));
       entry.setOutputSummary(success ? summary(output) : "");
       entry.setSuccess(success);
+      entry.setStatus(success ? "SUCCESS" : "FAILED");
       entry.setErrorMessage(summary(errorMessage));
       entry.setLatencyMs(latencyMs);
       entry.setPromptTemplateId(prompt == null ? null : prompt.promptTemplateId());

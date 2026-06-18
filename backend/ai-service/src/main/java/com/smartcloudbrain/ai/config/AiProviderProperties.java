@@ -7,7 +7,10 @@ public record AiProviderProperties(
     String provider,
     int timeoutMs,
     OpenAi openai,
-    Dify dify
+    Dify dify,
+    DifyWorkflow difyTriage,
+    DifyWorkflow difyMedicalRecord,
+    DifyWorkflow difyPrescriptionCheck
 ) {
   public record OpenAi(
       String baseUrl,
@@ -18,6 +21,15 @@ public record AiProviderProperties(
 
   public record Dify(
       String baseUrl,
+      String apiKey
+  ) {
+    @Deprecated
+    public String apiKey() {
+      return apiKey;
+    }
+  }
+
+  public record DifyWorkflow(
       String apiKey
   ) {
   }

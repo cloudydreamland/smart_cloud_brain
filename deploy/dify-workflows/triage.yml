@@ -1,0 +1,191 @@
+app:
+  description: 基于大模型的智能分诊系统，根据患者主诉症状自动推荐就诊科室，输出推荐科室名称、科室代码、推荐医生ID列表及分诊理由，辅助患者快速准确挂号。
+  icon: 🤖
+  icon_background: '#FFEAD5'
+  icon_type: emoji
+  mode: workflow
+  name: 智慧云脑-智能分诊
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/deepseek:0.0.17@f7a5c1d222d17ee419b17a80d6e4923838fe93788dc724a3af73fbc6990b3a32
+    version: null
+kind: app
+version: 0.6.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        attachment_image_file_size_limit: 2
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        file_upload_limit: 20
+        image_file_batch_limit: 10
+        image_file_size_limit: 10
+        single_chunk_attachment_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: ''
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: llm
+      id: 1781658416218--1781659066615-target
+      source: '1781658416218'
+      sourceHandle: source
+      target: '1781659066615'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: end
+      id: 1781659066615--1781659928413-target
+      source: '1781659066615'
+      sourceHandle: source
+      target: '1781659928413'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        selected: false
+        title: 用户输入
+        type: start
+        variables:
+        - default: ''
+          hint: ''
+          label: patientId
+          options: []
+          placeholder: ''
+          required: true
+          type: text-input
+          variable: patientId
+        - default: ''
+          hint: ''
+          label: chiefComplaint
+          options: []
+          placeholder: ''
+          required: true
+          type: text-input
+          variable: chiefComplaint
+      height: 135
+      id: '1781658416218'
+      position:
+        x: 80
+        y: 282
+      positionAbsolute:
+        x: 80
+        y: 282
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        model:
+          completion_params:
+            temperature: 0.7
+          mode: chat
+          name: deepseek-chat
+          provider: langgenius/deepseek/deepseek
+        prompt_template:
+        - role: system
+          text: "你是一位专业的医疗智能分诊助手。请根据患者的主诉症状，判断应该前往哪个科室就诊。\n\n患者ID：{{patientId}}\n\
+            主诉症状：{{chiefComplaint}}\n\n请严格按照以下JSON格式输出，不要输出任何其他内容：\n{\n  \"recommendedDepartment\"\
+            : \"推荐科室名称\",\n  \"departmentCode\": \"科室代码\",\n  \"recommendedDoctorDirection\": \"推荐就诊方向\",\n  \"urgencyLevel\": \"ROUTINE、URGENT或EMERGENCY\",\n  \"confidence\": 0.0,\n  \"recommendedDoctorIds\"\
+            : [],\n  \"reason\": \"分诊理由\",\n  \"degraded\": false\n}\n\n科室代码对照表：\n\
+            - 内科：INTERNAL\n- 外科：SURGERY\n- 骨科：ORTHOPEDICS\n- 儿科：PEDIATRICS\n- 妇产科：GYNECOLOGY\n\
+            - 眼科：OPHTHALMOLOGY\n- 耳鼻喉科：ENT\n- 皮肤科：DERMATOLOGY\n- 口腔科：DENTAL\n- 神经内科：NEUROLOGY\n\
+            - 心血管内科：CARDIOLOGY\n- 消化内科：GASTRO\n- 呼吸内科：RESPIRATORY\n- 急诊科：EMERGENCY\n\
+            - 全科：GENERAL\n\n如果无法准确判断，将degraded设为true，并将departmentCode设为GENERAL。"
+        selected: false
+        title: LLM
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: '1781659066615'
+      position:
+        x: 382
+        y: 282
+      positionAbsolute:
+        x: 382
+        y: 282
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        outputs:
+        - value_selector:
+          - '1781659066615'
+          - text
+          value_type: string
+          variable: result
+        selected: true
+        title: 输出
+        type: end
+      height: 88
+      id: '1781659928413'
+      position:
+        x: 684
+        y: 282
+      positionAbsolute:
+        x: 684
+        y: 282
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    viewport:
+      x: -403.5
+      y: 4
+      zoom: 1
+  rag_pipeline_variables: []

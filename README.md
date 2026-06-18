@@ -30,6 +30,8 @@ postman/    接口调试集合
 
 ## 一键启动
 
+本地工具版本：JDK 17、Node.js 24、Corepack 与 pnpm 9.15、Docker Desktop（含 Docker Compose）。
+
 推荐使用脚本：
 
 ```powershell
@@ -40,14 +42,25 @@ cd D:\smart_cloud_brain
 也可以直接使用 Docker Compose：
 
 ```powershell
-docker-compose --env-file deploy\env\.env -f deploy\docker-compose.yml up -d --build
+docker compose --env-file deploy\env\.env -f deploy\docker-compose.yml up -d --build
 ```
 
 默认配置为纯 Docker 运行：KingbaseES、RabbitMQ、后端微服务和三个前端都会由 Docker Compose 启动，不需要本机安装数据库服务。当前 Compose 不包含未实际接入的服务治理组件。
 
+### 演示环境（含 AI）
+
+演示时需要同时启动 Dify（AI 平台）。队友只需执行一条命令：
+
+```bash
+bash scripts/setup-demo.sh
+```
+
+首次运行会提示粘贴 Dify API Key（只需一次）。详细说明见 [docs/DEMO-SETUP.md](docs/DEMO-SETUP.md)。
+
 常用地址：
 
 - Gateway: `http://localhost:18080`
+- Nginx 统一入口: `http://localhost:18000`
 - 患者端: `http://localhost:5173`
 - 医生端: `http://localhost:5174`
 - 管理端: `http://localhost:5175`
@@ -85,7 +98,7 @@ corepack pnpm --filter @smart-cloud-brain/admin-web build
 
 ## Real AI API configuration
 
-`ai-service` now defaults to a real OpenAI-compatible provider. For DeepSeek, set:
+`ai-service` defaults to the local `mock` provider so the complete application can start without an external API key. To use a real OpenAI-compatible provider such as DeepSeek, set:
 
 ```env
 AI_PROVIDER=openai
@@ -99,10 +112,12 @@ Dify is also supported:
 ```env
 AI_PROVIDER=dify
 DIFY_BASE_URL=http://your-dify/v1
-DIFY_API_KEY=app-...
+DIFY_TRIAGE_API_KEY=app-...
+DIFY_MEDICAL_RECORD_API_KEY=app-...
+DIFY_PRESCRIPTION_CHECK_API_KEY=app-...
 ```
 
-If required variables are missing, `ai-service` fails during startup and reports the missing variable. Mock is for local test/demo only and must be explicitly enabled:
+The legacy `DIFY_API_KEY` remains as a deprecated fallback. If required variables are missing, `ai-service` fails during startup and reports the missing task key. Mock remains the default for local development:
 
 ```env
 AI_PROVIDER=mock

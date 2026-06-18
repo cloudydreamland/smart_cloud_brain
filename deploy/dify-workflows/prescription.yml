@@ -1,0 +1,196 @@
+app:
+  description: 基于大模型的处方风险审核，检查药物相互作用、禁忌证并给出调整建议。
+  icon: 🤖
+  icon_background: '#FFEAD5'
+  icon_type: emoji
+  mode: workflow
+  name: 智慧云脑-处方审核
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/deepseek:0.0.17@f7a5c1d222d17ee419b17a80d6e4923838fe93788dc724a3af73fbc6990b3a32
+    version: null
+kind: app
+version: 0.6.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        attachment_image_file_size_limit: 2
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        file_upload_limit: 20
+        image_file_batch_limit: 10
+        image_file_size_limit: 10
+        single_chunk_attachment_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: ''
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: llm
+      id: 1781658416218--1781659066615-target
+      source: '1781658416218'
+      sourceHandle: source
+      target: '1781659066615'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: end
+      id: 1781659066615--1781659928413-target
+      source: '1781659066615'
+      sourceHandle: source
+      target: '1781659928413'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        selected: false
+        title: 用户输入
+        type: start
+        variables:
+        - default: ''
+          hint: ''
+          label: patientId
+          options: []
+          placeholder: ''
+          required: true
+          type: text-input
+          variable: patientId
+        - default: ''
+          hint: ''
+          label: doctorId
+          options: []
+          placeholder: ''
+          required: false
+          type: text-input
+          variable: doctorId
+        - default: ''
+          hint: ''
+          label: drugs
+          options: []
+          placeholder: ''
+          required: true
+          type: paragraph
+          variable: drugs
+      height: 135
+      id: '1781658416218'
+      position:
+        x: 80
+        y: 282
+      positionAbsolute:
+        x: 80
+        y: 282
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        model:
+          completion_params:
+            temperature: 0.7
+          mode: chat
+          name: deepseek-chat
+          provider: langgenius/deepseek/deepseek
+        prompt_template:
+        - role: system
+          text: "你是一位专业的处方审核助手。请根据患者和用药信息识别药物相互作用、过敏与禁忌风险。\n\n患者ID：{{patientId}}\n\
+            医生ID：{{doctorId}}\n药物列表：{{drugs}}\n\n请严格按照以下JSON格式输出，不要输出任何其他内容：\n{\n  \"riskLevel\"\
+            : \"LOW、MEDIUM或HIGH\",\n  \"riskDescription\": \"风险说明\",\n  \"suggestions\"\
+            : \"处方建议\",\n  \"interactions\": [],\n  \"contraindications\": [],\n  \"adjustmentSuggestions\"\
+            : [],\n  \"degraded\": false\n}"
+        selected: false
+        title: LLM
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: '1781659066615'
+      position:
+        x: 382
+        y: 282
+      positionAbsolute:
+        x: 382
+        y: 282
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        outputs:
+        - value_selector:
+          - '1781659066615'
+          - text
+          value_type: string
+          variable: result
+        selected: true
+        title: 输出
+        type: end
+      height: 88
+      id: '1781659928413'
+      position:
+        x: 684
+        y: 282
+      positionAbsolute:
+        x: 684
+        y: 282
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    viewport:
+      x: -403.5
+      y: 4
+      zoom: 1
+  rag_pipeline_variables: []
