@@ -1,12 +1,12 @@
-# Patient Mobile
+# 患者移动端
 
-`patient-mobile` is a uni-app patient entry. It is not wired into the current Vite web build pipeline and is not included in the root `corepack pnpm test` or web build commands.
+`patient-mobile` 是 uni-app 患者端入口。它没有接入当前 Vite Web 构建流程，也不会包含在根目录 `corepack pnpm test` 或 Web 构建命令中。
 
-Runtime API base is configurable in this order:
+运行时接口地址按以下顺序读取：
 
-1. User-entered value stored under `patient-mobile-api-base`.
+1. 用户输入并存储在 `patient-mobile-api-base` 下的值。
 2. `globalThis.SMART_CLOUD_BRAIN_API_BASE`.
-3. `UNI_APP_API_BASE` or `VUE_APP_API_BASE`.
-4. Relative `/api`.
+3. `UNI_APP_API_BASE` 或 `VUE_APP_API_BASE`。
+4. 相对路径 `/api`。
 
-For local gateway access use `http://localhost:8080/api`. For Docker gateway access use `http://localhost:18080/api`.
+本地网关使用 `http://localhost:8080/api`。Docker 网关使用 `http://localhost:18080/api`。

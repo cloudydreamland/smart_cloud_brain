@@ -28,7 +28,7 @@ refresh();
 <template>
   <section class="panel">
     <header class="panel-header">
-      <div class="panel-title"><p class="eyebrow">RECORDS</p><h2>已保存病历</h2><p>快速回看当前医生账号下的病历记录。</p></div>
+      <div class="panel-title"><p class="eyebrow">病历记录</p><h2>已保存病历</h2><p>快速回看当前医生账号下的病历记录。</p></div>
       <button type="button" :disabled="loading" @click="refresh">刷新</button>
     </header>
     <div class="panel-body">
@@ -40,7 +40,7 @@ refresh();
             <td>{{ fieldText(item, "patientName", fieldText(item, "patientId")) }}</td>
             <td>{{ fieldText(item, "chiefComplaint") }}</td>
             <td>{{ fieldText(item, "diagnosis") }}</td>
-            <td>{{ item.aiGenerated ? "AI 草稿确认" : "医生录入" }}</td>
+            <td>{{ item.aiGenerated ? "智能草稿确认" : "医生录入" }}</td>
           </tr>
         </tbody>
       </DataTable>

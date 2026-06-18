@@ -94,7 +94,7 @@ async function closeTriage() {
         <div class="admin-filter-row">
           <input v-model.trim="filter.keyword" placeholder="搜索主诉或原因" />
           <input v-model.trim="filter.department" placeholder="推荐科室" />
-          <select v-model="filter.status"><option value="">全部状态</option><option value="MANUAL_REQUIRED">待人工处理</option><option value="AI_RECOMMENDED">AI 推荐</option><option value="CLOSED">已关闭</option></select>
+          <select v-model="filter.status"><option value="">全部状态</option><option value="MANUAL_REQUIRED">待人工处理</option><option value="AI_RECOMMENDED">智能推荐</option><option value="CLOSED">已关闭</option></select>
         </div>
         <div v-if="rows.length" class="table-scroll">
           <table class="data-table">

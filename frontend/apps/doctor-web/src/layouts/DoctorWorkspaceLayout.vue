@@ -1,17 +1,18 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import {
   notificationWebSocketUrl,
+  statusText,
   useAuthStore,
   useDoctorWorkflowStore,
 } from "@smart-cloud-brain/shared-api";
-import { AppShell, TopBar } from "@smart-cloud-brain/shared-ui";
 
 const auth = useAuthStore();
 const workflow = useDoctorWorkflowStore();
 const router = useRouter();
+const route = useRoute();
 const { session, permissionError } = storeToRefs(auth);
 const { registrations, notifications } = storeToRefs(workflow);
 const loading = ref(false);
@@ -22,17 +23,14 @@ let reconnectTimer: number | null = null;
 let unbind: (() => void) | null = null;
 
 const unread = computed(() => notifications.value.filter((item) => String(item.readStatus) !== "READ").length);
-const navGroups = computed(() => [
-  { label: "诊疗任务", items: [
-    { label: "工作台", to: "/", badge: registrations.value.length },
-    { label: "待接诊", to: "/queue", badge: registrations.value.length },
-    { label: "病历", to: "/records" },
-    { label: "处方", to: "/prescriptions" },
-  ] },
-  { label: "诊后", items: [
-    { label: "风险通知", to: "/notifications", badge: unread.value },
-    { label: "设置", to: "/settings" },
-  ] },
+const activeQueue = computed(() => registrations.value.filter((item) => String(item.status) !== "COMPLETED").length);
+const navItems = computed(() => [
+  { label: "首页", to: "/", badge: activeQueue.value },
+  { label: "队列", to: "/queue", badge: activeQueue.value },
+  { label: "病历", to: "/records" },
+  { label: "处方", to: "/prescriptions" },
+  { label: "通知", to: "/notifications", badge: unread.value },
+  { label: "设置", to: "/settings" },
 ]);
 
 async function refresh() {
@@ -64,12 +62,12 @@ function connectNotifications() {
   stopRealtime();
   socketStatus.value = "连接中";
   socket = new WebSocket(notificationWebSocketUrl(auth.token()));
-  socket.onopen = () => { socketStatus.value = "实时通知已连接"; };
+  socket.onopen = () => { socketStatus.value = "实时"; };
   socket.onmessage = () => refresh().catch(() => undefined);
-  socket.onerror = () => { socketStatus.value = "WebSocket 不可用，轮询中"; startPolling(); };
+  socket.onerror = () => { socketStatus.value = "轮询"; startPolling(); };
   socket.onclose = () => {
     if (session.value) {
-      socketStatus.value = "实时通知断开，重连中";
+      socketStatus.value = "重连中";
       startPolling();
       reconnectTimer = window.setTimeout(connectNotifications, 5000);
     }
@@ -95,30 +93,42 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <AppShell
-    mark="医"
-    title="医生诊疗工作台"
-    subtitle="接诊 · AI 病历 · 处方审核"
-    :user-name="session?.name"
-    :user-meta="`${session?.role || ''} #${session?.userId || ''}`"
-    :nav-groups="navGroups"
-    @logout="logout"
-  >
-    <template #user>
-      <div class="row-meta"><span class="tag success">在线接诊</span><span class="tag warning">{{ unread }} 条未读</span></div>
-    </template>
+  <div class="doctor-shell">
+    <aside class="doctor-nav" aria-label="医生端导航">
+      <div class="doctor-mark">医</div>
+      <nav>
+        <RouterLink
+          v-for="item in navItems"
+          :key="item.to"
+          class="doctor-nav-link"
+          :class="{ active: route.path === item.to || (item.to !== '/' && route.path.startsWith(item.to)) }"
+          :to="item.to"
+        >
+          <span>{{ item.label }}</span>
+          <b v-if="item.badge">{{ item.badge }}</b>
+        </RouterLink>
+      </nav>
+    </aside>
 
-    <TopBar eyebrow="Doctor Web" title="医生接诊与病历处方确认" description="队列、患者信息、AI 草稿和处方风险分页面处理。">
-      <template #actions>
-        <span class="tag info">{{ socketStatus }}</span>
-        <button type="button" :disabled="loading" @click="refresh">同步队列</button>
-      </template>
-    </TopBar>
+    <div class="doctor-app">
+      <header class="doctor-topline">
+        <div class="doctor-session">
+          <strong>{{ session?.name || "医生" }}</strong>
+          <span>{{ statusText(session?.role, "医生") }} #{{ session?.userId || "-" }}</span>
+        </div>
+        <div class="doctor-topline-status">
+          <span>队列 {{ activeQueue }}</span>
+          <span>未读 {{ unread }}</span>
+          <span>通知 {{ socketStatus }}</span>
+          <button type="button" :disabled="loading" @click="refresh">同步</button>
+          <button type="button" @click="logout">退出</button>
+        </div>
+      </header>
 
-    <div class="doctor-notices">
-      <div v-if="permissionError" class="notice error">{{ permissionError }}</div>
+      <main class="doctor-main">
+        <div v-if="permissionError" class="clinical-alert danger">{{ permissionError }}</div>
+        <RouterView @refresh="refresh" />
+      </main>
     </div>
-
-    <RouterView @refresh="refresh" />
-  </AppShell>
+  </div>
 </template>

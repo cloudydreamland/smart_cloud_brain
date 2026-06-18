@@ -39,28 +39,23 @@ refresh();
 </script>
 
 <template>
-  <section class="queue-workbench">
-    <header class="workbench-strip">
-      <div>
-        <p class="eyebrow">QUEUE</p>
-        <h2>待接诊挂号队列</h2>
-      </div>
-      <div class="queue-controls">
+  <section class="clinical-page queue-workbench">
+    <header class="queue-toolbar">
+      <div class="queue-filter-group">
         <SegmentedControl v-model="filter" :options="options" />
-        <button type="button" :disabled="loading" @click="refresh">刷新队列</button>
+        <input v-model.trim="keyword" class="queue-search" placeholder="搜索姓名 / 患者 ID / 科室" />
+      </div>
+      <div class="queue-actions">
+        <span class="queue-count">匹配 {{ rows.length }} 条</span>
+        <button type="button" :disabled="loading" @click="refresh">刷新</button>
       </div>
     </header>
 
-    <div class="queue-filterbar">
-      <input v-model.trim="keyword" placeholder="搜索姓名、患者 ID、科室" />
-      <span class="tag info">匹配 {{ rows.length }} 条</span>
-    </div>
-
-    <div class="workbench-section">
+    <section class="clinical-section">
       <ErrorState v-if="error" :message="error" />
       <LoadingState v-if="loading" title="正在同步队列" />
       <div v-else-if="rows.length" class="table-scroll">
-        <table class="data-table compact-table queue-table">
+        <table class="clinical-table queue-table">
           <thead>
             <tr>
               <th>序号</th>
@@ -75,7 +70,7 @@ refresh();
           <tbody>
             <tr v-for="(item, index) in rows" :key="String(item.registrationId)">
               <td>{{ index + 1 }}</td>
-              <td><strong>{{ fieldText(item, "patientName", `患者 ${fieldText(item, "patientId")}`) }}</strong></td>
+              <td><strong>{{ fieldText(item, "patientName", `患者${fieldText(item, "patientId")}`) }}</strong></td>
               <td>{{ fieldText(item, "patientId", "-") }}</td>
               <td>{{ fieldText(item, "departmentName", "-") }}</td>
               <td>{{ fieldText(item, "appointmentTime", "-") }}</td>
@@ -85,7 +80,7 @@ refresh();
           </tbody>
         </table>
       </div>
-      <EmptyState v-else title="暂无待接诊患者" message="当前筛选条件下无记录，可清空筛选或刷新队列。" />
-    </div>
+      <EmptyState v-else title="暂无待接诊患者" message="" />
+    </section>
   </section>
 </template>

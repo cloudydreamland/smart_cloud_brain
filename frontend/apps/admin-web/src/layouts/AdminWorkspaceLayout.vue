@@ -25,7 +25,7 @@ const navGroups = computed(() => [
   ] },
   { label: "配置", items: [
     { label: "知识库", to: "/knowledge" },
-    { label: "Prompt", to: "/prompts" },
+    { label: "提示词", to: "/prompts" },
     { label: "字典", to: "/dicts" },
     { label: "搜索", to: "/search" },
   ] },

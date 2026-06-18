@@ -1,9 +1,9 @@
 <template>
   <view class="page">
     <view class="hero">
-      <text class="eyebrow">Patient Mobile</text>
+      <text class="eyebrow">患者移动端</text>
       <text class="title">患者移动端</text>
-      <text class="subtitle">登录、AI 分诊、选择真实号源、预约挂号、查看诊疗记录</text>
+      <text class="subtitle">登录、智能分诊、选择真实号源、预约挂号、查看诊疗记录</text>
     </view>
 
     <view class="notice" v-if="message">
@@ -28,7 +28,7 @@
       </view>
 
       <view class="panel">
-        <text class="section-title">AI 智能分诊</text>
+        <text class="section-title">智能分诊</text>
         <textarea v-model="chiefComplaint" placeholder="请描述主要症状、持续时间和就诊诉求" />
         <button :disabled="busy || !chiefComplaint.trim()" @click="triage">提交分诊</button>
         <view v-if="triageResult" class="result">

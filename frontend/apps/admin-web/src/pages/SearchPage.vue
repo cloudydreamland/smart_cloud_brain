@@ -35,7 +35,7 @@ async function search() {
 
 <template>
   <section class="panel">
-    <header class="panel-header"><div class="panel-title"><p class="eyebrow">SEARCH</p><h2>知识、药品和 Prompt 检索</h2><p>统一调用后端检索接口核对配置内容。</p></div></header>
+    <header class="panel-header"><div class="panel-title"><p class="eyebrow">综合检索</p><h2>知识、药品和提示词检索</h2><p>统一调用后端检索接口核对配置内容。</p></div></header>
     <div class="panel-body stack">
       <ErrorState v-if="error" :message="error" />
       <div class="form-grid">
@@ -54,8 +54,8 @@ async function search() {
           <div class="list"><article v-for="item in results.drugs" :key="String(item.id)" class="list-row"><div class="row-main"><strong>{{ fieldText(item, "name") }}</strong><p>{{ fieldText(item, "specification") }}</p></div></article><EmptyState v-if="!results.drugs.length" title="暂无药品结果" /></div>
         </section>
         <section class="panel">
-          <header class="panel-header"><div class="panel-title"><h3>Prompt</h3><p>{{ results.prompts.length }} 条</p></div></header>
-          <div class="list"><article v-for="item in results.prompts" :key="String(item.id)" class="list-row"><div class="row-main"><strong>{{ fieldText(item, "templateName") }}</strong><p>{{ fieldText(item, "taskType") }}</p></div></article><EmptyState v-if="!results.prompts.length" title="暂无 Prompt 结果" /></div>
+          <header class="panel-header"><div class="panel-title"><h3>提示词</h3><p>{{ results.prompts.length }} 条</p></div></header>
+          <div class="list"><article v-for="item in results.prompts" :key="String(item.id)" class="list-row"><div class="row-main"><strong>{{ fieldText(item, "templateName") }}</strong><p>{{ fieldText(item, "taskType") }}</p></div></article><EmptyState v-if="!results.prompts.length" title="暂无提示词结果" /></div>
         </section>
       </div>
     </div>

@@ -13,7 +13,7 @@ import {
   type DataRow,
   type DrugItem,
 } from "@smart-cloud-brain/shared-api";
-import { EmptyState, ErrorState, FormField, LoadingState, StatusTag } from "@smart-cloud-brain/shared-ui";
+import { EmptyState, ErrorState, LoadingState, StatusTag } from "@smart-cloud-brain/shared-ui";
 import PatientContextDrawer from "../components/PatientContextDrawer.vue";
 import AiRecordPreviewModal from "../components/AiRecordPreviewModal.vue";
 import SaveRecordConfirmModal from "../components/SaveRecordConfirmModal.vue";
@@ -41,6 +41,7 @@ let recordStream: AbortController | null = null;
 
 const registration = computed(() => registrations.value.find((item) => toNumber(item.registrationId) === toNumber(props.registrationId)) ?? null);
 const triage = computed(() => triageRecords.value.find((item) => toNumber(item.triageRecordId) === toNumber(registration.value?.triageRecordId)) ?? null);
+const patientName = computed(() => fieldText(registration.value, "patientName", `患者${fieldText(registration.value, "patientId", "-")}`));
 const medicalForm = reactive({
   registrationId: toNumber(props.registrationId),
   chiefComplaint: "",
@@ -100,7 +101,7 @@ function handleStreamBlock(block: string) {
     applyDraft(parseEventData(dataText));
     streamStatus.value = "DRAFT_READY";
   } else if (eventName === "error") {
-    throw new Error(fieldText(parseEventData(dataText), "message", "AI generation failed"));
+    throw new Error(fieldText(parseEventData(dataText), "message", "智能病历生成失败"));
   }
 }
 
@@ -132,7 +133,7 @@ async function generateRecord() {
     if (buffer.trim()) handleStreamBlock(buffer);
     streamStatus.value = "DRAFT_READY";
     previewOpen.value = true;
-    setNotice("病历草稿已生成，请医生确认后保存。");
+    setNotice("病历草稿已生成，请确认后保存。");
   } catch (err) {
     streamStatus.value = "FAILED";
     setError(formatApiError(err, "病历生成失败"));
@@ -235,100 +236,141 @@ watch(() => props.registrationId, applyRegistration, { immediate: true });
 </script>
 
 <template>
-  <section class="consultation-workbench">
+  <section class="clinical-page consultation-workbench">
     <header class="patient-context-bar">
-      <div class="patient-identity">
-        <p class="eyebrow">CONSULTATION</p>
-        <h2>{{ registration ? fieldText(registration, "patientName", `患者 ${fieldText(registration, "patientId")}`) : "未选择患者" }}</h2>
+      <div class="patient-name-block">
+        <span>患者</span>
+        <strong>{{ registration ? patientName : "未选择" }}</strong>
       </div>
-      <div class="context-fields">
-        <span><b>挂号</b>#{{ registrationId }}</span>
+      <div class="patient-context-grid">
         <span><b>患者 ID</b>{{ fieldText(registration, "patientId", "-") }}</span>
+        <span><b>挂号 ID</b>#{{ registrationId }}</span>
         <span><b>科室</b>{{ fieldText(registration, "departmentName", "-") }}</span>
-        <span><b>时间</b>{{ fieldText(registration, "appointmentTime", "-") }}</span>
+        <span><b>预约</b>{{ fieldText(registration, "appointmentTime", "-") }}</span>
+        <span><b>状态</b><StatusTag v-if="registration" :status="fieldText(registration, 'status')" :tone="statusClass(registration.status)" /></span>
       </div>
-      <StatusTag v-if="registration" :status="fieldText(registration, 'status')" :tone="statusClass(registration.status)" />
       <div class="encounter-actions">
-        <button type="button" @click="contextOpen = true">患者上下文</button>
-        <button type="button" class="primary" @click="completeOpen = true">完成接诊</button>
+        <button type="button" @click="contextOpen = true">上下文</button>
+        <button type="button" class="primary" :disabled="loading.complete" @click="completeOpen = true">完成接诊</button>
       </div>
     </header>
 
     <ErrorState v-if="error" :message="error" />
-    <div v-if="notice" class="notice success">{{ notice }}</div>
-    <EmptyState v-if="!registration" title="未找到挂号" message="请从队列页面选择一条挂号记录。" />
+    <div v-if="notice" class="clinical-alert success">{{ notice }}</div>
+    <EmptyState v-if="!registration" title="未找到挂号" message="" />
 
     <div v-else class="encounter-layout">
-      <main class="record-workspace">
-        <section class="workbench-section">
-          <header class="section-title">
-            <div>
-              <h3>问诊文本</h3>
-              <p>{{ fieldText(triage, "chiefComplaint", "暂无分诊主诉") }}</p>
-            </div>
-            <StatusTag :status="streamStatus" tone="info" />
-          </header>
-          <FormField label="问诊摘要">
-            <textarea v-model.trim="dialogueText" class="consultation-textarea" rows="5" />
-          </FormField>
-          <div class="action-row">
-            <button class="primary" type="button" :disabled="loading.record" @click="generateRecord">生成病历</button>
-            <button type="button" :disabled="!streamText" @click="previewOpen = true">预览草稿</button>
-            <button type="button" :disabled="!canSaveRecord || loading.record" @click="saveConfirmOpen = true">保存病历</button>
-          </div>
-          <LoadingState v-if="loading.record" title="正在处理病历" />
-          <pre v-if="streamText" class="stream-box">{{ streamText }}</pre>
-        </section>
+      <aside class="clinical-section patient-rail">
+        <header class="section-toolbar">
+          <h2>患者/分诊</h2>
+          <button type="button" class="compact-action" @click="contextOpen = true">详情</button>
+        </header>
+        <dl class="clinical-dl">
+          <div><dt>患者</dt><dd>{{ patientName }}</dd></div>
+          <div><dt>患者 ID</dt><dd>{{ fieldText(registration, "patientId", "-") }}</dd></div>
+          <div><dt>科室</dt><dd>{{ fieldText(registration, "departmentName", "-") }}</dd></div>
+          <div><dt>分诊状态</dt><dd>{{ fieldText(triage, "status", "-") }}</dd></div>
+          <div class="span"><dt>主诉</dt><dd>{{ fieldText(triage, "chiefComplaint", medicalForm.chiefComplaint || "-") }}</dd></div>
+          <div class="span"><dt>历史信息</dt><dd>{{ fieldText(triage, "pastHistory", medicalForm.pastHistory || "-") }}</dd></div>
+        </dl>
+      </aside>
 
-        <section class="workbench-section">
-          <header class="section-title">
-            <div>
-              <h3>结构化病历</h3>
-              <p>主诉与诊断为保存必填项。</p>
+      <main class="clinical-section record-workspace">
+        <header class="section-toolbar">
+          <h2>病历工作区</h2>
+          <StatusTag :status="streamStatus" tone="info" />
+        </header>
+
+        <div class="record-editor-grid">
+          <label class="clinical-field full">
+            <span>问诊文本</span>
+            <textarea v-model.trim="dialogueText" class="consultation-textarea" rows="5" />
+          </label>
+
+          <div class="ai-draft-pane full">
+            <div class="inline-toolbar">
+              <strong>智能草稿</strong>
+              <button type="button" class="compact-action" :disabled="!streamText" @click="previewOpen = true">预览</button>
             </div>
-          </header>
-          <div class="clinical-form-grid">
-            <FormField label="主诉"><input v-model.trim="medicalForm.chiefComplaint" /></FormField>
-            <FormField label="诊断"><input v-model.trim="medicalForm.diagnosis" /></FormField>
-            <FormField label="现病史"><textarea v-model.trim="medicalForm.presentIllness" /></FormField>
-            <FormField label="既往史"><textarea v-model.trim="medicalForm.pastHistory" /></FormField>
-            <FormField label="体格检查"><textarea v-model.trim="medicalForm.physicalExam" /></FormField>
-            <FormField label="处理建议"><textarea v-model.trim="medicalForm.treatmentAdvice" /></FormField>
+            <LoadingState v-if="loading.record" title="正在处理病历" />
+            <pre v-else-if="streamText" class="stream-box">{{ streamText }}</pre>
+            <span v-else class="muted-line">暂无草稿</span>
           </div>
-        </section>
+
+          <label class="clinical-field">
+            <span>主诉</span>
+            <input v-model.trim="medicalForm.chiefComplaint" />
+          </label>
+          <label class="clinical-field">
+            <span>诊断</span>
+            <input v-model.trim="medicalForm.diagnosis" />
+          </label>
+          <label class="clinical-field">
+            <span>现病史</span>
+            <textarea v-model.trim="medicalForm.presentIllness" />
+          </label>
+          <label class="clinical-field">
+            <span>既往史</span>
+            <textarea v-model.trim="medicalForm.pastHistory" />
+          </label>
+          <label class="clinical-field">
+            <span>体格检查</span>
+            <textarea v-model.trim="medicalForm.physicalExam" />
+          </label>
+          <label class="clinical-field">
+            <span>处理建议</span>
+            <textarea v-model.trim="medicalForm.treatmentAdvice" />
+          </label>
+        </div>
+
+        <footer class="area-actions">
+          <button class="primary" type="button" :disabled="loading.record" @click="generateRecord">生成病历</button>
+          <button type="button" :disabled="!canSaveRecord || loading.record" @click="saveConfirmOpen = true">保存病历</button>
+        </footer>
       </main>
 
-      <aside class="prescription-rail">
-        <section class="workbench-section">
-          <header class="section-title">
-            <div>
-              <p class="eyebrow">PRESCRIPTION</p>
-              <h3>处方录入</h3>
-            </div>
-            <StatusTag :status="prescription.riskLevel" :tone="statusClass(prescription.riskLevel)" />
-          </header>
+      <aside class="clinical-section prescription-rail">
+        <header class="section-toolbar">
+          <h2>处方</h2>
+          <StatusTag :status="prescription.riskLevel" :tone="statusClass(prescription.riskLevel)" />
+        </header>
 
-          <div class="prescription-list">
-            <div v-for="(drug, index) in prescription.drugs" :key="index" class="drug-line">
-              <div class="drug-line-index">{{ index + 1 }}</div>
-              <FormField label="药品"><input v-model.trim="drug.drugName" list="drug-options" /></FormField>
-              <FormField label="剂量"><input v-model.trim="drug.dosage" /></FormField>
-              <FormField label="频次"><input v-model.trim="drug.frequency" /></FormField>
-              <FormField label="用法"><input v-model.trim="drug.usageMethod" /></FormField>
-              <button class="danger compact-action" type="button" @click="removeDrug(index)">删除</button>
-            </div>
-          </div>
+        <div class="table-scroll prescription-scroll">
+          <table class="clinical-table order-table">
+            <thead>
+              <tr>
+                <th>序号</th>
+                <th>药品</th>
+                <th>剂量</th>
+                <th>频次</th>
+                <th>用法</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(drug, index) in prescription.drugs" :key="index">
+                <td>{{ index + 1 }}</td>
+                <td><input v-model.trim="drug.drugName" list="drug-options" /></td>
+                <td><input v-model.trim="drug.dosage" /></td>
+                <td><input v-model.trim="drug.frequency" /></td>
+                <td><input v-model.trim="drug.usageMethod" /></td>
+                <td><button class="danger compact-action" type="button" @click="removeDrug(index)">删除</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-          <datalist id="drug-options"><option v-for="drug in drugs" :key="String(drug.id)" :value="String(drug.name)" /></datalist>
+        <datalist id="drug-options"><option v-for="drug in drugs" :key="String(drug.id)" :value="String(drug.name)" /></datalist>
 
-          <div class="action-row sticky-actions">
-            <button type="button" @click="addDrug">新增药品</button>
-            <button class="primary" type="button" :disabled="loading.prescription || !canCheck" @click="checkPrescription">风险审核</button>
-            <button type="button" :disabled="loading.prescription || !canCreate" @click="createPrescription">创建处方</button>
-          </div>
+        <div v-if="checkResult" class="risk-result">
+          {{ fieldText(checkResult, "suggestions", "请医生复核用药风险。") }}
+        </div>
 
-          <div v-if="checkResult" class="notice warning">{{ fieldText(checkResult, "suggestions", "请医生复核用药风险。") }}</div>
-        </section>
+        <footer class="area-actions prescription-actions">
+          <button type="button" @click="addDrug">新增药品</button>
+          <button class="primary" type="button" :disabled="loading.prescription || !canCheck" @click="checkPrescription">风险审核</button>
+          <button type="button" :disabled="loading.prescription || !canCreate" @click="createPrescription">创建处方</button>
+        </footer>
       </aside>
     </div>
 

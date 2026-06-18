@@ -51,7 +51,7 @@ refresh();
 <template>
   <section class="panel">
     <header class="panel-header">
-      <div class="panel-title"><p class="eyebrow">NOTIFICATIONS</p><h2>风险通知</h2><p>处方审核和系统通知集中处理。</p></div>
+      <div class="panel-title"><p class="eyebrow">风险通知</p><h2>风险通知</h2><p>处方审核和系统通知集中处理。</p></div>
       <button type="button" :disabled="loading" @click="refresh">刷新</button>
     </header>
     <div class="panel-body stack">

@@ -71,12 +71,12 @@ const configs: Record<Entity, {
     fields: [["title", "标题", "text"], ["symptoms", "症状", "textarea"], ["riskSignals", "风险信号", "textarea"], ["advice", "建议", "textarea"], ["departmentCode", "科室编码", "text"], ["status", "状态", "text"]],
   },
   prompt: {
-    title: "Prompt 维护",
-    description: "维护 AI 任务模板、输出 Schema 和版本。",
+    title: "提示词维护",
+    description: "维护智能任务模板、输出结构定义和版本。",
     rows: () => prompts.value,
     keys: ["taskType", "templateName", "departmentCode", "version"],
     columns: ["id", "taskType", "templateName", "departmentCode", "version", "enabled"],
-    fields: [["taskType", "任务类型", "text"], ["departmentCode", "科室编码", "text"], ["templateName", "模板名称", "text"], ["templateContent", "模板内容", "textarea"], ["outputSchema", "输出 Schema", "textarea"], ["version", "版本", "text"], ["enabled", "启用", "checkbox"]],
+    fields: [["taskType", "任务类型", "text"], ["departmentCode", "科室编码", "text"], ["templateName", "模板名称", "text"], ["templateContent", "模板内容", "textarea"], ["outputSchema", "输出结构定义", "textarea"], ["version", "版本", "text"], ["enabled", "启用", "checkbox"]],
   },
   dict: {
     title: "字典维护",
@@ -175,7 +175,7 @@ refresh();
   <section class="catalog-layout">
     <section class="panel">
       <header class="panel-header">
-        <div class="panel-title"><p class="eyebrow">CATALOG</p><h2>{{ config.title }}</h2><p>{{ config.description }}</p></div>
+        <div class="panel-title"><p class="eyebrow">基础目录</p><h2>{{ config.title }}</h2><p>{{ config.description }}</p></div>
         <div class="toolbar">
           <button type="button" :disabled="loading" @click="refresh">刷新</button>
           <button type="button" class="primary" @click="openEditor()">新增</button>

@@ -65,7 +65,7 @@ async function openDetail(item: DataRow) {
 <template>
   <section class="schedule-layout">
     <section class="panel">
-      <header class="panel-header"><div class="panel-title"><p class="eyebrow">SCHEDULE</p><h2>AI 排班与号源发布</h2><p>发布前管理员必须确认。</p></div></header>
+      <header class="panel-header"><div class="panel-title"><p class="eyebrow">排班发布</p><h2>智能排班与号源发布</h2><p>发布前管理员必须确认。</p></div></header>
       <div class="panel-body stack">
         <ErrorState v-if="error" :message="error" />
         <div v-if="notice" class="notice success">{{ notice }}</div>
