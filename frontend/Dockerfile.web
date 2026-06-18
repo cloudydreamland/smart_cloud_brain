@@ -1,8 +1,8 @@
 FROM node:24-alpine AS build
 ARG APP_NAME
+ARG PNPM_VERSION=9.15.0
 ARG NPM_REGISTRY=https://registry.npmmirror.com
 WORKDIR /workspace
-ENV COREPACK_NPM_REGISTRY=${NPM_REGISTRY}
 ENV npm_config_registry=${NPM_REGISTRY}
 
 COPY frontend/package.json ./
@@ -12,13 +12,16 @@ COPY frontend/tsconfig.base.json ./
 COPY frontend/apps apps
 COPY frontend/packages packages
 
-RUN corepack enable \
-    && corepack prepare pnpm@9.15.0 --activate \
+RUN npm config set registry ${NPM_REGISTRY} \
+    && (npm install -g pnpm@${PNPM_VERSION} --registry=${NPM_REGISTRY} \
+        || npm install -g pnpm@${PNPM_VERSION} --registry=https://registry.npmjs.org) \
     && pnpm config set registry ${NPM_REGISTRY} \
     && pnpm config set fetch-retries 5 \
     && pnpm config set fetch-retry-factor 2 \
     && pnpm config set fetch-timeout 120000 \
-    && pnpm install --frozen-lockfile
+    && (pnpm install --frozen-lockfile \
+        || (pnpm config set registry https://registry.npmjs.org \
+            && pnpm install --frozen-lockfile))
 ENV VITE_API_BASE=/api
 RUN pnpm --filter @smart-cloud-brain/${APP_NAME} build
 

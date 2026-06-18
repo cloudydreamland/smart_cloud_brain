@@ -320,6 +320,8 @@ services:
       dockerfile: frontend/Dockerfile.web
       args:
         APP_NAME: patient-web
+        PNPM_VERSION: ${PNPM_VERSION:-9.15.0}
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmmirror.com}
     container_name: scb-patient-web
     restart: unless-stopped
     depends_on:
@@ -334,6 +336,8 @@ services:
       dockerfile: frontend/Dockerfile.web
       args:
         APP_NAME: doctor-web
+        PNPM_VERSION: ${PNPM_VERSION:-9.15.0}
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmmirror.com}
     container_name: scb-doctor-web
     restart: unless-stopped
     depends_on:
@@ -348,6 +352,8 @@ services:
       dockerfile: frontend/Dockerfile.web
       args:
         APP_NAME: admin-web
+        PNPM_VERSION: ${PNPM_VERSION:-9.15.0}
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmmirror.com}
     container_name: scb-admin-web
     restart: unless-stopped
     depends_on:
