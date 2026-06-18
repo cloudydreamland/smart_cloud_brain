@@ -198,7 +198,7 @@ CREATE TABLE IF NOT EXISTS ai_generation_log (
   request_summary TEXT,
   response_summary TEXT,
   raw_result_json TEXT,
-  status VARCHAR(20) NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'UNKNOWN',
   error_message TEXT,
   duration_ms INT,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -209,6 +209,10 @@ ALTER TABLE ai_generation_log ADD COLUMN IF NOT EXISTS request_id VARCHAR(64);
 ALTER TABLE ai_generation_log ADD COLUMN IF NOT EXISTS input_summary TEXT;
 ALTER TABLE ai_generation_log ADD COLUMN IF NOT EXISTS output_summary TEXT;
 ALTER TABLE ai_generation_log ADD COLUMN IF NOT EXISTS success BOOLEAN;
+ALTER TABLE ai_generation_log ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'UNKNOWN';
+UPDATE ai_generation_log SET status = 'UNKNOWN' WHERE status IS NULL;
+ALTER TABLE ai_generation_log ALTER COLUMN status SET DEFAULT 'UNKNOWN';
+ALTER TABLE ai_generation_log ALTER COLUMN status SET NOT NULL;
 ALTER TABLE ai_generation_log ADD COLUMN IF NOT EXISTS latency_ms BIGINT;
 CREATE INDEX IF NOT EXISTS idx_ai_log_request_id ON ai_generation_log(request_id);
 CREATE INDEX IF NOT EXISTS idx_ai_log_task_created ON ai_generation_log(task_type, created_at);

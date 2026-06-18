@@ -149,7 +149,7 @@ CREATE TABLE IF NOT EXISTS ai_generation_log (
   request_summary TEXT,
   response_summary TEXT,
   raw_result_json JSON,
-  status VARCHAR(20) NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'UNKNOWN',
   error_message TEXT,
   duration_ms INT,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

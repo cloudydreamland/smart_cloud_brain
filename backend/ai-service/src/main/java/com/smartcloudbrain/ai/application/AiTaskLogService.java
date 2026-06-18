@@ -8,8 +8,6 @@ import java.time.LocalDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AiTaskLogService {
@@ -25,7 +23,6 @@ public class AiTaskLogService {
     this.objectMapper = objectMapper;
   }
 
-  @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void record(
       String taskType,
       String provider,
@@ -47,14 +44,14 @@ public class AiTaskLogService {
       entry.setInputSummary(summary(input));
       entry.setOutputSummary(success ? summary(output) : "");
       entry.setSuccess(success);
+      entry.setStatus(success ? "SUCCESS" : "FAILED");
       entry.setErrorMessage(summary(errorMessage));
       entry.setLatencyMs(latencyMs);
       entry.setPromptTemplateId(prompt == null ? null : prompt.promptTemplateId());
       entry.setCreatedAt(LocalDateTime.now());
-      repository.save(entry);
+      repository.saveAndFlush(entry);
     } catch (RuntimeException ex) {
       log.error("Failed to persist AI generation log for task {} request {}", taskType, requestId, ex);
-      throw ex;
     }
   }
 

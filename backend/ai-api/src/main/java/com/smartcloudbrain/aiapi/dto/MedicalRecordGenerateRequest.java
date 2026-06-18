@@ -1,9 +1,10 @@
 package com.smartcloudbrain.aiapi.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 public record MedicalRecordGenerateRequest(
-    Long registrationId,
+    @NotNull Long registrationId,
     String departmentCode,
     @NotBlank String dialogueText,
     Long patientId,
