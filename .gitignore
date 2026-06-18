@@ -5,6 +5,7 @@ target/
 .env
 deploy/env/.env
 *.log
+frontend/*.err
 node_modules/
 dist/
 
@@ -15,3 +16,6 @@ dist/
 # Hermes agent files
 .hermes/
 AGENTS.md
+
+# Local Codex execution notes
+docs/frontend-refactor-codex-execution.md
