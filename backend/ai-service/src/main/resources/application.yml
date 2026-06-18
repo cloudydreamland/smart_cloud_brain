@@ -27,7 +27,7 @@ knife4j:
   enable: true
 
 ai:
-  provider: ${AI_PROVIDER:openai}
+  provider: ${AI_PROVIDER:mock}
   timeout-ms: ${AI_TIMEOUT_MS:8000}
   openai:
     base-url: ${OPENAI_BASE_URL:}
@@ -36,3 +36,9 @@ ai:
   dify:
     base-url: ${DIFY_BASE_URL:}
     api-key: ${DIFY_API_KEY:}
+  dify-triage:
+    api-key: ${DIFY_TRIAGE_API_KEY:}
+  dify-medical-record:
+    api-key: ${DIFY_MEDICAL_RECORD_API_KEY:}
+  dify-prescription-check:
+    api-key: ${DIFY_PRESCRIPTION_CHECK_API_KEY:}

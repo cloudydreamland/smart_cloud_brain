@@ -1,7 +1,7 @@
 package com.smartcloudbrain.ai.application;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -19,43 +19,17 @@ class AiTaskLogServiceTest {
   private final AiTaskLogService service = new AiTaskLogService(repository, new ObjectMapper());
 
   @Test
-  void recordsSuccessStatusForSuccessfulGeneration() {
-    service.record(
-        "MEDICAL_RECORD",
-        "mock",
-        "mock-model",
-        "request-1",
-        "input",
-        "output",
-        null,
-        12L,
-        true,
-        ""
-    );
+  void recordsSuccessStatusRequiredByLegacySchema() {
+    service.record("TRIAGE", "dify", "workflow", "request-1", "input", "output", null, 12L, true, "");
 
-    ArgumentCaptor<AiGenerationLog> captor = ArgumentCaptor.forClass(AiGenerationLog.class);
-    verify(repository).saveAndFlush(captor.capture());
-    assertEquals("SUCCESS", captor.getValue().getStatus());
+    assertSavedStatus("SUCCESS");
   }
 
   @Test
-  void recordsFailedStatusForFailedGeneration() {
-    service.record(
-        "MEDICAL_RECORD",
-        "mock",
-        "mock-model",
-        "request-2",
-        "input",
-        null,
-        null,
-        12L,
-        false,
-        "provider failed"
-    );
+  void recordsFailedStatusRequiredByLegacySchema() {
+    service.record("TRIAGE", "dify", "workflow", "request-2", "input", null, null, 12L, false, "bad gateway");
 
-    ArgumentCaptor<AiGenerationLog> captor = ArgumentCaptor.forClass(AiGenerationLog.class);
-    verify(repository).saveAndFlush(captor.capture());
-    assertEquals("FAILED", captor.getValue().getStatus());
+    assertSavedStatus("FAILED");
   }
 
   @Test
@@ -74,5 +48,11 @@ class AiTaskLogServiceTest {
         true,
         ""
     ));
+  }
+
+  private void assertSavedStatus(String expected) {
+    ArgumentCaptor<AiGenerationLog> captor = ArgumentCaptor.forClass(AiGenerationLog.class);
+    verify(repository).saveAndFlush(captor.capture());
+    assertEquals(expected, captor.getValue().getStatus());
   }
 }

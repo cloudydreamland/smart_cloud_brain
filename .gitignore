@@ -4,6 +4,9 @@ target/
 .vscode/
 .env
 deploy/env/.env
+deploy/env/.env.dev
+deploy/env/.env.demo
+deploy/env/.env.prod
 *.log
 frontend/*.err
 node_modules/

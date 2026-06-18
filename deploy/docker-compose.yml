@@ -295,15 +295,18 @@ services:
       DB_NAME: ${DB_NAME:-smart_cloud_brain}
       DB_USERNAME: ${DB_USERNAME:-scb}
       DB_PASSWORD: ${DB_PASSWORD:-scb_password}
-      AI_PROVIDER: ${AI_PROVIDER:-openai}
+      AI_PROVIDER: ${AI_PROVIDER:-mock}
       AI_TIMEOUT_MS: ${AI_TIMEOUT_MS:-8000}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
       OPENAI_MODEL: ${OPENAI_MODEL:-}
       DIFY_BASE_URL: ${DIFY_BASE_URL:-}
       DIFY_API_KEY: ${DIFY_API_KEY:-}
-      NO_PROXY: ${NO_PROXY:-localhost,127.0.0.1,ai-service,docker-nginx-1,docker-api-1,nginx,api}
-      no_proxy: ${NO_PROXY:-localhost,127.0.0.1,ai-service,docker-nginx-1,docker-api-1,nginx,api}
+      DIFY_TRIAGE_API_KEY: ${DIFY_TRIAGE_API_KEY:-}
+      DIFY_MEDICAL_RECORD_API_KEY: ${DIFY_MEDICAL_RECORD_API_KEY:-}
+      DIFY_PRESCRIPTION_CHECK_API_KEY: ${DIFY_PRESCRIPTION_CHECK_API_KEY:-}
+      NO_PROXY: ${NO_PROXY:-localhost,127.0.0.1,host.docker.internal,ai-service,docker-nginx-1,docker-api-1,nginx,api}
+      no_proxy: ${NO_PROXY:-localhost,127.0.0.1,host.docker.internal,ai-service,docker-nginx-1,docker-api-1,nginx,api}
       TZ: Asia/Shanghai
     ports:
       - "${AI_SERVICE_PORT:-8081}:8081"
@@ -312,7 +315,6 @@ services:
         condition: service_completed_successfully
     networks:
       - default
-      - dify
 
   patient-web:
     build:
@@ -370,7 +372,7 @@ services:
       gateway-service:
         condition: service_healthy
     ports:
-      - "80:80"
+      - "${NGINX_PORT:-18000}:80"
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
       - ./nginx/html:/usr/share/nginx/html:ro
@@ -379,7 +381,3 @@ volumes:
   kingbase-data:
   rabbitmq-data:
   redis-data:
-
-networks:
-  dify:
-    name: ${DIFY_DOCKER_NETWORK:-docker_default}

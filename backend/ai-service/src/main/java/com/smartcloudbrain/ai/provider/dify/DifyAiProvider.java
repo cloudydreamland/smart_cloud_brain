@@ -27,6 +27,12 @@ import org.springframework.web.client.RestClient;
 @ConditionalOnProperty(prefix = "ai", name = "provider", havingValue = "dify")
 public class DifyAiProvider implements AiProvider {
 
+  enum WorkflowTask {
+    TRIAGE,
+    MEDICAL_RECORD,
+    PRESCRIPTION_CHECK
+  }
+
   private final AiProviderProperties properties;
   private final ObjectMapper objectMapper;
   private final RestClient restClient;
@@ -64,13 +70,13 @@ public class DifyAiProvider implements AiProvider {
     inputs.put("gender", textInput(request.gender()));
     inputs.put("allergyHistory", textInput(request.allergyHistory()));
     inputs.put("pastHistory", textInput(request.pastHistory()));
-    JsonNode outputs = runWorkflow(inputs, "triage-" + textInput(request.patientId()));
+    JsonNode outputs = runWorkflow(inputs, "triage-" + textInput(request.patientId()), WorkflowTask.TRIAGE);
     return new TriageResponse(
         requiredText(outputs, "recommendedDepartment"),
         requiredText(outputs, "departmentCode"),
-        requiredText(outputs, "recommendedDoctorDirection"),
-        requiredText(outputs, "urgencyLevel"),
-        requiredDouble(outputs, "confidence"),
+        text(outputs, "recommendedDoctorDirection", ""),
+        text(outputs, "urgencyLevel", ""),
+        optionalDouble(outputs, "confidence"),
         longList(outputs.get("recommendedDoctorIds")),
         requiredText(outputs, "reason"),
         false
@@ -92,7 +98,7 @@ public class DifyAiProvider implements AiProvider {
     inputs.put("doctorId", textInput(request.doctorId()));
     inputs.put("doctorName", textInput(request.doctorName()));
     inputs.put("appointmentTime", textInput(request.appointmentTime()));
-    JsonNode outputs = runWorkflow(inputs, "medical-record-" + textInput(request.registrationId()));
+    JsonNode outputs = runWorkflow(inputs, "medical-record-" + textInput(request.registrationId()), WorkflowTask.MEDICAL_RECORD);
     return new MedicalRecordGenerateResponse(
         requiredText(outputs, "chiefComplaint"),
         requiredText(outputs, "presentIllness"),
@@ -117,10 +123,10 @@ public class DifyAiProvider implements AiProvider {
     inputs.put("allergyHistory", textInput(request.allergyHistory()));
     inputs.put("pastHistory", textInput(request.pastHistory()));
     inputs.put("drugs", drugTextInput(request.drugs()));
-    JsonNode outputs = runWorkflow(inputs, "prescription-" + textInput(request.patientId()));
+    JsonNode outputs = runWorkflow(inputs, "prescription-" + textInput(request.patientId()), WorkflowTask.PRESCRIPTION_CHECK);
     return new PrescriptionCheckResponse(
         requiredText(outputs, "riskLevel"),
-        requiredText(outputs, "riskDescription"),
+        text(outputs, "riskDescription", ""),
         requiredText(outputs, "suggestions"),
         stringList(outputs.get("interactions")),
         stringList(outputs.get("contraindications")),
@@ -148,7 +154,7 @@ public class DifyAiProvider implements AiProvider {
     }
   }
 
-  private JsonNode runWorkflow(Map<String, Object> inputs, String user) {
+  private JsonNode runWorkflow(Map<String, Object> inputs, String user, WorkflowTask task) {
     Map<String, Object> body = new LinkedHashMap<>();
     body.put("inputs", inputs);
     body.put("response_mode", "blocking");
@@ -156,7 +162,7 @@ public class DifyAiProvider implements AiProvider {
     String response = restClient.post()
         .uri("/workflows/run")
         .contentType(MediaType.APPLICATION_JSON)
-        .header("Authorization", "Bearer " + require(dify().apiKey(), "DIFY_API_KEY"))
+        .header("Authorization", "Bearer " + apiKeyFor(task))
         .body(body)
         .retrieve()
         .body(String.class);
@@ -205,12 +211,9 @@ public class DifyAiProvider implements AiProvider {
     return value;
   }
 
-  private Double requiredDouble(JsonNode node, String field) {
+  private Double optionalDouble(JsonNode node, String field) {
     JsonNode value = node.get(field);
-    if (value == null || !value.isNumber()) {
-      throw new IllegalStateException("AI response missing numeric field: " + field);
-    }
-    return value.asDouble();
+    return value == null || !value.isNumber() ? null : value.asDouble();
   }
 
   private List<String> stringList(JsonNode node) {
@@ -244,6 +247,28 @@ public class DifyAiProvider implements AiProvider {
       throw new IllegalStateException("dify provider configuration is required");
     }
     return properties.dify();
+  }
+
+  @SuppressWarnings("deprecation")
+  String apiKeyFor(WorkflowTask task) {
+    AiProviderProperties.DifyWorkflow workflow = switch (task) {
+      case TRIAGE -> properties.difyTriage();
+      case MEDICAL_RECORD -> properties.difyMedicalRecord();
+      case PRESCRIPTION_CHECK -> properties.difyPrescriptionCheck();
+    };
+    String taskKey = workflow == null ? "" : workflow.apiKey();
+    if (taskKey != null && !taskKey.isBlank()) {
+      return taskKey;
+    }
+    return require(dify().apiKey(), keyName(task) + " or DIFY_API_KEY");
+  }
+
+  private String keyName(WorkflowTask task) {
+    return switch (task) {
+      case TRIAGE -> "DIFY_TRIAGE_API_KEY";
+      case MEDICAL_RECORD -> "DIFY_MEDICAL_RECORD_API_KEY";
+      case PRESCRIPTION_CHECK -> "DIFY_PRESCRIPTION_CHECK_API_KEY";
+    };
   }
 
   private String normalizeBaseUrl(String value) {
