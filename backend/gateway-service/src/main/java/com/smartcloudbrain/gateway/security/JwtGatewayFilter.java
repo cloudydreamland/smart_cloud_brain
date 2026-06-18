@@ -80,6 +80,10 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered {
     if (authorization != null && authorization.startsWith("Bearer ")) {
       return authorization.substring("Bearer ".length());
     }
+    String queryToken = request.getQueryParams().getFirst("token");
+    if (queryToken != null && !queryToken.isBlank()) {
+      return queryToken;
+    }
     List<String> protocols = request.getHeaders().get("Sec-WebSocket-Protocol");
     if (protocols != null) {
       for (String header : protocols) {

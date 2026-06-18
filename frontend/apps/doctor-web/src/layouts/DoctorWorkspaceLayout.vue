@@ -3,7 +3,6 @@ import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import {
-  notificationWebSocketProtocols,
   notificationWebSocketUrl,
   useAuthStore,
   useDoctorWorkflowStore,
@@ -64,7 +63,7 @@ function connectNotifications() {
   if (!session.value) return;
   stopRealtime();
   socketStatus.value = "连接中";
-  socket = new WebSocket(notificationWebSocketUrl(), notificationWebSocketProtocols(auth.token()));
+  socket = new WebSocket(notificationWebSocketUrl(auth.token()));
   socket.onopen = () => { socketStatus.value = "实时通知已连接"; };
   socket.onmessage = () => refresh().catch(() => undefined);
   socket.onerror = () => { socketStatus.value = "WebSocket 不可用，轮询中"; startPolling(); };

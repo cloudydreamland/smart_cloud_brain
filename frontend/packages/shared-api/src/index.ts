@@ -376,12 +376,9 @@ function websocketBase() {
     : `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}`;
 }
 
-export function notificationWebSocketUrl() {
-  return `${websocketBase()}/ws/notifications`;
-}
-
-export function notificationWebSocketProtocols(token: string) {
-  return token ? ["bearer", token] : [];
+export function notificationWebSocketUrl(token = "") {
+  const base = `${websocketBase()}/ws/notifications`;
+  return token ? `${base}?token=${encodeURIComponent(token)}` : base;
 }
 
 export function medicalRecordStreamUrl(registrationId: number, dialogueText: string, departmentCode = "") {
