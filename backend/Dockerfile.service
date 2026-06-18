@@ -1,27 +1,12 @@
-FROM maven:3.9.10-eclipse-temurin-17 AS build
-ARG SERVICE
-WORKDIR /workspace
-COPY backend/pom.xml .
-COPY backend/common-lib common-lib
-COPY backend/ai-api ai-api
-COPY backend/gateway-service gateway-service
-COPY backend/auth-service auth-service
-COPY backend/patient-service patient-service
-COPY backend/doctor-service doctor-service
-COPY backend/registration-service registration-service
-COPY backend/triage-service triage-service
-COPY backend/medical-record-service medical-record-service
-COPY backend/prescription-service prescription-service
-COPY backend/ai-service ai-service
-COPY backend/notification-service notification-service
-COPY backend/admin-service admin-service
-RUN mvn -pl ${SERVICE} -am -DskipTests package
-
 FROM eclipse-temurin:17-jre
+
 ARG SERVICE
 WORKDIR /app
+
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
-COPY --from=build /workspace/${SERVICE}/target/${SERVICE}.jar /app/service.jar
+
+COPY backend/${SERVICE}/target/${SERVICE}.jar /app/service.jar
+
 ENTRYPOINT ["java", "-jar", "/app/service.jar"]
