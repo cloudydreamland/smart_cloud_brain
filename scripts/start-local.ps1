@@ -23,8 +23,22 @@ if (-not (Test-Path $EnvFile)) {
   Write-Host "Created local environment file: $EnvFile"
 }
 
-$Architecture = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString()
-$KingbaseImage = if ($Architecture -eq "Arm64") {
+$Architecture = $null
+try {
+  $Architecture = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture
+} catch {
+  $Architecture = $null
+}
+if ($null -ne $Architecture) {
+  $Architecture = $Architecture.ToString()
+} elseif ($env:PROCESSOR_ARCHITEW6432) {
+  $Architecture = $env:PROCESSOR_ARCHITEW6432
+} elseif ($env:PROCESSOR_ARCHITECTURE) {
+  $Architecture = $env:PROCESSOR_ARCHITECTURE
+} else {
+  $Architecture = "AMD64"
+}
+$KingbaseImage = if ($Architecture -match "^(Arm64|ARM64)$") {
   "kingbase_v009r001c010b0004_single_arm:v1"
 } else {
   "kingbase_v009r001c010b0004_single_x86:v1"
