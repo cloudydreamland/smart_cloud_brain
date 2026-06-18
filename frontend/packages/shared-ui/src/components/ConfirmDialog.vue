@@ -22,7 +22,7 @@ defineEmits<{ close: []; confirm: [] }>();
     <div class="notice warning">该操作会提交到后端，请确认信息无误。</div>
     <template #footer>
       <button type="button" :disabled="busy" @click="$emit('close')">取消</button>
-      <button type="button" :class="tone" :disabled="busy" @click="$emit('confirm')">{{ busy ? "处理中" : confirmText }}</button>
+      <button type="button" :class="tone" :disabled="busy" @click="$emit('confirm')">{{ busy ? "处理中..." : confirmText }}</button>
     </template>
   </Modal>
 </template>

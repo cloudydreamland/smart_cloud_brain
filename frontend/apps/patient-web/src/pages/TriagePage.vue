@@ -13,6 +13,7 @@ const { triageHistory, triage } = storeToRefs(workflow);
 const form = reactive({ symptoms: "", duration: "", severity: "MEDIUM", extra: "" });
 const loading = ref(false);
 const error = ref("");
+const notice = ref("");
 const resultOpen = ref(false);
 const canSubmit = computed(() => form.symptoms.trim().length >= 6 && form.duration.trim().length > 0);
 
@@ -32,9 +33,11 @@ async function submit() {
   }
   loading.value = true;
   error.value = "";
+  notice.value = "";
   try {
     triage.value = await api.triage(auth.token(), { chiefComplaint: complaint() });
     await workflow.refreshAuthenticated(auth.token());
+    notice.value = "分诊已提交，请根据推荐科室继续选择号源。";
     resultOpen.value = true;
   } catch (err) {
     error.value = formatApiError(err, "分诊提交失败");
@@ -50,6 +53,7 @@ async function submit() {
       <header class="panel-header"><div class="panel-title"><p class="eyebrow">AI TRIAGE</p><h2>填写本次主要症状</h2><p>请描述症状、持续时间和变化情况。</p></div></header>
       <div class="panel-body stack">
         <ErrorState v-if="error" :message="error" />
+        <div v-if="notice" class="notice success">{{ notice }}</div>
         <FormField label="主要症状"><textarea v-model.trim="form.symptoms" rows="5" /></FormField>
         <div class="form-grid">
           <FormField label="持续时间"><input v-model.trim="form.duration" placeholder="例如：2 天" /></FormField>

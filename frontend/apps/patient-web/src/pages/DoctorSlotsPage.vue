@@ -11,6 +11,7 @@ const { slots, doctors, departments, triageHistory } = storeToRefs(workflow);
 const loading = ref(false);
 const saving = ref(false);
 const error = ref("");
+const notice = ref("");
 const selectedSlot = ref<DataRow | null>(null);
 const confirmOpen = ref(false);
 const recommendedDepartment = computed(() => fieldText(triageHistory.value[0], "recommendedDepartment", ""));
@@ -20,6 +21,7 @@ const displaySlots = computed(() => visibleSlots.value.length ? visibleSlots.val
 async function refresh() {
   loading.value = true;
   error.value = "";
+  notice.value = "";
   try {
     await workflow.refreshPublicData();
     await workflow.refreshAuthenticated(auth.token());
@@ -39,6 +41,7 @@ async function confirmAppointment() {
   if (!selectedSlot.value) return;
   saving.value = true;
   error.value = "";
+  notice.value = "";
   try {
     await api.createRegistration(auth.token(), {
       doctorId: toNumber(selectedSlot.value.doctorId),
@@ -49,6 +52,7 @@ async function confirmAppointment() {
     });
     await workflow.refreshAuthenticated(auth.token());
     confirmOpen.value = false;
+    notice.value = "预约已提交，可在“我的挂号”页面查看或取消。";
   } catch (err) {
     error.value = formatApiError(err, "挂号失败");
   } finally {
@@ -72,6 +76,7 @@ refresh();
       </header>
       <div class="panel-body stack">
         <ErrorState v-if="error" :message="error" />
+        <div v-if="notice" class="notice success">{{ notice }}</div>
         <div class="summary-strip">
           <div class="summary-item"><span>推荐科室</span><strong>{{ recommendedDepartment || "暂无" }}</strong></div>
           <div class="summary-item"><span>医生</span><strong>{{ doctors.length }}</strong></div>

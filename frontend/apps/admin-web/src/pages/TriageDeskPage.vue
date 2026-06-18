@@ -18,6 +18,7 @@ const closeTarget = ref<DataRow | null>(null);
 const assignOpen = ref(false);
 const loading = ref(false);
 const error = ref("");
+const notice = ref("");
 
 const rows = computed(() => triageDesk.value.filter((item) => {
   const keyword = filter.keyword.trim().toLowerCase();
@@ -52,10 +53,12 @@ async function assign() {
   }
   loading.value = true;
   error.value = "";
+  notice.value = "";
   try {
     await api.assignTriage(auth.token(), { ...assignForm });
     assignOpen.value = false;
     emit("refresh");
+    notice.value = "分诊已分配给医生。";
   } catch (err) {
     error.value = formatApiError(err, "分诊分配失败");
   } finally {
@@ -67,10 +70,12 @@ async function closeTriage() {
   if (!closeTarget.value) return;
   loading.value = true;
   error.value = "";
+  notice.value = "";
   try {
     await api.closeTriage(auth.token(), toNumber(closeTarget.value.triageRecordId));
     closeTarget.value = null;
     emit("refresh");
+    notice.value = "分诊记录已关闭。";
   } catch (err) {
     error.value = formatApiError(err, "关闭分诊失败");
   } finally {
@@ -85,6 +90,7 @@ async function closeTriage() {
       <header class="panel-header"><div class="panel-title"><p class="eyebrow">TRIAGE DESK</p><h2>分诊工作台</h2><p>查看分诊详情、人工改派医生、关闭异常记录。</p></div></header>
       <div class="panel-body stack">
         <ErrorState v-if="error" :message="error" />
+        <div v-if="notice" class="notice success">{{ notice }}</div>
         <div class="admin-filter-row">
           <input v-model.trim="filter.keyword" placeholder="搜索主诉或原因" />
           <input v-model.trim="filter.department" placeholder="推荐科室" />

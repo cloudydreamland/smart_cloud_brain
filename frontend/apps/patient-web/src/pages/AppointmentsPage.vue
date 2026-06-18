@@ -11,6 +11,7 @@ const { registrations } = storeToRefs(workflow);
 const loading = ref(false);
 const saving = ref(false);
 const error = ref("");
+const notice = ref("");
 const selected = ref<DataRow | null>(null);
 
 async function refresh() {
@@ -29,10 +30,12 @@ async function cancel() {
   if (!selected.value) return;
   saving.value = true;
   error.value = "";
+  notice.value = "";
   try {
     await api.cancelRegistration(auth.token(), toNumber(selected.value.registrationId));
     selected.value = null;
     await refresh();
+    notice.value = "挂号已取消。";
   } catch (err) {
     error.value = formatApiError(err, "取消挂号失败");
   } finally {
@@ -51,6 +54,7 @@ refresh();
     </header>
     <div class="panel-body stack">
       <ErrorState v-if="error" :message="error" />
+      <div v-if="notice" class="notice success">{{ notice }}</div>
       <LoadingState v-if="loading" />
       <div v-else-if="registrations.length" class="list">
         <article v-for="item in registrations" :key="String(item.registrationId)" class="list-row">
