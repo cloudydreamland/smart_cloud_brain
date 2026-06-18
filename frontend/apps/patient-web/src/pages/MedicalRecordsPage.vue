@@ -42,7 +42,7 @@ refresh();
 
 <template>
   <section class="panel">
-    <header class="panel-header"><div class="panel-title"><p class="eyebrow">MEDICAL RECORDS</p><h2>病历列表</h2><p>医生保存后同步到患者端。</p></div><button type="button" @click="refresh">刷新</button></header>
+    <header class="panel-header"><div class="panel-title"><p class="eyebrow">病历记录</p><h2>病历列表</h2><p>医生保存后同步到患者端。</p></div><button type="button" @click="refresh">刷新</button></header>
     <div class="panel-body stack">
       <ErrorState v-if="error" :message="error" />
       <LoadingState v-if="loading || detailLoading" />
@@ -54,7 +54,7 @@ refresh();
               <td>#{{ fieldText(item, "medicalRecordId") }}</td>
               <td>{{ fieldText(item, "chiefComplaint") }}</td>
               <td>{{ fieldText(item, "diagnosis") }}</td>
-              <td>{{ item.aiGenerated ? "AI 草稿确认" : "医生录入" }}</td>
+              <td>{{ item.aiGenerated ? "智能草稿确认" : "医生录入" }}</td>
               <td><button type="button" @click="open(item)">详情</button></td>
             </tr>
           </tbody>

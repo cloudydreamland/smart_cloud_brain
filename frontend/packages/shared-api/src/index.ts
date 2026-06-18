@@ -393,9 +393,25 @@ export function medicalRecordStreamUrl(registrationId: number, dialogueText: str
 }
 
 export function formatApiError(error: unknown, fallback: string) {
-  if (error instanceof ApiError) return error.message;
-  if (error instanceof Error) return error.message;
+  if (error instanceof ApiError) return localizeApiMessage(error.message);
+  if (error instanceof Error) return localizeApiMessage(error.message);
   return fallback;
+}
+
+function localizeApiMessage(message: string) {
+  const text = message.trim();
+  if (!text) return "请求失败";
+  const lower = text.toLowerCase();
+  if (lower.includes("triage-service unavailable")) {
+    return "分诊服务暂不可用，其他管理功能可继续使用。";
+  }
+  if (lower.includes("doctor-service unavailable")) {
+    return "医生与号源服务暂不可用，请稍后重试。";
+  }
+  if (lower.includes("ai service unavailable")) {
+    return "智能服务暂不可用，请稍后重试。";
+  }
+  return text;
 }
 
 export function toNumber(value: unknown, fallback = 0) {
@@ -420,6 +436,42 @@ export function statusClass(status: unknown) {
     return "warning";
   }
   return "info";
+}
+
+export function statusText(status: unknown, fallback = "-") {
+  const raw = String(status ?? "").trim();
+  if (!raw) return fallback;
+  const labels: Record<string, string> = {
+    CREATED: "已创建",
+    CONFIRMED: "已确认",
+    COMPLETED: "已完成",
+    AVAILABLE: "可预约",
+    ENABLED: "启用",
+    PUBLISHED: "已发布",
+    AI_RECOMMENDED: "智能推荐",
+    LOW: "低风险",
+    READ: "已读",
+    CANCELLED: "已取消",
+    FAILED: "失败",
+    DISABLED: "停用",
+    HIGH: "高风险",
+    CLOSED: "已关闭",
+    FULL: "已约满",
+    PENDING: "待处理",
+    DRAFT: "草稿",
+    UNPUBLISHED: "未发布",
+    UNREVIEWED: "未审核",
+    MEDIUM: "中风险",
+    MANUAL_REQUIRED: "待人工处理",
+    UNREAD: "未读",
+    PATIENT: "患者",
+    DOCTOR: "医生",
+    ADMIN: "管理员",
+    MALE: "男",
+    FEMALE: "女",
+    UNKNOWN: "未说明",
+  };
+  return labels[raw.toUpperCase()] ?? raw;
 }
 
 export const useAuthStore = defineStore("auth", () => {
@@ -571,17 +623,23 @@ export const useAdminWorkflowStore = defineStore("adminWorkflow", () => {
   const triageDesk = ref<DataRow[]>([]);
   const selectedScheduleSuggestion = ref<DataRow | null>(null);
   const selectedTriage = ref<DataRow | null>(null);
+  const refreshErrors = ref<Record<string, string>>({});
 
   async function refresh(token: string) {
+    const nextErrors: Record<string, string> = {};
+    const keepCurrent = <T>(key: string, fallbackMessage: string, current: T) => (error: unknown) => {
+      nextErrors[key] = formatApiError(error, fallbackMessage);
+      return current;
+    };
     const [departmentList, doctorList, drugList, promptList, knowledgeList, dictList, scheduleList, triageList] = await Promise.all([
-      adminApi.departments(token),
-      adminApi.publicDoctors(),
-      adminApi.drugs(token),
-      adminApi.prompts(token),
-      adminApi.knowledgeEntries(token),
-      adminApi.dicts(token),
-      adminApi.schedules(token),
-      adminApi.triageDesk(token),
+      adminApi.departments(token).catch(keepCurrent("departments", "科室列表加载失败", departments.value)),
+      adminApi.publicDoctors().catch(keepCurrent("doctors", "医生列表加载失败", doctors.value)),
+      adminApi.drugs(token).catch(keepCurrent("drugs", "药品列表加载失败", drugs.value)),
+      adminApi.prompts(token).catch(keepCurrent("prompts", "提示词模板加载失败", prompts.value)),
+      adminApi.knowledgeEntries(token).catch(keepCurrent("knowledge", "知识库加载失败", knowledge.value)),
+      adminApi.dicts(token).catch(keepCurrent("dicts", "字典加载失败", dicts.value)),
+      adminApi.schedules(token).catch(keepCurrent("schedules", "排班列表加载失败", schedules.value)),
+      adminApi.triageDesk(token).catch(keepCurrent("triageDesk", "分诊台加载失败", [] as DataRow[])),
     ]);
     departments.value = departmentList;
     doctors.value = doctorList;
@@ -591,6 +649,7 @@ export const useAdminWorkflowStore = defineStore("adminWorkflow", () => {
     dicts.value = dictList;
     schedules.value = scheduleList;
     triageDesk.value = triageList;
+    refreshErrors.value = nextErrors;
   }
 
   return {
@@ -605,6 +664,7 @@ export const useAdminWorkflowStore = defineStore("adminWorkflow", () => {
     triageDesk,
     selectedScheduleSuggestion,
     selectedTriage,
+    refreshErrors,
     refresh,
   };
 });

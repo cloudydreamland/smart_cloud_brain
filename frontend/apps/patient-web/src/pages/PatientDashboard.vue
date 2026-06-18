@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { storeToRefs } from "pinia";
-import { fieldText, statusClass, useAuthStore, usePatientWorkflowStore } from "@smart-cloud-brain/shared-api";
+import { fieldText, statusClass, statusText, useAuthStore, usePatientWorkflowStore } from "@smart-cloud-brain/shared-api";
 import { EmptyState, LoadingState, StatusTag } from "@smart-cloud-brain/shared-ui";
 import PatientHero from "../components/PatientHero.vue";
 
@@ -33,7 +33,7 @@ const latestPrescription = computed(() => prescriptions.value[0] ?? null);
           <header class="panel-header"><div class="panel-title"><h2>当前分诊结果</h2><p>用于挂号推荐，医生接诊时会再次确认。</p></div></header>
           <div class="panel-body">
             <div v-if="latestTriage" class="clinical-note">
-              <StatusTag :status="fieldText(latestTriage, 'status')" :tone="statusClass(latestTriage.status)" />
+              <StatusTag :status="statusText(latestTriage.status)" :tone="statusClass(latestTriage.status)" />
               <h3>{{ fieldText(latestTriage, "recommendedDepartment", "待确认") }}</h3>
               <p>{{ fieldText(latestTriage, "reason", "暂无说明") }}</p>
             </div>
@@ -46,7 +46,7 @@ const latestPrescription = computed(() => prescriptions.value[0] ?? null);
             <div v-if="latestRegistration" class="record-card">
               <strong>{{ fieldText(latestRegistration, "departmentName") }} · {{ fieldText(latestRegistration, "doctorName") }}</strong>
               <span>{{ fieldText(latestRegistration, "appointmentTime") }}</span>
-              <StatusTag :status="fieldText(latestRegistration, 'status')" :tone="statusClass(latestRegistration.status)" />
+              <StatusTag :status="statusText(latestRegistration.status)" :tone="statusClass(latestRegistration.status)" />
             </div>
             <EmptyState v-else title="暂无挂号" message="选择号源后，预约会显示在这里。" />
           </div>
@@ -64,7 +64,7 @@ const latestPrescription = computed(() => prescriptions.value[0] ?? null);
           <header class="panel-header"><div class="panel-title"><h2>诊后信息</h2><p>病历和处方由医生保存后同步。</p></div></header>
           <div class="panel-body stack">
             <div v-if="latestRecord" class="clinical-note"><strong>{{ fieldText(latestRecord, "diagnosis") }}</strong><p>{{ fieldText(latestRecord, "chiefComplaint") }}</p></div>
-            <div v-if="latestPrescription" class="clinical-note"><strong>处方 #{{ fieldText(latestPrescription, "prescriptionId") }}</strong><p>风险等级：{{ fieldText(latestPrescription, "riskLevel", "未审核") }}</p></div>
+            <div v-if="latestPrescription" class="clinical-note"><strong>处方 #{{ fieldText(latestPrescription, "prescriptionId") }}</strong><p>风险等级：{{ statusText(latestPrescription.riskLevel, "未审核") }}</p></div>
             <EmptyState v-if="!latestRecord && !latestPrescription" title="暂无诊后记录" />
           </div>
         </section>

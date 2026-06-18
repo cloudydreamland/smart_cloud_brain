@@ -2,7 +2,7 @@
 import { computed, reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
-import { api, fieldText, formatApiError, statusClass, useAuthStore, usePatientWorkflowStore } from "@smart-cloud-brain/shared-api";
+import { api, fieldText, formatApiError, statusClass, statusText, useAuthStore, usePatientWorkflowStore } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, FormField, LoadingState, StatusTag } from "@smart-cloud-brain/shared-ui";
 import TriageResultModal from "../components/TriageResultModal.vue";
 
@@ -16,12 +16,13 @@ const error = ref("");
 const notice = ref("");
 const resultOpen = ref(false);
 const canSubmit = computed(() => form.symptoms.trim().length >= 6 && form.duration.trim().length > 0);
+const severityLabels: Record<string, string> = { LOW: "轻度", MEDIUM: "中度", HIGH: "重度或明显加重" };
 
 function complaint() {
   return [
     `症状：${form.symptoms.trim()}`,
     `持续时间：${form.duration.trim()}`,
-    `严重程度：${form.severity}`,
+    `严重程度：${severityLabels[form.severity] ?? form.severity}`,
     form.extra.trim() ? `补充说明：${form.extra.trim()}` : "",
   ].filter(Boolean).join("；");
 }
@@ -50,7 +51,7 @@ async function submit() {
 <template>
   <section class="portal-grid">
     <form class="panel" @submit.prevent="submit">
-      <header class="panel-header"><div class="panel-title"><p class="eyebrow">AI TRIAGE</p><h2>填写本次主要症状</h2><p>请描述症状、持续时间和变化情况。</p></div></header>
+      <header class="panel-header"><div class="panel-title"><p class="eyebrow">智能分诊</p><h2>填写本次主要症状</h2><p>请描述症状、持续时间和变化情况。</p></div></header>
       <div class="panel-body stack">
         <ErrorState v-if="error" :message="error" />
         <div v-if="notice" class="notice success">{{ notice }}</div>
@@ -71,7 +72,7 @@ async function submit() {
         <div class="panel-body">
           <LoadingState v-if="loading" title="正在分析症状" />
           <div v-else-if="triage" class="clinical-note">
-            <StatusTag :status="fieldText(triage, 'status')" :tone="statusClass(triage.status)" />
+            <StatusTag :status="statusText(triage.status)" :tone="statusClass(triage.status)" />
             <h3>{{ fieldText(triage, "recommendedDepartment", "待确认") }}</h3>
             <p>{{ fieldText(triage, "reason", "暂无说明") }}</p>
           </div>
@@ -83,7 +84,7 @@ async function submit() {
         <div class="list">
           <article v-for="item in triageHistory" :key="String(item.triageRecordId)" class="list-row">
             <div class="row-main"><strong>{{ fieldText(item, "recommendedDepartment", "待确认") }}</strong><p>{{ fieldText(item, "chiefComplaint") }}</p></div>
-            <StatusTag :status="fieldText(item, 'status')" :tone="statusClass(item.status)" />
+            <StatusTag :status="statusText(item.status)" :tone="statusClass(item.status)" />
           </article>
           <EmptyState v-if="!triageHistory.length" title="暂无历史分诊" />
         </div>

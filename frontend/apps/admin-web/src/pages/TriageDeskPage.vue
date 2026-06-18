@@ -10,7 +10,7 @@ import CloseTriageConfirmModal from "../components/CloseTriageConfirmModal.vue";
 const emit = defineEmits<{ refresh: [] }>();
 const auth = useAuthStore();
 const workflow = useAdminWorkflowStore();
-const { triageDesk, doctors } = storeToRefs(workflow);
+const { triageDesk, doctors, refreshErrors } = storeToRefs(workflow);
 const filter = reactive({ keyword: "", department: "", status: "" });
 const assignForm = reactive({ triageRecordId: 0, doctorId: 0 });
 const selected = ref<DataRow | null>(null);
@@ -87,9 +87,9 @@ async function closeTriage() {
 <template>
   <section class="triage-layout">
     <section class="panel">
-      <header class="panel-header"><div class="panel-title"><p class="eyebrow">TRIAGE DESK</p><h2>分诊工作台</h2><p>查看分诊详情、人工改派医生、关闭异常记录。</p></div></header>
+      <header class="panel-header"><div class="panel-title"><p class="eyebrow">分诊台</p><h2>分诊工作台</h2><p>查看分诊详情、人工改派医生、关闭异常记录。</p></div></header>
       <div class="panel-body stack">
-        <ErrorState v-if="error" :message="error" />
+        <ErrorState v-if="error || refreshErrors.triageDesk" :message="error || refreshErrors.triageDesk" />
         <div v-if="notice" class="notice success">{{ notice }}</div>
         <div class="admin-filter-row">
           <input v-model.trim="filter.keyword" placeholder="搜索主诉或原因" />

@@ -35,7 +35,7 @@ async function submit() {
 <template>
   <section class="mayo-container auth-grid">
     <div class="auth-copy">
-      <p class="eyebrow">PATIENT LOGIN</p>
+      <p class="eyebrow">患者登录</p>
       <h1>进入患者服务门户</h1>
       <p class="mayo-lead">登录后可以提交分诊、选择号源、管理挂号，并查看诊后病历与处方。</p>
     </div>

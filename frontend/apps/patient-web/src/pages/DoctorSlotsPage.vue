@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { api, fieldText, formatApiError, statusClass, toNumber, useAuthStore, usePatientWorkflowStore, type DataRow } from "@smart-cloud-brain/shared-api";
+import { api, fieldText, formatApiError, statusClass, statusText, toNumber, useAuthStore, usePatientWorkflowStore, type DataRow } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, LoadingState, StatusTag } from "@smart-cloud-brain/shared-ui";
 import ConfirmAppointmentModal from "../components/ConfirmAppointmentModal.vue";
 
@@ -68,7 +68,7 @@ refresh();
     <section class="panel">
       <header class="panel-header">
         <div class="panel-title">
-          <p class="eyebrow">FIND A DOCTOR</p>
+          <p class="eyebrow">预约医生</p>
           <h2>可预约号源</h2>
           <p>优先展示与当前分诊推荐科室匹配的医生号源。</p>
         </div>
@@ -90,7 +90,7 @@ refresh();
               <p>{{ fieldText(slot, "startTime") }} · 余号 {{ fieldText(slot, "remainingCapacity", "0") }}/{{ fieldText(slot, "capacity", "0") }}</p>
             </div>
             <div class="toolbar">
-              <StatusTag :status="fieldText(slot, 'status')" :tone="statusClass(slot.status)" />
+              <StatusTag :status="statusText(slot.status)" :tone="statusClass(slot.status)" />
               <button class="primary" type="button" @click="choose(slot)">选择</button>
             </div>
           </article>

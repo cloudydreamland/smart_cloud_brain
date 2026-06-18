@@ -50,7 +50,7 @@ async function submit() {
 <template>
   <section class="mayo-container auth-grid">
     <div class="auth-copy">
-      <p class="eyebrow">PATIENT REGISTER</p>
+      <p class="eyebrow">患者注册</p>
       <h1>创建患者档案</h1>
       <p class="mayo-lead">基础信息会用于挂号、医生接诊识别和处方审核，请保持真实准确。</p>
     </div>

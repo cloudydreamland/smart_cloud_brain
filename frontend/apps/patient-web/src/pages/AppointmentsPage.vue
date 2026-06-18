@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { storeToRefs } from "pinia";
-import { api, fieldText, formatApiError, statusClass, toNumber, useAuthStore, usePatientWorkflowStore, type DataRow } from "@smart-cloud-brain/shared-api";
+import { api, fieldText, formatApiError, statusClass, statusText, toNumber, useAuthStore, usePatientWorkflowStore, type DataRow } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, LoadingState, StatusTag } from "@smart-cloud-brain/shared-ui";
 import CancelAppointmentModal from "../components/CancelAppointmentModal.vue";
 
@@ -49,7 +49,7 @@ refresh();
 <template>
   <section class="panel">
     <header class="panel-header">
-      <div class="panel-title"><p class="eyebrow">APPOINTMENTS</p><h2>我的挂号</h2><p>集中展示待就诊、已取消和已完成记录。</p></div>
+      <div class="panel-title"><p class="eyebrow">我的挂号</p><h2>我的挂号</h2><p>集中展示待就诊、已取消和已完成记录。</p></div>
       <button type="button" :disabled="loading" @click="refresh">刷新</button>
     </header>
     <div class="panel-body stack">
@@ -63,7 +63,7 @@ refresh();
             <p>{{ fieldText(item, "appointmentTime") }}</p>
           </div>
           <div class="toolbar">
-            <StatusTag :status="fieldText(item, 'status')" :tone="statusClass(item.status)" />
+            <StatusTag :status="statusText(item.status)" :tone="statusClass(item.status)" />
             <button class="danger" type="button" :disabled="fieldText(item, 'status') === 'CANCELLED'" @click="selected = item">取消</button>
           </div>
         </article>

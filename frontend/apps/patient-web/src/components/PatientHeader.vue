@@ -12,16 +12,16 @@ defineEmits<{ logout: [] }>();
       <span v-if="userName">{{ userName }} · 已登录</span>
     </div>
     <div class="mayo-mainbar">
-      <RouterLink class="mayo-brand" to="/" aria-label="Smart Cloud Brain 患者端">
-        <span class="mayo-symbol">SCB</span>
-        <span>Smart Cloud Brain</span>
+      <RouterLink class="mayo-brand" to="/" aria-label="智慧云脑患者端">
+        <span class="mayo-symbol">云脑</span>
+        <span>智慧云脑</span>
       </RouterLink>
       <nav v-if="!publicMode" class="mayo-nav" aria-label="患者服务导航">
-        <RouterLink to="/triage">Request appointment</RouterLink>
-        <RouterLink to="/doctors">Find a doctor</RouterLink>
-        <RouterLink to="/appointments">Appointments</RouterLink>
-        <RouterLink to="/records">Patient portal</RouterLink>
-        <RouterLink to="/profile">Profile</RouterLink>
+        <RouterLink to="/triage">症状分诊</RouterLink>
+        <RouterLink to="/doctors">预约医生</RouterLink>
+        <RouterLink to="/appointments">我的挂号</RouterLink>
+        <RouterLink to="/records">病历处方</RouterLink>
+        <RouterLink to="/profile">个人资料</RouterLink>
       </nav>
       <div class="mayo-actions">
         <RouterLink v-if="publicMode" class="button" to="/register">注册</RouterLink>

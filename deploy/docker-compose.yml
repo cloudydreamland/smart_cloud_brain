@@ -263,11 +263,22 @@ services:
       dockerfile: backend/Dockerfile.service
       args:
         SERVICE: admin-service
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+      rabbitmq:
+        condition: service_started
+      doctor-service:
+        condition: service_healthy
+      triage-service:
+        condition: service_healthy
     environment:
       <<: *domain-env
       SERVER_PORT: 8090
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      DOCTOR_SERVICE_BASE_URL: http://doctor-service:8084
+      TRIAGE_SERVICE_BASE_URL: http://triage-service:8086
 
   ai-service:
     build:
