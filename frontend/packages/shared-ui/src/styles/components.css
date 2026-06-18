@@ -3,7 +3,7 @@
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
-  box-shadow: var(--shadow);
+  box-shadow: 0 1px 2px rgba(34, 59, 56, 0.04);
 }
 
 .panel-header {
@@ -223,7 +223,7 @@
 }
 
 .data-table th {
-  background: #f1f5f4;
+  background: #f5f8f7;
   color: #53645f;
   font-size: 12px;
   font-weight: 700;
