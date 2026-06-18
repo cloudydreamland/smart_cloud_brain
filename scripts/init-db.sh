@@ -2,21 +2,22 @@
 set -eu
 
 ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
-MYSQL_CONTAINER="${MYSQL_CONTAINER:-scb-mysql}"
-MYSQL_ROOT_PASSWORD="${DB_ROOT_PASSWORD:-root_password}"
+FLYWAY_IMAGE="${FLYWAY_IMAGE:-flyway/flyway:10-alpine}"
+DB_HOST="${DB_HOST:-host.docker.internal}"
+DB_PORT="${DB_PORT:-54321}"
+DB_NAME="${DB_NAME:-smart_cloud_brain}"
+DB_USERNAME="${DB_USERNAME:-scb}"
+DB_PASSWORD="${DB_PASSWORD:-scb_password}"
 
-for sql_file in \
-  "$ROOT_DIR/sql/auth_db.sql" \
-  "$ROOT_DIR/sql/patient_db.sql" \
-  "$ROOT_DIR/sql/doctor_db.sql" \
-  "$ROOT_DIR/sql/registration_db.sql" \
-  "$ROOT_DIR/sql/triage_db.sql" \
-  "$ROOT_DIR/sql/medical_record_db.sql" \
-  "$ROOT_DIR/sql/prescription_db.sql" \
-  "$ROOT_DIR/sql/ai_db.sql" \
-  "$ROOT_DIR/sql/notification_db.sql" \
-  "$ROOT_DIR/sql/admin_db.sql" \
-  "$ROOT_DIR/sql/demo_seed_data.sql"
-do
-  docker exec -i "$MYSQL_CONTAINER" mysql -uroot -p"$MYSQL_ROOT_PASSWORD" < "$sql_file"
-done
+docker run --rm \
+  --add-host=host.docker.internal:host-gateway \
+  -v "$ROOT_DIR/sql/flyway:/flyway/sql:ro" \
+  "$FLYWAY_IMAGE" \
+  -url="jdbc:postgresql://$DB_HOST:$DB_PORT/$DB_NAME" \
+  -user="$DB_USERNAME" \
+  -password="$DB_PASSWORD" \
+  -connectRetries=60 \
+  -locations=filesystem:/flyway/sql \
+  -baselineOnMigrate=true \
+  -baselineVersion=0 \
+  migrate

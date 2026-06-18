@@ -2,6 +2,7 @@ package com.smartcloudbrain.admin.client;
 
 import com.smartcloudbrain.common.exception.BusinessException;
 import com.smartcloudbrain.common.result.Result;
+import com.smartcloudbrain.common.security.InternalRequestGuard;
 import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,9 +25,13 @@ public class InternalTriageClient {
 
   public InternalTriageClient(
       RestClient.Builder restClientBuilder,
-      @Value("${services.triage.base-url}") String baseUrl
+      @Value("${services.triage.base-url}") String baseUrl,
+      @Value("${internal.service-token:${INTERNAL_SERVICE_TOKEN:smart-cloud-brain-internal-local-token-change}}") String internalToken
   ) {
-    this.restClient = restClientBuilder.baseUrl(baseUrl).build();
+    this.restClient = restClientBuilder
+        .baseUrl(baseUrl)
+        .defaultHeader(InternalRequestGuard.INTERNAL_TOKEN_HEADER, internalToken)
+        .build();
   }
 
   public List<Map<String, Object>> list() {

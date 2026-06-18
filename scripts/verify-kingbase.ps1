@@ -4,8 +4,8 @@ param(
   [string]$HostName = $(if ($env:KINGBASE_HOST) { $env:KINGBASE_HOST } else { "127.0.0.1" }),
   [int]$Port = $(if ($env:KINGBASE_PORT) { [int]$env:KINGBASE_PORT } else { 54321 }),
   [string]$Database = $(if ($env:KINGBASE_DATABASE) { $env:KINGBASE_DATABASE } else { "smart_cloud_brain" }),
-  [string]$User = $(if ($env:KINGBASE_USER) { $env:KINGBASE_USER } else { "system" }),
-  [string]$Password = $env:KINGBASE_PASSWORD,
+  [string]$User = $(if ($env:KINGBASE_USER) { $env:KINGBASE_USER } elseif ($env:DB_USERNAME) { $env:DB_USERNAME } else { "scb" }),
+  [string]$Password = $(if ($env:KINGBASE_PASSWORD) { $env:KINGBASE_PASSWORD } elseif ($env:DB_PASSWORD) { $env:DB_PASSWORD } else { "scb_password" }),
   [switch]$ApplySql,
   [string]$SchemaPath = "",
   [string]$SeedPath = ""
@@ -16,7 +16,7 @@ Set-StrictMode -Version Latest
 
 $Root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 if ([string]::IsNullOrWhiteSpace($SchemaPath)) {
-  $SchemaPath = Join-Path $Root "sql\kingbase_schema.sql"
+  $SchemaPath = Join-Path $Root "sql\flyway\V1__smart_cloud_brain_schema.sql"
 }
 if ([string]::IsNullOrWhiteSpace($SeedPath)) {
   $SeedPath = Join-Path $Root "sql\kingbase_seed_ascii.sql"
@@ -24,10 +24,24 @@ if ([string]::IsNullOrWhiteSpace($SeedPath)) {
 
 if (-not [string]::IsNullOrWhiteSpace($Password)) {
   $env:PGPASSWORD = $Password
+  $env:KINGBASE_PASSWORD = $Password
+}
+
+$UseDockerClient = $false
+if (-not (Get-Command $Client -ErrorAction SilentlyContinue)) {
+  if (Get-Command docker -ErrorAction SilentlyContinue) {
+    $UseDockerClient = $true
+    Write-Host "[INFO] database client '$Client' not found; using ksql inside scb-kingbase container"
+  } else {
+    throw "Database client '$Client' was not found and Docker is unavailable."
+  }
 }
 
 function Get-ClientArgs {
   if (-not [string]::IsNullOrWhiteSpace($Url)) {
+    if ($UseDockerClient) {
+      throw "KINGBASE_URL is not supported by the Docker client fallback. Use host/port/database/user parameters instead."
+    }
     return @($Url)
   }
   return @("-h", $HostName, "-p", "$Port", "-U", $User, "-d", $Database)
@@ -36,7 +50,16 @@ function Get-ClientArgs {
 function Invoke-Db {
   param([string[]]$ExtraArgs)
   $args = @(Get-ClientArgs) + @("-v", "ON_ERROR_STOP=1") + $ExtraArgs
-  $output = & $Client @args
+  if ($UseDockerClient) {
+    $dockerArgs = @("exec")
+    if (-not [string]::IsNullOrWhiteSpace($env:KINGBASE_PASSWORD)) {
+      $dockerArgs += @("-e", "KINGBASE_PASSWORD=$($env:KINGBASE_PASSWORD)")
+    }
+    $dockerArgs += @("scb-kingbase", "/home/kingbase/install/kingbase/bin/ksql", "-w") + $args
+    $output = & docker @dockerArgs
+  } else {
+    $output = & $Client @args
+  }
   if ($LASTEXITCODE -ne 0) {
     throw "Database client failed with exit code $LASTEXITCODE"
   }
@@ -96,16 +119,7 @@ function Assert-SameSnapshot {
 }
 
 if ($ApplySql) {
-  Write-Host "[INFO] Applying schema and seed for the first pass"
-  Invoke-SqlFile $SchemaPath
-  Invoke-SqlFile $SeedPath
-  $first = Get-Snapshot
-
-  Write-Host "[INFO] Applying schema and seed for the second pass"
-  Invoke-SqlFile $SchemaPath
-  Invoke-SqlFile $SeedPath
-  $second = Get-Snapshot
-  Assert-SameSnapshot $first $second
+  throw "Direct SQL initialization is disabled. Apply database changes through Flyway with scripts/init-db.sh, then run this verifier without -ApplySql."
 }
 
 $expectedTables = @(

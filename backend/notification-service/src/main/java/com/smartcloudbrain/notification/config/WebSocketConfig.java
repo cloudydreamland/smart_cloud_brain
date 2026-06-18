@@ -16,7 +16,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
   public WebSocketConfig(
       NotificationWebSocketHandler notificationWebSocketHandler,
-      @Value("${websocket.allowed-origin-patterns:http://localhost:5174,http://localhost}") String allowedOriginPatterns
+      @Value("${notification.websocket.allowed-origin-patterns:http://localhost:5174,http://127.0.0.1:5174}") String allowedOriginPatterns
   ) {
     this.notificationWebSocketHandler = notificationWebSocketHandler;
     this.allowedOriginPatterns = allowedOriginPatterns;

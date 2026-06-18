@@ -59,25 +59,42 @@ public class AuthService {
     return Map.of("patientId", patientRepository.save(patient).getId());
   }
 
+  @Transactional
   public LoginResponse loginPatient(LoginRequest request) {
     Patient patient = patientRepository.findByPhone(request.account())
         .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
     passwordService.assertMatches(request.password(), patient.getPasswordHash());
+    if (passwordService.requiresUpgrade(patient.getPasswordHash())) {
+      patient.setPasswordHash(passwordService.encode(request.password()));
+      patient.setUpdatedAt(LocalDateTime.now());
+      patientRepository.save(patient);
+    }
     return session(patient.getId(), RoleType.PATIENT, patient.getName());
   }
 
+  @Transactional
   public LoginResponse loginDoctor(LoginRequest request) {
     Doctor doctor = doctorRepository.findByPhone(request.account())
         .or(() -> doctorByDemoAccount(request.account()))
         .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
     passwordService.assertMatches(request.password(), doctor.getPasswordHash());
+    if (passwordService.requiresUpgrade(doctor.getPasswordHash())) {
+      doctor.setPasswordHash(passwordService.encode(request.password()));
+      doctorRepository.save(doctor);
+    }
     return session(doctor.getId(), RoleType.DOCTOR, doctor.getName());
   }
 
+  @Transactional
   public LoginResponse loginAdmin(LoginRequest request) {
     AdminUser admin = adminUserRepository.findByUsername(request.account())
         .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
     passwordService.assertMatches(request.password(), admin.getPasswordHash());
+    if (passwordService.requiresUpgrade(admin.getPasswordHash())) {
+      admin.setPasswordHash(passwordService.encode(request.password()));
+      admin.setUpdatedAt(LocalDateTime.now());
+      adminUserRepository.save(admin);
+    }
     return session(admin.getId(), RoleType.ADMIN, admin.getName());
   }
 

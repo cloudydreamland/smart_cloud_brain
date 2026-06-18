@@ -45,5 +45,7 @@ services:
     base-url: ${DOCTOR_SERVICE_BASE_URL:http://localhost:8084}
   triage:
     base-url: ${TRIAGE_SERVICE_BASE_URL:http://localhost:8086}
+  ai:
+    base-url: ${AI_SERVICE_BASE_URL:http://localhost:8081}
 
 

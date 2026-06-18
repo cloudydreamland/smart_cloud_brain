@@ -8,23 +8,23 @@ spring:
         - id: auth-service
           uri: lb://auth-service
           predicates:
-            - Path=/api/patient/register,/api/patient/login,/api/doctor/login,/api/admin/login,/internal/auth/**
+            - Path=/api/patient/register,/api/patient/login,/api/doctor/login,/api/admin/login
         - id: patient-service
           uri: lb://patient-service
           predicates:
-            - Path=/api/patient/**,/internal/patients/**
+            - Path=/api/patient/**
         - id: doctor-service
           uri: lb://doctor-service
           predicates:
-            - Path=/api/doctor/**,/internal/doctors/**
+            - Path=/api/doctor/**
         - id: registration-service
           uri: lb://registration-service
           predicates:
-            - Path=/api/registration/**,/internal/registrations/**
+            - Path=/api/registration/**
         - id: triage-service
           uri: lb://triage-service
           predicates:
-            - Path=/api/triage/**,/internal/triage-records/**
+            - Path=/api/triage/**
         - id: medical-record-service
           uri: lb://medical-record-service
           predicates:
@@ -36,7 +36,7 @@ spring:
         - id: notification-service
           uri: lb://notification-service
           predicates:
-            - Path=/api/notification/**,/internal/notifications/**
+            - Path=/api/notification/**
         - id: notification-websocket
           uri: lb:ws://notification-service
           predicates:
