@@ -39,7 +39,10 @@ corepack pnpm --filter admin-web build
 
 使用 Postman 或页面操作验证：
 
-- `/api/auth/login`
+- `/api/patient/login`
+- `/api/doctor/login`
+- `/api/admin/login`
+- `/api/auth/me`
 - `/api/triage/consult`
 - `/api/registration/slots`
 - `/api/registration/create`
@@ -48,9 +51,12 @@ corepack pnpm --filter admin-web build
 - `/api/medical-record/save`
 - `/api/prescription/check`
 - `/api/prescription/create`
+- `/api/prescription/detail?id={id}`
 - `/api/admin/schedule/generate`
 - `/api/admin/schedule/publish`
 - `/api/admin/triage-desk/list`
+
+说明：本阶段不完善 AI 排班服务化链路，`/api/admin/schedule/generate` 保持现有管理端排班建议能力，AI Provider 接入由后续任务处理。
 
 ## 4. 数据库验证
 
@@ -71,7 +77,13 @@ corepack pnpm --filter admin-web build
 
 ```powershell
 cd D:\smart_cloud_brain
-docker-compose --env-file deploy\env\.env -f deploy\docker-compose.yml --profile embedded-db up -d --build
+docker compose --env-file deploy\env\.env -f deploy\docker-compose.yml up -d --build
+```
+
+旧版 Docker CLI 可改用：
+
+```powershell
+docker-compose --env-file deploy\env\.env -f deploy\docker-compose.yml up -d --build
 ```
 
 检查：

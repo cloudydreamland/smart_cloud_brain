@@ -20,7 +20,7 @@ postman/    接口调试集合
 3. 医生查看自己的挂号队列，生成并保存 AI 病历草稿。
 4. 医生执行处方审核并确认处方，风险通知通过 RabbitMQ/WebSocket 推送。
 5. 患者查看自己的病历和处方。
-6. 管理员维护基础数据、系统字典、分诊工作台，并生成/发布 AI 排班。
+6. 管理员维护基础数据、系统字典、分诊工作台，并生成/发布排班建议。
 
 ## 默认账号
 
@@ -124,3 +124,5 @@ AI_PROVIDER=mock
 ```
 
 Triage, medical-record generation, and prescription checks read enabled templates from `prompt_template`; admin changes affect later AI output. Successful and failed AI calls are written to `ai_generation_log` with summaries only, not full private medical text.
+
+Note: AI-powered schedule suggestion is intentionally left as a handoff item. The current admin schedule workflow can generate suggestions and publish bookable slots, but it does not yet call `ai-service`.

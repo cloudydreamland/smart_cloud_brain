@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { storeToRefs } from "pinia";
-import { fieldText, formatApiError, statusClass, statusText, useAuthStore, usePatientWorkflowStore, type DataRow } from "@smart-cloud-brain/shared-api";
+import { api, fieldText, formatApiError, statusClass, statusText, toNumber, useAuthStore, usePatientWorkflowStore, type DataRow } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, LoadingState, StatusTag } from "@smart-cloud-brain/shared-ui";
 import PrescriptionDetailModal from "../components/PrescriptionDetailModal.vue";
 
@@ -24,6 +24,18 @@ async function refresh() {
   }
 }
 
+async function openDetail(item: DataRow) {
+  loading.value = true;
+  error.value = "";
+  try {
+    selected.value = await api.prescriptionDetail(auth.token(), toNumber(item.prescriptionId));
+  } catch (err) {
+    error.value = formatApiError(err, "处方详情加载失败");
+  } finally {
+    loading.value = false;
+  }
+}
+
 refresh();
 </script>
 
@@ -38,7 +50,7 @@ refresh();
           <div class="row-main"><strong>处方 #{{ fieldText(item, "prescriptionId") }}</strong><p>{{ fieldText(item, "createdAt") }} · {{ statusText(item.status) }}</p></div>
           <div class="toolbar">
             <StatusTag :status="statusText(item.riskLevel, '未审核')" :tone="statusClass(item.riskLevel)" />
-            <button type="button" @click="selected = item">详情</button>
+            <button type="button" @click="openDetail(item)">详情</button>
           </div>
         </article>
       </div>

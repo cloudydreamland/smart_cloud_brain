@@ -6,9 +6,11 @@ import com.smartcloudbrain.prescription.dto.prescription.PrescriptionCreateReque
 import com.smartcloudbrain.prescription.service.PrescriptionService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -34,6 +36,16 @@ public class PrescriptionController {
   @GetMapping("/list")
   public Result<?> list() {
     return Result.success(prescriptionService.list());
+  }
+
+  @GetMapping("/detail")
+  public Result<?> detail(@RequestParam("id") Long id) {
+    return Result.success(prescriptionService.detail(id));
+  }
+
+  @GetMapping("/{id}")
+  public Result<?> detailByPath(@PathVariable Long id) {
+    return Result.success(prescriptionService.detail(id));
   }
 }
 

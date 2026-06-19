@@ -32,8 +32,8 @@
 1. 打开管理端 `http://localhost:5175`。
 2. 使用 `admin / 123456` 登录。
 3. 展示科室、医生、药品、Prompt、知识库和系统字典维护。
-4. 生成 AI 排班建议。
-5. 说明当前排班建议由 Mock AI 返回，但发布动作会写入医生排班和可预约号源。
+4. 生成排班建议。
+5. 说明当前排班发布动作会写入医生排班和可预约号源；AI 排班服务化链路作为后续交接项，不纳入本轮完善范围。
 6. 发布排班后回到患者端刷新号源，确认新增号源可见。
 7. 打开分诊工作台，查看分诊记录详情，演示分配医生和关闭记录。
 
@@ -54,12 +54,12 @@
 ```powershell
 cd D:\smart_cloud_brain
 copy deploy\env\.env.example deploy\env\.env
-docker-compose --env-file deploy\env\.env -f deploy\docker-compose.yml --profile embedded-db up -d --build
+docker compose --env-file deploy\env\.env -f deploy\docker-compose.yml up -d --build
 ```
 
 说明：
 
-- Compose 启动 Gateway、各业务微服务、三端 Web、Nacos、RabbitMQ、Nginx 和兼容数据库。
+- Compose 启动 Gateway、各业务微服务、三端 Web、RabbitMQ、Nginx 和兼容数据库。
 - `sql/kingbase_schema.sql` 初始化基础表和演示数据。
 - Maven 本地仓库固定为 `D:\DEVELOP\maven`，后端离线编译命令已写入 README 和验收清单。
 

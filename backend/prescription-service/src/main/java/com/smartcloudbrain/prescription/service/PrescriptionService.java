@@ -154,6 +154,19 @@ public class PrescriptionService {
     return prescriptions.stream().map(this::prescriptionView).toList();
   }
 
+  public Map<String, Object> detail(Long id) {
+    Prescription prescription = prescriptionRepository.findById(id)
+        .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+    AuthenticatedUser user = currentUserService.get();
+    if (user.role() == RoleType.PATIENT && !prescription.getPatientId().equals(user.userId())) {
+      throw new BusinessException(ErrorCode.FORBIDDEN);
+    }
+    if (user.role() == RoleType.DOCTOR && !prescription.getDoctorId().equals(user.userId())) {
+      throw new BusinessException(ErrorCode.FORBIDDEN);
+    }
+    return prescriptionView(prescription);
+  }
+
   private Map<String, Object> prescriptionView(Prescription prescription) {
     List<Map<String, Object>> items = prescriptionItemRepository.findByPrescriptionId(prescription.getId()).stream()
         .map(item -> Map.<String, Object>of(

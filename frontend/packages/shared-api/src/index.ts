@@ -16,6 +16,12 @@ export type Session = {
   name: string;
 };
 
+export type CurrentUser = {
+  userId: number;
+  role: Role;
+  name: string;
+};
+
 export type DataRow = Record<string, unknown>;
 
 export type PatientRegisterRequest = {
@@ -249,6 +255,7 @@ export const authApi = {
   loginPatient: (account: string, password: string) => post<Session>("/patient/login", { account, password }),
   loginDoctor: (account: string, password: string) => post<Session>("/doctor/login", { account, password }),
   loginAdmin: (account: string, password: string) => post<Session>("/admin/login", { account, password }),
+  currentUser: (token: string) => get<CurrentUser>("/auth/me", token),
 };
 
 export const patientApi = {
@@ -267,6 +274,7 @@ export const patientApi = {
   medicalRecords: (token: string) => get<DataRow[]>("/medical-record/list", token),
   medicalRecordDetail: (token: string, id: number) => get<DataRow>(`/medical-record/detail${query({ id })}`, token),
   prescriptions: (token: string) => get<DataRow[]>("/prescription/list", token),
+  prescriptionDetail: (token: string, id: number) => get<DataRow>(`/prescription/detail${query({ id })}`, token),
 };
 
 export const doctorApi = {
@@ -282,6 +290,7 @@ export const doctorApi = {
   checkPrescription: (token: string, body: PrescriptionCheckRequest) => post<DataRow>("/prescription/check", body, token),
   createPrescription: (token: string, body: PrescriptionCreateRequest) => post<DataRow>("/prescription/create", body, token),
   prescriptions: (token: string) => get<DataRow[]>("/prescription/list", token),
+  prescriptionDetail: patientApi.prescriptionDetail,
   searchDrugs: (token: string, q = "") => get<DataRow[]>(`/search/drugs${query({ q })}`, token),
   notifications: (token: string, readStatus?: string) => get<DataRow[]>(`/notification/list${query({ readStatus })}`, token),
   markNotificationRead: (token: string, notificationId: number) => post<DataRow>("/notification/read", { notificationId }, token),
@@ -317,6 +326,7 @@ export const adminApi = {
 
 export const api = {
   registerPatient: authApi.registerPatient,
+  currentUser: authApi.currentUser,
   loginPatient: authApi.loginPatient,
   loginDoctor: authApi.loginDoctor,
   loginAdmin: authApi.loginAdmin,
@@ -339,6 +349,7 @@ export const api = {
   checkPrescription: doctorApi.checkPrescription,
   createPrescription: doctorApi.createPrescription,
   prescriptions: patientApi.prescriptions,
+  prescriptionDetail: patientApi.prescriptionDetail,
   notifications: doctorApi.notifications,
   markNotificationRead: doctorApi.markNotificationRead,
   saveDepartment: adminApi.saveDepartment,

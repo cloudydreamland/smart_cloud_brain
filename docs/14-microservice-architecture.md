@@ -106,15 +106,17 @@ notification-service 消费事件 -> notification_message
 notification-service -> WebSocket 推送医生端
 ```
 
-### 4.4 管理端 AI 排班
+### 4.4 管理端排班
 
 ```text
 管理端 -> gateway-service -> admin-service
 admin-service -> doctor-service 查询医生和已有排班
-admin-service -> ai-service 生成排班建议
+admin-service 生成排班建议
 管理员确认发布 -> admin-service -> doctor-service
 doctor-service 保存正式排班和可预约号源
 ```
+
+说明：当前排班建议保留现有规则链路，发布动作仍然写入医生排班和可预约号源。AI 排班服务化接入作为后续交接项。
 
 ## 5. 数据边界
 

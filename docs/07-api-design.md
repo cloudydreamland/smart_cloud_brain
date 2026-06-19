@@ -18,8 +18,8 @@ Authorization: Bearer <jwt-token>
 
 ```json
 {
-  "code": "SUCCESS",
-  "message": "ok",
+  "code": 0,
+  "message": "success",
   "data": {}
 }
 ```
@@ -28,27 +28,30 @@ Authorization: Bearer <jwt-token>
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
-| POST | `/api/auth/login` | 患者、医生、管理员登录 |
-| POST | `/api/auth/register` | 患者注册 |
+| POST | `/api/patient/login` | 患者登录 |
+| POST | `/api/doctor/login` | 医生登录 |
+| POST | `/api/admin/login` | 管理员登录 |
+| POST | `/api/patient/register` | 患者注册 |
 | GET | `/api/auth/me` | 当前登录用户信息 |
 
 ## 3. 患者与医生接口
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
-| GET | `/api/patients/me` | 患者本人信息 |
-| GET | `/api/doctors` | 医生列表 |
-| GET | `/api/doctors/{id}` | 医生详情 |
-| GET | `/api/departments` | 科室列表 |
+| GET | `/api/patient/info` | 患者本人信息 |
+| GET | `/api/doctor/list` | 医生列表 |
+| GET | `/api/doctor/detail?id={id}` | 医生详情 |
+| GET | `/api/doctor/department/list` | 科室列表 |
 
 ## 4. 分诊接口
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
 | POST | `/api/triage/consult` | 提交主诉并获取 AI 分诊建议 |
-| GET | `/api/triage/records` | 患者分诊记录 |
+| GET | `/api/triage/list` | 当前用户可见分诊记录 |
 | GET | `/api/admin/triage-desk/list` | 管理端分诊工作台 |
 | POST | `/api/admin/triage-desk/assign` | 管理端分配医生 |
+| POST | `/api/admin/triage-desk/close` | 管理端关闭分诊记录 |
 
 ## 5. 挂号接口
 
@@ -57,8 +60,8 @@ Authorization: Bearer <jwt-token>
 | GET | `/api/registration/slots` | 可预约号源 |
 | POST | `/api/registration/create` | 创建挂号 |
 | POST | `/api/registration/cancel` | 取消挂号 |
-| GET | `/api/registration/my` | 患者挂号列表 |
-| GET | `/api/registration/doctor/queue` | 医生待接诊队列 |
+| POST | `/api/registration/complete` | 医生完成接诊 |
+| GET | `/api/registration/list` | 当前用户可见挂号列表；患者看本人，医生看本人队列，管理员看全部 |
 
 ## 6. 病历接口
 
@@ -67,7 +70,8 @@ Authorization: Bearer <jwt-token>
 | POST | `/api/medical-record/generate` | AI 生成病历草稿 |
 | POST | `/api/medical-record/save` | 医生保存正式病历 |
 | GET | `/api/medical-record/list` | 病历列表 |
-| GET | `/api/medical-record/{id}` | 病历详情 |
+| GET | `/api/medical-record/detail?id={id}` | 病历详情 |
+| GET | `/api/medical-record/generate/stream` | SSE 生成病历草稿 |
 
 ## 7. 处方接口
 
@@ -76,27 +80,33 @@ Authorization: Bearer <jwt-token>
 | POST | `/api/prescription/check` | AI 处方审核 |
 | POST | `/api/prescription/create` | 保存处方 |
 | GET | `/api/prescription/list` | 处方列表 |
-| GET | `/api/prescription/{id}` | 处方详情 |
+| GET | `/api/prescription/detail?id={id}` | 处方详情 |
+| GET | `/api/prescription/{id}` | 处方详情兼容路径 |
 
 ## 8. 管理端接口
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
-| GET/POST | `/api/admin/departments/**` | 科室维护 |
-| GET/POST | `/api/admin/doctors/**` | 医生维护 |
-| GET/POST | `/api/admin/drugs/**` | 药品维护 |
-| GET/POST | `/api/admin/prompts/**` | Prompt 维护 |
+| GET/POST | `/api/admin/department/**` | 科室维护 |
+| POST | `/api/admin/doctor/save` | 医生维护 |
+| GET/POST | `/api/admin/drug/**` | 药品维护 |
+| GET/POST | `/api/admin/prompt-template/**` | Prompt 维护 |
 | GET/POST | `/api/admin/knowledge/**` | 知识库维护 |
 | GET/POST | `/api/admin/dict/**` | 字典维护 |
-| POST | `/api/admin/schedule/generate` | AI 排班建议 |
+| POST | `/api/admin/schedule/generate` | 排班建议生成；AI 服务化接入为后续交接项 |
 | POST | `/api/admin/schedule/publish` | 发布排班和号源 |
+| GET | `/api/admin/schedule/list` | 已发布排班列表 |
+| GET | `/api/admin/schedule/suggestion/detail?id={id}` | 排班建议详情 |
+| GET | `/api/search/knowledge` | 知识库搜索 |
+| GET | `/api/search/drugs` | 药品搜索 |
+| GET | `/api/admin/search/prompts` | Prompt 搜索 |
 
 ## 9. 通知接口
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
-| GET | `/api/notifications` | 通知列表 |
-| POST | `/api/notifications/{id}/read` | 标记已读 |
+| GET | `/api/notification/list` | 医生通知列表 |
+| POST | `/api/notification/read` | 标记已读，body 传 `notificationId` |
 | WS | `/ws/notifications` | 医生端实时通知 |
 
 ## 10. AI 内部接口
@@ -107,6 +117,9 @@ AI 内部接口只允许后端服务调用，不由前端直接访问。
 |---|---|---|
 | POST | `/internal/ai/triage` | 智能分诊 |
 | POST | `/internal/ai/medical-record/generate` | 病历生成 |
+| GET | `/internal/ai/medical-record/generate/stream` | 病历生成 SSE |
 | POST | `/internal/ai/prescription/check` | 处方审核 |
-| POST | `/internal/ai/schedule/generate` | 排班建议 |
+| POST | `/internal/ai/prompt-template/resolve` | Prompt 模板解析 |
+
+说明：AI 排班服务化接口已作为后续交接项，不列为本轮已实现内部 AI 接口。
 

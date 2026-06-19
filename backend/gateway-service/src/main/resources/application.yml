@@ -10,7 +10,7 @@ spring:
         - id: auth-service
           uri: ${AUTH_SERVICE_URI:http://localhost:8082}
           predicates:
-            - Path=/api/patient/register,/api/patient/login,/api/doctor/login,/api/admin/login
+            - Path=/api/patient/register,/api/patient/login,/api/doctor/login,/api/admin/login,/api/auth/me
         - id: patient-service
           uri: ${PATIENT_SERVICE_URI:http://localhost:8083}
           predicates:

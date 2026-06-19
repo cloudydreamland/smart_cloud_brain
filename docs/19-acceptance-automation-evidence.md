@@ -1,8 +1,25 @@
 # Acceptance Automation Evidence
 
-Date: 2026-06-16
+Date: 2026-06-19
+
+## Current Scope
+
+- AI 排班服务化链路暂不纳入本轮完善范围，由后续任务接手。
+- 本轮补齐当前用户接口、处方详情接口、权限测试、文档命令与验收路径对齐。
 
 ## Backend Maven Verification
+
+Command:
+
+```powershell
+cd D:\smart_cloud_brain\backend
+mvn -s "$env:USERPROFILE\.m2\settings.xml" "-Dmaven.repo.local=D:\DEVELOP\maven" -o -pl auth-service,prescription-service -am test
+```
+
+Result:
+
+- PASS. Build success.
+- Covered tests added in this pass: `/api/auth/me` current-user response, prescription detail ownership denial, doctor-owned prescription detail with items.
 
 Command:
 
@@ -27,6 +44,23 @@ Result:
 
 - PASS. Build success for the required backend module list.
 
+## Frontend Verification
+
+Command:
+
+```powershell
+cd D:\smart_cloud_brain\frontend
+corepack pnpm test
+corepack pnpm --filter @smart-cloud-brain/patient-web build
+corepack pnpm --filter @smart-cloud-brain/doctor-web build
+corepack pnpm --filter @smart-cloud-brain/admin-web build
+```
+
+Result:
+
+- PASS. `shared-api` tests: 4 passed.
+- PASS. patient-web, doctor-web, and admin-web production builds completed.
+
 ## Postman Acceptance Collection
 
 Files:
@@ -44,6 +78,7 @@ node -e "JSON.parse(require('fs').readFileSync('postman/smart-cloud-brain.postma
 Result:
 
 - PASS. Postman collection and local environment JSON parse successfully.
+- 2026-06-19 update: collection now covers `/api/auth/me`, doctor prescription detail, and patient prescription detail.
 
 Runtime command after local services are up:
 
@@ -54,16 +89,19 @@ newman run postman\smart-cloud-brain.postman_collection.json -e postman\local.po
 
 Covered workflows:
 
-- Admin schedule workflow: login, generate suggestions, read detail, publish, read dictionaries.
-- Patient closed loop: login, profile, AI triage through backend, list bookable slots, create registration, create/cancel another registration, list registrations.
-- Doctor closed loop: login, list registrations, generate medical record, SSE generation, save record, AI prescription check, create prescription, read notifications.
-- Patient follow-up views: read saved medical records and prescriptions.
+- Admin schedule workflow: login, generate schedule suggestions, read detail, publish, read dictionaries.
+- Patient closed loop: login, `/api/auth/me`, profile, AI triage through backend, list bookable slots, create registration, create/cancel another registration, list registrations.
+- Doctor closed loop: login, list registrations, generate medical record, SSE generation, save record, AI prescription check, create prescription, read prescription detail, read notifications.
+- Patient follow-up views: read saved medical records, prescriptions and prescription detail.
 - Admin triage desk workflow: list, detail, assign, close.
 - AI fallback workflow: non-cardiology triage uses the backend AI chain and stores manual/degraded status.
 
 Runtime result:
 
-- Not executed in this pass because the full service stack was not started in this workspace session.
+- Not completed in this pass.
+- `docker compose --env-file deploy\env\.env -f deploy\docker-compose.yml up -d --build` failed because this Docker CLI does not support `--env-file` on the `docker compose` subcommand.
+- `docker-compose --env-file deploy\env\.env -f deploy\docker-compose.yml up -d --build` failed because Docker daemon was not running: `//./pipe/docker_engine` was not found.
+- `newman run ...` failed because `newman` is not installed on this machine.
 
 ## Kingbase-Compatible Database Verification
 
@@ -94,24 +132,19 @@ $env:KINGBASE_PASSWORD = "<password>"
 .\scripts\verify-kingbase.ps1
 ```
 
-Runtime command to verify repeatable initialization:
-
-```powershell
-cd D:\smart_cloud_brain
-.\scripts\verify-kingbase.ps1 -ApplySql
-```
-
 Checks:
 
 - All expected tables exist.
 - Required seed data exists for department, doctor, patient, admin user, drug, prompt template, knowledge entry and system dictionary.
 - Published schedules exist.
 - Appointment slots are bookable with `status = 'AVAILABLE'` and `remaining_capacity > 0`.
-- With `-ApplySql`, schema and seed SQL are executed twice and key table counts are compared for idempotency.
+- SQL initialization changes should be applied through Flyway/init scripts before running this verifier.
 
 Runtime result:
 
-- Not executed in this pass because no Kingbase connection credentials were provided.
+- Not completed in this pass.
+- `psql` was not installed, so the script attempted to use `ksql` inside the `scb-kingbase` Docker container.
+- Docker daemon was not running, so the fallback database client could not connect to `//./pipe/docker_engine`.
 
 ## Screenshots
 
@@ -121,5 +154,5 @@ Screenshot directory:
 
 Current status:
 
-- No browser/Postman/database screenshots were captured in this backend-only automation pass.
-- Put future Postman runner, database client and three-terminal E2E screenshots in this directory and reference them from this document.
+- Pending capture for a future full-stack run.
+- Capture after Docker Desktop and Newman are available: Postman/Newman summary, database verification, Docker Compose status, RabbitMQ status, and three Web screenshots.

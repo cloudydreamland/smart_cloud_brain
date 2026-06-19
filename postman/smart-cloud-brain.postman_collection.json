@@ -206,6 +206,28 @@
           }
         },
         {
+          "name": "Patient Current User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('patient current user can be read', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('current user role is PATIENT', () => pm.expect(body.data.role).to.eql('PATIENT'));",
+                  "pm.test('current user id matches login', () => pm.expect(String(body.data.userId)).to.eql(String(pm.environment.get('patientId'))));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{patientToken}}" }],
+            "url": "{{baseUrl}}/api/auth/me"
+          }
+        },
+        {
           "name": "AI Triage",
           "event": [
             {
@@ -554,6 +576,28 @@
           }
         },
         {
+          "name": "Doctor Prescription Detail",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('doctor can read own prescription detail', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('detail matches created prescription', () => pm.expect(String(body.data.prescriptionId)).to.eql(String(pm.environment.get('prescriptionId'))));",
+                  "pm.test('detail includes prescription items', () => pm.expect(body.data.items).to.be.an('array').and.not.empty);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{doctorToken}}" }],
+            "url": "{{baseUrl}}/api/prescription/detail?id={{prescriptionId}}"
+          }
+        },
+        {
           "name": "Complete Registration",
           "event": [
             {
@@ -647,6 +691,28 @@
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{patientToken}}" }],
             "url": "{{baseUrl}}/api/prescription/list"
+          }
+        },
+        {
+          "name": "Patient Prescription Detail",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('patient can read own prescription detail', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('detail matches created prescription', () => pm.expect(String(body.data.prescriptionId)).to.eql(String(pm.environment.get('prescriptionId'))));",
+                  "pm.test('patient detail includes confirmed status', () => pm.expect(body.data.status).to.eql('CONFIRMED'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{patientToken}}" }],
+            "url": "{{baseUrl}}/api/prescription/detail?id={{prescriptionId}}"
           }
         }
       ]
