@@ -56,34 +56,34 @@ public class RegistrationService {
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
     departmentRepository.findById(request.departmentId())
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
-    AppointmentSlot slot = null;
-    if (request.slotId() != null) {
-      slot = appointmentSlotRepository.findByIdForUpdate(request.slotId())
-          .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
-      if (registrationRepository.existsByPatientIdAndSlotIdAndStatusNot(user.userId(), slot.getId(), "CANCELLED")) {
-        throw new BusinessException(ErrorCode.CONFLICT);
-      }
-      if (!"AVAILABLE".equalsIgnoreCase(slot.getStatus())
-          || slot.getRemainingCapacity() == null
-          || slot.getRemainingCapacity() <= 0
-          || !slot.getDoctorId().equals(request.doctorId())
-          || !slot.getDepartmentId().equals(request.departmentId())) {
-        throw new BusinessException(ErrorCode.CONFLICT);
-      }
-      slot.setRemainingCapacity(slot.getRemainingCapacity() - 1);
-      if (slot.getRemainingCapacity() <= 0) {
-        slot.setStatus("FULL");
-      }
-      slot.setUpdatedAt(LocalDateTime.now());
-      appointmentSlotRepository.save(slot);
+    if (request.slotId() == null) {
+      throw new BusinessException(ErrorCode.BAD_REQUEST);
     }
+    AppointmentSlot slot = appointmentSlotRepository.findByIdForUpdate(request.slotId())
+        .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+    if (registrationRepository.existsByPatientIdAndSlotIdAndStatusNot(user.userId(), slot.getId(), "CANCELLED")) {
+      throw new BusinessException(ErrorCode.CONFLICT);
+    }
+    if (!"AVAILABLE".equalsIgnoreCase(slot.getStatus())
+        || slot.getRemainingCapacity() == null
+        || slot.getRemainingCapacity() <= 0
+        || !slot.getDoctorId().equals(request.doctorId())
+        || !slot.getDepartmentId().equals(request.departmentId())) {
+      throw new BusinessException(ErrorCode.CONFLICT);
+    }
+    slot.setRemainingCapacity(slot.getRemainingCapacity() - 1);
+    if (slot.getRemainingCapacity() <= 0) {
+      slot.setStatus("FULL");
+    }
+    slot.setUpdatedAt(LocalDateTime.now());
+    appointmentSlotRepository.save(slot);
     Registration registration = new Registration();
     registration.setPatientId(user.userId());
     registration.setDoctorId(doctor.getId());
     registration.setDepartmentId(request.departmentId());
     registration.setTriageRecordId(request.triageRecordId());
-    registration.setSlotId(slot == null ? null : slot.getId());
-    registration.setAppointmentTime(slot == null ? request.appointmentTime() : slot.getStartTime());
+    registration.setSlotId(slot.getId());
+    registration.setAppointmentTime(slot.getStartTime());
     registration.setStatus("CREATED");
     registration.setUpdatedAt(LocalDateTime.now());
     return registrationView(registrationRepository.save(registration));

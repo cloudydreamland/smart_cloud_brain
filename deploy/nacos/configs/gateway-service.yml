@@ -8,7 +8,7 @@ spring:
         - id: auth-service
           uri: lb://auth-service
           predicates:
-            - Path=/api/patient/register,/api/patient/login,/api/doctor/login,/api/admin/login
+            - Path=/api/patient/register,/api/patient/login,/api/doctor/login,/api/admin/login,/api/auth/me
         - id: patient-service
           uri: lb://patient-service
           predicates:

@@ -13,7 +13,8 @@
     "build:doctor": "corepack pnpm --filter @smart-cloud-brain/doctor-web build",
     "build:admin": "corepack pnpm --filter @smart-cloud-brain/admin-web build",
     "lint": "corepack pnpm -r --if-present lint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "axios": "^1.7.9",
@@ -22,7 +23,11 @@
     "vue-router": "^4.5.0"
   },
   "devDependencies": {
+    "@pinia/testing": "^0.1.7",
     "@vitejs/plugin-vue": "^5.2.1",
+    "@vitest/coverage-v8": "^2.1.8",
+    "@vue/test-utils": "^2.4.6",
+    "jsdom": "^25.0.1",
     "typescript": "^5.6.3",
     "vitest": "^2.1.8",
     "vite": "^6.0.7",

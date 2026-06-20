@@ -8,6 +8,7 @@ import com.smartcloudbrain.aiapi.dto.PromptResolveRequest;
 import com.smartcloudbrain.aiapi.dto.TriageRequest;
 import com.smartcloudbrain.ai.service.PromptTemplateService;
 import com.smartcloudbrain.common.result.Result;
+import com.smartcloudbrain.common.security.InternalRequestGuard;
 import jakarta.validation.Valid;
 import java.io.IOException;
 import org.springframework.http.MediaType;
@@ -25,19 +26,27 @@ public class InternalAiController {
 
   private final AiOrchestrationService aiOrchestrationService;
   private final PromptTemplateService promptTemplateService;
+  private final InternalRequestGuard internalRequestGuard;
 
-  public InternalAiController(AiOrchestrationService aiOrchestrationService, PromptTemplateService promptTemplateService) {
+  public InternalAiController(
+      AiOrchestrationService aiOrchestrationService,
+      PromptTemplateService promptTemplateService,
+      InternalRequestGuard internalRequestGuard
+  ) {
     this.aiOrchestrationService = aiOrchestrationService;
     this.promptTemplateService = promptTemplateService;
+    this.internalRequestGuard = internalRequestGuard;
   }
 
   @PostMapping("/triage")
   public Result<?> triage(@Valid @RequestBody TriageRequest request) {
+    internalRequestGuard.requireServiceRequest();
     return Result.success(aiOrchestrationService.triage(request));
   }
 
   @PostMapping("/medical-record/generate")
   public Result<?> generateMedicalRecord(@Valid @RequestBody MedicalRecordGenerateRequest request) {
+    internalRequestGuard.requireServiceRequest();
     return Result.success(aiOrchestrationService.generateMedicalRecord(request));
   }
 
@@ -47,6 +56,7 @@ public class InternalAiController {
       @RequestParam("dialogueText") String dialogueText,
       @RequestParam(name = "departmentCode", required = false) String departmentCode
   ) {
+    internalRequestGuard.requireServiceRequest();
     SseEmitter emitter = new SseEmitter(30_000L);
     new Thread(() -> {
       try {
@@ -69,11 +79,13 @@ public class InternalAiController {
 
   @PostMapping("/prescription/check")
   public Result<?> checkPrescription(@Valid @RequestBody PrescriptionCheckRequest request) {
+    internalRequestGuard.requireServiceRequest();
     return Result.success(aiOrchestrationService.checkPrescription(request));
   }
 
   @PostMapping("/prompt-template/resolve")
   public Result<?> resolvePrompt(@Valid @RequestBody PromptResolveRequest request) {
+    internalRequestGuard.requireServiceRequest();
     return Result.success(promptTemplateService.resolve(request.taskType(), request.departmentCode()));
   }
 }

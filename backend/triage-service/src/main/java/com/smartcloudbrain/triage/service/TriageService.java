@@ -76,9 +76,14 @@ public class TriageService {
 
   public List<Map<String, Object>> list() {
     AuthenticatedUser user = currentUserService.get();
-    List<TriageRecord> records = user.role() == RoleType.PATIENT
-        ? triageRecordRepository.findByPatientId(user.userId())
-        : triageRecordRepository.findAll();
+    List<TriageRecord> records;
+    if (user.role() == RoleType.PATIENT) {
+      records = triageRecordRepository.findByPatientId(user.userId());
+    } else if (user.role() == RoleType.DOCTOR) {
+      records = triageRecordRepository.findByAssignedDoctorId(user.userId());
+    } else {
+      records = triageRecordRepository.findAll();
+    }
     return records.stream().map(record -> triageView(record, null)).toList();
   }
 
