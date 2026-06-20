@@ -8,7 +8,7 @@ import CancelAppointmentModal from "../components/CancelAppointmentModal.vue";
 const auth = useAuthStore();
 const workflow = usePatientWorkflowStore();
 const { registrations } = storeToRefs(workflow);
-const statusFilter = ref("");
+const statusFilter = ref("UNFINISHED");
 const loading = ref(false);
 const saving = ref(false);
 const error = ref("");
@@ -18,10 +18,18 @@ const filterOptions = [
   { label: "全部", value: "" },
   { label: "未完成", value: "UNFINISHED" },
   { label: "已完成", value: "COMPLETED" },
+  { label: "已取消", value: "CANCELLED" },
 ];
-const filteredRegistrations = computed(() => registrations.value.filter((item) => {
-  if (statusFilter.value === "COMPLETED") return fieldText(item, "status") === "COMPLETED";
-  if (statusFilter.value === "UNFINISHED") return fieldText(item, "status") !== "COMPLETED";
+const sortedRegistrations = computed(() => [...registrations.value].sort((left, right) => {
+  return timestamp(right, "createdAt") - timestamp(left, "createdAt")
+    || timestamp(right, "appointmentTime") - timestamp(left, "appointmentTime")
+    || toNumber(right.registrationId) - toNumber(left.registrationId);
+}));
+const filteredRegistrations = computed(() => sortedRegistrations.value.filter((item) => {
+  const status = fieldText(item, "status");
+  if (statusFilter.value === "COMPLETED") return status === "COMPLETED";
+  if (statusFilter.value === "CANCELLED") return status === "CANCELLED";
+  if (statusFilter.value === "UNFINISHED") return !["COMPLETED", "CANCELLED"].includes(status);
   return true;
 }));
 const { currentPage, pageSize, total, pageRows } = usePagination(filteredRegistrations, 8);
@@ -29,6 +37,13 @@ const { currentPage, pageSize, total, pageRows } = usePagination(filteredRegistr
 watch(statusFilter, () => {
   currentPage.value = 1;
 });
+
+function timestamp(item: DataRow, key: string) {
+  const value = item[key];
+  if (!value) return 0;
+  const time = new Date(String(value)).getTime();
+  return Number.isFinite(time) ? time : 0;
+}
 
 async function refresh() {
   loading.value = true;
@@ -65,7 +80,7 @@ refresh();
 <template>
   <section class="panel">
     <header class="panel-header">
-      <div class="panel-title"><p class="eyebrow">我的挂号</p><h2>我的挂号</h2><p>按完成状态分组查看挂号记录。</p></div>
+      <div class="panel-title"><p class="eyebrow">我的挂号</p><h2>我的挂号</h2><p>默认查看未完成记录，并按创建时间倒序排列。</p></div>
       <button type="button" :disabled="loading" @click="refresh">刷新</button>
     </header>
     <div class="panel-body stack">
@@ -80,7 +95,7 @@ refresh();
         <article v-for="item in pageRows" :key="String(item.registrationId)" class="list-row">
           <div class="row-main">
             <strong>#{{ fieldText(item, "registrationId") }} {{ fieldText(item, "departmentName") }} · {{ fieldText(item, "doctorName") }}</strong>
-            <p>{{ fieldText(item, "appointmentTime") }}</p>
+            <p>创建时间：{{ fieldText(item, "createdAt", "暂无") }} · 就诊时间：{{ fieldText(item, "appointmentTime", "待定") }}</p>
           </div>
           <div class="toolbar">
             <StatusTag :status="statusText(item.status)" :tone="statusClass(item.status)" />
