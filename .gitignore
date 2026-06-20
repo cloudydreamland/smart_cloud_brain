@@ -11,6 +11,7 @@ deploy/env/.env.prod
 frontend/*.err
 node_modules/
 dist/
+frontend/coverage/
 
 # 本地配置文件（每人用自己的数据库）
 **/application-dev.yml
