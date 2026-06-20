@@ -1,6 +1,7 @@
 package com.smartcloudbrain.triage.controller;
 
 import com.smartcloudbrain.common.result.Result;
+import com.smartcloudbrain.common.security.InternalRequestGuard;
 import com.smartcloudbrain.triage.dto.internal.InternalTriageAssignRequest;
 import com.smartcloudbrain.triage.dto.internal.InternalTriageCloseRequest;
 import com.smartcloudbrain.triage.service.TriageDeskService;
@@ -16,28 +17,34 @@ import org.springframework.web.bind.annotation.RestController;
 public class InternalTriageDeskController {
 
   private final TriageDeskService triageDeskService;
+  private final InternalRequestGuard internalRequestGuard;
 
-  public InternalTriageDeskController(TriageDeskService triageDeskService) {
+  public InternalTriageDeskController(TriageDeskService triageDeskService, InternalRequestGuard internalRequestGuard) {
     this.triageDeskService = triageDeskService;
+    this.internalRequestGuard = internalRequestGuard;
   }
 
   @GetMapping("/list")
   public Result<?> list() {
+    internalRequestGuard.requireServiceRequest();
     return Result.success(triageDeskService.list());
   }
 
   @GetMapping("/detail")
   public Result<?> detail(@RequestParam("id") Long id) {
+    internalRequestGuard.requireServiceRequest();
     return Result.success(triageDeskService.detail(id));
   }
 
   @PostMapping("/assign")
   public Result<?> assign(@RequestBody InternalTriageAssignRequest request) {
+    internalRequestGuard.requireServiceRequest();
     return Result.success(triageDeskService.assign(request.triageRecordId(), request.doctorId()));
   }
 
   @PostMapping("/close")
   public Result<?> close(@RequestBody InternalTriageCloseRequest request) {
+    internalRequestGuard.requireServiceRequest();
     return Result.success(triageDeskService.close(request.triageRecordId()));
   }
 }

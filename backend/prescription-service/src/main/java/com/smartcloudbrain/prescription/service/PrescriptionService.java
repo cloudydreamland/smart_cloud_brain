@@ -88,9 +88,6 @@ public class PrescriptionService {
     record.setInteractions(String.join(",", safeInteractions(response)));
     record.setAiResultJson("{\"degraded\":" + response.degraded() + "}");
     checkRecordRepository.save(record);
-    if ("HIGH".equals(response.riskLevel()) || "MEDIUM".equals(response.riskLevel())) {
-      publishRiskNotification(doctorId, request.patientId(), null, response);
-    }
     return Map.of(
         "riskLevel", response.riskLevel(),
         "riskDescription", response.riskDescription(),
