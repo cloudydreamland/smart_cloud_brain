@@ -72,6 +72,7 @@ describe("shared api request handling", () => {
       api.saveDrug("jwt", { name: "aspirin" }),
       api.prompts("jwt"),
       api.savePrompt("jwt", { taskType: "TRIAGE", templateName: "default", templateContent: "content" }),
+      api.testPrompt("jwt", { taskType: "TRIAGE", templateContent: "content", outputSchema: "{\"type\":\"object\"}" }),
       api.knowledgeEntries("jwt"),
       api.saveKnowledgeEntry("jwt", { title: "cold", symptoms: "cough", advice: "rest" }),
       api.dicts("jwt", "gender"),
@@ -90,6 +91,7 @@ describe("shared api request handling", () => {
 
     expect(fetch.mock.calls.length).toBeGreaterThan(30);
     expect(fetch.mock.calls.map((call) => String(call[0])).join("\n")).toContain("/admin/schedule/publish");
+    expect(fetch.mock.calls.map((call) => String(call[0])).join("\n")).toContain("/admin/prompt-template/test");
   });
 
   it("throws business, http, network, empty-body and invalid-json errors", async () => {

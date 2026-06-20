@@ -9,6 +9,7 @@ public final class AiInternalApi {
   public static final String PRESCRIPTION_CHECK = BASE + "/prescription/check";
   public static final String SCHEDULE_SUGGEST = BASE + "/schedule/suggest";
   public static final String PROMPT_RESOLVE = BASE + "/prompt-template/resolve";
+  public static final String PROMPT_TEST = BASE + "/prompt-template/test";
   public static final String HEALTH = BASE + "/health";
 
   private AiInternalApi() {

@@ -1,0 +1,57 @@
+package com.smartcloudbrain.admin.client;
+
+import com.smartcloudbrain.aiapi.constant.AiInternalApi;
+import com.smartcloudbrain.aiapi.dto.PromptTestRequest;
+import com.smartcloudbrain.common.exception.BusinessException;
+import com.smartcloudbrain.common.result.Result;
+import com.smartcloudbrain.common.security.InternalRequestGuard;
+import java.util.Map;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
+
+@Component
+public class InternalAiClient {
+
+  private static final ParameterizedTypeReference<Result<Object>> OBJECT_RESULT =
+      new ParameterizedTypeReference<>() {
+      };
+
+  private final RestClient restClient;
+
+  public InternalAiClient(
+      RestClient.Builder restClientBuilder,
+      @Value("${services.ai.base-url}") String baseUrl,
+      @Value("${internal.service-token:${INTERNAL_SERVICE_TOKEN:smart-cloud-brain-internal-local-token-change}}") String internalToken
+  ) {
+    this.restClient = restClientBuilder
+        .baseUrl(baseUrl)
+        .defaultHeader(InternalRequestGuard.INTERNAL_TOKEN_HEADER, internalToken)
+        .build();
+  }
+
+  public Object testPrompt(PromptTestRequest request) {
+    try {
+      Result<Object> result = restClient.post()
+          .uri(AiInternalApi.PROMPT_TEST)
+          .body(request)
+          .retrieve()
+          .body(OBJECT_RESULT);
+      return data(result);
+    } catch (RestClientException ex) {
+      throw new BusinessException(500, "ai-service unavailable");
+    }
+  }
+
+  private Object data(Result<Object> result) {
+    if (result == null) {
+      throw new BusinessException(500, "ai-service returned empty response");
+    }
+    if (result.code() != 0) {
+      throw new BusinessException(result.code(), result.message());
+    }
+    return result.data() == null ? Map.of() : result.data();
+  }
+}

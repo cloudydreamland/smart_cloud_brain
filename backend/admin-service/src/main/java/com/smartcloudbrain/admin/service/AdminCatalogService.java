@@ -1,5 +1,8 @@
 package com.smartcloudbrain.admin.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.smartcloudbrain.admin.client.InternalAiClient;
 import com.smartcloudbrain.admin.client.InternalDoctorClient;
 import com.smartcloudbrain.admin.client.InternalTriageClient;
 import com.smartcloudbrain.admin.dto.admin.DepartmentSaveRequest;
@@ -24,6 +27,7 @@ import com.smartcloudbrain.admin.repository.DrugRepository;
 import com.smartcloudbrain.admin.repository.KnowledgeEntryRepository;
 import com.smartcloudbrain.admin.repository.PromptTemplateRepository;
 import com.smartcloudbrain.admin.repository.SystemDictRepository;
+import com.smartcloudbrain.aiapi.dto.PromptTestRequest;
 import com.smartcloudbrain.common.error.ErrorCode;
 import com.smartcloudbrain.common.exception.BusinessException;
 import com.smartcloudbrain.common.security.PasswordHashService;
@@ -33,6 +37,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -50,7 +55,9 @@ public class AdminCatalogService {
   private final AiScheduleSuggestionRepository aiScheduleSuggestionRepository;
   private final InternalDoctorClient internalDoctorClient;
   private final InternalTriageClient internalTriageClient;
+  private final InternalAiClient internalAiClient;
   private final PasswordHashService passwordHashService;
+  private final ObjectMapper objectMapper;
 
   public AdminCatalogService(
       DepartmentRepository departmentRepository,
@@ -62,7 +69,9 @@ public class AdminCatalogService {
       AiScheduleSuggestionRepository aiScheduleSuggestionRepository,
       InternalDoctorClient internalDoctorClient,
       InternalTriageClient internalTriageClient,
-      PasswordHashService passwordHashService
+      InternalAiClient internalAiClient,
+      PasswordHashService passwordHashService,
+      ObjectMapper objectMapper
   ) {
     this.departmentRepository = departmentRepository;
     this.doctorRepository = doctorRepository;
@@ -73,7 +82,9 @@ public class AdminCatalogService {
     this.aiScheduleSuggestionRepository = aiScheduleSuggestionRepository;
     this.internalDoctorClient = internalDoctorClient;
     this.internalTriageClient = internalTriageClient;
+    this.internalAiClient = internalAiClient;
     this.passwordHashService = passwordHashService;
+    this.objectMapper = objectMapper;
   }
 
   public List<Map<String, Object>> departments() {
@@ -136,17 +147,34 @@ public class AdminCatalogService {
   @CacheEvict(cacheNames = "adminCatalog", allEntries = true)
   @Transactional
   public Map<String, Object> savePrompt(PromptTemplateSaveRequest request) {
+    requireSupportedPromptTask(request.taskType());
+    String outputSchema = normalizeOutputSchema(request.taskType(), request.outputSchema());
+    validatePromptOutputSchema(request.taskType(), outputSchema);
     PromptTemplate prompt = request.id() == null ? new PromptTemplate() : promptTemplateRepository.findById(request.id()).orElseGet(PromptTemplate::new);
     prompt.setTaskType(request.taskType());
     prompt.setDepartmentCode(request.departmentCode());
     prompt.setTemplateName(request.templateName());
     prompt.setTemplateContent(request.templateContent());
-    prompt.setOutputSchema(request.outputSchema() == null ? "{\"type\":\"object\"}" : request.outputSchema());
+    prompt.setOutputSchema(outputSchema);
     prompt.setVersion(request.version() == null ? "v1" : request.version());
     prompt.setEnabled(request.enabled() == null || request.enabled());
     prompt.setUpdatedAt(LocalDateTime.now());
     PromptTemplate saved = promptTemplateRepository.save(prompt);
     return promptView(saved);
+  }
+
+  public Object testPrompt(PromptTestRequest request) {
+    requireSupportedPromptTask(request.taskType());
+    String outputSchema = normalizeOutputSchema(request.taskType(), request.outputSchema());
+    validatePromptOutputSchema(request.taskType(), outputSchema);
+    return internalAiClient.testPrompt(new PromptTestRequest(
+        request.taskType(),
+        request.departmentCode(),
+        request.templateName(),
+        request.templateContent(),
+        outputSchema,
+        request.sampleInput()
+    ));
   }
 
   public List<Map<String, Object>> knowledgeEntries() {
@@ -312,6 +340,96 @@ public class AdminCatalogService {
 
   private boolean contains(String value, String query) {
     return normalize(value).contains(query);
+  }
+
+  private void validatePromptOutputSchema(String taskType, String outputSchema) {
+    JsonNode schema;
+    try {
+      schema = objectMapper.readTree(outputSchema);
+    } catch (Exception ex) {
+      throw new BusinessException(400, "outputSchema must be valid JSON");
+    }
+    Set<String> required = requiredFieldsForTask(taskType);
+    if (required.isEmpty()) {
+      return;
+    }
+    for (String field : required) {
+      if (!schemaMentionsField(schema, field)) {
+        throw new BusinessException(400, "outputSchema missing required field: " + field);
+      }
+    }
+  }
+
+  private void requireSupportedPromptTask(String taskType) {
+    if (requiredFieldsForTask(taskType).isEmpty()) {
+      throw new BusinessException(400, "Unsupported prompt task type: " + taskType);
+    }
+  }
+
+  private String normalizeOutputSchema(String taskType, String outputSchema) {
+    if (outputSchema != null && !outputSchema.isBlank()) {
+      return outputSchema;
+    }
+    return defaultOutputSchema(taskType);
+  }
+
+  private String defaultOutputSchema(String taskType) {
+    return switch (normalize(taskType).toUpperCase(Locale.ROOT)) {
+      case "TRIAGE" -> """
+          {"type":"object","required":["recommendedDepartment","departmentCode","recommendedDoctorDirection","urgencyLevel","confidence","recommendedDoctorIds","reason"]}
+          """.trim();
+      case "MEDICAL_RECORD" -> """
+          {"type":"object","required":["chiefComplaint","presentIllness","pastHistory","physicalExam","diagnosis","treatmentAdvice","soapContent"]}
+          """.trim();
+      case "PRESCRIPTION_CHECK" -> """
+          {"type":"object","required":["riskLevel","riskDescription","suggestions","interactions","contraindications","adjustmentSuggestions"]}
+          """.trim();
+      default -> "{\"type\":\"object\"}";
+    };
+  }
+
+  private Set<String> requiredFieldsForTask(String taskType) {
+    return switch (normalize(taskType).toUpperCase(Locale.ROOT)) {
+      case "TRIAGE" -> Set.of(
+          "recommendedDepartment",
+          "departmentCode",
+          "recommendedDoctorDirection",
+          "urgencyLevel",
+          "confidence",
+          "recommendedDoctorIds",
+          "reason"
+      );
+      case "MEDICAL_RECORD" -> Set.of(
+          "chiefComplaint",
+          "presentIllness",
+          "pastHistory",
+          "physicalExam",
+          "diagnosis",
+          "treatmentAdvice",
+          "soapContent"
+      );
+      case "PRESCRIPTION_CHECK" -> Set.of(
+          "riskLevel",
+          "riskDescription",
+          "suggestions",
+          "interactions",
+          "contraindications",
+          "adjustmentSuggestions"
+      );
+      default -> Set.of();
+    };
+  }
+
+  private boolean schemaMentionsField(JsonNode schema, String field) {
+    JsonNode required = schema.path("required");
+    if (required.isArray()) {
+      for (JsonNode item : required) {
+        if (field.equals(item.asText())) {
+          return true;
+        }
+      }
+    }
+    return schema.path("properties").has(field);
   }
 
   private String normalize(String value) {

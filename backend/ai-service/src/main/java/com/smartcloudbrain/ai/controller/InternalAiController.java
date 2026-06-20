@@ -5,6 +5,7 @@ import com.smartcloudbrain.aiapi.constant.AiInternalApi;
 import com.smartcloudbrain.aiapi.dto.MedicalRecordGenerateRequest;
 import com.smartcloudbrain.aiapi.dto.PrescriptionCheckRequest;
 import com.smartcloudbrain.aiapi.dto.PromptResolveRequest;
+import com.smartcloudbrain.aiapi.dto.PromptTestRequest;
 import com.smartcloudbrain.aiapi.dto.TriageRequest;
 import com.smartcloudbrain.ai.service.PromptTemplateService;
 import com.smartcloudbrain.common.result.Result;
@@ -87,5 +88,11 @@ public class InternalAiController {
   public Result<?> resolvePrompt(@Valid @RequestBody PromptResolveRequest request) {
     internalRequestGuard.requireServiceRequest();
     return Result.success(promptTemplateService.resolve(request.taskType(), request.departmentCode()));
+  }
+
+  @PostMapping("/prompt-template/test")
+  public Result<?> testPrompt(@Valid @RequestBody PromptTestRequest request) {
+    internalRequestGuard.requireServiceRequest();
+    return Result.success(aiOrchestrationService.testPrompt(request));
   }
 }

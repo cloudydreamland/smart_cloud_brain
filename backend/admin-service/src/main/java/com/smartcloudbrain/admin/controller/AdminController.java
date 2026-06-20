@@ -11,6 +11,7 @@ import com.smartcloudbrain.admin.dto.admin.SchedulePublishRequest;
 import com.smartcloudbrain.admin.dto.admin.SystemDictSaveRequest;
 import com.smartcloudbrain.admin.dto.admin.TriageAssignRequest;
 import com.smartcloudbrain.admin.service.AdminCatalogService;
+import com.smartcloudbrain.aiapi.dto.PromptTestRequest;
 import com.smartcloudbrain.common.security.CurrentUserService;
 import com.smartcloudbrain.common.security.RoleType;
 import jakarta.validation.Valid;
@@ -73,6 +74,12 @@ public class AdminController {
   public Result<?> savePrompt(@Valid @RequestBody PromptTemplateSaveRequest request) {
     requireAdmin();
     return Result.success(adminCatalogService.savePrompt(request));
+  }
+
+  @PostMapping("/prompt-template/test")
+  public Result<?> testPrompt(@Valid @RequestBody PromptTestRequest request) {
+    requireAdmin();
+    return Result.success(adminCatalogService.testPrompt(request));
   }
 
   @GetMapping("/knowledge/list")

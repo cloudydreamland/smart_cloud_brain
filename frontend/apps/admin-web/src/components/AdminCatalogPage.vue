@@ -11,6 +11,8 @@ import {
   useAdminWorkflowStore,
   useAuthStore,
   type DataRow,
+  type PromptTemplateSaveRequest,
+  type PromptTestRequest,
 } from "@smart-cloud-brain/shared-api";
 import { DataTable, ErrorState, FormField, Modal, PaginationBar, StatusTag } from "@smart-cloud-brain/shared-ui";
 
@@ -27,9 +29,32 @@ const keyword = ref("");
 const error = ref("");
 const notice = ref("");
 const saving = ref(false);
+const testing = ref(false);
 const loading = ref(false);
 const editorOpen = ref(false);
+const testResult = ref("");
 const form = reactive<Record<string, string | number | boolean | undefined>>({});
+
+const promptTasks = [
+  {
+    value: "TRIAGE",
+    label: "智能分诊",
+    required: ["recommendedDepartment", "departmentCode", "recommendedDoctorDirection", "urgencyLevel", "confidence", "recommendedDoctorIds", "reason"],
+    sample: "胸痛、气短两天，活动后加重",
+  },
+  {
+    value: "MEDICAL_RECORD",
+    label: "病历生成",
+    required: ["chiefComplaint", "presentIllness", "pastHistory", "physicalExam", "diagnosis", "treatmentAdvice", "soapContent"],
+    sample: "患者胸痛、气短两天，活动后加重，休息后稍缓解。",
+  },
+  {
+    value: "PRESCRIPTION_CHECK",
+    label: "处方审核",
+    required: ["riskLevel", "riskDescription", "suggestions", "interactions", "contraindications", "adjustmentSuggestions"],
+    sample: "诊断：胸痛待查，高血压；药品：aspirin 100mg once daily oral",
+  },
+];
 
 const configs: Record<Entity, {
   title: string;
@@ -125,10 +150,13 @@ function openEditor(item?: DataRow) {
     if ("status" in form) form.status = "ENABLED";
     if (props.entity === "prompt") {
       form.taskType = "MEDICAL_RECORD";
-      form.outputSchema = "{\"type\":\"object\"}";
+      form.outputSchema = defaultPromptSchema("MEDICAL_RECORD");
       form.version = "v1";
+      form.sampleInput = promptTaskConfig("MEDICAL_RECORD").sample;
     }
   }
+  if (props.entity === "prompt" && !form.sampleInput) form.sampleInput = promptTaskConfig(String(form.taskType)).sample;
+  if (props.entity === "prompt" && !form.outputSchema) form.outputSchema = defaultPromptSchema(String(form.taskType));
   editorOpen.value = true;
 }
 
@@ -164,7 +192,7 @@ function fieldHint(key: string) {
 }
 
 async function save() {
-  const invalid = requireFields() || validateDoctorForm();
+  const invalid = requireFields() || validateDoctorForm() || validatePromptForm();
   if (invalid) {
     error.value = invalid;
     return;
@@ -177,7 +205,7 @@ async function save() {
     if (props.entity === "doctor") await api.saveDoctor(auth.token(), form as never);
     if (props.entity === "drug") await api.saveDrug(auth.token(), form as never);
     if (props.entity === "knowledge") await api.saveKnowledgeEntry(auth.token(), form as never);
-    if (props.entity === "prompt") await api.savePrompt(auth.token(), form as never);
+    if (props.entity === "prompt") await api.savePrompt(auth.token(), promptSaveBody());
     if (props.entity === "dict") await api.saveDict(auth.token(), form as never);
     editorOpen.value = false;
     notice.value = `${config.value.title}已保存。`;
@@ -187,6 +215,78 @@ async function save() {
     error.value = formatApiError(err, "保存失败");
   } finally {
     saving.value = false;
+  }
+}
+
+function promptTaskConfig(taskType: string) {
+  return promptTasks.find((item) => item.value === String(taskType || "").toUpperCase()) ?? promptTasks[1];
+}
+
+function defaultPromptSchema(taskType: string) {
+  const required = promptTaskConfig(taskType).required;
+  return JSON.stringify({ type: "object", required }, null, 2);
+}
+
+function onPromptTaskChange() {
+  if (props.entity !== "prompt") return;
+  const task = promptTaskConfig(String(form.taskType));
+  if (!form.templateName) form.templateName = `${task.value}_v1`;
+  form.outputSchema = defaultPromptSchema(task.value);
+  form.sampleInput = task.sample;
+  testResult.value = "";
+}
+
+function validatePromptForm() {
+  if (props.entity !== "prompt") return "";
+  const task = promptTaskConfig(String(form.taskType));
+  let schema: { required?: unknown; properties?: Record<string, unknown> };
+  try {
+    schema = JSON.parse(String(form.outputSchema || "{}"));
+  } catch {
+    return "输出结构定义必须是合法 JSON。";
+  }
+  const required = Array.isArray(schema.required) ? schema.required.map(String) : [];
+  const properties = schema.properties && typeof schema.properties === "object" ? Object.keys(schema.properties) : [];
+  const missing = task.required.filter((field) => !required.includes(field) && !properties.includes(field));
+  return missing.length ? `输出结构缺少字段：${missing.join(", ")}` : "";
+}
+
+function promptSaveBody(): PromptTemplateSaveRequest {
+  return {
+    id: typeof form.id === "number" ? form.id : undefined,
+    taskType: String(form.taskType || ""),
+    departmentCode: String(form.departmentCode || ""),
+    templateName: String(form.templateName || ""),
+    templateContent: String(form.templateContent || ""),
+    outputSchema: String(form.outputSchema || ""),
+    version: String(form.version || ""),
+    enabled: Boolean(form.enabled),
+  };
+}
+
+function promptTestBody(): PromptTestRequest {
+  return {
+    ...promptSaveBody(),
+    sampleInput: String(form.sampleInput || ""),
+  };
+}
+
+async function testPrompt() {
+  const invalid = requireFields() || validatePromptForm();
+  if (invalid) {
+    error.value = invalid;
+    return;
+  }
+  testing.value = true;
+  error.value = "";
+  testResult.value = "";
+  try {
+    const result = await api.testPrompt(auth.token(), promptTestBody());
+    testResult.value = JSON.stringify(result, null, 2);
+  } catch (err) {
+    error.value = formatApiError(err, "提示词试运行失败");
+  } finally {
+    testing.value = false;
   }
 }
 
@@ -233,6 +333,9 @@ refresh();
         <FormField v-for="[key, label, type] in config.fields" :key="key" :label="label" :hint="fieldHint(key)">
           <textarea v-if="type === 'textarea'" v-model="form[key]" />
           <input v-else-if="type === 'checkbox'" v-model="form[key]" type="checkbox" />
+          <select v-else-if="props.entity === 'prompt' && key === 'taskType'" v-model="form[key]" @change="onPromptTaskChange">
+            <option v-for="task in promptTasks" :key="task.value" :value="task.value">{{ task.label }}（{{ task.value }}）</option>
+          </select>
           <select v-else-if="type === 'department-select'" v-model.number="form[key]">
             <option :value="0" disabled>请选择科室</option>
             <option v-for="department in departments" :key="String(department.id)" :value="toNumber(department.id)">
@@ -242,10 +345,15 @@ refresh();
           <input v-else-if="type === 'number'" v-model.number="form[key]" type="number" />
           <input v-else v-model="form[key]" :type="type" />
         </FormField>
+        <FormField v-if="props.entity === 'prompt'" label="试运行样例">
+          <textarea v-model="form.sampleInput" />
+        </FormField>
+        <pre v-if="testResult" class="prompt-test-result">{{ testResult }}</pre>
       </div>
       <template #footer>
         <button type="button" :disabled="saving" @click="editorOpen = false">取消</button>
-        <button type="button" class="primary" :disabled="saving" @click="save">{{ saving ? "保存中..." : "保存" }}</button>
+        <button v-if="props.entity === 'prompt'" type="button" :disabled="saving || testing" @click="testPrompt">{{ testing ? "试运行中..." : "试运行" }}</button>
+        <button type="button" class="primary" :disabled="saving || testing" @click="save">{{ saving ? "保存中..." : "保存" }}</button>
       </template>
     </Modal>
   </section>

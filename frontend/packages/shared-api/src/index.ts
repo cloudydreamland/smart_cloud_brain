@@ -141,6 +141,15 @@ export type PromptTemplateSaveRequest = {
   enabled?: boolean;
 };
 
+export type PromptTestRequest = {
+  taskType: string;
+  departmentCode?: string;
+  templateName?: string;
+  templateContent: string;
+  outputSchema?: string;
+  sampleInput?: string;
+};
+
 export type SystemDictSaveRequest = {
   id?: number;
   dictType: string;
@@ -306,6 +315,7 @@ export const adminApi = {
   saveDrug: (token: string, body: DrugSaveRequest) => post<DataRow>("/admin/drug/save", body, token),
   prompts: (token: string) => get<DataRow[]>("/admin/prompt-template/list", token),
   savePrompt: (token: string, body: PromptTemplateSaveRequest) => post<DataRow>("/admin/prompt-template/save", body, token),
+  testPrompt: (token: string, body: PromptTestRequest) => post<DataRow>("/admin/prompt-template/test", body, token),
   knowledgeEntries: (token: string) => get<DataRow[]>("/admin/knowledge/list", token),
   saveKnowledgeEntry: (token: string, body: KnowledgeEntrySaveRequest) => post<DataRow>("/admin/knowledge/save", body, token),
   dicts: (token: string, dictType = "") => get<DataRow[]>(`/admin/dict/list${query({ dictType })}`, token),
@@ -358,6 +368,7 @@ export const api = {
   saveDrug: adminApi.saveDrug,
   prompts: adminApi.prompts,
   savePrompt: adminApi.savePrompt,
+  testPrompt: adminApi.testPrompt,
   knowledgeEntries: adminApi.knowledgeEntries,
   saveKnowledgeEntry: adminApi.saveKnowledgeEntry,
   dicts: adminApi.dicts,
