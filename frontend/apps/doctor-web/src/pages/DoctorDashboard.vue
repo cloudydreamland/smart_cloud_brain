@@ -7,8 +7,9 @@ import { EmptyState, StatusTag } from "@smart-cloud-brain/shared-ui";
 const workflow = useDoctorWorkflowStore();
 const { registrations, records, prescriptions, notifications } = storeToRefs(workflow);
 const unread = computed(() => notifications.value.filter((item) => String(item.readStatus) !== "READ").length);
-const completed = computed(() => registrations.value.filter((item) => fieldText(item, "status") === "COMPLETED").length);
-const active = computed(() => registrations.value.filter((item) => fieldText(item, "status") !== "COMPLETED").length);
+const completed = computed(() => registrations.value.filter((item) => fieldText(item, "status").toUpperCase() === "COMPLETED").length);
+const activeRegistrations = computed(() => registrations.value.filter((item) => fieldText(item, "status").toUpperCase() !== "COMPLETED"));
+const active = computed(() => activeRegistrations.value.length);
 const highRisk = computed(() => prescriptions.value.filter((item) => fieldText(item, "riskLevel").toUpperCase() === "HIGH").length);
 const queueTotal = computed(() => Math.max(registrations.value.length, 1));
 const completionRate = computed(() => Math.round((completed.value / queueTotal.value) * 100));
@@ -24,7 +25,7 @@ const workloadBars = computed(() => [
     <header class="clinical-statusbar">
       <div class="status-cell">
         <span>队列数</span>
-        <strong>{{ registrations.length }}</strong>
+        <strong>{{ active }}</strong>
       </div>
       <div class="status-cell">
         <span>完成率</span>
@@ -51,7 +52,7 @@ const workloadBars = computed(() => [
           <RouterLink class="button primary compact-action" to="/queue">队列</RouterLink>
         </header>
         <div class="table-scroll">
-          <table v-if="registrations.length" class="clinical-table">
+          <table v-if="activeRegistrations.length" class="clinical-table">
             <thead>
               <tr>
                 <th>患者</th>
@@ -63,7 +64,7 @@ const workloadBars = computed(() => [
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in registrations.slice(0, 10)" :key="String(item.registrationId)">
+              <tr v-for="item in activeRegistrations.slice(0, 10)" :key="String(item.registrationId)">
                 <td><strong>{{ fieldText(item, "patientName", `患者${fieldText(item, "patientId")}`) }}</strong></td>
                 <td>#{{ fieldText(item, "registrationId") }}</td>
                 <td>{{ fieldText(item, "departmentName", "-") }}</td>

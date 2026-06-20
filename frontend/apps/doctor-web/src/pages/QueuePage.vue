@@ -7,7 +7,7 @@ import { EmptyState, ErrorState, LoadingState, PaginationBar, SegmentedControl, 
 const auth = useAuthStore();
 const workflow = useDoctorWorkflowStore();
 const { registrations } = storeToRefs(workflow);
-const filter = ref("");
+const filter = ref("CREATED");
 const keyword = ref("");
 const loading = ref(false);
 const error = ref("");
@@ -23,6 +23,10 @@ const rows = computed(() => registrations.value.filter((item) => {
   return (!filter.value || fieldText(item, "status") === filter.value) && (!keyword.value || haystack.includes(keyword.value.toLowerCase()));
 }));
 const { currentPage, pageSize, total, pageRows } = usePagination(rows, 10);
+
+function isCompleted(item: Record<string, unknown>) {
+  return fieldText(item, "status").toUpperCase() === "COMPLETED";
+}
 
 async function refresh() {
   loading.value = true;
@@ -76,7 +80,11 @@ refresh();
               <td>{{ fieldText(item, "departmentName", "-") }}</td>
               <td>{{ fieldText(item, "appointmentTime", "-") }}</td>
               <td><StatusTag :status="fieldText(item, 'status')" :tone="statusClass(item.status)" /></td>
-              <td><RouterLink class="button primary compact-action" :to="`/consult/${item.registrationId}`">接诊</RouterLink></td>
+              <td>
+                <RouterLink class="button compact-action" :class="{ primary: !isCompleted(item) }" :to="`/consult/${item.registrationId}`">
+                  {{ isCompleted(item) ? "查看" : "接诊" }}
+                </RouterLink>
+              </td>
             </tr>
           </tbody>
         </table>

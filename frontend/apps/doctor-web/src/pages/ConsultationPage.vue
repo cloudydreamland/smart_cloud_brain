@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from "vue";
+import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import {
   api,
@@ -25,6 +26,7 @@ const props = defineProps<{ registrationId: string }>();
 const emit = defineEmits<{ refresh: [] }>();
 const auth = useAuthStore();
 const workflow = useDoctorWorkflowStore();
+const router = useRouter();
 const { registrations, triageRecords, drugs, streamText, streamStatus } = storeToRefs(workflow);
 const loading = reactive({ record: false, prescription: false, complete: false });
 const error = ref("");
@@ -42,6 +44,7 @@ let recordStream: AbortController | null = null;
 const registration = computed(() => registrations.value.find((item) => toNumber(item.registrationId) === toNumber(props.registrationId)) ?? null);
 const triage = computed(() => triageRecords.value.find((item) => toNumber(item.triageRecordId) === toNumber(registration.value?.triageRecordId)) ?? null);
 const patientName = computed(() => fieldText(registration.value, "patientName", `患者${fieldText(registration.value, "patientId", "-")}`));
+const isCompleted = computed(() => fieldText(registration.value, "status", "").toUpperCase() === "COMPLETED");
 const medicalForm = reactive({
   registrationId: toNumber(props.registrationId),
   chiefComplaint: "",
@@ -223,8 +226,8 @@ async function completeRegistration() {
   try {
     await api.completeRegistration(auth.token(), medicalForm.registrationId);
     completeOpen.value = false;
-    emit("refresh");
-    setNotice("接诊已完成。");
+    await workflow.refresh(auth.token());
+    await router.push({ name: "doctor-queue" });
   } catch (err) {
     setError(formatApiError(err, "完成接诊失败"));
   } finally {
@@ -251,7 +254,7 @@ watch(() => props.registrationId, applyRegistration, { immediate: true });
       </div>
       <div class="encounter-actions">
         <button type="button" @click="contextOpen = true">上下文</button>
-        <button type="button" class="primary" :disabled="loading.complete" @click="completeOpen = true">完成接诊</button>
+        <button v-if="!isCompleted" type="button" class="primary" :disabled="loading.complete" @click="completeOpen = true">完成接诊</button>
       </div>
     </header>
 
