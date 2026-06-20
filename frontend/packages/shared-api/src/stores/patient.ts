@@ -25,12 +25,13 @@ export const usePatientWorkflowStore = defineStore("patientWorkflow", () => {
       patientApi.registrations(token), patientApi.medicalRecords(token), patientApi.prescriptions(token),
     ]);
     patient.value = info;
-    triageHistory.value = triages;
+    triageHistory.value = [...triages].sort((left, right) =>
+      Number(right.triageRecordId) - Number(left.triageRecordId));
     slots.value = slotList;
     registrations.value = registrationList;
     records.value = recordList;
     prescriptions.value = prescriptionList;
-    triage.value = triages[0] ?? triage.value;
+    triage.value = triageHistory.value[0] ?? triage.value;
   }
 
   return { patient, departments, doctors, triage, triageHistory, slots, registrations, records, prescriptions, refreshPublicData, refreshAuthenticated };

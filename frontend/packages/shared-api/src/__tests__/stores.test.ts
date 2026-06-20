@@ -22,7 +22,7 @@ function routeData(url: string) {
   if (url.includes("/patient/info")) return { id: 1, name: "患者" };
   if (url.includes("/doctor/department/list")) return [{ id: 1, code: "CARDIOLOGY" }];
   if (url.includes("/doctor/list")) return [{ id: 2, name: "医生" }];
-  if (url.includes("/triage/list")) return [{ id: 3, status: "AI_RECOMMENDED" }];
+  if (url.includes("/triage/list")) return [{ triageRecordId: 3, status: "AI_RECOMMENDED" }];
   if (url.includes("/registration/slots")) return [{ id: 4 }];
   if (url.includes("/registration/list")) return [{ id: 5 }];
   if (url.includes("/medical-record/list")) return [{ id: 6 }];
@@ -87,6 +87,16 @@ describe("workflow stores", () => {
     expect(store.patient?.name).toBe("患者");
     expect(store.triage?.status).toBe("AI_RECOMMENDED");
     expect(store.prescriptions).toHaveLength(1);
+
+    vi.stubGlobal("fetch", vi.fn(async (input: string | URL | Request) => {
+      const url = String(input);
+      return ok(url.includes("/triage/list")
+        ? [{ triageRecordId: 2, status: "OLDER" }, { triageRecordId: 9, status: "LATEST" }]
+        : routeData(url));
+    }));
+    await store.refreshAuthenticated("jwt");
+    expect(store.triage?.status).toBe("LATEST");
+    expect(store.triageHistory.map((item) => item.triageRecordId)).toEqual([9, 2]);
 
     store.triage = { id: 99, status: "PRESERVED" };
     vi.stubGlobal("fetch", vi.fn(async (input: string | URL | Request) => {
