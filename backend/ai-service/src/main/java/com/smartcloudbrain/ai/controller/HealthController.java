@@ -50,7 +50,8 @@ public class HealthController {
     return hasText(properties.dify().baseUrl())
         && hasTaskOrFallbackKey(properties.difyTriage(), fallbackKey)
         && hasTaskOrFallbackKey(properties.difyMedicalRecord(), fallbackKey)
-        && hasTaskOrFallbackKey(properties.difyPrescriptionCheck(), fallbackKey);
+        && hasTaskOrFallbackKey(properties.difyPrescriptionCheck(), fallbackKey)
+        && hasTaskOrFallbackKey(properties.difySchedule(), fallbackKey);
   }
 
   private boolean hasTaskOrFallbackKey(AiProviderProperties.DifyWorkflow workflow, String fallbackKey) {

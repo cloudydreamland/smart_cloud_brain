@@ -145,8 +145,8 @@ workflow:
           provider: langgenius/deepseek/deepseek
         prompt_template:
         - role: system
-          text: "你是一位专业的处方审核助手。请根据患者和用药信息识别药物相互作用、过敏与禁忌风险。\n\n患者ID：{{patientId}}\n\
-            医生ID：{{doctorId}}\n药物列表：{{drugs}}\n\n请严格按照以下JSON格式输出，不要输出任何其他内容：\n{\n  \"riskLevel\"\
+          text: "你是一位专业的处方审核助手。请根据患者和用药信息识别药物相互作用、过敏与禁忌风险。\n\n患者ID：{{#1781658416218.patientId#}}\n\
+            医生ID：{{#1781658416218.doctorId#}}\n药物列表：{{#1781658416218.drugs#}}\n\n请严格按照以下JSON格式输出，不要输出任何其他内容：\n{\n  \"riskLevel\"\
             : \"LOW、MEDIUM或HIGH\",\n  \"riskDescription\": \"风险说明\",\n  \"suggestions\"\
             : \"处方建议\",\n  \"interactions\": [],\n  \"contraindications\": [],\n  \"adjustmentSuggestions\"\
             : [],\n  \"degraded\": false\n}"

@@ -2,14 +2,25 @@ package com.smartcloudbrain.admin.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.smartcloudbrain.admin.client.InternalDoctorClient;
+import com.smartcloudbrain.admin.client.InternalAiClient;
 import com.smartcloudbrain.admin.client.InternalTriageClient;
 import com.smartcloudbrain.admin.dto.admin.SchedulePublishRequest;
+import com.smartcloudbrain.admin.dto.admin.ScheduleGenerateRequest;
+import com.smartcloudbrain.admin.dto.admin.DepartmentSaveRequest;
+import com.smartcloudbrain.admin.dto.admin.DoctorSaveRequest;
+import com.smartcloudbrain.admin.dto.admin.KnowledgeEntrySaveRequest;
+import com.smartcloudbrain.admin.dto.admin.PromptTemplateSaveRequest;
 import com.smartcloudbrain.admin.entity.AiScheduleSuggestion;
+import com.smartcloudbrain.admin.entity.Department;
+import com.smartcloudbrain.admin.entity.Drug;
+import com.smartcloudbrain.admin.entity.KnowledgeEntry;
+import com.smartcloudbrain.admin.entity.PromptTemplate;
 import com.smartcloudbrain.admin.entity.Doctor;
 import com.smartcloudbrain.admin.repository.AiScheduleSuggestionRepository;
 import com.smartcloudbrain.admin.repository.DepartmentRepository;
@@ -19,10 +30,14 @@ import com.smartcloudbrain.admin.repository.KnowledgeEntryRepository;
 import com.smartcloudbrain.admin.repository.PromptTemplateRepository;
 import com.smartcloudbrain.admin.repository.SystemDictRepository;
 import com.smartcloudbrain.common.security.PasswordHashService;
+import com.smartcloudbrain.aiapi.dto.ScheduleSuggestResponse;
+import com.smartcloudbrain.aiapi.dto.ScheduleSuggestionItem;
+import com.smartcloudbrain.common.exception.BusinessException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.ArrayList;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -41,6 +56,7 @@ class AdminCatalogServiceTest {
   @Mock private SystemDictRepository systemDictRepository;
   @Mock private AiScheduleSuggestionRepository aiScheduleSuggestionRepository;
   @Mock private InternalDoctorClient internalDoctorClient;
+  @Mock private InternalAiClient internalAiClient;
   @Mock private InternalTriageClient internalTriageClient;
   @Mock private PasswordHashService passwordHashService;
   @InjectMocks private AdminCatalogService adminCatalogService;
@@ -112,5 +128,220 @@ class AdminCatalogServiceTest {
     assertEquals("Doctor Eight", assigned.get("assignedDoctorName"));
     assertEquals("CLOSED", closed.get("status"));
     assertNotNull(closed.get("assignedDoctorName"));
+  }
+
+  @Test
+  void generatesValidatedAiScheduleWithProviderState() {
+    Department department = new Department();
+    department.setId(3L);
+    department.setCode("CARDIOLOGY");
+    department.setName("心内科");
+    Doctor doctor = new Doctor();
+    doctor.setId(2L);
+    doctor.setName("王医生");
+    doctor.setDepartmentId(3L);
+    doctor.setStatus("ENABLED");
+    List<AiScheduleSuggestion> saved = new ArrayList<>();
+
+    when(departmentRepository.findAll()).thenReturn(List.of(department));
+    when(doctorRepository.findAll()).thenReturn(List.of(doctor));
+    when(internalDoctorClient.schedules()).thenReturn(List.of());
+    when(internalAiClient.suggestSchedule(any())).thenReturn(new ScheduleSuggestResponse(
+        List.of(new ScheduleSuggestionItem(2L, 3L, LocalDate.of(2026, 6, 21),
+            "09:00-12:00", 16, "胸痛就诊需求较高")),
+        "dify",
+        false
+    ));
+    when(aiScheduleSuggestionRepository.findByStatusOrderByWorkDateAscDoctorIdAsc("DRAFT"))
+        .thenAnswer(invocation -> List.copyOf(saved));
+    when(aiScheduleSuggestionRepository.save(any(AiScheduleSuggestion.class))).thenAnswer(invocation -> {
+      AiScheduleSuggestion value = invocation.getArgument(0);
+      value.setId(9L);
+      saved.add(value);
+      return value;
+    });
+
+    List<Map<String, Object>> result = adminCatalogService.generateScheduleSuggestions(
+        new ScheduleGenerateRequest(LocalDate.of(2026, 6, 21), 2));
+
+    assertEquals(1, result.size());
+    assertEquals("dify", result.get(0).get("source"));
+    assertEquals(false, result.get(0).get("degraded"));
+    assertEquals(16, result.get(0).get("capacity"));
+  }
+
+  @Test
+  void rejectsAiScheduleThatConflictsWithExistingSlot() {
+    Department department = new Department();
+    department.setId(3L);
+    department.setCode("CARDIOLOGY");
+    Doctor doctor = new Doctor();
+    doctor.setId(2L);
+    doctor.setDepartmentId(3L);
+    doctor.setStatus("ENABLED");
+    when(departmentRepository.findAll()).thenReturn(List.of(department));
+    when(doctorRepository.findAll()).thenReturn(List.of(doctor));
+    when(internalDoctorClient.schedules()).thenReturn(List.of(Map.of(
+        "doctorId", 2L, "workDate", "2026-06-21", "timeRange", "09:00-12:00")));
+    when(internalAiClient.suggestSchedule(any())).thenReturn(new ScheduleSuggestResponse(
+        List.of(new ScheduleSuggestionItem(2L, 3L, LocalDate.of(2026, 6, 21),
+            "09:00-12:00", 12, "重复建议")),
+        "dify",
+        false
+    ));
+
+    assertThrows(BusinessException.class, () -> adminCatalogService.generateScheduleSuggestions(
+        new ScheduleGenerateRequest(LocalDate.of(2026, 6, 21), 1)));
+  }
+
+  @Test
+  void coversCatalogCrudSearchAndInternalDelegates() {
+    Department department = new Department();
+    department.setId(3L);
+    department.setCode("CARDIOLOGY");
+    department.setName("心内科");
+    Doctor doctor = new Doctor();
+    doctor.setId(2L);
+    doctor.setName("王医生");
+    doctor.setDepartmentId(3L);
+    doctor.setStatus("ENABLED");
+    Drug drug = new Drug();
+    drug.setId(4L);
+    drug.setName("阿司匹林");
+    drug.setSpecification("100mg");
+    drug.setStatus("ENABLED");
+    PromptTemplate prompt = new PromptTemplate();
+    prompt.setId(5L);
+    prompt.setTaskType("SCHEDULE");
+    prompt.setTemplateName("排班模板");
+    prompt.setTemplateContent("生成排班");
+    prompt.setEnabled(true);
+    KnowledgeEntry knowledge = new KnowledgeEntry();
+    knowledge.setId(6L);
+    knowledge.setTitle("胸痛");
+    knowledge.setSymptoms("胸痛气短");
+    knowledge.setAdvice("心内科就诊");
+    knowledge.setStatus("ENABLED");
+
+    when(departmentRepository.findAll()).thenReturn(List.of(department));
+    when(departmentRepository.findByCode("GENERAL")).thenReturn(Optional.empty());
+    when(departmentRepository.findById(3L)).thenReturn(Optional.of(department));
+    when(departmentRepository.save(any())).thenAnswer(invocation -> {
+      Department value = invocation.getArgument(0);
+      if (value.getId() == null) value.setId(7L);
+      return value;
+    });
+    when(passwordHashService.encode(any())).thenReturn("hash");
+    when(doctorRepository.save(any())).thenAnswer(invocation -> {
+      Doctor value = invocation.getArgument(0);
+      if (value.getId() == null) value.setId(8L);
+      return value;
+    });
+    when(doctorRepository.findById(2L)).thenReturn(Optional.of(doctor));
+    when(drugRepository.findAll()).thenReturn(List.of(drug));
+    when(promptTemplateRepository.findAll()).thenReturn(List.of(prompt));
+    when(promptTemplateRepository.save(any())).thenAnswer(invocation -> {
+      PromptTemplate value = invocation.getArgument(0);
+      if (value.getId() == null) value.setId(9L);
+      return value;
+    });
+    when(knowledgeEntryRepository.findAll()).thenReturn(List.of(knowledge));
+    when(knowledgeEntryRepository.save(any())).thenAnswer(invocation -> {
+      KnowledgeEntry value = invocation.getArgument(0);
+      if (value.getId() == null) value.setId(10L);
+      return value;
+    });
+    when(internalDoctorClient.schedules()).thenReturn(List.of(Map.of("id", 1L)));
+    when(internalTriageClient.list()).thenReturn(List.of(Map.of("triageRecordId", 1L, "patientId", 1L, "status", "PENDING")));
+    when(internalTriageClient.detail(1L)).thenReturn(Map.of("triageRecordId", 1L, "patientId", 1L, "status", "PENDING"));
+
+    assertEquals(1, adminCatalogService.departments().size());
+    assertEquals("GENERAL", adminCatalogService.saveDepartment(
+        new DepartmentSaveRequest(null, "GENERAL", "全科", null)).get("code"));
+    assertEquals("CARDIOLOGY", adminCatalogService.saveDepartment(
+        new DepartmentSaveRequest(3L, "CARDIOLOGY", "心内科", "说明")).get("code"));
+    assertEquals("王医生", adminCatalogService.saveDoctor(
+        new DoctorSaveRequest(2L, "王医生", "1", "new", 3L, "主任", "胸痛", null)).get("name"));
+    assertEquals("新医生", adminCatalogService.saveDoctor(
+        new DoctorSaveRequest(null, "新医生", "2", "", 3L, null, null, null)).get("name"));
+    assertEquals(1, adminCatalogService.prompts().size());
+    assertEquals("SCHEDULE", adminCatalogService.savePrompt(
+        new PromptTemplateSaveRequest(null, "SCHEDULE", null, "模板", "内容", null, null, null)).get("taskType"));
+    assertEquals(1, adminCatalogService.knowledgeEntries().size());
+    assertEquals("胸痛", adminCatalogService.saveKnowledgeEntry(
+        new KnowledgeEntrySaveRequest(null, "胸痛", "胸痛", null, "就诊", "CARDIOLOGY", null)).get("title"));
+    assertEquals(1, adminCatalogService.searchDrugs("阿司匹林").size());
+    assertEquals(1, adminCatalogService.searchDrugs("100mg").size());
+    drug.setContraindication("活动性出血禁用");
+    assertEquals(1, adminCatalogService.searchDrugs("出血禁用").size());
+    assertEquals(1, adminCatalogService.searchPrompts("排班").size());
+    assertEquals(1, adminCatalogService.searchPrompts("生成排班").size());
+    when(knowledgeEntryRepository.findByStatus("ENABLED")).thenReturn(List.of(knowledge));
+    assertEquals(1, adminCatalogService.searchKnowledge("气短", "").size());
+    knowledge.setRiskSignals("高危胸痛");
+    assertEquals(1, adminCatalogService.searchKnowledge("高危", "").size());
+    assertEquals(1, adminCatalogService.searchKnowledge("心内科就诊", "").size());
+    assertEquals(1, adminCatalogService.schedules().size());
+    assertEquals(1, adminCatalogService.triageDesk().size());
+    assertEquals(1L, adminCatalogService.triageDetail(1L).get("triageRecordId"));
+  }
+
+  @Test
+  void rejectsEveryInvalidAiScheduleShapeAndCoversDraftDelegates() {
+    Department department = new Department();
+    department.setId(3L);
+    department.setCode("CARDIOLOGY");
+    department.setName("心内科");
+    Doctor doctor = new Doctor();
+    doctor.setId(2L);
+    doctor.setName("医生");
+    doctor.setDepartmentId(3L);
+    doctor.setStatus("ENABLED");
+    LocalDate start = LocalDate.of(2026, 6, 21);
+    when(departmentRepository.findAll()).thenReturn(List.of(department));
+    when(doctorRepository.findAll()).thenReturn(List.of()).thenReturn(List.of(doctor));
+    when(internalDoctorClient.schedules()).thenReturn(List.of(
+        Map.of("doctorId", 2L),
+        Map.of("doctorId", 2L, "workDate", "bad-date", "timeRange", "09:00-12:00")));
+
+    assertThrows(BusinessException.class, () -> adminCatalogService.generateScheduleSuggestions(
+        new ScheduleGenerateRequest(start, 1)));
+
+    when(internalAiClient.suggestSchedule(any())).thenReturn(
+        new ScheduleSuggestResponse(List.of(), "dify", false),
+        new ScheduleSuggestResponse(List.of(new ScheduleSuggestionItem(9L, 3L, start, "09:00-12:00", 12, "x")), "dify", false),
+        new ScheduleSuggestResponse(List.of(new ScheduleSuggestionItem(2L, 3L, start.plusDays(2), "09:00-12:00", 12, "x")), "dify", false),
+        new ScheduleSuggestResponse(List.of(new ScheduleSuggestionItem(2L, 3L, start, "09:00-12:00", 0, "x")), "dify", false),
+        new ScheduleSuggestResponse(List.of(new ScheduleSuggestionItem(2L, 3L, start, "bad", 12, "x")), "dify", false),
+        new ScheduleSuggestResponse(List.of(new ScheduleSuggestionItem(2L, 3L, start, "12:00-09:00", 12, "x")), "dify", false)
+    );
+    for (int i = 0; i < 6; i++) {
+      assertThrows(BusinessException.class, () -> adminCatalogService.generateScheduleSuggestions(
+          new ScheduleGenerateRequest(start, 1)));
+    }
+
+    AiScheduleSuggestion suggestion = new AiScheduleSuggestion();
+    suggestion.setId(5L);
+    suggestion.setDoctorId(null);
+    suggestion.setDepartmentId(null);
+    suggestion.setWorkDate(start);
+    suggestion.setTimeRange("09:00-12:00");
+    suggestion.setCapacity(12);
+    suggestion.setStatus("DRAFT");
+    when(aiScheduleSuggestionRepository.findById(5L)).thenReturn(Optional.of(suggestion));
+    assertEquals("", adminCatalogService.scheduleSuggestionDetail(5L).get("doctorName"));
+
+    AiScheduleSuggestion publishable = new AiScheduleSuggestion();
+    publishable.setId(6L);
+    publishable.setDoctorId(2L);
+    publishable.setDepartmentId(3L);
+    publishable.setWorkDate(start);
+    publishable.setTimeRange("09:00-12:00");
+    publishable.setCapacity(12);
+    publishable.setStatus("DRAFT");
+    when(aiScheduleSuggestionRepository.findByStatusOrderByWorkDateAscDoctorIdAsc("DRAFT"))
+        .thenReturn(List.of(publishable));
+    when(internalDoctorClient.publishSchedules(any())).thenReturn(List.of(Map.of("id", 1L)));
+    assertEquals(1, adminCatalogService.publishSchedule(new SchedulePublishRequest(List.of())).size());
   }
 }

@@ -77,7 +77,7 @@ async function openDetail(item: DataRow) {
         <LoadingState v-if="loading" />
         <div v-if="suggestions.length" class="list">
           <article v-for="item in suggestions" :key="String(item.id)" class="list-row">
-            <div class="row-main"><strong>{{ fieldText(item, "workDate") }} {{ fieldText(item, "timeRange") }}</strong><p>{{ fieldText(item, "doctorName") }} · 容量 {{ fieldText(item, "capacity") }}</p></div>
+            <div class="row-main"><strong>{{ fieldText(item, "workDate") }} {{ fieldText(item, "timeRange") }}</strong><p>{{ fieldText(item, "doctorName") }} · 容量 {{ fieldText(item, "capacity") }}</p><span class="tag" :class="item.degraded ? 'warning' : 'success'">{{ item.degraded ? "规则降级" : "真实AI建议" }}</span></div>
             <button type="button" @click="openDetail(item)">详情</button>
           </article>
         </div>

@@ -1,0 +1,187 @@
+app:
+  description: 根据启用医生、科室、日期范围和已有排班生成可解释的门诊排班建议，由后端强校验后交管理员确认发布。
+  icon: 📅
+  icon_background: '#E8F3FF'
+  icon_type: emoji
+  mode: workflow
+  name: 智慧云脑-AI排班建议
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/deepseek:0.0.17@f7a5c1d222d17ee419b17a80d6e4923838fe93788dc724a3af73fbc6990b3a32
+    version: null
+kind: app
+version: 0.6.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: ''
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: llm
+      id: 1781953000001-source-1781953000002-target
+      source: '1781953000001'
+      sourceHandle: source
+      target: '1781953000002'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: end
+      id: 1781953000002-source-1781953000003-target
+      source: '1781953000002'
+      sourceHandle: source
+      target: '1781953000003'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        selected: false
+        title: 用户输入
+        type: start
+        variables:
+        - label: promptTemplateName
+          required: true
+          type: text-input
+          variable: promptTemplateName
+        - label: promptTemplate
+          required: true
+          type: paragraph
+          variable: promptTemplate
+        - label: outputSchema
+          required: true
+          type: paragraph
+          variable: outputSchema
+        - label: startDate
+          required: true
+          type: text-input
+          variable: startDate
+        - label: days
+          required: true
+          type: text-input
+          variable: days
+        - label: doctors
+          required: true
+          type: paragraph
+          variable: doctors
+        - label: departments
+          required: true
+          type: paragraph
+          variable: departments
+        - label: existingSchedules
+          required: false
+          type: paragraph
+          variable: existingSchedules
+        - label: validationFeedback
+          required: false
+          type: paragraph
+          variable: validationFeedback
+      height: 312
+      id: '1781953000001'
+      position:
+        x: 80
+        y: 240
+      positionAbsolute:
+        x: 80
+        y: 240
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        model:
+          completion_params:
+            temperature: 0.2
+          mode: chat
+          name: deepseek-chat
+          provider: langgenius/deepseek/deepseek
+        prompt_template:
+        - role: system
+          text: '{{#1781953000001.promptTemplate#}}
+
+            输出结构：{{#1781953000001.outputSchema#}}
+
+            开始日期：{{#1781953000001.startDate#}}，天数：{{#1781953000001.days#}}
+
+            启用医生JSON：{{#1781953000001.doctors#}}
+
+            科室JSON：{{#1781953000001.departments#}}
+
+            已有排班JSON：{{#1781953000001.existingSchedules#}}
+
+            上次校验反馈：{{#1781953000001.validationFeedback#}}
+
+            只允许使用给定医生和其所属科室；workDate最早必须是开始日期，最晚是开始日期加天数减1，禁止使用范围外或其他示例日期；不得与已有排班重复；时段使用HH:mm-HH:mm；容量为1-100。严格返回紧凑JSON，不要Markdown，格式为：{"suggestions":[{"doctorId":1,"departmentId":1,"workDate":"{{#1781953000001.startDate#}}","timeRange":"09:00-12:00","capacity":12,"reason":"理由"}]}。'
+        selected: false
+        title: DeepSeek 排班
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: '1781953000002'
+      position:
+        x: 382
+        y: 300
+      positionAbsolute:
+        x: 382
+        y: 300
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        outputs:
+        - value_selector:
+          - '1781953000002'
+          - text
+          value_type: string
+          variable: result
+        selected: false
+        title: 输出
+        type: end
+      height: 88
+      id: '1781953000003'
+      position:
+        x: 684
+        y: 300
+      positionAbsolute:
+        x: 684
+        y: 300
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    viewport:
+      x: 0
+      y: 0
+      zoom: 1
+  rag_pipeline_variables: []
