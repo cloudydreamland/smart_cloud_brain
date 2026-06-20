@@ -1,0 +1,50 @@
+import { ApiError, type DataRow } from "./types";
+
+export function formatApiError(error: unknown, fallback: string) {
+  if (error instanceof ApiError) return localizeApiMessage(error.message);
+  if (error instanceof Error) return localizeApiMessage(error.message);
+  return fallback;
+}
+
+function localizeApiMessage(message: string) {
+  const text = message.trim();
+  if (!text) return "请求失败";
+  const lower = text.toLowerCase();
+  if (lower.includes("triage-service unavailable")) return "分诊服务暂不可用，其他管理功能可继续使用。";
+  if (lower.includes("doctor-service unavailable")) return "医生与号源服务暂不可用，请稍后重试。";
+  if (lower.includes("ai service unavailable")) return "智能服务暂不可用，请稍后重试。";
+  return text;
+}
+
+export function toNumber(value: unknown, fallback = 0) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : fallback;
+}
+
+export function fieldText(item: DataRow | null | undefined, key: string, fallback = "-") {
+  const value = item?.[key];
+  return value === undefined || value === null || value === "" ? fallback : String(value);
+}
+
+export function statusClass(status: unknown) {
+  const value = String(status || "").toUpperCase();
+  if (["CREATED", "CONFIRMED", "COMPLETED", "AVAILABLE", "ENABLED", "PUBLISHED", "AI_RECOMMENDED", "LOW", "READ"].includes(value)) return "success";
+  if (["CANCELLED", "FAILED", "DISABLED", "HIGH", "CLOSED", "FULL"].includes(value)) return "danger";
+  if (["PENDING", "DRAFT", "UNPUBLISHED", "UNREVIEWED", "MEDIUM", "MANUAL_REQUIRED", "UNREAD"].includes(value)) return "warning";
+  return "info";
+}
+
+export function statusText(status: unknown, fallback = "-") {
+  const raw = String(status ?? "").trim();
+  if (!raw) return fallback;
+  const labels: Record<string, string> = {
+    CREATED: "已创建", CONFIRMED: "已确认", COMPLETED: "已完成", AVAILABLE: "可预约",
+    ENABLED: "启用", PUBLISHED: "已发布", AI_RECOMMENDED: "智能推荐", LOW: "低风险",
+    READ: "已读", CANCELLED: "已取消", FAILED: "失败", DISABLED: "停用", HIGH: "高风险",
+    CLOSED: "已关闭", FULL: "已约满", PENDING: "待处理", DRAFT: "草稿",
+    UNPUBLISHED: "未发布", UNREVIEWED: "未审核", MEDIUM: "中风险",
+    MANUAL_REQUIRED: "待人工处理", UNREAD: "未读", PATIENT: "患者", DOCTOR: "医生",
+    ADMIN: "管理员", MALE: "男", FEMALE: "女", UNKNOWN: "未说明",
+  };
+  return labels[raw.toUpperCase()] ?? raw;
+}

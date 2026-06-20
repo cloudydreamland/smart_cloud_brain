@@ -11,6 +11,22 @@
           "name": "Gateway Health",
           "event": [
             {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const start = new Date();",
+                  "const offsetDays = 30 + (Math.floor(Date.now() / 1000) % 3650);",
+                  "start.setDate(start.getDate() + offsetDays);",
+                  "const yyyy = start.getFullYear();",
+                  "const mm = String(start.getMonth() + 1).padStart(2, '0');",
+                  "const dd = String(start.getDate()).padStart(2, '0');",
+                  "pm.environment.set('scheduleStartDate', `${yyyy}-${mm}-${dd}`);",
+                  "['scheduleSuggestionId', 'scheduleSuggestionIds', 'scheduledDoctorId', 'scheduledDepartmentId', 'scheduledWorkDate', 'scheduledTimeRange', 'slotId', 'slotDoctorId', 'slotDepartmentId', 'slotStartTime', 'registrationId', 'cancelRegistrationId', 'medicalRecordId', 'prescriptionId'].forEach(key => pm.environment.unset(key));"
+                ]
+              }
+            },
+            {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
@@ -48,7 +64,12 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"account\": \"admin\",\n  \"password\": \"123456\"\n}"
@@ -66,8 +87,16 @@
                 "exec": [
                   "pm.test('schedule suggestions generated', () => pm.response.to.have.status(200));",
                   "const body = pm.response.json();",
+                  "pm.test('schedule generation business result succeeds', () => pm.expect(body.code).to.eql(0));",
                   "pm.test('at least one suggestion exists', () => pm.expect(body.data.length).to.be.greaterThan(0));",
-                  "pm.environment.set('scheduleSuggestionId', body.data[0].id);"
+                  "pm.test('real Dify suggestions are returned', () => pm.expect(body.data.every(item => item.source === 'dify' && item.degraded === false)).to.eql(true));",
+                  "const selected = body.data[0];",
+                  "pm.environment.set('scheduleSuggestionId', selected.id);",
+                  "pm.environment.set('scheduleSuggestionIds', JSON.stringify(body.data.slice(0, 2).map(item => item.id)));",
+                  "pm.environment.set('scheduledDoctorId', selected.doctorId);",
+                  "pm.environment.set('scheduledDepartmentId', selected.departmentId);",
+                  "pm.environment.set('scheduledWorkDate', selected.workDate);",
+                  "pm.environment.set('scheduledTimeRange', selected.timeRange);"
                 ]
               }
             }
@@ -75,8 +104,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -95,6 +130,7 @@
                 "exec": [
                   "pm.test('suggestion detail can be read', () => pm.response.to.have.status(200));",
                   "const body = pm.response.json();",
+                  "pm.test('suggestion detail business result succeeds', () => pm.expect(body.code).to.eql(0));",
                   "pm.test('detail matches selected suggestion', () => pm.expect(String(body.data.id)).to.eql(String(pm.environment.get('scheduleSuggestionId'))));"
                 ]
               }
@@ -102,7 +138,12 @@
           ],
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/admin/schedule/suggestion/detail?id={{scheduleSuggestionId}}"
           }
         },
@@ -116,6 +157,7 @@
                 "exec": [
                   "pm.test('schedule publish succeeds', () => pm.response.to.have.status(200));",
                   "const body = pm.response.json();",
+                  "pm.test('schedule publish business result succeeds', () => pm.expect(body.code).to.eql(0));",
                   "pm.test('published schedules are returned', () => pm.expect(body.data).to.be.an('array'));"
                 ]
               }
@@ -124,12 +166,18 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"suggestionIds\": [{{scheduleSuggestionId}}]\n}"
+              "raw": "{\n  \"suggestionIds\": {{scheduleSuggestionIds}}\n}"
             },
             "url": "{{baseUrl}}/api/admin/schedule/publish"
           }
@@ -151,7 +199,12 @@
           ],
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/admin/dict/list"
           }
         }
@@ -178,7 +231,12 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"account\": \"13800000001\",\n  \"password\": \"123456\"\n}"
@@ -201,7 +259,12 @@
           ],
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{patientToken}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{patientToken}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/patient/info"
           }
         },
@@ -223,7 +286,12 @@
           ],
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{patientToken}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{patientToken}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/auth/me"
           }
         },
@@ -246,8 +314,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{patientToken}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{patientToken}}"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -266,8 +340,10 @@
                 "exec": [
                   "pm.test('available slots can be listed', () => pm.response.to.have.status(200));",
                   "const body = pm.response.json();",
-                  "pm.test('at least one bookable slot exists', () => pm.expect(body.data.length).to.be.greaterThan(0));",
-                  "const slot = body.data[0];",
+                  "pm.test('slot list business result succeeds', () => pm.expect(body.code).to.eql(0));",
+                  "const expectedPrefix = `${pm.environment.get('scheduledWorkDate')}T${pm.environment.get('scheduledTimeRange').split('-')[0]}`;",
+                  "const slot = body.data.find(item => String(item.doctorId) === String(pm.environment.get('scheduledDoctorId')) && String(item.departmentId) === String(pm.environment.get('scheduledDepartmentId')) && String(item.startTime).startsWith(expectedPrefix));",
+                  "pm.test('newly published slot is bookable', () => pm.expect(slot).to.exist);",
                   "pm.environment.set('slotId', slot.slotId);",
                   "pm.environment.set('slotDoctorId', slot.doctorId);",
                   "pm.environment.set('slotDepartmentId', slot.departmentId);",
@@ -278,37 +354,13 @@
           ],
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{patientToken}}" }],
-            "url": "{{baseUrl}}/api/registration/slots"
-          }
-        },
-        {
-          "name": "Create Active Registration",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('active registration is created', () => pm.response.to.have.status(200));",
-                  "const body = pm.response.json();",
-                  "pm.test('registration status is created', () => pm.expect(body.data.status).to.eql('CREATED'));",
-                  "pm.environment.set('registrationId', body.data.registrationId);"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{patientToken}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{patientToken}}"
+              }
             ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"doctorId\": {{slotDoctorId}},\n  \"departmentId\": {{slotDepartmentId}},\n  \"appointmentTime\": \"{{slotStartTime}}\",\n  \"triageRecordId\": {{triageRecordId}},\n  \"slotId\": {{slotId}}\n}"
-            },
-            "url": "{{baseUrl}}/api/registration/create"
+            "url": "{{baseUrl}}/api/registration/slots"
           }
         },
         {
@@ -321,6 +373,8 @@
                 "exec": [
                   "pm.test('cancellable registration is created', () => pm.response.to.have.status(200));",
                   "const body = pm.response.json();",
+                  "pm.test('cancellable registration business result succeeds', () => pm.expect(body.code).to.eql(0));",
+                  "pm.test('cancellable registration status is created', () => pm.expect(body.data.status).to.eql('CREATED'));",
                   "pm.environment.set('cancelRegistrationId', body.data.registrationId);"
                 ]
               }
@@ -329,12 +383,18 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{patientToken}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{patientToken}}"
+              }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"doctorId\": {{slotDoctorId}},\n  \"departmentId\": {{slotDepartmentId}},\n  \"appointmentTime\": \"{{slotStartTime}}\",\n  \"triageRecordId\": {{triageRecordId}}\n}"
+              "raw": "{\n  \"doctorId\": {{slotDoctorId}},\n  \"departmentId\": {{slotDepartmentId}},\n  \"appointmentTime\": \"{{slotStartTime}}\",\n  \"triageRecordId\": {{triageRecordId}},\n  \"slotId\": {{slotId}}\n}"
             },
             "url": "{{baseUrl}}/api/registration/create"
           }
@@ -357,14 +417,56 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{patientToken}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{patientToken}}"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"registrationId\": {{cancelRegistrationId}}\n}"
             },
             "url": "{{baseUrl}}/api/registration/cancel"
+          }
+        },
+        {
+          "name": "Create Active Registration",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('active registration is created', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('registration business result succeeds', () => pm.expect(body.code).to.eql(0));",
+                  "pm.test('registration status is created', () => pm.expect(body.data.status).to.eql('CREATED'));",
+                  "pm.environment.set('registrationId', body.data.registrationId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{patientToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"doctorId\": {{slotDoctorId}},\n  \"departmentId\": {{slotDepartmentId}},\n  \"appointmentTime\": \"{{slotStartTime}}\",\n  \"triageRecordId\": {{triageRecordId}},\n  \"slotId\": {{slotId}}\n}"
+            },
+            "url": "{{baseUrl}}/api/registration/create"
           }
         },
         {
@@ -384,7 +486,12 @@
           ],
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{patientToken}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{patientToken}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/registration/list"
           }
         }
@@ -411,10 +518,15 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"account\": \"doctor1\",\n  \"password\": \"123456\"\n}"
+              "raw": "{\n  \"account\": \"doctor{{slotDoctorId}}\",\n  \"password\": \"123456\"\n}"
             },
             "url": "{{baseUrl}}/api/doctor/login"
           }
@@ -429,15 +541,20 @@
                 "exec": [
                   "pm.test('doctor registrations can be listed', () => pm.response.to.have.status(200));",
                   "const body = pm.response.json();",
-                  "const existing = body.data.find(item => item.status === 'CREATED') || body.data[0];",
-                  "if (existing) pm.environment.set('registrationId', existing.registrationId);"
+                  "const targetId = String(pm.environment.get('registrationId'));",
+                  "pm.test('assigned doctor sees this active registration', () => pm.expect(body.data.some(item => String(item.registrationId) === targetId && item.status === 'CREATED')).to.eql(true));"
                 ]
               }
             }
           ],
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{doctorToken}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctorToken}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/registration/list"
           }
         },
@@ -459,8 +576,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{doctorToken}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctorToken}}"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -485,8 +608,13 @@
           ],
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{doctorToken}}" }],
-            "url": "{{baseUrl}}/api/medical-record/generate/stream?registrationId={{registrationId}}"
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/medical-record/generate/stream?registrationId={{registrationId}}&dialogueText=patient%20reports%20chest%20pain%20and%20dyspnea%20for%20two%20days&departmentCode=CARDIOLOGY"
           }
         },
         {
@@ -507,8 +635,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{doctorToken}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctorToken}}"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -527,7 +661,9 @@
                 "exec": [
                   "pm.test('prescription check succeeds', () => pm.response.to.have.status(200));",
                   "const body = pm.response.json();",
-                  "pm.test('aspirin risk is detected by backend AI chain', () => pm.expect(body.data.riskLevel).to.eql('MEDIUM'));",
+                  "pm.test('prescription check business result succeeds', () => pm.expect(body.code).to.eql(0));",
+                  "pm.test('real AI detects aspirin and warfarin risk', () => pm.expect(['MEDIUM', 'HIGH']).to.include(body.data.riskLevel));",
+                  "pm.test('prescription check is not degraded', () => pm.expect(body.data.degraded).to.eql(false));",
                   "pm.environment.set('prescriptionRiskLevel', body.data.riskLevel);"
                 ]
               }
@@ -536,12 +672,18 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{doctorToken}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctorToken}}"
+              }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"patientId\": {{patientId}},\n  \"doctorId\": {{doctorId}},\n  \"drugs\": [\n    {\"drugName\":\"aspirin\",\"dosage\":\"100mg\",\"frequency\":\"once daily\",\"usageMethod\":\"oral\",\"days\":7,\"remark\":\"take after meals\"}\n  ]\n}"
+              "raw": "{\n  \"patientId\": {{patientId}},\n  \"doctorId\": {{doctorId}},\n  \"drugs\": [\n    {\"drugName\":\"阿司匹林\",\"dosage\":\"100mg\",\"frequency\":\"每日一次\",\"usageMethod\":\"口服\",\"days\":7,\"remark\":\"饭后服用\"},\n    {\"drugName\":\"华法林\",\"dosage\":\"2.5mg\",\"frequency\":\"每日一次\",\"usageMethod\":\"口服\",\"days\":7,\"remark\":\"监测INR\"}\n  ]\n}"
             },
             "url": "{{baseUrl}}/api/prescription/check"
           }
@@ -565,8 +707,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{doctorToken}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctorToken}}"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -593,7 +741,12 @@
           ],
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{doctorToken}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctorToken}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/prescription/detail?id={{prescriptionId}}"
           }
         },
@@ -615,8 +768,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{doctorToken}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctorToken}}"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -629,20 +788,38 @@
           "name": "Doctor Notification List",
           "event": [
             {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "setTimeout(() => {}, 6000);"
+                ]
+              }
+            },
+            {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('doctor notification list can be read', () => pm.response.to.have.status(200));",
                   "const body = pm.response.json();",
-                  "if (body.data.length) pm.environment.set('notificationId', body.data[0].notificationId);"
+                  "const prescriptionId = String(pm.environment.get('prescriptionId'));",
+                  "const matches = body.data.filter(item => String(item.prescriptionId) === prescriptionId && item.type === 'PRESCRIPTION_HIGH_RISK');",
+                  "pm.test('this prescription emits exactly one risk notification', () => pm.expect(matches.length).to.eql(1));",
+                  "pm.test('risk notification preserves the AI risk level', () => { pm.expect(matches[0], 'risk notification exists').to.exist; pm.expect(matches[0].riskLevel).to.be.oneOf(['MEDIUM', 'HIGH']); });",
+                  "if (matches.length) pm.environment.set('notificationId', matches[0].notificationId);"
                 ]
               }
             }
           ],
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{doctorToken}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctorToken}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/notification/list"
           }
         }
@@ -668,7 +845,12 @@
           ],
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{patientToken}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{patientToken}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/medical-record/list"
           }
         },
@@ -689,7 +871,12 @@
           ],
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{patientToken}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{patientToken}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/prescription/list"
           }
         },
@@ -711,7 +898,12 @@
           ],
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{patientToken}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{patientToken}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/prescription/detail?id={{prescriptionId}}"
           }
         }
@@ -739,7 +931,12 @@
           ],
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/admin/triage-desk/list"
           }
         },
@@ -758,7 +955,12 @@
           ],
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/admin/triage-desk/detail?id={{triageRecordId}}"
           }
         },
@@ -780,8 +982,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -808,8 +1016,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -821,20 +1035,20 @@
       ]
     },
     {
-      "name": "AI fallback workflow",
+      "name": "Additional AI workflow",
       "item": [
         {
-          "name": "Fallback Triage Uses Backend AI Chain",
+          "name": "Non-cardiology Triage Uses Real Dify",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('fallback triage request succeeds', () => pm.response.to.have.status(200));",
+                  "pm.test('non-cardiology triage request succeeds', () => pm.response.to.have.status(200));",
                   "const body = pm.response.json();",
-                  "pm.test('mock provider marks non-cardiology triage as degraded/manual', () => pm.expect(body.data.degraded).to.eql(true));",
-                  "pm.test('manual fallback status is stored', () => pm.expect(body.data.status).to.eql('MANUAL_REQUIRED'));"
+                  "pm.test('real Dify result is not degraded', () => pm.expect(body.data.degraded).to.eql(false));",
+                  "pm.test('AI recommendation is stored', () => pm.expect(body.data.status).to.eql('AI_RECOMMENDED'));"
                 ]
               }
             }
@@ -842,8 +1056,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{patientToken}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{patientToken}}"
+              }
             ],
             "body": {
               "mode": "raw",
