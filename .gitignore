@@ -12,6 +12,7 @@ frontend/*.err
 node_modules/
 dist/
 frontend/coverage/
+tmp/
 
 # 本地配置文件（每人用自己的数据库）
 **/application-dev.yml
