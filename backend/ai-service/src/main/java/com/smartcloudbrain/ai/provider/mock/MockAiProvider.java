@@ -35,12 +35,12 @@ public class MockAiProvider implements AiProvider {
   @Override
   public MedicalRecordGenerateResponse generateMedicalRecord(MedicalRecordGenerateRequest request, PromptResolveResponse prompt) {
     return new MedicalRecordGenerateResponse(
-        "Chest pain with dyspnea for two days",
-        "Symptoms worsen after activity and are relieved by rest.",
-        "No clear past history was provided.",
-        "Physical examination should be completed by the doctor.",
-        "Chest pain under evaluation.",
-        "Complete ECG and cardiac enzyme checks.",
+        "Chest pain with dyspnea 啊啊for two days",
+        "Symptoms worsen af啊啊啊ter activity and are relieved by rest.",
+        "No clear past hist啊啊啊ory was provided.",
+        "Physical examination啊啊 should be completed by the doctor.",
+        "Chest pain under 啊啊evaluation.",
+        "Complete ECG 啊啊啊and cardiac enzyme checks.",
         false
     );
   }

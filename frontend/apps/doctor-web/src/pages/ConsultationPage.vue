@@ -88,6 +88,27 @@ function applyDraft(draft: DataRow) {
   medicalForm.treatmentAdvice = fieldText(draft, "treatmentAdvice", medicalForm.treatmentAdvice);
 }
 
+function normalizeDraft(payload: DataRow) {
+  const nested = payload.data;
+  return nested && typeof nested === "object" && !Array.isArray(nested) ? nested as DataRow : payload;
+}
+
+function formatDraft(draft: DataRow) {
+  const sections = [
+    ["主诉", fieldText(draft, "chiefComplaint", "")],
+    ["现病史", fieldText(draft, "presentIllness", "")],
+    ["既往史", fieldText(draft, "pastHistory", "")],
+    ["体格检查", fieldText(draft, "physicalExam", "")],
+    ["诊断", fieldText(draft, "diagnosis", "")],
+    ["处理建议", fieldText(draft, "treatmentAdvice", "")],
+  ];
+  const text = sections
+    .filter(([, value]) => value)
+    .map(([label, value]) => `${label}：${value}`)
+    .join("\n");
+  return text || fieldText(draft, "soapContent", "暂无生成内容");
+}
+
 function parseEventData(raw: string) {
   try { return JSON.parse(raw) as DataRow; } catch { return { text: raw }; }
 }
@@ -101,7 +122,9 @@ function handleStreamBlock(block: string) {
     const data = parseEventData(dataText);
     streamText.value += `${fieldText(data, "text", dataText)}\n`;
   } else if (eventName === "structured") {
-    applyDraft(parseEventData(dataText));
+    const draft = normalizeDraft(parseEventData(dataText));
+    applyDraft(draft);
+    streamText.value = formatDraft(draft);
     streamStatus.value = "DRAFT_READY";
   } else if (eventName === "error") {
     throw new Error(fieldText(parseEventData(dataText), "message", "智能病历生成失败"));
