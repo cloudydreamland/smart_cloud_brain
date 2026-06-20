@@ -5,6 +5,7 @@ import {
   api,
   fieldText,
   formatApiError,
+  statusText,
   statusClass,
   toNumber,
   usePagination,
@@ -19,6 +20,7 @@ import { DataTable, ErrorState, FormField, Modal, PaginationBar, StatusTag } fro
 type Entity = "department" | "doctor" | "drug" | "knowledge" | "prompt" | "dict";
 type FieldType = "text" | "password" | "number" | "textarea" | "checkbox" | "department-select";
 type FieldConfig = [key: string, label: string, type: FieldType];
+type DictOption = { value: string; label: string };
 
 const props = defineProps<{ entity: Entity }>();
 const emit = defineEmits<{ refresh: [] }>();
@@ -55,6 +57,50 @@ const promptTasks = [
     sample: "诊断：胸痛待查，高血压；药品：aspirin 100mg once daily oral",
   },
 ];
+
+const fallbackDicts: Record<string, DictOption[]> = {
+  DICT_TYPE: [
+    { value: "SYSTEM_STATUS", label: "系统状态" },
+    { value: "PROMPT_TASK_TYPE", label: "AI 任务类型" },
+    { value: "REGISTRATION_STATUS", label: "挂号状态" },
+    { value: "TRIAGE_STATUS", label: "分诊状态" },
+    { value: "RISK_LEVEL", label: "风险等级" },
+    { value: "READ_STATUS", label: "阅读状态" },
+    { value: "GENDER", label: "性别" },
+  ],
+  SYSTEM_STATUS: [
+    { value: "ENABLED", label: "启用" },
+    { value: "DISABLED", label: "停用" },
+  ],
+  PROMPT_TASK_TYPE: promptTasks.map((task) => ({ value: task.value, label: task.label })),
+  REGISTRATION_STATUS: [
+    { value: "CREATED", label: "待接诊" },
+    { value: "CONFIRMED", label: "已确认" },
+    { value: "COMPLETED", label: "已完成" },
+    { value: "CANCELLED", label: "已取消" },
+  ],
+  TRIAGE_STATUS: [
+    { value: "AI_RECOMMENDED", label: "AI 已推荐" },
+    { value: "ASSIGNED", label: "已分配医生" },
+    { value: "MANUAL_REQUIRED", label: "待人工处理" },
+    { value: "CLOSED", label: "已关闭" },
+  ],
+  RISK_LEVEL: [
+    { value: "UNREVIEWED", label: "未审核" },
+    { value: "LOW", label: "低风险" },
+    { value: "MEDIUM", label: "中风险" },
+    { value: "HIGH", label: "高风险" },
+  ],
+  READ_STATUS: [
+    { value: "UNREAD", label: "未读" },
+    { value: "READ", label: "已读" },
+  ],
+  GENDER: [
+    { value: "MALE", label: "男" },
+    { value: "FEMALE", label: "女" },
+    { value: "UNKNOWN", label: "未知" },
+  ],
+};
 
 const configs: Record<Entity, {
   title: string;
@@ -123,6 +169,53 @@ const rows = computed(() => {
 });
 const { currentPage, pageSize, total, pageRows } = usePagination(rows, 8);
 
+function dictionaryOptions(dictType: string): DictOption[] {
+  const options = dicts.value
+    .filter((item) => fieldText(item, "dictType") === dictType && fieldText(item, "status", "ENABLED") !== "DISABLED")
+    .sort((left, right) => toNumber(left.sort) - toNumber(right.sort) || toNumber(left.id) - toNumber(right.id))
+    .map((item) => ({ value: fieldText(item, "dictKey"), label: fieldText(item, "dictValue") }))
+    .filter((item) => item.value);
+  return options.length ? options : fallbackDicts[dictType] ?? [];
+}
+
+function firstDictValue(dictType: string, fallback: string) {
+  return dictionaryOptions(dictType)[0]?.value ?? fallback;
+}
+
+function fieldDictType(key: string) {
+  if (key === "status") return "SYSTEM_STATUS";
+  if (key === "taskType") return "PROMPT_TASK_TYPE";
+  if (key === "dictType") return "DICT_TYPE";
+  return "";
+}
+
+function shouldUseDictionarySelect(key: string) {
+  return Boolean(fieldDictType(key));
+}
+
+function dictionaryLabel(dictType: string, value: unknown) {
+  const raw = String(value ?? "");
+  return dictionaryOptions(dictType).find((item) => item.value === raw)?.label ?? statusText(raw, raw);
+}
+
+function departmentCodeOptions() {
+  const options = departments.value
+    .map((department) => ({
+      value: fieldText(department, "code"),
+      label: `${fieldText(department, "name")}（${fieldText(department, "code")}）`,
+    }))
+    .filter((item) => item.value);
+  return [{ value: "GENERAL", label: "通用（GENERAL）" }, ...options];
+}
+
+function displayCell(column: string, value: unknown) {
+  if (column === "status") return dictionaryLabel("SYSTEM_STATUS", value);
+  if (column === "taskType") return dictionaryLabel("PROMPT_TASK_TYPE", value);
+  if (column === "dictType") return dictionaryLabel("DICT_TYPE", value);
+  if (column === "departmentCode") return departmentCodeOptions().find((item) => item.value === String(value ?? ""))?.label ?? String(value ?? "");
+  return String(value ?? "");
+}
+
 async function refresh() {
   loading.value = true;
   error.value = "";
@@ -147,12 +240,14 @@ function openEditor(item?: DataRow) {
       form[key] = type === "checkbox" ? true : ["number", "department-select"].includes(type) ? 0 : "";
     });
     if (props.entity === "doctor") form.departmentId = toNumber(departments.value[0]?.id);
-    if ("status" in form) form.status = "ENABLED";
+    if ("status" in form) form.status = firstDictValue("SYSTEM_STATUS", "ENABLED");
+    if (props.entity === "dict") form.dictType = firstDictValue("DICT_TYPE", "SYSTEM_STATUS");
+    if (props.entity === "knowledge" || props.entity === "prompt") form.departmentCode = departmentCodeOptions()[0]?.value ?? "GENERAL";
     if (props.entity === "prompt") {
-      form.taskType = "MEDICAL_RECORD";
-      form.outputSchema = defaultPromptSchema("MEDICAL_RECORD");
+      form.taskType = firstDictValue("PROMPT_TASK_TYPE", "MEDICAL_RECORD");
+      form.outputSchema = defaultPromptSchema(String(form.taskType));
       form.version = "v1";
-      form.sampleInput = promptTaskConfig("MEDICAL_RECORD").sample;
+      form.sampleInput = promptTaskConfig(String(form.taskType)).sample;
     }
   }
   if (props.entity === "prompt" && !form.sampleInput) form.sampleInput = promptTaskConfig(String(form.taskType)).sample;
@@ -312,8 +407,9 @@ refresh();
           <tbody>
             <tr v-for="item in pageRows" :key="String(item.id)">
               <td v-for="column in config.columns" :key="column">
-                <StatusTag v-if="column === 'status' || column === 'enabled'" :status="fieldText(item, column)" :tone="statusClass(item[column])" />
-                <span v-else>{{ fieldText(item, column) }}</span>
+                <StatusTag v-if="column === 'status'" :status="displayCell(column, item[column])" :tone="statusClass(item[column])" />
+                <StatusTag v-else-if="column === 'enabled'" :status="fieldText(item, column)" :tone="statusClass(item[column])" />
+                <span v-else>{{ displayCell(column, item[column]) }}</span>
               </td>
               <td><button type="button" @click="openEditor(item)">编辑</button></td>
             </tr>
@@ -333,14 +429,17 @@ refresh();
         <FormField v-for="[key, label, type] in config.fields" :key="key" :label="label" :hint="fieldHint(key)">
           <textarea v-if="type === 'textarea'" v-model="form[key]" />
           <input v-else-if="type === 'checkbox'" v-model="form[key]" type="checkbox" />
-          <select v-else-if="props.entity === 'prompt' && key === 'taskType'" v-model="form[key]" @change="onPromptTaskChange">
-            <option v-for="task in promptTasks" :key="task.value" :value="task.value">{{ task.label }}（{{ task.value }}）</option>
+          <select v-else-if="shouldUseDictionarySelect(key)" v-model="form[key]" @change="key === 'taskType' && onPromptTaskChange()">
+            <option v-for="option in dictionaryOptions(fieldDictType(key))" :key="option.value" :value="option.value">{{ option.label }}（{{ option.value }}）</option>
           </select>
           <select v-else-if="type === 'department-select'" v-model.number="form[key]">
             <option :value="0" disabled>请选择科室</option>
             <option v-for="department in departments" :key="String(department.id)" :value="toNumber(department.id)">
               {{ fieldText(department, "name") }}
             </option>
+          </select>
+          <select v-else-if="key === 'departmentCode'" v-model="form[key]">
+            <option v-for="department in departmentCodeOptions()" :key="department.value" :value="department.value">{{ department.label }}</option>
           </select>
           <input v-else-if="type === 'number'" v-model.number="form[key]" type="number" />
           <input v-else v-model="form[key]" :type="type" />

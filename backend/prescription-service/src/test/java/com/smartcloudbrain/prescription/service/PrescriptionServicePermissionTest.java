@@ -2,6 +2,7 @@ package com.smartcloudbrain.prescription.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -15,12 +16,14 @@ import com.smartcloudbrain.common.security.AuthenticatedUser;
 import com.smartcloudbrain.common.security.CurrentUserService;
 import com.smartcloudbrain.common.security.RoleType;
 import com.smartcloudbrain.prescription.dto.prescription.PrescriptionCreateRequest;
+import com.smartcloudbrain.prescription.entity.Drug;
 import com.smartcloudbrain.prescription.entity.MedicalRecord;
 import com.smartcloudbrain.prescription.entity.Patient;
 import com.smartcloudbrain.prescription.entity.Prescription;
 import com.smartcloudbrain.prescription.entity.PrescriptionCheckRecord;
 import com.smartcloudbrain.prescription.entity.PrescriptionItem;
 import com.smartcloudbrain.prescription.event.OutboxEventPublisher;
+import com.smartcloudbrain.prescription.repository.DrugRepository;
 import com.smartcloudbrain.prescription.repository.MedicalRecordRepository;
 import com.smartcloudbrain.prescription.repository.PatientRepository;
 import com.smartcloudbrain.prescription.repository.PrescriptionCheckRecordRepository;
@@ -31,6 +34,7 @@ import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -44,6 +48,7 @@ class PrescriptionServicePermissionTest {
   @Mock private PrescriptionCheckRecordRepository checkRecordRepository;
   @Mock private MedicalRecordRepository medicalRecordRepository;
   @Mock private PatientRepository patientRepository;
+  @Mock private DrugRepository drugRepository;
   @Mock private OutboxEventPublisher outboxEventPublisher;
   @Mock private CurrentUserService currentUserService;
   @InjectMocks private PrescriptionService prescriptionService;
@@ -126,6 +131,36 @@ class PrescriptionServicePermissionTest {
     assertEquals("HIGH", result.get("riskLevel"));
     assertEquals(77L, result.get("checkRecordId"));
     verify(outboxEventPublisher, never()).enqueue(any(), any(), any());
+  }
+
+  @Test
+  void checkEnrichesDrugsWithCatalogKnowledgeBeforeAiReview() {
+    Drug aspirin = new Drug();
+    aspirin.setName("aspirin");
+    aspirin.setSpecification("100mg tablet");
+    aspirin.setContraindication("active bleeding");
+    aspirin.setInteractionRule("avoid with warfarin");
+    when(currentUserService.require(RoleType.DOCTOR)).thenReturn(new AuthenticatedUser(10L, RoleType.DOCTOR, "doctor"));
+    when(patientRepository.findById(2L)).thenReturn(Optional.empty());
+    when(medicalRecordRepository.findFirstByPatientIdAndDoctorIdOrderByIdDesc(2L, 10L)).thenReturn(Optional.empty());
+    when(drugRepository.findByStatusIgnoreCase("ENABLED")).thenReturn(List.of(aspirin));
+    when(aiGatewayService.checkPrescription(any(PrescriptionCheckRequest.class)))
+        .thenReturn(new PrescriptionCheckResponse("LOW", "ok", List.of(), false));
+    when(checkRecordRepository.save(any(PrescriptionCheckRecord.class))).thenAnswer(invocation -> {
+      PrescriptionCheckRecord record = invocation.getArgument(0);
+      record.setId(78L);
+      return record;
+    });
+
+    Map<String, Object> result = prescriptionService.check(new PrescriptionCheckRequest(2L, 10L, drugs()));
+
+    ArgumentCaptor<PrescriptionCheckRequest> requestCaptor = ArgumentCaptor.forClass(PrescriptionCheckRequest.class);
+    verify(aiGatewayService).checkPrescription(requestCaptor.capture());
+    DrugItem enrichedDrug = requestCaptor.getValue().drugs().get(0);
+    assertTrue(enrichedDrug.remark().contains("Drug catalog"));
+    assertTrue(enrichedDrug.remark().contains("specification=100mg tablet"));
+    assertTrue(enrichedDrug.remark().contains("contraindication=active bleeding"));
+    assertEquals(1, ((List<?>) result.get("drugKnowledge")).size());
   }
 
   @Test
