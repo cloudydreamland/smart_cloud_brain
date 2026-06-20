@@ -7,6 +7,7 @@ export { default as ErrorState } from "./components/ErrorState.vue";
 export { default as FormField } from "./components/FormField.vue";
 export { default as LoadingState } from "./components/LoadingState.vue";
 export { default as Modal } from "./components/Modal.vue";
+export { default as PaginationBar } from "./components/PaginationBar.vue";
 export { default as SegmentedControl } from "./components/SegmentedControl.vue";
 export { default as SideNav } from "./components/SideNav.vue";
 export { default as StatusTag } from "./components/StatusTag.vue";

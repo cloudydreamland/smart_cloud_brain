@@ -2,8 +2,8 @@
 import { computed, reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
-import { api, fieldText, formatApiError, statusClass, statusText, useAuthStore, usePatientWorkflowStore } from "@smart-cloud-brain/shared-api";
-import { EmptyState, ErrorState, FormField, LoadingState, StatusTag } from "@smart-cloud-brain/shared-ui";
+import { api, fieldText, formatApiError, statusClass, statusText, useAuthStore, usePagination, usePatientWorkflowStore } from "@smart-cloud-brain/shared-api";
+import { EmptyState, ErrorState, FormField, LoadingState, PaginationBar, StatusTag } from "@smart-cloud-brain/shared-ui";
 import TriageResultModal from "../components/TriageResultModal.vue";
 
 const router = useRouter();
@@ -17,6 +17,7 @@ const notice = ref("");
 const resultOpen = ref(false);
 const canSubmit = computed(() => form.symptoms.trim().length >= 6 && form.duration.trim().length > 0);
 const severityLabels: Record<string, string> = { LOW: "轻度", MEDIUM: "中度", HIGH: "重度或明显加重" };
+const { currentPage, pageSize, total, pageRows } = usePagination(triageHistory, 5);
 
 function complaint() {
   return [
@@ -82,10 +83,11 @@ async function submit() {
       <section class="panel">
         <header class="panel-header"><div class="panel-title"><h2>历史分诊</h2><p>用于回看最近症状和推荐记录。</p></div></header>
         <div class="list">
-          <article v-for="item in triageHistory" :key="String(item.triageRecordId)" class="list-row">
+          <article v-for="item in pageRows" :key="String(item.triageRecordId)" class="list-row">
             <div class="row-main"><strong>{{ fieldText(item, "recommendedDepartment", "待确认") }}</strong><p>{{ fieldText(item, "chiefComplaint") }}</p></div>
             <StatusTag :status="statusText(item.status)" :tone="statusClass(item.status)" />
           </article>
+          <PaginationBar v-model="currentPage" :total="total" :page-size="pageSize" />
           <EmptyState v-if="!triageHistory.length" title="暂无历史分诊" />
         </div>
       </section>

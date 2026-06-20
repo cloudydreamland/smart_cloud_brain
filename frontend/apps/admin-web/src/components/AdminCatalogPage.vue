@@ -7,14 +7,15 @@ import {
   formatApiError,
   statusClass,
   toNumber,
+  usePagination,
   useAdminWorkflowStore,
   useAuthStore,
   type DataRow,
 } from "@smart-cloud-brain/shared-api";
-import { DataTable, ErrorState, FormField, Modal, StatusTag } from "@smart-cloud-brain/shared-ui";
+import { DataTable, ErrorState, FormField, Modal, PaginationBar, StatusTag } from "@smart-cloud-brain/shared-ui";
 
 type Entity = "department" | "doctor" | "drug" | "knowledge" | "prompt" | "dict";
-type FieldType = "text" | "password" | "number" | "textarea" | "checkbox";
+type FieldType = "text" | "password" | "number" | "textarea" | "checkbox" | "department-select";
 type FieldConfig = [key: string, label: string, type: FieldType];
 
 const props = defineProps<{ entity: Entity }>();
@@ -52,7 +53,7 @@ const configs: Record<Entity, {
     rows: () => doctors.value,
     keys: ["name", "phone", "departmentName", "title", "specialty"],
     columns: ["id", "name", "phone", "departmentName", "title", "status"],
-    fields: [["name", "姓名", "text"], ["phone", "手机号", "text"], ["password", "新密码", "password"], ["departmentId", "科室 ID", "number"], ["title", "职称", "text"], ["specialty", "专长", "textarea"], ["status", "状态", "text"]],
+    fields: [["name", "姓名", "text"], ["phone", "手机号", "text"], ["password", "新密码", "password"], ["departmentId", "科室", "department-select"], ["title", "职称", "text"], ["specialty", "专长", "textarea"], ["status", "状态", "text"]],
   },
   drug: {
     title: "药品维护",
@@ -95,6 +96,7 @@ const rows = computed(() => {
   if (!q) return source;
   return source.filter((item) => config.value.keys.some((key) => fieldText(item, key, "").toLowerCase().includes(q)));
 });
+const { currentPage, pageSize, total, pageRows } = usePagination(rows, 8);
 
 async function refresh() {
   loading.value = true;
@@ -116,7 +118,9 @@ function openEditor(item?: DataRow) {
     form.id = toNumber(item.id) || undefined;
     config.value.fields.forEach(([key]) => { form[key] = item[key] as string | number | boolean | undefined; });
   } else {
-    config.value.fields.forEach(([key, , type]) => { form[key] = type === "checkbox" ? true : type === "number" ? 0 : ""; });
+    config.value.fields.forEach(([key, , type]) => {
+      form[key] = type === "checkbox" ? true : ["number", "department-select"].includes(type) ? 0 : "";
+    });
     if (props.entity === "doctor") form.departmentId = toNumber(departments.value[0]?.id);
     if ("status" in form) form.status = "ENABLED";
     if (props.entity === "prompt") {
@@ -138,11 +142,29 @@ function requireFields() {
     dict: ["dictType", "dictKey", "dictValue"],
   };
   const missing = required[props.entity].find((key) => form[key] === undefined || form[key] === "" || form[key] === 0);
-  return missing ? `请填写 ${missing}` : "";
+  return missing ? `请填写 ${fieldLabel(missing)}` : "";
+}
+
+function fieldLabel(key: string) {
+  return config.value.fields.find(([fieldKey]) => fieldKey === key)?.[1] ?? key;
+}
+
+function validateDoctorForm() {
+  if (props.entity !== "doctor") return "";
+  form.phone = String(form.phone ?? "").trim();
+  form.departmentId = toNumber(form.departmentId);
+  if (!/^\d{11}$/.test(String(form.phone))) return "手机号必须为11位数字";
+  if (!form.departmentId) return "请选择科室";
+  return "";
+}
+
+function fieldHint(key: string) {
+  if (props.entity === "doctor" && key === "phone") return "请输入11位数字";
+  return "";
 }
 
 async function save() {
-  const invalid = requireFields();
+  const invalid = requireFields() || validateDoctorForm();
   if (invalid) {
     error.value = invalid;
     return;
@@ -188,7 +210,7 @@ refresh();
         <DataTable :rows="rows" :loading="loading" :error="error" empty-title="暂无数据" empty-message="当前筛选条件下没有记录。">
           <thead><tr><th v-for="column in config.columns" :key="column">{{ column }}</th><th class="actions-cell">操作</th></tr></thead>
           <tbody>
-            <tr v-for="item in rows" :key="String(item.id)">
+            <tr v-for="item in pageRows" :key="String(item.id)">
               <td v-for="column in config.columns" :key="column">
                 <StatusTag v-if="column === 'status' || column === 'enabled'" :status="fieldText(item, column)" :tone="statusClass(item[column])" />
                 <span v-else>{{ fieldText(item, column) }}</span>
@@ -197,6 +219,7 @@ refresh();
             </tr>
           </tbody>
         </DataTable>
+        <PaginationBar v-model="currentPage" :total="total" :page-size="pageSize" />
       </div>
     </section>
     <aside class="panel">
@@ -207,9 +230,16 @@ refresh();
     </aside>
     <Modal :open="editorOpen" :title="config.title" description="新增或编辑当前维护对象。" @close="editorOpen = false">
       <div class="stack">
-        <FormField v-for="[key, label, type] in config.fields" :key="key" :label="label">
+        <FormField v-for="[key, label, type] in config.fields" :key="key" :label="label" :hint="fieldHint(key)">
           <textarea v-if="type === 'textarea'" v-model="form[key]" />
           <input v-else-if="type === 'checkbox'" v-model="form[key]" type="checkbox" />
+          <select v-else-if="type === 'department-select'" v-model.number="form[key]">
+            <option :value="0" disabled>请选择科室</option>
+            <option v-for="department in departments" :key="String(department.id)" :value="toNumber(department.id)">
+              {{ fieldText(department, "name") }}
+            </option>
+          </select>
+          <input v-else-if="type === 'number'" v-model.number="form[key]" type="number" />
           <input v-else v-model="form[key]" :type="type" />
         </FormField>
       </div>

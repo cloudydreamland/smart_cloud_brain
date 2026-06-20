@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { computed, ref } from "vue";
+import { computed, ref, toValue, watch, type MaybeRefOrGetter } from "vue";
 
 export type Role = "PATIENT" | "DOCTOR" | "ADMIN";
 
@@ -480,6 +480,23 @@ export function statusText(status: unknown, fallback = "-") {
     UNKNOWN: "未说明",
   };
   return labels[raw.toUpperCase()] ?? raw;
+}
+
+export function usePagination<T>(source: MaybeRefOrGetter<T[]>, initialPageSize = 8) {
+  const currentPage = ref(1);
+  const pageSize = ref(initialPageSize);
+  const total = computed(() => toValue(source).length);
+  const pageCount = computed(() => Math.max(1, Math.ceil(total.value / Math.max(1, pageSize.value))));
+  const pageRows = computed(() => {
+    const start = (currentPage.value - 1) * pageSize.value;
+    return toValue(source).slice(start, start + pageSize.value);
+  });
+
+  watch([total, pageCount], () => {
+    currentPage.value = Math.min(Math.max(1, currentPage.value), pageCount.value);
+  });
+
+  return { currentPage, pageSize, total, pageCount, pageRows };
 }
 
 export const useAuthStore = defineStore("auth", () => {

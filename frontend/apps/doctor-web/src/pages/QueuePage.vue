@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { fieldText, formatApiError, statusClass, useAuthStore, useDoctorWorkflowStore } from "@smart-cloud-brain/shared-api";
-import { EmptyState, ErrorState, LoadingState, SegmentedControl, StatusTag } from "@smart-cloud-brain/shared-ui";
+import { fieldText, formatApiError, statusClass, useAuthStore, useDoctorWorkflowStore, usePagination } from "@smart-cloud-brain/shared-api";
+import { EmptyState, ErrorState, LoadingState, PaginationBar, SegmentedControl, StatusTag } from "@smart-cloud-brain/shared-ui";
 
 const auth = useAuthStore();
 const workflow = useDoctorWorkflowStore();
@@ -22,6 +22,7 @@ const rows = computed(() => registrations.value.filter((item) => {
   const haystack = `${fieldText(item, "patientName", "")} ${fieldText(item, "patientId", "")} ${fieldText(item, "departmentName", "")}`.toLowerCase();
   return (!filter.value || fieldText(item, "status") === filter.value) && (!keyword.value || haystack.includes(keyword.value.toLowerCase()));
 }));
+const { currentPage, pageSize, total, pageRows } = usePagination(rows, 10);
 
 async function refresh() {
   loading.value = true;
@@ -68,8 +69,8 @@ refresh();
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(item, index) in rows" :key="String(item.registrationId)">
-              <td>{{ index + 1 }}</td>
+            <tr v-for="(item, index) in pageRows" :key="String(item.registrationId)">
+              <td>{{ (currentPage - 1) * pageSize + index + 1 }}</td>
               <td><strong>{{ fieldText(item, "patientName", `患者${fieldText(item, "patientId")}`) }}</strong></td>
               <td>{{ fieldText(item, "patientId", "-") }}</td>
               <td>{{ fieldText(item, "departmentName", "-") }}</td>
@@ -79,6 +80,7 @@ refresh();
             </tr>
           </tbody>
         </table>
+        <PaginationBar v-model="currentPage" :total="total" :page-size="pageSize" />
       </div>
       <EmptyState v-else title="暂无待接诊患者" message="" />
     </section>

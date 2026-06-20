@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { reactive, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { api, fieldText, formatApiError, toNumber, useAdminWorkflowStore, useAuthStore, type DataRow } from "@smart-cloud-brain/shared-api";
-import { EmptyState, ErrorState, FormField, LoadingState } from "@smart-cloud-brain/shared-ui";
+import { api, fieldText, formatApiError, toNumber, useAdminWorkflowStore, useAuthStore, usePagination, type DataRow } from "@smart-cloud-brain/shared-api";
+import { EmptyState, ErrorState, FormField, LoadingState, PaginationBar } from "@smart-cloud-brain/shared-ui";
 import ScheduleSuggestionDetailModal from "../components/ScheduleSuggestionDetailModal.vue";
 import PublishScheduleConfirmModal from "../components/PublishScheduleConfirmModal.vue";
 
@@ -16,6 +16,18 @@ const error = ref("");
 const notice = ref("");
 const selected = ref<DataRow | null>(null);
 const publishOpen = ref(false);
+const {
+  currentPage: suggestionPage,
+  pageSize: suggestionPageSize,
+  total: suggestionTotal,
+  pageRows: pagedSuggestions,
+} = usePagination(suggestions, 6);
+const {
+  currentPage: schedulePage,
+  pageSize: schedulePageSize,
+  total: scheduleTotal,
+  pageRows: pagedSchedules,
+} = usePagination(schedules, 6);
 
 async function generate() {
   loading.value = true;
@@ -76,10 +88,11 @@ async function openDetail(item: DataRow) {
         <div class="toolbar"><button type="button" :disabled="loading" @click="generate">生成建议</button><button class="primary" type="button" :disabled="loading || !suggestions.length" @click="publishOpen = true">发布号源</button></div>
         <LoadingState v-if="loading" />
         <div v-if="suggestions.length" class="list">
-          <article v-for="item in suggestions" :key="String(item.id)" class="list-row">
+          <article v-for="item in pagedSuggestions" :key="String(item.id)" class="list-row">
             <div class="row-main"><strong>{{ fieldText(item, "workDate") }} {{ fieldText(item, "timeRange") }}</strong><p>{{ fieldText(item, "doctorName") }} · 容量 {{ fieldText(item, "capacity") }}</p></div>
             <button type="button" @click="openDetail(item)">详情</button>
           </article>
+          <PaginationBar v-model="suggestionPage" :total="suggestionTotal" :page-size="suggestionPageSize" />
         </div>
         <EmptyState v-else title="暂无待发布建议" />
       </div>
@@ -87,7 +100,8 @@ async function openDetail(item: DataRow) {
     <aside class="panel">
       <header class="panel-header"><div class="panel-title"><h2>已发布排班</h2><p>后端排班列表。</p></div></header>
       <div class="list">
-        <article v-for="item in schedules" :key="String(item.id)" class="list-row"><div class="row-main"><strong>{{ fieldText(item, "workDate") }} {{ fieldText(item, "timeRange") }}</strong><p>{{ fieldText(item, "doctorName") }} · 容量 {{ fieldText(item, "capacity") }}</p></div></article>
+        <article v-for="item in pagedSchedules" :key="String(item.id)" class="list-row"><div class="row-main"><strong>{{ fieldText(item, "workDate") }} {{ fieldText(item, "timeRange") }}</strong><p>{{ fieldText(item, "doctorName") }} · 容量 {{ fieldText(item, "capacity") }}</p></div></article>
+        <PaginationBar v-model="schedulePage" :total="scheduleTotal" :page-size="schedulePageSize" />
         <EmptyState v-if="!schedules.length" title="暂无已发布排班" />
       </div>
     </aside>

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { storeToRefs } from "pinia";
-import { api, fieldText, formatApiError, useAuthStore, usePatientWorkflowStore, type DataRow } from "@smart-cloud-brain/shared-api";
-import { EmptyState, ErrorState, LoadingState } from "@smart-cloud-brain/shared-ui";
+import { api, fieldText, formatApiError, useAuthStore, usePagination, usePatientWorkflowStore, type DataRow } from "@smart-cloud-brain/shared-api";
+import { EmptyState, ErrorState, LoadingState, PaginationBar } from "@smart-cloud-brain/shared-ui";
 import MedicalRecordDetailModal from "../components/MedicalRecordDetailModal.vue";
 
 const auth = useAuthStore();
@@ -12,6 +12,7 @@ const loading = ref(false);
 const detailLoading = ref(false);
 const error = ref("");
 const selected = ref<DataRow | null>(null);
+const { currentPage, pageSize, total, pageRows } = usePagination(records, 8);
 
 async function refresh() {
   loading.value = true;
@@ -50,7 +51,7 @@ refresh();
         <table class="data-table">
           <thead><tr><th>病历号</th><th>主诉</th><th>诊断</th><th>方式</th><th class="actions-cell">操作</th></tr></thead>
           <tbody>
-            <tr v-for="item in records" :key="String(item.medicalRecordId)">
+            <tr v-for="item in pageRows" :key="String(item.medicalRecordId)">
               <td>#{{ fieldText(item, "medicalRecordId") }}</td>
               <td>{{ fieldText(item, "chiefComplaint") }}</td>
               <td>{{ fieldText(item, "diagnosis") }}</td>
@@ -59,6 +60,7 @@ refresh();
             </tr>
           </tbody>
         </table>
+        <PaginationBar v-model="currentPage" :total="total" :page-size="pageSize" />
       </div>
       <EmptyState v-else title="暂无病历" message="医生保存病历后会显示在这里。" />
     </div>

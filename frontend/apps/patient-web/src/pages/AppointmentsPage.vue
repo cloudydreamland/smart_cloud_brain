@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { storeToRefs } from "pinia";
-import { api, fieldText, formatApiError, statusClass, statusText, toNumber, useAuthStore, usePatientWorkflowStore, type DataRow } from "@smart-cloud-brain/shared-api";
-import { EmptyState, ErrorState, LoadingState, StatusTag } from "@smart-cloud-brain/shared-ui";
+import { api, fieldText, formatApiError, statusClass, statusText, toNumber, useAuthStore, usePagination, usePatientWorkflowStore, type DataRow } from "@smart-cloud-brain/shared-api";
+import { EmptyState, ErrorState, LoadingState, PaginationBar, StatusTag } from "@smart-cloud-brain/shared-ui";
 import CancelAppointmentModal from "../components/CancelAppointmentModal.vue";
 
 const auth = useAuthStore();
@@ -13,6 +13,7 @@ const saving = ref(false);
 const error = ref("");
 const notice = ref("");
 const selected = ref<DataRow | null>(null);
+const { currentPage, pageSize, total, pageRows } = usePagination(registrations, 8);
 
 async function refresh() {
   loading.value = true;
@@ -57,7 +58,7 @@ refresh();
       <div v-if="notice" class="notice success">{{ notice }}</div>
       <LoadingState v-if="loading" />
       <div v-else-if="registrations.length" class="list">
-        <article v-for="item in registrations" :key="String(item.registrationId)" class="list-row">
+        <article v-for="item in pageRows" :key="String(item.registrationId)" class="list-row">
           <div class="row-main">
             <strong>#{{ fieldText(item, "registrationId") }} {{ fieldText(item, "departmentName") }} · {{ fieldText(item, "doctorName") }}</strong>
             <p>{{ fieldText(item, "appointmentTime") }}</p>
@@ -67,6 +68,7 @@ refresh();
             <button class="danger" type="button" :disabled="fieldText(item, 'status') === 'CANCELLED'" @click="selected = item">取消</button>
           </div>
         </article>
+        <PaginationBar v-model="currentPage" :total="total" :page-size="pageSize" />
       </div>
       <EmptyState v-else title="暂无挂号记录" message="从号源页面选择医生后，记录会显示在这里。" />
     </div>
