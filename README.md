@@ -98,7 +98,7 @@ corepack pnpm --filter @smart-cloud-brain/admin-web build
 
 ## Real AI API configuration
 
-`ai-service` defaults to the local `mock` provider so the complete application can start without an external API key. To use a real OpenAI-compatible provider such as DeepSeek, set:
+`ai-service` defaults to the local `mock` provider so the complete application can start without an external API key. It supports four task types: triage, medical-record generation, prescription checking, and schedule suggestions. To use a real OpenAI-compatible provider such as DeepSeek, set:
 
 ```env
 AI_PROVIDER=openai
@@ -115,14 +115,21 @@ DIFY_BASE_URL=http://your-dify/v1
 DIFY_TRIAGE_API_KEY=app-...
 DIFY_MEDICAL_RECORD_API_KEY=app-...
 DIFY_PRESCRIPTION_CHECK_API_KEY=app-...
+DIFY_SCHEDULE_API_KEY=app-...
 ```
 
-The legacy `DIFY_API_KEY` remains as a deprecated fallback. If required variables are missing, `ai-service` fails during startup and reports the missing task key. Mock remains the default for local development:
+The legacy `DIFY_API_KEY` remains as a deprecated fallback. If required variables are missing, `ai-service` fails during startup and reports the missing task key. When a configured Dify/OpenAI-compatible call fails at runtime, `ai-service` automatically returns a deterministic Mock result with `degraded=true`; successful real calls keep `degraded=false`. Mock remains the default for local development:
 
 ```env
 AI_PROVIDER=mock
 ```
 
-Triage, medical-record generation, and prescription checks read enabled templates from `prompt_template`; admin changes affect later AI output. Successful and failed AI calls are written to `ai_generation_log` with summaries only, not full private medical text.
+All four task types read enabled templates from `prompt_template`; admin changes affect later AI output. Successful, failed, and fallback AI calls are written to `ai_generation_log` with summaries only, not full private medical text. Schedule responses are validated against enabled doctors, departments, requested dates, time ranges, capacity limits, and duplicate slots before an administrator can publish them.
 
-Note: AI-powered schedule suggestion is intentionally left as a handoff item. The current admin schedule workflow can generate suggestions and publish bookable slots, but it does not yet call `ai-service`.
+Coverage verification:
+
+```bash
+mvn -f backend/pom.xml clean verify
+python3 scripts/check-backend-coverage.py
+cd frontend && corepack pnpm run test:coverage
+```
