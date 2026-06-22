@@ -98,16 +98,7 @@ corepack pnpm --filter @smart-cloud-brain/admin-web build
 
 ## Real AI API configuration
 
-`ai-service` defaults to the local `mock` provider so the complete application can start without an external API key. To use a real OpenAI-compatible provider such as DeepSeek, set:
-
-```env
-AI_PROVIDER=openai
-OPENAI_API_KEY=sk-...
-OPENAI_BASE_URL=https://api.deepseek.com/v1
-OPENAI_MODEL=deepseek-chat
-```
-
-Dify is also supported:
+`ai-service` defaults to the Dify provider. Put the real model API key, such as DeepSeek, in the Dify console model provider settings, then configure this project with Dify workflow API keys:
 
 ```env
 AI_PROVIDER=dify
@@ -117,7 +108,18 @@ DIFY_MEDICAL_RECORD_API_KEY=app-...
 DIFY_PRESCRIPTION_CHECK_API_KEY=app-...
 ```
 
-The legacy `DIFY_API_KEY` remains as a deprecated fallback. If required variables are missing, `ai-service` fails during startup and reports the missing task key. Mock remains the default for local development:
+The legacy `DIFY_API_KEY` remains as a deprecated shared-key fallback. If required variables are missing, `ai-service` fails during startup and reports the missing task key.
+
+To bypass Dify and call an OpenAI-compatible provider directly, set:
+
+```env
+AI_PROVIDER=openai
+OPENAI_API_KEY=sk-...
+OPENAI_BASE_URL=https://api.deepseek.com
+OPENAI_MODEL=deepseek-v4-flash
+```
+
+Mock remains available only as an explicit local fallback:
 
 ```env
 AI_PROVIDER=mock
