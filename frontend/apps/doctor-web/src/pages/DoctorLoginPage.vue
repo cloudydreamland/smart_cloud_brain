@@ -2,12 +2,12 @@
 import { reactive, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { api, formatApiError, useAuthStore } from "@smart-cloud-brain/shared-api";
-import { ErrorState, FormField } from "@smart-cloud-brain/shared-ui";
+import { ErrorState } from "@smart-cloud-brain/shared-ui";
 
 const auth = useAuthStore();
 const route = useRoute();
 const router = useRouter();
-const form = reactive({ account: "", password: "" });
+const form = reactive({ account: "doctor_chen", password: "123456" });
 const loading = ref(false);
 const error = ref("");
 
@@ -23,7 +23,7 @@ async function submit() {
     auth.save("doctor-session", session, "DOCTOR");
     if (!auth.permissionError) await router.push(String(route.query.redirect || "/"));
   } catch (err) {
-    error.value = formatApiError(err, "医生登录失败");
+    error.value = formatApiError(err, "医生登录失败，请确认网关和认证服务已启动。");
   } finally {
     loading.value = false;
   }
@@ -31,15 +31,54 @@ async function submit() {
 </script>
 
 <template>
-  <main class="workspace">
-    <form class="panel" style="max-width: 520px; margin: 12vh auto 0" @submit.prevent="submit">
-      <header class="panel-header"><div class="panel-title"><p class="eyebrow">医生登录</p><h2>进入接诊工作台</h2><p>登录后可查看队列、生成病历和审核处方。</p></div></header>
-      <div class="panel-body stack">
-        <ErrorState v-if="error" :message="error" />
-        <FormField label="账号"><input v-model.trim="form.account" autocomplete="username" /></FormField>
-        <FormField label="密码"><input v-model="form.password" type="password" autocomplete="current-password" /></FormField>
-        <button class="primary" type="submit" :disabled="loading">{{ loading ? "登录中" : "进入工作台" }}</button>
+  <main class="doctor-login-screen">
+    <section class="login-visual">
+      <div class="brand-line">
+        <div class="brand-mark">SCB</div>
+        <span>SMART CLOUD BRAIN CLINICAL</span>
       </div>
-    </form>
+      <h1>医生接诊工作台</h1>
+      <p>把队列、患者上下文、AI 病历草稿、处方风险审核和通知闭环放在同一条临床流程里，减少切换，强化风险提示。</p>
+      <div class="signal-panel">
+        <div class="signal-card">
+          <span>今日队列</span>
+          <strong>18</strong>
+          <div class="pulse-line"></div>
+        </div>
+        <div class="signal-card">
+          <span>AI 病历完成率</span>
+          <strong>92%</strong>
+          <div class="pulse-line"></div>
+        </div>
+        <div class="signal-card">
+          <span>高风险待复核</span>
+          <strong>2</strong>
+          <div class="pulse-line"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="login-form-wrap">
+      <form class="login-card" @submit.prevent="submit">
+        <header>
+          <p class="eyebrow">医生登录</p>
+          <h2>进入接诊工作台</h2>
+          <p>演示账号已预填，登录后进入完整医生端流程。</p>
+        </header>
+        <div class="form-body">
+          <ErrorState v-if="error" :message="error" />
+          <label class="field">
+            <span>账号</span>
+            <input v-model.trim="form.account" autocomplete="username" />
+          </label>
+          <label class="field">
+            <span>密码</span>
+            <input v-model="form.password" type="password" autocomplete="current-password" />
+          </label>
+          <button class="primary" type="submit" :disabled="loading">{{ loading ? "登录中" : "进入工作台" }}</button>
+          <span class="hint">真实前端页面，登录仍会调用后端认证接口。</span>
+        </div>
+      </form>
+    </section>
   </main>
 </template>

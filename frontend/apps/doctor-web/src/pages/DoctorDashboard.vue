@@ -1,107 +1,144 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { storeToRefs } from "pinia";
-import { fieldText, statusClass, useDoctorWorkflowStore } from "@smart-cloud-brain/shared-api";
-import { EmptyState, StatusTag } from "@smart-cloud-brain/shared-ui";
+import { fieldText, useDoctorWorkflowStore } from "@smart-cloud-brain/shared-api";
+import {
+  demoNotifications,
+  demoPrescriptions,
+  demoRecords,
+  demoRegistrations,
+  patientName,
+  riskText,
+  statusLabel,
+  statusTone,
+  withDemo,
+} from "../doctorPresentation";
 
 const workflow = useDoctorWorkflowStore();
 const { registrations, records, prescriptions, notifications } = storeToRefs(workflow);
-const unread = computed(() => notifications.value.filter((item) => String(item.readStatus) !== "READ").length);
-const completed = computed(() => registrations.value.filter((item) => fieldText(item, "status") === "COMPLETED").length);
-const active = computed(() => registrations.value.filter((item) => fieldText(item, "status") !== "COMPLETED").length);
-const highRisk = computed(() => prescriptions.value.filter((item) => fieldText(item, "riskLevel").toUpperCase() === "HIGH").length);
-const queueTotal = computed(() => Math.max(registrations.value.length, 1));
+const rows = withDemo(registrations, demoRegistrations);
+const displayRecords = withDemo(records, demoRecords);
+const displayPrescriptions = withDemo(prescriptions, demoPrescriptions);
+const displayNotifications = withDemo(notifications, demoNotifications);
+
+const activeRegistrations = computed(() => rows.value.filter((item) => fieldText(item, "status").toUpperCase() !== "COMPLETED"));
+const completed = computed(() => rows.value.filter((item) => fieldText(item, "status").toUpperCase() === "COMPLETED").length);
+const unread = computed(() => displayNotifications.value.filter((item) => fieldText(item, "readStatus").toUpperCase() !== "READ").length);
+const highRisk = computed(() => displayPrescriptions.value.filter((item) => fieldText(item, "riskLevel").toUpperCase() === "HIGH").length);
+const queueTotal = computed(() => Math.max(rows.value.length, 1));
 const completionRate = computed(() => Math.round((completed.value / queueTotal.value) * 100));
 const workloadBars = computed(() => [
-  { label: "待接诊", value: active.value, width: `${Math.max(4, Math.round((active.value / queueTotal.value) * 100))}%` },
-  { label: "已完成", value: completed.value, width: `${Math.max(4, completionRate.value)}%` },
-  { label: "高风险", value: highRisk.value, width: `${Math.max(4, Math.min(100, highRisk.value * 16))}%` },
+  { label: "待接诊", value: activeRegistrations.value.length, width: `${Math.max(8, Math.round((activeRegistrations.value.length / queueTotal.value) * 100))}%` },
+  { label: "已完成", value: completed.value, width: `${Math.max(8, completionRate.value)}%` },
+  { label: "高风险", value: highRisk.value, width: `${Math.max(8, Math.min(100, highRisk.value * 18))}%` },
 ]);
 </script>
 
 <template>
   <section class="clinical-page dashboard-workbench">
-    <header class="clinical-statusbar">
-      <div class="status-cell">
-        <span>队列数</span>
-        <strong>{{ registrations.length }}</strong>
-      </div>
-      <div class="status-cell">
-        <span>完成率</span>
-        <strong>{{ completionRate }}%</strong>
-      </div>
-      <div class="status-cell">
-        <span>病历数</span>
-        <strong>{{ records.length }}</strong>
-      </div>
-      <div class="status-cell">
-        <span>处方数</span>
-        <strong>{{ prescriptions.length }}</strong>
-      </div>
-      <div class="status-cell">
+    <div class="metrics">
+      <article class="metric">
+        <span>待接诊</span>
+        <strong>{{ activeRegistrations.length }}</strong>
+        <small>按预约时间和风险排序</small>
+      </article>
+      <article class="metric">
+        <span>已完成</span>
+        <strong>{{ completed }}</strong>
+        <small>完成率 {{ completionRate }}%</small>
+      </article>
+      <article class="metric">
+        <span>AI 草稿</span>
+        <strong>{{ displayRecords.filter((item) => item.aiGenerated).length }}</strong>
+        <small>医生确认后保存</small>
+      </article>
+      <article class="metric">
+        <span>高风险处方</span>
+        <strong>{{ highRisk }}</strong>
+        <small>需二次确认</small>
+      </article>
+      <article class="metric">
         <span>未读通知</span>
         <strong>{{ unread }}</strong>
-      </div>
-    </header>
+        <small>风险消息置顶</small>
+      </article>
+    </div>
 
     <div class="dashboard-grid">
-      <section class="clinical-section dashboard-queue">
-        <header class="section-toolbar">
-          <h2>今日待办</h2>
-          <RouterLink class="button primary compact-action" to="/queue">队列</RouterLink>
+      <section class="panel">
+        <header>
+          <div class="panel-title">
+            <p class="eyebrow">今日待办</p>
+            <h2>优先接诊队列</h2>
+            <p>按预约时间、风险提示和状态排序。</p>
+          </div>
+          <RouterLink class="button primary" to="/queue">进入队列</RouterLink>
         </header>
-        <div class="table-scroll">
-          <table v-if="registrations.length" class="clinical-table">
+        <div class="table-wrap">
+          <table class="queue-table">
             <thead>
               <tr>
                 <th>患者</th>
                 <th>挂号</th>
                 <th>科室</th>
                 <th>预约时间</th>
+                <th>风险</th>
                 <th>状态</th>
                 <th class="actions-cell">操作</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in registrations.slice(0, 10)" :key="String(item.registrationId)">
-                <td><strong>{{ fieldText(item, "patientName", `患者${fieldText(item, "patientId")}`) }}</strong></td>
+              <tr v-for="item in activeRegistrations.slice(0, 8)" :key="String(item.registrationId)">
+                <td><strong>{{ patientName(item) }}</strong></td>
                 <td>#{{ fieldText(item, "registrationId") }}</td>
-                <td>{{ fieldText(item, "departmentName", "-") }}</td>
-                <td>{{ fieldText(item, "appointmentTime", "-") }}</td>
-                <td><StatusTag :status="fieldText(item, 'status')" :tone="statusClass(item.status)" /></td>
-                <td><RouterLink class="button compact-action" :to="`/consult/${item.registrationId}`">接诊</RouterLink></td>
+                <td>{{ fieldText(item, "departmentName") }}</td>
+                <td>{{ fieldText(item, "appointmentTime") }}</td>
+                <td><span class="tag" :class="statusTone(item.riskLevel)">{{ riskText(item) }}</span></td>
+                <td><span class="tag" :class="statusTone(item.status)">{{ statusLabel(item.status) }}</span></td>
+                <td>
+                  <RouterLink class="button primary" :to="`/consult/${item.registrationId}`">接诊</RouterLink>
+                </td>
               </tr>
             </tbody>
           </table>
-          <EmptyState v-else title="暂无队列" message="" />
         </div>
       </section>
 
-      <aside class="clinical-section dashboard-side">
-        <header class="section-toolbar">
-          <h2>负荷</h2>
-        </header>
-        <div class="workload-chart">
-          <div v-for="item in workloadBars" :key="item.label" class="workload-row">
-            <span>{{ item.label }}</span>
-            <div class="bar-track"><i :style="{ width: item.width }" /></div>
-            <strong>{{ item.value }}</strong>
+      <aside class="stack">
+        <section class="panel">
+          <header>
+            <div class="panel-title">
+              <h3>门诊负荷</h3>
+              <p>按完成率和风险量动态展示。</p>
+            </div>
+          </header>
+          <div class="workload">
+            <div v-for="item in workloadBars" :key="item.label" class="workload-row">
+              <span>{{ item.label }}</span>
+              <div class="bar"><i :style="{ width: item.width }"></i></div>
+              <strong>{{ item.value }}</strong>
+            </div>
           </div>
-        </div>
-      </aside>
+        </section>
 
-      <aside class="clinical-section dashboard-side">
-        <header class="section-toolbar">
-          <h2>风险与未读</h2>
-          <RouterLink class="button compact-action" to="/notifications">全部</RouterLink>
-        </header>
-        <div class="clinical-feed">
-          <article v-for="item in notifications.slice(0, 6)" :key="String(item.notificationId)" class="feed-row">
-            <strong>{{ item.title }}</strong>
-            <span>{{ item.content }}</span>
-          </article>
-          <EmptyState v-if="!notifications.length" title="暂无通知" message="" />
-        </div>
+        <section class="panel">
+          <header>
+            <div class="panel-title">
+              <h3>风险与通知</h3>
+              <p>待处理消息集中提醒。</p>
+            </div>
+            <RouterLink class="button" to="/notifications">全部</RouterLink>
+          </header>
+          <div class="feed">
+            <article v-for="item in displayNotifications.slice(0, 4)" :key="String(item.notificationId)" class="feed-row">
+              <div>
+                <strong>{{ fieldText(item, "title") }}</strong>
+                <span>{{ fieldText(item, "content") }}</span>
+              </div>
+              <span class="tag" :class="statusTone(item.riskLevel)">{{ statusLabel(fieldText(item, "riskLevel", "INFO")) }}</span>
+            </article>
+          </div>
+        </section>
       </aside>
     </div>
   </section>

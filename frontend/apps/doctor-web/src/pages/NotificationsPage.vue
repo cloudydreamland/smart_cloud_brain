@@ -1,18 +1,21 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { storeToRefs } from "pinia";
-import { api, fieldText, formatApiError, statusClass, toNumber, useAuthStore, useDoctorWorkflowStore, type DataRow } from "@smart-cloud-brain/shared-api";
-import { EmptyState, ErrorState, LoadingState, StatusTag } from "@smart-cloud-brain/shared-ui";
+import { api, fieldText, formatApiError, toNumber, useAuthStore, useDoctorWorkflowStore, usePagination, type DataRow } from "@smart-cloud-brain/shared-api";
+import { ErrorState, LoadingState, PaginationBar } from "@smart-cloud-brain/shared-ui";
 import NotificationDetailModal from "../components/NotificationDetailModal.vue";
+import { demoNotifications, statusLabel, statusTone, withDemo } from "../doctorPresentation";
 
 const emit = defineEmits<{ refresh: [] }>();
 const auth = useAuthStore();
 const workflow = useDoctorWorkflowStore();
 const { notifications } = storeToRefs(workflow);
+const displayNotifications = withDemo(notifications, demoNotifications);
 const selected = ref<DataRow | null>(null);
 const error = ref("");
 const notice = ref("");
 const loading = ref(false);
+const { currentPage, pageSize, total, pageRows } = usePagination(displayNotifications, 8);
 
 async function refresh() {
   loading.value = true;
@@ -21,7 +24,7 @@ async function refresh() {
   try {
     await workflow.refresh(auth.token());
   } catch (err) {
-    error.value = formatApiError(err, "通知列表加载失败");
+    error.value = formatApiError(err, "通知列表加载失败，当前展示演示数据。");
   } finally {
     loading.value = false;
   }
@@ -39,7 +42,8 @@ async function markRead(item = selected.value) {
     await refresh();
     notice.value = "通知已标记为已读。";
   } catch (err) {
-    error.value = formatApiError(err, "标记通知失败");
+    selected.value = null;
+    notice.value = `${formatApiError(err, "标记通知失败")}；演示流程已继续。`;
   } finally {
     loading.value = false;
   }
@@ -50,31 +54,33 @@ refresh();
 
 <template>
   <section class="panel">
-    <header class="panel-header">
-      <div class="panel-title"><p class="eyebrow">风险通知</p><h2>风险通知</h2><p>处方审核和系统通知集中处理。</p></div>
-      <button type="button" :disabled="loading" @click="refresh">刷新</button>
+    <header>
+      <div class="panel-title">
+        <p class="eyebrow">风险通知</p>
+        <h2>通知中心</h2>
+        <p>处方、病历、系统消息统一处理。</p>
+      </div>
+      <button type="button" :disabled="loading" @click="refresh">{{ loading ? "刷新中" : "刷新" }}</button>
     </header>
     <div class="panel-body stack">
       <ErrorState v-if="error" :message="error" />
       <div v-if="notice" class="notice success">{{ notice }}</div>
       <LoadingState v-if="loading" title="正在同步通知" />
-      <div v-else-if="notifications.length" class="list">
-        <article v-for="item in notifications" :key="String(item.notificationId)" class="list-row">
-          <div class="row-main">
+      <div class="feed">
+        <article v-for="item in pageRows" :key="String(item.notificationId)" class="feed-row">
+          <div>
             <strong>{{ fieldText(item, "title") }}</strong>
-            <p>{{ fieldText(item, "content") }}</p>
-            <div class="row-meta">
-              <StatusTag :status="fieldText(item, 'riskLevel', 'INFO')" :tone="statusClass(item.riskLevel)" />
-              <StatusTag :status="fieldText(item, 'readStatus')" :tone="statusClass(item.readStatus)" />
-            </div>
+            <span>{{ fieldText(item, "content") }}</span>
           </div>
           <div class="toolbar">
+            <span class="tag" :class="statusTone(fieldText(item, 'riskLevel', 'INFO'))">{{ statusLabel(fieldText(item, "riskLevel", "INFO")) }}</span>
+            <span class="tag" :class="statusTone(fieldText(item, 'readStatus', 'UNREAD'))">{{ statusLabel(fieldText(item, "readStatus", "UNREAD")) }}</span>
             <button type="button" @click="selected = item">详情</button>
             <button type="button" :disabled="fieldText(item, 'readStatus') === 'READ'" @click="markRead(item)">已读</button>
           </div>
         </article>
       </div>
-      <EmptyState v-else title="暂无通知" />
+      <PaginationBar v-model="currentPage" :total="total" :page-size="pageSize" />
     </div>
     <NotificationDetailModal :open="Boolean(selected)" :notification="selected" @close="selected = null" @read="markRead()" />
   </section>

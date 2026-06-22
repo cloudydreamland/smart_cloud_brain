@@ -12,7 +12,7 @@ defineEmits<{ close: [] }>();
             <h2>{{ title }}</h2>
             <p v-if="description">{{ description }}</p>
           </div>
-          <button type="button" aria-label="关闭抽屉" @click="$emit('close')">关闭</button>
+          <button type="button" class="ghost" aria-label="关闭抽屉" @click="$emit('close')">关闭</button>
         </header>
         <div class="drawer-body">
           <slot />

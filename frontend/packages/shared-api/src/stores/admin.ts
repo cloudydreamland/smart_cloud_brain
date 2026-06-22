@@ -14,6 +14,7 @@ export const useAdminWorkflowStore = defineStore("adminWorkflow", () => {
   const suggestions = ref<DataRow[]>([]);
   const schedules = ref<DataRow[]>([]);
   const triageDesk = ref<DataRow[]>([]);
+  const aiLogs = ref<DataRow[]>([]);
   const selectedScheduleSuggestion = ref<DataRow | null>(null);
   const selectedTriage = ref<DataRow | null>(null);
   const refreshErrors = ref<Record<string, string>>({});
@@ -24,7 +25,7 @@ export const useAdminWorkflowStore = defineStore("adminWorkflow", () => {
       nextErrors[key] = formatApiError(error, fallbackMessage);
       return current;
     };
-    const [departmentList, doctorList, drugList, promptList, knowledgeList, dictList, scheduleList, triageList] = await Promise.all([
+    const [departmentList, doctorList, drugList, promptList, knowledgeList, dictList, scheduleList, triageList, aiLogList] = await Promise.all([
       adminApi.departments(token).catch(keepCurrent("departments", "科室列表加载失败", departments.value)),
       adminApi.publicDoctors().catch(keepCurrent("doctors", "医生列表加载失败", doctors.value)),
       adminApi.drugs(token).catch(keepCurrent("drugs", "药品列表加载失败", drugs.value)),
@@ -33,6 +34,7 @@ export const useAdminWorkflowStore = defineStore("adminWorkflow", () => {
       adminApi.dicts(token).catch(keepCurrent("dicts", "字典加载失败", dicts.value)),
       adminApi.schedules(token).catch(keepCurrent("schedules", "排班列表加载失败", schedules.value)),
       adminApi.triageDesk(token).catch(keepCurrent("triageDesk", "分诊台加载失败", [] as DataRow[])),
+      adminApi.aiLogs(token).catch(keepCurrent("aiLogs", "AI 日志加载失败", aiLogs.value)),
     ]);
     departments.value = departmentList;
     doctors.value = doctorList;
@@ -42,8 +44,9 @@ export const useAdminWorkflowStore = defineStore("adminWorkflow", () => {
     dicts.value = dictList;
     schedules.value = scheduleList;
     triageDesk.value = triageList;
+    aiLogs.value = aiLogList;
     refreshErrors.value = nextErrors;
   }
 
-  return { departments, doctors, drugs, prompts, knowledge, dicts, suggestions, schedules, triageDesk, selectedScheduleSuggestion, selectedTriage, refreshErrors, refresh };
+  return { departments, doctors, drugs, prompts, knowledge, dicts, suggestions, schedules, triageDesk, aiLogs, selectedScheduleSuggestion, selectedTriage, refreshErrors, refresh };
 });

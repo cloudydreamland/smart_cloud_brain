@@ -1,3 +1,4 @@
+import { computed, ref, toValue, watch, type MaybeRefOrGetter } from "vue";
 import { ApiError, type DataRow } from "./types";
 
 export function formatApiError(error: unknown, fallback: string) {
@@ -47,4 +48,31 @@ export function statusText(status: unknown, fallback = "-") {
     ADMIN: "管理员", MALE: "男", FEMALE: "女", UNKNOWN: "未说明",
   };
   return labels[raw.toUpperCase()] ?? raw;
+}
+
+export function aiSourceLabel(provider: unknown) {
+  const value = String(provider ?? "").trim().toLowerCase();
+  if (!value) return "AI";
+  return value === "mock" ? "本地模拟" : "AI";
+}
+
+export function aiSourceTone(provider: unknown) {
+  return String(provider ?? "").trim().toLowerCase() === "mock" ? "warning" : "success";
+}
+
+export function usePagination<T>(source: MaybeRefOrGetter<T[]>, initialPageSize = 8) {
+  const currentPage = ref(1);
+  const pageSize = ref(initialPageSize);
+  const total = computed(() => toValue(source).length);
+  const pageCount = computed(() => Math.max(1, Math.ceil(total.value / Math.max(1, pageSize.value))));
+  const pageRows = computed(() => {
+    const start = (currentPage.value - 1) * pageSize.value;
+    return toValue(source).slice(start, start + pageSize.value);
+  });
+
+  watch([total, pageCount], () => {
+    currentPage.value = Math.min(Math.max(1, currentPage.value), pageCount.value);
+  });
+
+  return { currentPage, pageSize, total, pageCount, pageRows };
 }

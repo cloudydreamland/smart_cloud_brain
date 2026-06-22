@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { api, fieldText, formatApiError, statusClass, toNumber, useAdminWorkflowStore, useAuthStore, type DataRow } from "@smart-cloud-brain/shared-api";
-import { EmptyState, ErrorState, FormField, StatusTag } from "@smart-cloud-brain/shared-ui";
+import { api, fieldText, formatApiError, statusClass, toNumber, useAdminWorkflowStore, useAuthStore, usePagination, type DataRow } from "@smart-cloud-brain/shared-api";
+import { EmptyState, ErrorState, FormField, PaginationBar, StatusTag } from "@smart-cloud-brain/shared-ui";
 import TriageDetailModal from "../components/TriageDetailModal.vue";
 import AssignDoctorModal from "../components/AssignDoctorModal.vue";
 import CloseTriageConfirmModal from "../components/CloseTriageConfirmModal.vue";
@@ -27,6 +27,7 @@ const rows = computed(() => triageDesk.value.filter((item) => {
     && (!filter.department || fieldText(item, "recommendedDepartment", "").includes(filter.department))
     && (!filter.status || fieldText(item, "status") === filter.status);
 }));
+const { currentPage, pageSize, total, pageRows } = usePagination(rows, 8);
 
 async function detail(item: DataRow) {
   loading.value = true;
@@ -100,7 +101,7 @@ async function closeTriage() {
           <table class="data-table">
             <thead><tr><th>记录</th><th>主诉</th><th>推荐科室</th><th>医生</th><th>状态</th><th class="actions-cell">操作</th></tr></thead>
             <tbody>
-              <tr v-for="item in rows" :key="String(item.triageRecordId)">
+              <tr v-for="item in pageRows" :key="String(item.triageRecordId)">
                 <td>#{{ fieldText(item, "triageRecordId") }}</td>
                 <td>{{ fieldText(item, "chiefComplaint") }}</td>
                 <td>{{ fieldText(item, "recommendedDepartment") }}</td>
@@ -110,6 +111,7 @@ async function closeTriage() {
               </tr>
             </tbody>
           </table>
+          <PaginationBar v-model="currentPage" :total="total" :page-size="pageSize" />
         </div>
         <EmptyState v-else title="暂无分诊记录" />
       </div>

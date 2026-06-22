@@ -34,6 +34,10 @@ export type DoctorSaveRequest = {
   id?: number; name: string; phone: string; password?: string; departmentId: number;
   title?: string; specialty?: string; status?: string;
 };
+export type AccountSaveRequest = {
+  id?: number; role: Role; account: string; name: string; password?: string;
+  departmentId?: number; title?: string; specialty?: string; status?: string;
+};
 export type DrugSaveRequest = {
   id?: number; name: string; specification?: string; contraindication?: string;
   interactionRule?: string; status?: string;
@@ -46,6 +50,7 @@ export type PromptTemplateSaveRequest = {
   id?: number; taskType: string; departmentCode?: string; templateName: string;
   templateContent: string; outputSchema?: string; version?: string; enabled?: boolean;
 };
+export type PromptTestRequest = PromptTemplateSaveRequest & { sampleInput?: string };
 export type SystemDictSaveRequest = {
   id?: number; dictType: string; dictKey: string; dictValue: string; sort?: number; status?: string;
 };

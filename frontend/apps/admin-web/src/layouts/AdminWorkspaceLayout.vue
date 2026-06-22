@@ -22,6 +22,7 @@ const navGroups = computed(() => [
     { label: "药品", to: "/drugs" },
     { label: "排班", to: "/schedule" },
     { label: "分诊台", to: "/triage-desk", badge: highRisk.value },
+    { label: "账户权限", to: "/accounts" },
   ] },
   { label: "配置", items: [
     { label: "知识库", to: "/knowledge" },

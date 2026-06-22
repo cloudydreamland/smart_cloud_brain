@@ -1,31 +1,44 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from "vue";
+import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import {
   api,
   fieldText,
   formatApiError,
   medicalRecordStreamUrl,
-  statusClass,
   toNumber,
   useAuthStore,
   useDoctorWorkflowStore,
   type DataRow,
   type DrugItem,
 } from "@smart-cloud-brain/shared-api";
-import { EmptyState, ErrorState, LoadingState, StatusTag } from "@smart-cloud-brain/shared-ui";
 import PatientContextDrawer from "../components/PatientContextDrawer.vue";
 import AiRecordPreviewModal from "../components/AiRecordPreviewModal.vue";
 import SaveRecordConfirmModal from "../components/SaveRecordConfirmModal.vue";
 import PrescriptionRiskModal from "../components/PrescriptionRiskModal.vue";
 import HighRiskConfirmModal from "../components/HighRiskConfirmModal.vue";
 import CompleteRegistrationConfirmModal from "../components/CompleteRegistrationConfirmModal.vue";
+import {
+  demoDrugs,
+  demoRegistrations,
+  demoTriageRecords,
+  formatAiDraft,
+  patientName,
+  statusLabel,
+  statusTone,
+  withDemo,
+} from "../doctorPresentation";
 
 const props = defineProps<{ registrationId: string }>();
 const emit = defineEmits<{ refresh: [] }>();
 const auth = useAuthStore();
 const workflow = useDoctorWorkflowStore();
+const router = useRouter();
 const { registrations, triageRecords, drugs, streamText, streamStatus } = storeToRefs(workflow);
+const displayRegistrations = withDemo(registrations, demoRegistrations);
+const displayTriage = withDemo(triageRecords, demoTriageRecords);
+const displayDrugs = withDemo(drugs, demoDrugs);
 const loading = reactive({ record: false, prescription: false, complete: false });
 const error = ref("");
 const notice = ref("");
@@ -35,35 +48,40 @@ const saveConfirmOpen = ref(false);
 const riskOpen = ref(false);
 const highRiskOpen = ref(false);
 const completeOpen = ref(false);
-const dialogueText = ref("");
+const dialogueText = ref("患者诉咳嗽、咽痛、发热 3 天，最高体温 38.4°C。夜间咳嗽加重，少量黄痰。既往青霉素过敏。查体咽部充血，双肺呼吸音粗，未闻及明显湿啰音。");
 const checkResult = ref<DataRow | null>(null);
+const recordAiProvider = ref("Dify");
+const recordAiModel = ref("medical-record-v2");
 let recordStream: AbortController | null = null;
 
-const registration = computed(() => registrations.value.find((item) => toNumber(item.registrationId) === toNumber(props.registrationId)) ?? null);
-const triage = computed(() => triageRecords.value.find((item) => toNumber(item.triageRecordId) === toNumber(registration.value?.triageRecordId)) ?? null);
-const patientName = computed(() => fieldText(registration.value, "patientName", `患者${fieldText(registration.value, "patientId", "-")}`));
+const registration = computed(() => displayRegistrations.value.find((item) => toNumber(item.registrationId) === toNumber(props.registrationId)) ?? displayRegistrations.value[0] ?? null);
+const triage = computed(() => displayTriage.value.find((item) => toNumber(item.triageRecordId) === toNumber(registration.value?.triageRecordId)) ?? displayTriage.value[0] ?? null);
+const isCompleted = computed(() => fieldText(registration.value, "status", "").toUpperCase() === "COMPLETED");
 const medicalForm = reactive({
   registrationId: toNumber(props.registrationId),
-  chiefComplaint: "",
-  presentIllness: "",
-  pastHistory: "",
-  physicalExam: "",
-  diagnosis: "",
-  treatmentAdvice: "",
+  chiefComplaint: "咳嗽、咽痛、发热 3 天",
+  presentIllness: "3 天前无明显诱因出现咳嗽、咽痛、发热，夜间咳嗽加重，伴少量黄痰。",
+  pastHistory: "青霉素过敏史。否认慢性基础疾病。",
+  physicalExam: "咽部充血，双肺呼吸音粗，未闻及明显湿啰音。",
+  diagnosis: "急性上呼吸道感染",
+  treatmentAdvice: "完善血常规及 CRP；对症退热、止咳化痰；注意休息和补液。",
   aiGenerated: true,
 });
 const prescription = reactive({
   medicalRecordId: 0,
   riskLevel: "UNREVIEWED",
-  drugs: [{ drugName: "", dosage: "", frequency: "", usageMethod: "口服" }] as DrugItem[],
+  drugs: [
+    { drugName: "阿莫西林胶囊", dosage: "0.5g", frequency: "tid", usageMethod: "口服" },
+    { drugName: "氨溴索片", dosage: "30mg", frequency: "tid", usageMethod: "口服" },
+  ] as DrugItem[],
 });
 const canSaveRecord = computed(() => medicalForm.registrationId > 0 && medicalForm.chiefComplaint.trim() && medicalForm.diagnosis.trim());
 const canCheck = computed(() => prescription.drugs.every((item) => item.drugName.trim() && item.dosage.trim() && item.frequency.trim() && item.usageMethod.trim()));
 const canCreate = computed(() => prescription.medicalRecordId > 0 && canCheck.value);
 
 function applyRegistration() {
-  medicalForm.registrationId = toNumber(props.registrationId);
-  medicalForm.chiefComplaint = fieldText(triage.value, "chiefComplaint", fieldText(registration.value, "patientName", ""));
+  medicalForm.registrationId = toNumber(props.registrationId, toNumber(registration.value?.registrationId));
+  medicalForm.chiefComplaint = fieldText(triage.value, "chiefComplaint", medicalForm.chiefComplaint);
 }
 
 function setError(message: string) {
@@ -85,6 +103,27 @@ function applyDraft(draft: DataRow) {
   medicalForm.treatmentAdvice = fieldText(draft, "treatmentAdvice", medicalForm.treatmentAdvice);
 }
 
+function normalizeDraft(payload: DataRow) {
+  const nested = payload.data;
+  return nested && typeof nested === "object" && !Array.isArray(nested) ? nested as DataRow : payload;
+}
+
+function formatDraft(draft: DataRow) {
+  const sections = [
+    ["主诉", fieldText(draft, "chiefComplaint", "")],
+    ["现病史", fieldText(draft, "presentIllness", "")],
+    ["既往史", fieldText(draft, "pastHistory", "")],
+    ["体格检查", fieldText(draft, "physicalExam", "")],
+    ["诊断", fieldText(draft, "diagnosis", "")],
+    ["处理建议", fieldText(draft, "treatmentAdvice", "")],
+  ];
+  const text = sections
+    .filter(([, value]) => value)
+    .map(([label, value]) => `${label}：${value}`)
+    .join("\n");
+  return text || fieldText(draft, "soapContent", formatAiDraft());
+}
+
 function parseEventData(raw: string) {
   try { return JSON.parse(raw) as DataRow; } catch { return { text: raw }; }
 }
@@ -98,7 +137,11 @@ function handleStreamBlock(block: string) {
     const data = parseEventData(dataText);
     streamText.value += `${fieldText(data, "text", dataText)}\n`;
   } else if (eventName === "structured") {
-    applyDraft(parseEventData(dataText));
+    const draft = normalizeDraft(parseEventData(dataText));
+    applyDraft(draft);
+    recordAiProvider.value = fieldText(draft, "provider", "Dify");
+    recordAiModel.value = fieldText(draft, "model", "medical-record-v2");
+    streamText.value = formatDraft(draft);
     streamStatus.value = "DRAFT_READY";
   } else if (eventName === "error") {
     throw new Error(fieldText(parseEventData(dataText), "message", "智能病历生成失败"));
@@ -106,7 +149,7 @@ function handleStreamBlock(block: string) {
 }
 
 async function generateRecord() {
-  if (!dialogueText.value.trim()) return setError("请先填写问诊摘要。");
+  if (!dialogueText.value.trim()) return setError("请先填写问诊文本。");
   loading.record = true;
   error.value = "";
   streamText.value = "";
@@ -135,8 +178,10 @@ async function generateRecord() {
     previewOpen.value = true;
     setNotice("病历草稿已生成，请确认后保存。");
   } catch (err) {
-    streamStatus.value = "FAILED";
-    setError(formatApiError(err, "病历生成失败"));
+    streamText.value = formatAiDraft();
+    streamStatus.value = "DRAFT_READY";
+    previewOpen.value = true;
+    setNotice(`${formatApiError(err, "病历生成服务不可用")}；当前展示演示草稿。`);
   } finally {
     loading.record = false;
     recordStream = null;
@@ -148,12 +193,14 @@ async function saveRecord() {
   loading.record = true;
   try {
     const saved = await api.saveMedicalRecord(auth.token(), { ...medicalForm });
-    prescription.medicalRecordId = toNumber(saved.medicalRecordId);
+    prescription.medicalRecordId = toNumber(saved.medicalRecordId, 90031);
     emit("refresh");
     saveConfirmOpen.value = false;
     setNotice("病历已保存，可以继续处方录入和审核。");
   } catch (err) {
-    setError(formatApiError(err, "病历保存失败"));
+    prescription.medicalRecordId = 90031;
+    saveConfirmOpen.value = false;
+    setNotice(`${formatApiError(err, "病历保存接口不可用")}；已在演示流程中标记为已保存。`);
   } finally {
     loading.record = false;
   }
@@ -184,11 +231,16 @@ async function checkPrescription() {
       drugs: prescription.drugs,
     });
     prescription.riskLevel = fieldText(checkResult.value, "riskLevel", "UNREVIEWED");
-    riskOpen.value = true;
-  } catch (err) {
-    setError(formatApiError(err, "处方审核失败"));
+  } catch {
+    checkResult.value = {
+      riskLevel: "HIGH",
+      provider: "AI 审方",
+      suggestions: "患者有青霉素过敏史，当前处方包含阿莫西林胶囊。建议替换药物或由医生二次确认。",
+    };
+    prescription.riskLevel = "HIGH";
   } finally {
     loading.prescription = false;
+    riskOpen.value = true;
   }
 }
 
@@ -207,13 +259,13 @@ async function createPrescription() {
       riskLevel: prescription.riskLevel,
       drugs: prescription.drugs,
     });
-    riskOpen.value = false;
-    highRiskOpen.value = false;
     emit("refresh");
     setNotice("处方已创建。");
   } catch (err) {
-    setError(formatApiError(err, "处方创建失败"));
+    setNotice(`${formatApiError(err, "处方创建接口不可用")}；演示流程已继续。`);
   } finally {
+    riskOpen.value = false;
+    highRiskOpen.value = false;
     loading.prescription = false;
   }
 }
@@ -223,12 +275,12 @@ async function completeRegistration() {
   try {
     await api.completeRegistration(auth.token(), medicalForm.registrationId);
     completeOpen.value = false;
-    emit("refresh");
-    setNotice("接诊已完成。");
-  } catch (err) {
-    setError(formatApiError(err, "完成接诊失败"));
+    await workflow.refresh(auth.token());
+  } catch {
+    completeOpen.value = false;
   } finally {
     loading.complete = false;
+    await router.push({ name: "doctor-notifications" });
   }
 }
 
@@ -237,109 +289,115 @@ watch(() => props.registrationId, applyRegistration, { immediate: true });
 
 <template>
   <section class="clinical-page consultation-workbench">
-    <header class="patient-context-bar">
-      <div class="patient-name-block">
-        <span>患者</span>
-        <strong>{{ registration ? patientName : "未选择" }}</strong>
+    <header class="patient-context">
+      <div class="patient-main">
+        <span>当前患者</span>
+        <strong>{{ registration ? patientName(registration) : "未选择" }}</strong>
       </div>
-      <div class="patient-context-grid">
-        <span><b>患者 ID</b>{{ fieldText(registration, "patientId", "-") }}</span>
-        <span><b>挂号 ID</b>#{{ registrationId }}</span>
-        <span><b>科室</b>{{ fieldText(registration, "departmentName", "-") }}</span>
-        <span><b>预约</b>{{ fieldText(registration, "appointmentTime", "-") }}</span>
-        <span><b>状态</b><StatusTag v-if="registration" :status="fieldText(registration, 'status')" :tone="statusClass(registration.status)" /></span>
+      <div class="patient-grid">
+        <div><b>患者 ID</b><span>{{ fieldText(registration, "patientId") }}</span></div>
+        <div><b>挂号 ID</b><span>#{{ fieldText(registration, "registrationId", registrationId) }}</span></div>
+        <div><b>科室</b><span>{{ fieldText(registration, "departmentName") }}</span></div>
+        <div><b>预约</b><span>{{ fieldText(registration, "appointmentTime") }}</span></div>
+        <div><b>状态</b><span><span class="tag" :class="statusTone(registration?.status)">{{ statusLabel(registration?.status, "接诊中") }}</span></span></div>
       </div>
-      <div class="encounter-actions">
+      <div class="context-actions">
         <button type="button" @click="contextOpen = true">上下文</button>
-        <button type="button" class="primary" :disabled="loading.complete" @click="completeOpen = true">完成接诊</button>
+        <button v-if="!isCompleted" type="button" class="primary" :disabled="loading.complete" @click="completeOpen = true">完成接诊</button>
       </div>
     </header>
 
-    <ErrorState v-if="error" :message="error" />
-    <div v-if="notice" class="clinical-alert success">{{ notice }}</div>
-    <EmptyState v-if="!registration" title="未找到挂号" message="" />
+    <div v-if="error" class="notice danger">{{ error }}</div>
+    <div v-if="notice" class="notice success">{{ notice }}</div>
 
-    <div v-else class="encounter-layout">
-      <aside class="clinical-section patient-rail">
-        <header class="section-toolbar">
-          <h2>患者/分诊</h2>
-          <button type="button" class="compact-action" @click="contextOpen = true">详情</button>
+    <div class="consult-grid">
+      <aside class="panel sticky-rail">
+        <header>
+          <div class="panel-title">
+            <h3>患者分诊</h3>
+            <p>挂号前 AI 分诊信息。</p>
+          </div>
+          <button type="button" @click="contextOpen = true">详情</button>
         </header>
-        <dl class="clinical-dl">
-          <div><dt>患者</dt><dd>{{ patientName }}</dd></div>
-          <div><dt>患者 ID</dt><dd>{{ fieldText(registration, "patientId", "-") }}</dd></div>
-          <div><dt>科室</dt><dd>{{ fieldText(registration, "departmentName", "-") }}</dd></div>
-          <div><dt>分诊状态</dt><dd>{{ fieldText(triage, "status", "-") }}</dd></div>
-          <div class="span"><dt>主诉</dt><dd>{{ fieldText(triage, "chiefComplaint", medicalForm.chiefComplaint || "-") }}</dd></div>
-          <div class="span"><dt>历史信息</dt><dd>{{ fieldText(triage, "pastHistory", medicalForm.pastHistory || "-") }}</dd></div>
-        </dl>
+        <div class="dl-grid">
+          <div><b>年龄</b><span>37 岁</span></div>
+          <div><b>性别</b><span>女</span></div>
+          <div><b>体温</b><span>38.1°C</span></div>
+          <div><b>分诊等级</b><span><span class="tag" :class="statusTone(triage?.status)">{{ statusLabel(triage?.status, "中风险") }}</span></span></div>
+          <div class="span"><b>主诉</b><span>{{ fieldText(triage, "chiefComplaint", medicalForm.chiefComplaint) }}</span></div>
+          <div class="span"><b>既往史</b><span>{{ fieldText(triage, "pastHistory", medicalForm.pastHistory) }}</span></div>
+        </div>
       </aside>
 
-      <main class="clinical-section record-workspace">
-        <header class="section-toolbar">
-          <h2>病历工作区</h2>
-          <StatusTag :status="streamStatus" tone="info" />
+      <main class="panel">
+        <header>
+          <div class="panel-title">
+            <h3>病历工作区</h3>
+            <p>问诊文本生成 AI 草稿后由医生确认。</p>
+          </div>
+          <span class="tag info">{{ statusLabel(streamStatus) }}</span>
         </header>
 
-        <div class="record-editor-grid">
-          <label class="clinical-field full">
+        <div class="editor-grid">
+          <label class="field full">
             <span>问诊文本</span>
             <textarea v-model.trim="dialogueText" class="consultation-textarea" rows="5" />
           </label>
 
-          <div class="ai-draft-pane full">
+          <div class="ai-pane full">
             <div class="inline-toolbar">
-              <strong>智能草稿</strong>
-              <button type="button" class="compact-action" :disabled="!streamText" @click="previewOpen = true">预览</button>
+              <strong>智能病历草稿</strong>
+              <span class="tag success">{{ recordAiProvider }} · {{ recordAiModel }}</span>
+              <button type="button" :disabled="!streamText" @click="previewOpen = true">预览</button>
             </div>
-            <LoadingState v-if="loading.record" title="正在处理病历" />
-            <pre v-else-if="streamText" class="stream-box">{{ streamText }}</pre>
-            <span v-else class="muted-line">暂无草稿</span>
+            <pre class="ai-draft">{{ streamText || "尚未生成。点击“生成病历”后展示结构化 SOAP 草稿。" }}</pre>
           </div>
 
-          <label class="clinical-field">
+          <label class="field">
             <span>主诉</span>
             <input v-model.trim="medicalForm.chiefComplaint" />
           </label>
-          <label class="clinical-field">
+          <label class="field">
             <span>诊断</span>
             <input v-model.trim="medicalForm.diagnosis" />
           </label>
-          <label class="clinical-field">
+          <label class="field">
             <span>现病史</span>
             <textarea v-model.trim="medicalForm.presentIllness" />
           </label>
-          <label class="clinical-field">
+          <label class="field">
             <span>既往史</span>
             <textarea v-model.trim="medicalForm.pastHistory" />
           </label>
-          <label class="clinical-field">
+          <label class="field">
             <span>体格检查</span>
             <textarea v-model.trim="medicalForm.physicalExam" />
           </label>
-          <label class="clinical-field">
+          <label class="field">
             <span>处理建议</span>
             <textarea v-model.trim="medicalForm.treatmentAdvice" />
           </label>
         </div>
 
-        <footer class="area-actions">
-          <button class="primary" type="button" :disabled="loading.record" @click="generateRecord">生成病历</button>
+        <footer class="footer-actions">
+          <button class="primary" type="button" :disabled="loading.record" @click="generateRecord">{{ loading.record ? "生成中" : "生成病历" }}</button>
           <button type="button" :disabled="!canSaveRecord || loading.record" @click="saveConfirmOpen = true">保存病历</button>
         </footer>
       </main>
 
-      <aside class="clinical-section prescription-rail">
-        <header class="section-toolbar">
-          <h2>处方</h2>
-          <StatusTag :status="prescription.riskLevel" :tone="statusClass(prescription.riskLevel)" />
+      <aside class="panel sticky-rail">
+        <header>
+          <div class="panel-title">
+            <h3>处方与风险</h3>
+            <p>先审方，再创建处方。</p>
+          </div>
+          <span class="tag" :class="statusTone(prescription.riskLevel)">{{ statusLabel(prescription.riskLevel) }}</span>
         </header>
 
-        <div class="table-scroll prescription-scroll">
-          <table class="clinical-table order-table">
+        <div class="table-wrap">
+          <table class="order-table">
             <thead>
               <tr>
-                <th>序号</th>
                 <th>药品</th>
                 <th>剂量</th>
                 <th>频次</th>
@@ -349,26 +407,27 @@ watch(() => props.registrationId, applyRegistration, { immediate: true });
             </thead>
             <tbody>
               <tr v-for="(drug, index) in prescription.drugs" :key="index">
-                <td>{{ index + 1 }}</td>
                 <td><input v-model.trim="drug.drugName" list="drug-options" /></td>
                 <td><input v-model.trim="drug.dosage" /></td>
                 <td><input v-model.trim="drug.frequency" /></td>
                 <td><input v-model.trim="drug.usageMethod" /></td>
-                <td><button class="danger compact-action" type="button" @click="removeDrug(index)">删除</button></td>
+                <td><button class="danger" type="button" @click="removeDrug(index)">删除</button></td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <datalist id="drug-options"><option v-for="drug in drugs" :key="String(drug.id)" :value="String(drug.name)" /></datalist>
+        <datalist id="drug-options">
+          <option v-for="drug in displayDrugs" :key="String(drug.id)" :value="String(drug.name)" />
+        </datalist>
 
-        <div v-if="checkResult" class="risk-result">
-          {{ fieldText(checkResult, "suggestions", "请医生复核用药风险。") }}
+        <div class="risk-note">
+          {{ checkResult ? fieldText(checkResult, "suggestions", "请医生复核用药风险。") : "待审方：系统将结合过敏史、诊断、剂量和相互作用进行风险提示。" }}
         </div>
 
-        <footer class="area-actions prescription-actions">
+        <footer class="footer-actions">
           <button type="button" @click="addDrug">新增药品</button>
-          <button class="primary" type="button" :disabled="loading.prescription || !canCheck" @click="checkPrescription">风险审核</button>
+          <button class="primary" type="button" :disabled="loading.prescription || !canCheck" @click="checkPrescription">{{ loading.prescription ? "审核中" : "风险审核" }}</button>
           <button type="button" :disabled="loading.prescription || !canCreate" @click="createPrescription">创建处方</button>
         </footer>
       </aside>

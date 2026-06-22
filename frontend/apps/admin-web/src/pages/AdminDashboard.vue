@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { storeToRefs } from "pinia";
-import { useAdminWorkflowStore } from "@smart-cloud-brain/shared-api";
-import { EmptyState } from "@smart-cloud-brain/shared-ui";
+import { aiSourceLabel, aiSourceTone, fieldText, statusClass, useAdminWorkflowStore } from "@smart-cloud-brain/shared-api";
+import { EmptyState, StatusTag } from "@smart-cloud-brain/shared-ui";
 
 const workflow = useAdminWorkflowStore();
-const { departments, doctors, drugs, schedules, triageDesk } = storeToRefs(workflow);
+const { departments, doctors, drugs, schedules, triageDesk, aiLogs } = storeToRefs(workflow);
 const highRisk = computed(() => triageDesk.value.filter((item) => ["MANUAL_REQUIRED", "HIGH"].includes(String(item.status))).length);
 </script>
 
@@ -35,6 +35,20 @@ const highRisk = computed(() => triageDesk.value.filter((item) => ["MANUAL_REQUI
             <div class="row-main"><strong>{{ item.workDate }} {{ item.timeRange }}</strong><p>{{ item.doctorName }} · 容量 {{ item.capacity }}</p></div>
           </article>
           <EmptyState v-if="!schedules.length" title="暂无排班" />
+        </div>
+      </aside>
+      <aside class="panel">
+        <header class="panel-header"><div class="panel-title"><h2>AI 日志</h2><p>最近调用的 provider / model。</p></div></header>
+        <div class="list">
+          <article v-for="item in aiLogs.slice(0, 6)" :key="String(item.requestId || item.createdAt)" class="list-row">
+            <div class="row-main">
+              <strong>{{ fieldText(item, "taskType", "UNKNOWN") }}</strong>
+              <p>{{ fieldText(item, "provider", "-") }} / {{ fieldText(item, "model", "-") }} · {{ fieldText(item, "latencyMs", "0") }}ms</p>
+              <span class="tag" :class="aiSourceTone(item.provider)">{{ aiSourceLabel(item.provider) }}</span>
+            </div>
+            <StatusTag :status="fieldText(item, 'status', 'UNKNOWN')" :tone="statusClass(item.status)" />
+          </article>
+          <EmptyState v-if="!aiLogs.length" title="暂无 AI 日志" />
         </div>
       </aside>
     </div>
