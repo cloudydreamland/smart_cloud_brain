@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Modal, StatusTag } from "@smart-cloud-brain/shared-ui";
-import { fieldText, statusClass, type DataRow } from "@smart-cloud-brain/shared-api";
+import { aiSourceLabel, aiSourceTone, fieldText, statusClass, type DataRow } from "@smart-cloud-brain/shared-api";
 
 defineProps<{ open: boolean; result: DataRow | null }>();
 defineEmits<{ close: []; confirm: [] }>();
@@ -10,6 +10,9 @@ defineEmits<{ close: []; confirm: [] }>();
   <Modal :open="open" title="处方审核结果" description="高风险处方需要再次确认。" @close="$emit('close')">
     <div v-if="result" class="stack">
       <StatusTag :status="fieldText(result, 'riskLevel', '未审核')" :tone="statusClass(result.riskLevel)" />
+      <span v-if="fieldText(result, 'provider', '')" class="tag" :class="aiSourceTone(result.provider)">
+        {{ aiSourceLabel(result.provider) }} · {{ fieldText(result, "provider") }}{{ fieldText(result, "model", "") ? ` / ${fieldText(result, "model")}` : "" }}
+      </span>
       <p>{{ fieldText(result, "suggestions", "请医生复核用药风险。") }}</p>
     </div>
     <template #footer>

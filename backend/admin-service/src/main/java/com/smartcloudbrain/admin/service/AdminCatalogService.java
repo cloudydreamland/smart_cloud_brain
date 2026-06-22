@@ -186,6 +186,10 @@ public class AdminCatalogService {
     ));
   }
 
+  public Object aiLogs() {
+    return internalAiClient.recentLogs();
+  }
+
   public List<Map<String, Object>> knowledgeEntries() {
     return knowledgeEntryRepository.findAll().stream().map(this::knowledgeView).toList();
   }

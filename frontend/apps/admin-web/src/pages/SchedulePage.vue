@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { reactive, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { api, fieldText, formatApiError, toNumber, useAdminWorkflowStore, useAuthStore, usePagination, type DataRow } from "@smart-cloud-brain/shared-api";
+import { aiSourceLabel, aiSourceTone, api, fieldText, formatApiError, toNumber, useAdminWorkflowStore, useAuthStore, usePagination, type DataRow } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, FormField, LoadingState, PaginationBar } from "@smart-cloud-brain/shared-ui";
 import ScheduleSuggestionDetailModal from "../components/ScheduleSuggestionDetailModal.vue";
 import PublishScheduleConfirmModal from "../components/PublishScheduleConfirmModal.vue";
@@ -89,7 +89,7 @@ async function openDetail(item: DataRow) {
         <LoadingState v-if="loading" />
         <div v-if="suggestions.length" class="list">
           <article v-for="item in pagedSuggestions" :key="String(item.id)" class="list-row">
-            <div class="row-main"><strong>{{ fieldText(item, "workDate") }} {{ fieldText(item, "timeRange") }}</strong><p>{{ fieldText(item, "doctorName") }} · 容量 {{ fieldText(item, "capacity") }}</p><span class="tag" :class="item.degraded ? 'warning' : 'success'">{{ item.degraded ? "规则降级" : "真实AI建议" }}</span></div>
+            <div class="row-main"><strong>{{ fieldText(item, "workDate") }} {{ fieldText(item, "timeRange") }}</strong><p>{{ fieldText(item, "doctorName") }} · 容量 {{ fieldText(item, "capacity") }}</p><span class="tag" :class="aiSourceTone(item.source)">{{ aiSourceLabel(item.source) }} · {{ fieldText(item, "source", "unknown") }}</span></div>
             <button type="button" @click="openDetail(item)">详情</button>
           </article>
           <PaginationBar v-model="suggestionPage" :total="suggestionTotal" :page-size="suggestionPageSize" />

@@ -82,6 +82,12 @@ public class AdminController {
     return Result.success(adminCatalogService.testPrompt(request));
   }
 
+  @GetMapping("/ai-log/list")
+  public Result<?> aiLogs() {
+    requireAdmin();
+    return Result.success(adminCatalogService.aiLogs());
+  }
+
   @GetMapping("/knowledge/list")
   public Result<?> knowledgeEntries() {
     requireAdmin();

@@ -28,6 +28,11 @@ public class MockAiProvider implements AiProvider {
   }
 
   @Override
+  public String modelName() {
+    return "local-demo";
+  }
+
+  @Override
   public TriageResponse triage(TriageRequest request, PromptResolveResponse prompt) {
     boolean cardiology = request.chiefComplaint().contains("胸痛")
         || request.chiefComplaint().toLowerCase().contains("chest");

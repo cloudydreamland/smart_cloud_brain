@@ -100,19 +100,23 @@ public class PrescriptionService {
     record.setRiskLevel(response.riskLevel());
     record.setSuggestions(nullToEmpty(response.suggestions()));
     record.setInteractions(String.join(",", safeInteractions(response)));
-    record.setAiResultJson("{\"degraded\":" + response.degraded() + "}");
+    record.setAiResultJson("{\"degraded\":" + response.degraded()
+        + ",\"provider\":\"" + nullToEmpty(response.provider())
+        + "\",\"model\":\"" + nullToEmpty(response.model()) + "\"}");
     checkRecordRepository.save(record);
-    return Map.of(
-        "riskLevel", response.riskLevel(),
-        "riskDescription", nullToEmpty(response.riskDescription()),
-        "suggestions", nullToEmpty(response.suggestions()),
-        "interactions", safeInteractions(response),
-        "contraindications", response.contraindications() == null ? List.of() : response.contraindications(),
-        "adjustmentSuggestions", response.adjustmentSuggestions() == null ? List.of() : response.adjustmentSuggestions(),
-        "drugKnowledge", drugKnowledge(requestedDrugs, catalogDrugs),
-        "degraded", response.degraded(),
-        "checkRecordId", record.getId()
-    );
+    Map<String, Object> result = new LinkedHashMap<>();
+    result.put("riskLevel", response.riskLevel());
+    result.put("riskDescription", nullToEmpty(response.riskDescription()));
+    result.put("suggestions", nullToEmpty(response.suggestions()));
+    result.put("interactions", safeInteractions(response));
+    result.put("contraindications", response.contraindications() == null ? List.of() : response.contraindications());
+    result.put("adjustmentSuggestions", response.adjustmentSuggestions() == null ? List.of() : response.adjustmentSuggestions());
+    result.put("drugKnowledge", drugKnowledge(requestedDrugs, catalogDrugs));
+    result.put("degraded", response.degraded());
+    result.put("provider", nullToEmpty(response.provider()));
+    result.put("model", nullToEmpty(response.model()));
+    result.put("checkRecordId", record.getId());
+    return result;
   }
 
   @Transactional

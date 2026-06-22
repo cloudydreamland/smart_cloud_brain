@@ -50,6 +50,16 @@ export function statusText(status: unknown, fallback = "-") {
   return labels[raw.toUpperCase()] ?? raw;
 }
 
+export function aiSourceLabel(provider: unknown) {
+  const value = String(provider ?? "").trim().toLowerCase();
+  if (!value) return "AI";
+  return value === "mock" ? "本地模拟" : "AI";
+}
+
+export function aiSourceTone(provider: unknown) {
+  return String(provider ?? "").trim().toLowerCase() === "mock" ? "warning" : "success";
+}
+
 export function usePagination<T>(source: MaybeRefOrGetter<T[]>, initialPageSize = 8) {
   const currentPage = ref(1);
   const pageSize = ref(initialPageSize);

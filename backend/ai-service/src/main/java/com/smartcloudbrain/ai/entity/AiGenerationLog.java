@@ -31,6 +31,34 @@ public class AiGenerationLog extends BaseEntity {
   @Column(name = "created_at")
   private LocalDateTime createdAt;
 
+  public String getTaskType() {
+    return taskType;
+  }
+
+  public String getProvider() {
+    return provider;
+  }
+
+  public String getModel() {
+    return model;
+  }
+
+  public String getRequestId() {
+    return requestId;
+  }
+
+  public String getInputSummary() {
+    return inputSummary;
+  }
+
+  public String getOutputSummary() {
+    return outputSummary;
+  }
+
+  public Boolean getSuccess() {
+    return success;
+  }
+
   public void setTaskType(String taskType) {
     this.taskType = taskType;
   }
@@ -77,6 +105,22 @@ public class AiGenerationLog extends BaseEntity {
 
   public void setPromptTemplateId(Long promptTemplateId) {
     this.promptTemplateId = promptTemplateId;
+  }
+
+  public Long getPromptTemplateId() {
+    return promptTemplateId;
+  }
+
+  public String getErrorMessage() {
+    return errorMessage;
+  }
+
+  public Long getLatencyMs() {
+    return latencyMs;
+  }
+
+  public LocalDateTime getCreatedAt() {
+    return createdAt;
   }
 
   public void setCreatedAt(LocalDateTime createdAt) {

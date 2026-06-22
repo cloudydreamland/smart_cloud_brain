@@ -2,7 +2,7 @@
 import { computed, reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
-import { api, fieldText, formatApiError, statusClass, statusText, useAuthStore, usePagination, usePatientWorkflowStore } from "@smart-cloud-brain/shared-api";
+import { aiSourceLabel, aiSourceTone, api, fieldText, formatApiError, statusClass, statusText, useAuthStore, usePagination, usePatientWorkflowStore } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, FormField, LoadingState, PaginationBar, StatusTag } from "@smart-cloud-brain/shared-ui";
 import TriageResultModal from "../components/TriageResultModal.vue";
 
@@ -74,6 +74,9 @@ async function submit() {
           <LoadingState v-if="loading" title="正在分析症状" />
           <div v-else-if="triage" class="clinical-note">
             <StatusTag :status="statusText(triage.status)" :tone="statusClass(triage.status)" />
+            <span v-if="fieldText(triage, 'provider', '')" class="tag" :class="aiSourceTone(triage.provider)">
+              {{ aiSourceLabel(triage.provider) }} · {{ fieldText(triage, "provider") }}{{ fieldText(triage, "model", "") ? ` / ${fieldText(triage, "model")}` : "" }}
+            </span>
             <h3>{{ fieldText(triage, "recommendedDepartment", "待确认") }}</h3>
             <p>{{ fieldText(triage, "reason", "暂无说明") }}</p>
           </div>

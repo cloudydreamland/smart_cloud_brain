@@ -4,6 +4,8 @@ import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import {
   api,
+  aiSourceLabel,
+  aiSourceTone,
   fieldText,
   formatApiError,
   medicalRecordStreamUrl,
@@ -39,6 +41,8 @@ const highRiskOpen = ref(false);
 const completeOpen = ref(false);
 const dialogueText = ref("");
 const checkResult = ref<DataRow | null>(null);
+const recordAiProvider = ref("");
+const recordAiModel = ref("");
 let recordStream: AbortController | null = null;
 
 const registration = computed(() => registrations.value.find((item) => toNumber(item.registrationId) === toNumber(props.registrationId)) ?? null);
@@ -124,6 +128,8 @@ function handleStreamBlock(block: string) {
   } else if (eventName === "structured") {
     const draft = normalizeDraft(parseEventData(dataText));
     applyDraft(draft);
+    recordAiProvider.value = fieldText(draft, "provider", "");
+    recordAiModel.value = fieldText(draft, "model", "");
     streamText.value = formatDraft(draft);
     streamStatus.value = "DRAFT_READY";
   } else if (eventName === "error") {
@@ -134,9 +140,11 @@ function handleStreamBlock(block: string) {
 async function generateRecord() {
   if (!dialogueText.value.trim()) return setError("请先填写问诊摘要。");
   loading.record = true;
-  error.value = "";
-  streamText.value = "";
-  streamStatus.value = "GENERATING";
+    error.value = "";
+    streamText.value = "";
+    recordAiProvider.value = "";
+    recordAiModel.value = "";
+    streamStatus.value = "GENERATING";
   try {
     recordStream?.abort();
     recordStream = new AbortController();
@@ -316,6 +324,9 @@ watch(() => props.registrationId, applyRegistration, { immediate: true });
           <div class="ai-draft-pane full">
             <div class="inline-toolbar">
               <strong>智能草稿</strong>
+              <span v-if="recordAiProvider" class="tag" :class="aiSourceTone(recordAiProvider)">
+                {{ aiSourceLabel(recordAiProvider) }} · {{ recordAiProvider }}{{ recordAiModel ? ` / ${recordAiModel}` : "" }}
+              </span>
               <button type="button" class="compact-action" :disabled="!streamText" @click="previewOpen = true">预览</button>
             </div>
             <LoadingState v-if="loading.record" title="正在处理病历" />

@@ -9,6 +9,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.smartcloudbrain.ai.application.AiOrchestrationService;
+import com.smartcloudbrain.ai.application.AiTaskLogService;
 import com.smartcloudbrain.ai.service.PromptTemplateService;
 import com.smartcloudbrain.aiapi.dto.PromptResolveRequest;
 import com.smartcloudbrain.aiapi.dto.ScheduleSuggestRequest;
@@ -23,10 +24,11 @@ import org.junit.jupiter.api.Test;
 class InternalAiControllerSecurityTest {
 
   private final AiOrchestrationService aiOrchestrationService = mock(AiOrchestrationService.class);
+  private final AiTaskLogService aiTaskLogService = mock(AiTaskLogService.class);
   private final PromptTemplateService promptTemplateService = mock(PromptTemplateService.class);
   private final InternalRequestGuard internalRequestGuard = mock(InternalRequestGuard.class);
   private final InternalAiController controller =
-      new InternalAiController(aiOrchestrationService, promptTemplateService, internalRequestGuard);
+      new InternalAiController(aiOrchestrationService, aiTaskLogService, promptTemplateService, internalRequestGuard);
 
   @Test
   void validatesInternalTokenForAiEndpoints() {

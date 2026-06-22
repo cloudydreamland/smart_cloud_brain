@@ -50,6 +50,18 @@ public class InternalAiClient {
     }
   }
 
+  public Object recentLogs() {
+    try {
+      Result<Object> result = restClient.get()
+          .uri(AiInternalApi.LOG_RECENT)
+          .retrieve()
+          .body(OBJECT_RESULT);
+      return data(result);
+    } catch (RestClientException ex) {
+      throw new BusinessException(500, "ai-service unavailable");
+    }
+  }
+
   public ScheduleSuggestResponse suggestSchedule(ScheduleSuggestRequest request) {
     try {
       Result<ScheduleSuggestResponse> result = restClient.post()

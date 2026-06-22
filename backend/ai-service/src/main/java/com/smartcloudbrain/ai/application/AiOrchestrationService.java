@@ -127,7 +127,7 @@ public class AiOrchestrationService {
     PromptResolveResponse prompt = null;
     try {
       prompt = promptResolver.resolve();
-      T result = callable.call(prompt);
+      T result = withRuntime(callable.call(prompt), aiProvider.providerName(), aiProvider.modelName());
       aiTaskLogService.record(
           taskType,
           aiProvider.providerName(),
@@ -145,8 +145,8 @@ public class AiOrchestrationService {
       safeRecord(taskType, aiProvider.providerName(), aiProvider.modelName(), requestId, input, null,
           prompt, System.currentTimeMillis() - start, false, rootMessage(ex), ex);
       try {
-        T fallback = fallbackCallable.call();
-        safeRecord(taskType, fallbackProvider.providerName(), "deterministic-fallback", requestId,
+        T fallback = withRuntime(fallbackCallable.call(), fallbackProvider.providerName(), fallbackProvider.modelName());
+        safeRecord(taskType, fallbackProvider.providerName(), fallbackProvider.modelName(), requestId,
             input, fallback, null, System.currentTimeMillis() - start, true,
             "Fallback after " + aiProvider.providerName() + " failure: " + rootMessage(ex), ex);
         return fallback;
@@ -176,6 +176,23 @@ public class AiOrchestrationService {
     } catch (RuntimeException logException) {
       sourceException.addSuppressed(logException);
     }
+  }
+
+  @SuppressWarnings("unchecked")
+  private <T> T withRuntime(T result, String provider, String model) {
+    if (result instanceof TriageResponse response) {
+      return (T) response.withRuntime(provider, model);
+    }
+    if (result instanceof MedicalRecordGenerateResponse response) {
+      return (T) response.withRuntime(provider, model);
+    }
+    if (result instanceof PrescriptionCheckResponse response) {
+      return (T) response.withRuntime(provider, model);
+    }
+    if (result instanceof ScheduleSuggestResponse response) {
+      return (T) response.withRuntime(provider, model);
+    }
+    return result;
   }
 
   private String nullToGeneral(String value) {

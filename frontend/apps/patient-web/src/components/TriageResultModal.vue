@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Modal, StatusTag } from "@smart-cloud-brain/shared-ui";
-import { fieldText, statusClass, statusText, type DataRow } from "@smart-cloud-brain/shared-api";
+import { aiSourceLabel, aiSourceTone, fieldText, statusClass, statusText, type DataRow } from "@smart-cloud-brain/shared-api";
 
 defineProps<{ open: boolean; result: DataRow | null }>();
 defineEmits<{ close: []; doctors: [] }>();
@@ -10,6 +10,9 @@ defineEmits<{ close: []; doctors: [] }>();
   <Modal :open="open" title="分诊结果" description="智能分诊仅用于挂号推荐，最终诊断以医生接诊为准。" @close="$emit('close')">
     <div v-if="result" class="triage-result">
       <StatusTag :status="statusText(result.status)" :tone="statusClass(result.status)" />
+      <span v-if="fieldText(result, 'provider', '')" class="tag" :class="aiSourceTone(result.provider)">
+        {{ aiSourceLabel(result.provider) }} · {{ fieldText(result, "provider") }}{{ fieldText(result, "model", "") ? ` / ${fieldText(result, "model")}` : "" }}
+      </span>
       <h3>{{ fieldText(result, "recommendedDepartment", "待人工确认") }}</h3>
       <p>{{ fieldText(result, "reason", "暂无说明") }}</p>
     </div>
