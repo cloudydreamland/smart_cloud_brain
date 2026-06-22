@@ -8,6 +8,7 @@ import {
   useAuthStore,
   useDoctorWorkflowStore,
 } from "@smart-cloud-brain/shared-api";
+import { CollapsibleSidebar } from "@smart-cloud-brain/shared-ui";
 
 const auth = useAuthStore();
 const workflow = useDoctorWorkflowStore();
@@ -31,6 +32,11 @@ const navItems = computed(() => [
   { label: "处方", to: "/prescriptions" },
   { label: "通知", to: "/notifications", badge: unread.value },
   { label: "设置", to: "/settings" },
+]);
+
+const sidebarGroups = computed(() => [
+  { items: navItems.value.slice(0, 4) },
+  { items: navItems.value.slice(4) },
 ]);
 
 async function refresh() {
@@ -94,21 +100,13 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="doctor-shell">
-    <aside class="doctor-nav" aria-label="医生端导航">
-      <div class="doctor-mark">医</div>
-      <nav>
-        <RouterLink
-          v-for="item in navItems"
-          :key="item.to"
-          class="doctor-nav-link"
-          :class="{ active: route.path === item.to || (item.to !== '/' && route.path.startsWith(item.to)) }"
-          :to="item.to"
-        >
-          <span>{{ item.label }}</span>
-          <b v-if="item.badge">{{ item.badge }}</b>
-        </RouterLink>
-      </nav>
-    </aside>
+    <CollapsibleSidebar
+      mark="医"
+      title="医生工作台"
+      :groups="sidebarGroups"
+      :user-name="session?.name || '医生'"
+      :user-meta="`${statusText(session?.role, '医生')} #${session?.userId || '-'}`"
+    />
 
     <div class="doctor-app">
       <header class="doctor-topline">

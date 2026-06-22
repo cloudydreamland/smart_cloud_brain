@@ -3,7 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { statusText, useAdminWorkflowStore, useAuthStore } from "@smart-cloud-brain/shared-api";
-import { AppShell, TopBar } from "@smart-cloud-brain/shared-ui";
+import { CollapsibleSidebar, TopBar } from "@smart-cloud-brain/shared-ui";
 
 const auth = useAuthStore();
 const workflow = useAdminWorkflowStore();
@@ -55,22 +55,29 @@ onBeforeUnmount(() => unbind?.());
 </script>
 
 <template>
-  <AppShell
-    mark="管"
-    title="运营管理工作台"
-    subtitle="基础数据 · 号源 · 知识库"
-    :user-name="session?.name"
-    :user-meta="`${statusText(session?.role, '')} #${session?.userId || ''}`"
-    :nav-groups="navGroups"
-    @logout="logout"
-  >
-    <template #user>
-      <div class="row-meta"><span class="tag success">已登录</span><span class="tag warning">{{ highRisk }} 条需关注</span></div>
-    </template>
-    <TopBar eyebrow="管理端" title="基础数据、号源与智能配置统一维护" description="管理端强调批量浏览、快速编辑、分诊改派和数据发布状态。">
-      <template #actions><button type="button" :disabled="loading" @click="refresh">刷新数据</button></template>
-    </TopBar>
-    <div class="admin-notices"><div v-if="permissionError" class="notice error">{{ permissionError }}</div></div>
-    <RouterView @refresh="refresh" />
-  </AppShell>
+  <div class="admin-shell">
+    <CollapsibleSidebar
+      mark="管"
+      title="管理控制台"
+      :groups="navGroups"
+      :user-name="session?.name || '管理员'"
+      :user-meta="`${statusText(session?.role, '')} #${session?.userId || ''}`"
+    />
+
+    <div class="admin-app">
+      <TopBar eyebrow="管理端" title="基础数据、号源与智能配置统一维护" description="管理端强调批量浏览、快速编辑、分诊改派和数据发布状态。">
+        <template #actions>
+          <div class="row-meta">
+            <span class="tag success">已登录</span>
+            <span class="tag warning">{{ highRisk }} 条需关注</span>
+          </div>
+          <button type="button" :disabled="loading" @click="refresh">刷新数据</button>
+          <button type="button" @click="logout">退出登录</button>
+        </template>
+      </TopBar>
+
+      <div class="admin-notices"><div v-if="permissionError" class="notice error">{{ permissionError }}</div></div>
+      <RouterView @refresh="refresh" />
+    </div>
+  </div>
 </template>

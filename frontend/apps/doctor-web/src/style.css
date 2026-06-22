@@ -21,14 +21,7 @@
   --info: #245ca8;
   --info-soft: #e4edf8;
   --shadow: none;
-  --radius: 0;
-  --radius-sm: 0;
   --focus: 0 0 0 2px rgba(11, 95, 120, 0.22);
-}
-
-* {
-  border-radius: 0 !important;
-  box-shadow: none !important;
 }
 
 html,
@@ -48,7 +41,7 @@ button,
 input,
 textarea,
 select {
-  border-radius: 0 !important;
+  border-radius: var(--radius-sm);
 }
 
 button,
@@ -124,17 +117,6 @@ textarea {
 .tag.danger { border-color: #d7a09a; background: var(--danger-soft); color: var(--danger); }
 .tag.info { border-color: #a8bddd; background: var(--info-soft); color: var(--info); }
 
-.panel,
-.modal-card,
-.drawer-card,
-.empty-state,
-.error-state,
-.loading-state,
-.notice {
-  border-radius: 0 !important;
-  box-shadow: none !important;
-}
-
 .panel {
   border: 1px solid var(--line);
 }
@@ -176,63 +158,12 @@ textarea {
 }
 
 .doctor-shell {
-  display: grid;
-  grid-template-columns: 112px minmax(0, 1fr);
   min-height: 100vh;
   background: var(--bg);
 }
 
-.doctor-nav {
-  position: sticky;
-  top: 0;
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  border-right: 1px solid var(--line-strong);
-  background: #162532;
-  color: #dbe5eb;
-}
-
-.doctor-mark {
-  display: grid;
-  place-items: center;
-  height: 48px;
-  border-bottom: 1px solid #2e4050;
-  background: #0d1c28;
-  font-size: 18px;
-  font-weight: 800;
-}
-
-.doctor-nav nav {
-  display: grid;
-}
-
-.doctor-nav-link {
-  display: grid;
-  gap: 3px;
-  justify-items: center;
-  min-height: 58px;
-  padding: 10px 12px;
-  border-bottom: 1px solid #2b3c4a;
-  color: #cdd8df;
-  font-size: 13px;
-}
-
-.doctor-nav-link.active {
-  background: #0b5f78;
-  color: #fff;
-}
-
-.doctor-nav-link b {
-  min-width: 18px;
-  padding: 0 4px;
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  font-size: 11px;
-  line-height: 16px;
-  text-align: center;
-}
-
 .doctor-app {
+  margin-left: 56px;
   min-width: 0;
 }
 
@@ -720,37 +651,8 @@ textarea {
 }
 
 @media (max-width: 860px) {
-  .doctor-shell {
-    grid-template-columns: 1fr;
-  }
-
-  .doctor-nav {
-    position: sticky;
-    z-index: 50;
-    min-height: 0;
-    flex-direction: row;
-    border-right: 0;
-    border-bottom: 1px solid var(--line-strong);
-  }
-
-  .doctor-mark {
-    width: 64px;
-    height: 46px;
-    border-right: 1px solid #2e4050;
-    border-bottom: 0;
-  }
-
-  .doctor-nav nav {
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(76px, 1fr);
-    width: calc(100vw - 64px);
-    overflow-x: auto;
-  }
-
-  .doctor-nav-link {
-    min-height: 46px;
-    border-right: 1px solid #2b3c4a;
-    border-bottom: 0;
+  .doctor-app {
+    margin-left: 0;
   }
 
   .doctor-topline {
