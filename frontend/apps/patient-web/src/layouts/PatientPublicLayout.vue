@@ -1,10 +1,5 @@
-<script setup lang="ts">
-import PatientHeader from "../components/PatientHeader.vue";
-</script>
-
 <template>
-  <main class="patient-page theme-patient">
-    <PatientHeader public-mode />
+  <main class="patient-page theme-patient patient-public-page">
     <RouterView />
   </main>
 </template>
