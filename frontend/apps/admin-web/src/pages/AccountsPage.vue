@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from "vue";
+import { computed, onMounted, reactive, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 import {
   api,
@@ -14,13 +14,14 @@ import {
   type DataRow,
   type Role,
 } from "@smart-cloud-brain/shared-api";
-import { DataTable, ErrorState, FormField, Modal, PaginationBar, StatusTag } from "@smart-cloud-brain/shared-ui";
+import { DataTable, ErrorState, FormField, Modal, PaginationBar, SegmentedControl, StatusTag } from "@smart-cloud-brain/shared-ui";
 
 const auth = useAuthStore();
 const workflow = useAdminWorkflowStore();
 const { departments } = storeToRefs(workflow);
 const accounts = ref<DataRow[]>([]);
 const roles = ref<DataRow[]>([]);
+const activeRole = ref("ADMIN");
 const keyword = ref("");
 const error = ref("");
 const notice = ref("");
@@ -48,18 +49,60 @@ const form = reactive<{
   status: "ENABLED",
 });
 
-const filteredAccounts = computed(() => {
+const fallbackRoleOptions = [
+  { value: "ADMIN", label: "系统管理员" },
+  { value: "DOCTOR", label: "医生" },
+];
+
+const roleOptions = computed(() => {
+  const seen = new Set<string>();
+  const options = [...roles.value, ...accounts.value]
+    .map((item) => {
+      const value = fieldText(item, "role", "");
+      if (!value || seen.has(value)) return null;
+      seen.add(value);
+      return { value, label: fieldText(item, "label", roleLabel(value)) };
+    })
+    .filter((item): item is { value: string; label: string } => Boolean(item));
+  const source = options.length ? options : fallbackRoleOptions;
+  return source.map((item) => ({
+    ...item,
+    label: `${item.label} ${accountsByRole(item.value).length}`,
+  }));
+});
+
+const currentRoleLabel = computed(() => roleLabel(activeRole.value));
+const currentRoleTemplate = computed(() => roles.value.find((item) => fieldText(item, "role") === activeRole.value));
+const currentRoleTotal = computed(() => accountsByRole(activeRole.value).length);
+const currentRoleEnabled = computed(() => accountsByRole(activeRole.value).filter((item) => fieldText(item, "status", "ENABLED") !== "DISABLED").length);
+
+const currentRoleAccounts = computed(() => {
   const q = keyword.value.trim().toLowerCase();
-  if (!q) return accounts.value;
-  return accounts.value.filter((item) => [
+  const source = accountsByRole(activeRole.value);
+  if (!q) return source;
+  return source.filter((item) => [
     "roleLabel", "role", "account", "name", "departmentName", "title", "status", "permissions",
   ].some((key) => fieldText(item, key, "").toLowerCase().includes(q)));
 });
-const { currentPage, pageSize, total, pageRows } = usePagination(filteredAccounts, 8);
+const { currentPage, pageSize, total, pageRows } = usePagination(currentRoleAccounts, 8);
+
+watch([activeRole, keyword], () => {
+  currentPage.value = 1;
+});
+
+watch(roleOptions, (options) => {
+  if (!options.some((item) => item.value === activeRole.value)) {
+    activeRole.value = options[0]?.value ?? "ADMIN";
+  }
+}, { immediate: true });
+
+function accountsByRole(role: string) {
+  return accounts.value.filter((item) => fieldText(item, "role") === role);
+}
 
 function roleLabel(role: unknown) {
   const raw = String(role || "");
-  return fieldText(roles.value.find((item) => fieldText(item, "role") === raw), "label", raw);
+  return fieldText(roles.value.find((item) => fieldText(item, "role") === raw), "label", fallbackRoleOptions.find((item) => item.value === raw)?.label ?? raw);
 }
 
 function rolePermissionText(role: unknown) {
@@ -69,6 +112,10 @@ function rolePermissionText(role: unknown) {
 
 function defaultDepartmentId() {
   return toNumber(departments.value[0]?.id, 0);
+}
+
+function defaultCreateRole(): Role {
+  return activeRole.value === "DOCTOR" ? "DOCTOR" : "ADMIN";
 }
 
 async function refresh() {
@@ -95,7 +142,7 @@ function openEditor(item?: DataRow) {
   error.value = "";
   notice.value = "";
   form.id = item ? toNumber(item.id, undefined) : undefined;
-  form.role = (fieldText(item, "role", "ADMIN") as Role) || "ADMIN";
+  form.role = item ? ((fieldText(item, "role", "ADMIN") as Role) || "ADMIN") : defaultCreateRole();
   form.account = fieldText(item, "account");
   form.name = fieldText(item, "name");
   form.password = "";
@@ -189,13 +236,20 @@ onMounted(refresh);
       <div class="panel-body stack">
         <ErrorState v-if="error" :message="error" />
         <div v-if="notice" class="notice success">{{ notice }}</div>
-        <div class="admin-filter-row">
-          <input v-model.trim="keyword" placeholder="搜索账号、姓名、角色或权限" />
+        <div class="account-role-bar">
+          <SegmentedControl v-model="activeRole" :options="roleOptions" />
+          <div class="account-role-summary">
+            <strong>{{ currentRoleLabel }}</strong>
+            <span>{{ currentRoleTotal }} 个账户</span>
+            <span>{{ currentRoleEnabled }} 个启用</span>
+          </div>
         </div>
-        <DataTable :rows="filteredAccounts" :loading="loading" :error="error" empty-title="暂无账户" empty-message="还没有可管理的管理员或医生账户。">
+        <div class="admin-filter-row">
+          <input v-model.trim="keyword" :placeholder="`搜索${currentRoleLabel}账号、姓名或权限`" />
+        </div>
+        <DataTable :rows="currentRoleAccounts" :loading="loading" :error="error" :empty-title="`${currentRoleLabel}暂无账户`" empty-message="当前角色下还没有可管理账户。">
           <thead>
             <tr>
-              <th>角色</th>
               <th>账号</th>
               <th>姓名</th>
               <th>所属科室</th>
@@ -206,7 +260,6 @@ onMounted(refresh);
           </thead>
           <tbody>
             <tr v-for="item in pageRows" :key="`${fieldText(item, 'role')}-${fieldText(item, 'id')}`">
-              <td><strong>{{ fieldText(item, "roleLabel", roleLabel(item.role)) }}</strong></td>
               <td>{{ fieldText(item, "account") }}</td>
               <td>{{ fieldText(item, "name") }}</td>
               <td>{{ fieldText(item, "departmentName", "-") }}</td>
@@ -223,16 +276,29 @@ onMounted(refresh);
     <aside class="panel">
       <header class="panel-header">
         <div class="panel-title">
-          <h2>角色权限模板</h2>
+          <h2>当前角色权限</h2>
           <p>系统访问控制由登录角色决定，保存账号后立即按角色生效。</p>
         </div>
       </header>
       <div class="panel-body role-template-list">
-        <article v-for="role in roles" :key="fieldText(role, 'role')" class="role-template">
-          <strong>{{ fieldText(role, "label") }}</strong>
-          <span class="tag">{{ fieldText(role, "role") }}</span>
-          <p>{{ fieldText(role, "permissions") }}</p>
+        <article class="role-template role-template-active">
+          <strong>{{ currentRoleLabel }}</strong>
+          <span class="tag">{{ activeRole }}</span>
+          <p>{{ fieldText(currentRoleTemplate, "permissions", "暂无权限说明") }}</p>
         </article>
+        <div class="role-switch-list">
+          <button
+            v-for="role in roleOptions"
+            :key="role.value"
+            type="button"
+            class="role-switch-card"
+            :class="{ active: role.value === activeRole }"
+            @click="activeRole = role.value"
+          >
+            <span>{{ roleLabel(role.value) }}</span>
+            <strong>{{ accountsByRole(role.value).length }}</strong>
+          </button>
+        </div>
       </div>
     </aside>
 
