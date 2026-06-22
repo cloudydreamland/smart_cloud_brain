@@ -25,12 +25,12 @@ let unbind: (() => void) | null = null;
 const unread = computed(() => notifications.value.filter((item) => String(item.readStatus) !== "READ").length);
 const activeQueue = computed(() => registrations.value.filter((item) => String(item.status) !== "COMPLETED").length);
 const navItems = computed(() => [
-  { label: "首页", to: "/", badge: activeQueue.value },
-  { label: "队列", to: "/queue", badge: activeQueue.value },
-  { label: "病历", to: "/records" },
-  { label: "处方", to: "/prescriptions" },
-  { label: "通知", to: "/notifications", badge: unread.value },
-  { label: "设置", to: "/settings" },
+  { icon: "01", label: "首页", to: "/", badge: activeQueue.value },
+  { icon: "02", label: "队列", to: "/queue", badge: activeQueue.value },
+  { icon: "03", label: "病历", to: "/records" },
+  { icon: "04", label: "处方", to: "/prescriptions" },
+  { icon: "05", label: "通知", to: "/notifications", badge: unread.value },
+  { icon: "06", label: "设置", to: "/settings" },
 ]);
 
 async function refresh() {
@@ -95,7 +95,10 @@ onBeforeUnmount(() => {
 <template>
   <div class="doctor-shell">
     <aside class="doctor-nav" aria-label="医生端导航">
-      <div class="doctor-mark">医</div>
+      <div class="doctor-mark">
+        <strong>DOCTOR</strong>
+        <span>CLINIC</span>
+      </div>
       <nav>
         <RouterLink
           v-for="item in navItems"
@@ -104,6 +107,7 @@ onBeforeUnmount(() => {
           :class="{ active: route.path === item.to || (item.to !== '/' && route.path.startsWith(item.to)) }"
           :to="item.to"
         >
+          <i>{{ item.icon }}</i>
           <span>{{ item.label }}</span>
           <b v-if="item.badge">{{ item.badge }}</b>
         </RouterLink>
