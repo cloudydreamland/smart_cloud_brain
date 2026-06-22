@@ -34,6 +34,10 @@ export type DoctorSaveRequest = {
   id?: number; name: string; phone: string; password?: string; departmentId: number;
   title?: string; specialty?: string; status?: string;
 };
+export type AccountSaveRequest = {
+  id?: number; role: Role; account: string; name: string; password?: string;
+  departmentId?: number; title?: string; specialty?: string; status?: string;
+};
 export type DrugSaveRequest = {
   id?: number; name: string; specification?: string; contraindication?: string;
   interactionRule?: string; status?: string;

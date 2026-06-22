@@ -77,6 +77,9 @@ public class AuthService {
     Doctor doctor = doctorRepository.findByPhone(request.account())
         .or(() -> doctorByDemoAccount(request.account()))
         .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
+    if ("DISABLED".equalsIgnoreCase(doctor.getStatus())) {
+      throw new BusinessException(ErrorCode.UNAUTHORIZED);
+    }
     passwordService.assertMatches(request.password(), doctor.getPasswordHash());
     if (passwordService.requiresUpgrade(doctor.getPasswordHash())) {
       doctor.setPasswordHash(passwordService.encode(request.password()));
@@ -89,6 +92,9 @@ public class AuthService {
   public LoginResponse loginAdmin(LoginRequest request) {
     AdminUser admin = adminUserRepository.findByUsername(request.account())
         .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
+    if ("DISABLED".equalsIgnoreCase(admin.getStatus())) {
+      throw new BusinessException(ErrorCode.UNAUTHORIZED);
+    }
     passwordService.assertMatches(request.password(), admin.getPasswordHash());
     if (passwordService.requiresUpgrade(admin.getPasswordHash())) {
       admin.setPasswordHash(passwordService.encode(request.password()));
