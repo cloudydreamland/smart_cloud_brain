@@ -10,7 +10,6 @@ import static org.mockito.Mockito.when;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartcloudbrain.admin.client.InternalAiClient;
 import com.smartcloudbrain.admin.client.InternalDoctorClient;
-import com.smartcloudbrain.admin.client.InternalAiClient;
 import com.smartcloudbrain.admin.client.InternalTriageClient;
 import com.smartcloudbrain.admin.dto.admin.SchedulePublishRequest;
 import com.smartcloudbrain.admin.dto.admin.ScheduleGenerateRequest;
@@ -60,7 +59,6 @@ class AdminCatalogServiceTest {
   @Mock private InternalDoctorClient internalDoctorClient;
   @Mock private InternalAiClient internalAiClient;
   @Mock private InternalTriageClient internalTriageClient;
-  @Mock private InternalAiClient internalAiClient;
   @Mock private PasswordHashService passwordHashService;
   @Mock private ObjectMapper objectMapper;
   @InjectMocks private AdminCatalogService adminCatalogService;
