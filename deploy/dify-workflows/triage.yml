@@ -137,8 +137,8 @@ workflow:
           provider: langgenius/deepseek/deepseek
         prompt_template:
         - role: system
-          text: "你是一位专业的医疗智能分诊助手。请根据患者的主诉症状，判断应该前往哪个科室就诊。\n\n患者ID：{{patientId}}\n\
-            主诉症状：{{chiefComplaint}}\n\n请严格按照以下JSON格式输出，不要输出任何其他内容：\n{\n  \"recommendedDepartment\"\
+          text: "你是一位专业的医疗智能分诊助手。请根据患者的主诉症状，判断应该前往哪个科室就诊。\n\n患者ID：{{#1781658416218.patientId#}}\n\
+            主诉症状：{{#1781658416218.chiefComplaint#}}\n\n请严格按照以下JSON格式输出，不要输出任何其他内容：\n{\n  \"recommendedDepartment\"\
             : \"推荐科室名称\",\n  \"departmentCode\": \"科室代码\",\n  \"recommendedDoctorDirection\": \"推荐就诊方向\",\n  \"urgencyLevel\": \"ROUTINE、URGENT或EMERGENCY\",\n  \"confidence\": 0.0,\n  \"recommendedDoctorIds\"\
             : [],\n  \"reason\": \"分诊理由\",\n  \"degraded\": false\n}\n\n科室代码对照表：\n\
             - 内科：INTERNAL\n- 外科：SURGERY\n- 骨科：ORTHOPEDICS\n- 儿科：PEDIATRICS\n- 妇产科：GYNECOLOGY\n\

@@ -6,6 +6,7 @@ import com.smartcloudbrain.aiapi.dto.MedicalRecordGenerateRequest;
 import com.smartcloudbrain.aiapi.dto.PrescriptionCheckRequest;
 import com.smartcloudbrain.aiapi.dto.PromptResolveRequest;
 import com.smartcloudbrain.aiapi.dto.PromptTestRequest;
+import com.smartcloudbrain.aiapi.dto.ScheduleSuggestRequest;
 import com.smartcloudbrain.aiapi.dto.TriageRequest;
 import com.smartcloudbrain.ai.service.PromptTemplateService;
 import com.smartcloudbrain.common.result.Result;
@@ -82,6 +83,12 @@ public class InternalAiController {
   public Result<?> checkPrescription(@Valid @RequestBody PrescriptionCheckRequest request) {
     internalRequestGuard.requireServiceRequest();
     return Result.success(aiOrchestrationService.checkPrescription(request));
+  }
+
+  @PostMapping("/schedule/suggest")
+  public Result<?> suggestSchedule(@Valid @RequestBody ScheduleSuggestRequest request) {
+    internalRequestGuard.requireServiceRequest();
+    return Result.success(aiOrchestrationService.suggestSchedule(request));
   }
 
   @PostMapping("/prompt-template/resolve")

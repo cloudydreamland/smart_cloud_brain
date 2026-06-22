@@ -10,9 +10,13 @@ import com.smartcloudbrain.aiapi.dto.MedicalRecordGenerateResponse;
 import com.smartcloudbrain.aiapi.dto.PrescriptionCheckRequest;
 import com.smartcloudbrain.aiapi.dto.PrescriptionCheckResponse;
 import com.smartcloudbrain.aiapi.dto.PromptResolveResponse;
+import com.smartcloudbrain.aiapi.dto.ScheduleSuggestRequest;
+import com.smartcloudbrain.aiapi.dto.ScheduleSuggestResponse;
+import com.smartcloudbrain.aiapi.dto.ScheduleSuggestionItem;
 import com.smartcloudbrain.aiapi.dto.TriageRequest;
 import com.smartcloudbrain.aiapi.dto.TriageResponse;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -30,7 +34,8 @@ public class DifyAiProvider implements AiProvider {
   enum WorkflowTask {
     TRIAGE,
     MEDICAL_RECORD,
-    PRESCRIPTION_CHECK
+    PRESCRIPTION_CHECK,
+    SCHEDULE
   }
 
   private final AiProviderProperties properties;
@@ -125,7 +130,7 @@ public class DifyAiProvider implements AiProvider {
     inputs.put("drugs", drugTextInput(request.drugs()));
     JsonNode outputs = runWorkflow(inputs, "prescription-" + textInput(request.patientId()), WorkflowTask.PRESCRIPTION_CHECK);
     return new PrescriptionCheckResponse(
-        requiredText(outputs, "riskLevel"),
+        normalizeRiskLevel(requiredText(outputs, "riskLevel")),
         text(outputs, "riskDescription", ""),
         requiredText(outputs, "suggestions"),
         stringList(outputs.get("interactions")),
@@ -133,6 +138,55 @@ public class DifyAiProvider implements AiProvider {
         stringList(outputs.get("adjustmentSuggestions")),
         false
     );
+  }
+
+  @Override
+  public ScheduleSuggestResponse suggestSchedule(ScheduleSuggestRequest request, PromptResolveResponse prompt) {
+    Map<String, Object> inputs = baseInputs(prompt);
+    String constrainedPrompt = ScheduleAiResponseValidator.constrainedPrompt(prompt, request);
+    inputs.put("promptTemplate", constrainedPrompt);
+    inputs.put("startDate", request.startDate().toString());
+    inputs.put("days", textInput(request.days()));
+    inputs.put("doctors", jsonInput(request.doctors()));
+    inputs.put("departments", jsonInput(request.departments()));
+    inputs.put("existingSchedules", jsonInput(request.existingSchedules()));
+    JsonNode outputs = runWorkflow(inputs, "schedule-" + request.startDate(), WorkflowTask.SCHEDULE);
+    try {
+      return validatedScheduleResponse(request, outputs);
+    } catch (RuntimeException firstValidationError) {
+      String feedback = java.util.Objects.requireNonNullElse(
+          firstValidationError.getMessage(), "The previous response violated schedule constraints.");
+      inputs.put("validationFeedback", feedback);
+      inputs.put("promptTemplate", constrainedPrompt
+          + "\nCORRECTION REQUIRED: the previous response was rejected because: " + feedback
+          + ". Return a completely corrected JSON result.");
+      JsonNode correctedOutputs = runWorkflow(
+          inputs, "schedule-correction-" + request.startDate(), WorkflowTask.SCHEDULE);
+      return validatedScheduleResponse(request, correctedOutputs);
+    }
+  }
+
+  private ScheduleSuggestResponse validatedScheduleResponse(
+      ScheduleSuggestRequest request,
+      JsonNode outputs
+  ) {
+    JsonNode items = outputs.path("suggestions");
+    if (!items.isArray()) {
+      throw new IllegalStateException("AI response missing required array: suggestions");
+    }
+    List<ScheduleSuggestionItem> suggestions = new ArrayList<>();
+    for (JsonNode item : items) {
+      suggestions.add(new ScheduleSuggestionItem(
+          requiredLong(item, "doctorId"),
+          requiredLong(item, "departmentId"),
+          LocalDate.parse(requiredText(item, "workDate")),
+          requiredText(item, "timeRange"),
+          requiredInt(item, "capacity"),
+          requiredText(item, "reason")
+      ));
+    }
+    ScheduleAiResponseValidator.validate(request, suggestions);
+    return new ScheduleSuggestResponse(suggestions, "dify", false);
   }
 
   JsonNode parseOutputs(String responseBody) {
@@ -203,6 +257,15 @@ public class DifyAiProvider implements AiProvider {
     return value == null || value.isNull() ? fallback : value.asText(fallback);
   }
 
+  private String normalizeRiskLevel(String value) {
+    return switch (value.trim().toUpperCase(java.util.Locale.ROOT)) {
+      case "LOW", "低", "低风险" -> "LOW";
+      case "MEDIUM", "中", "中风险" -> "MEDIUM";
+      case "HIGH", "高", "高风险" -> "HIGH";
+      default -> throw new IllegalStateException("AI response returned unsupported riskLevel: " + value);
+    };
+  }
+
   private String requiredText(JsonNode node, String field) {
     String value = text(node, field, "");
     if (value.isBlank()) {
@@ -242,6 +305,30 @@ public class DifyAiProvider implements AiProvider {
     return values;
   }
 
+  private long requiredLong(JsonNode node, String field) {
+    JsonNode value = node.get(field);
+    if (value == null || !value.canConvertToLong()) {
+      throw new IllegalStateException("AI response missing numeric field: " + field);
+    }
+    return value.asLong();
+  }
+
+  private int requiredInt(JsonNode node, String field) {
+    JsonNode value = node.get(field);
+    if (value == null || !value.canConvertToInt()) {
+      throw new IllegalStateException("AI response missing numeric field: " + field);
+    }
+    return value.asInt();
+  }
+
+  private String jsonInput(Object value) {
+    try {
+      return objectMapper.writeValueAsString(value);
+    } catch (Exception ex) {
+      throw new IllegalArgumentException("Failed to serialize Dify input", ex);
+    }
+  }
+
   private AiProviderProperties.Dify dify() {
     if (properties.dify() == null) {
       throw new IllegalStateException("dify provider configuration is required");
@@ -255,6 +342,7 @@ public class DifyAiProvider implements AiProvider {
       case TRIAGE -> properties.difyTriage();
       case MEDICAL_RECORD -> properties.difyMedicalRecord();
       case PRESCRIPTION_CHECK -> properties.difyPrescriptionCheck();
+      case SCHEDULE -> properties.difySchedule();
     };
     String taskKey = workflow == null ? "" : workflow.apiKey();
     if (taskKey != null && !taskKey.isBlank()) {
@@ -268,6 +356,7 @@ public class DifyAiProvider implements AiProvider {
       case TRIAGE -> "DIFY_TRIAGE_API_KEY";
       case MEDICAL_RECORD -> "DIFY_MEDICAL_RECORD_API_KEY";
       case PRESCRIPTION_CHECK -> "DIFY_PRESCRIPTION_CHECK_API_KEY";
+      case SCHEDULE -> "DIFY_SCHEDULE_API_KEY";
     };
   }
 

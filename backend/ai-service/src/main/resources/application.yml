@@ -42,3 +42,5 @@ ai:
     api-key: ${DIFY_MEDICAL_RECORD_API_KEY:}
   dify-prescription-check:
     api-key: ${DIFY_PRESCRIPTION_CHECK_API_KEY:}
+  dify-schedule:
+    api-key: ${DIFY_SCHEDULE_API_KEY:}

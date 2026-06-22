@@ -104,8 +104,8 @@ public class PrescriptionService {
     checkRecordRepository.save(record);
     return Map.of(
         "riskLevel", response.riskLevel(),
-        "riskDescription", response.riskDescription(),
-        "suggestions", response.suggestions(),
+        "riskDescription", nullToEmpty(response.riskDescription()),
+        "suggestions", nullToEmpty(response.suggestions()),
         "interactions", safeInteractions(response),
         "contraindications", response.contraindications() == null ? List.of() : response.contraindications(),
         "adjustmentSuggestions", response.adjustmentSuggestions() == null ? List.of() : response.adjustmentSuggestions(),
@@ -339,5 +339,4 @@ public class PrescriptionService {
     return value == null ? "" : value;
   }
 }
-
 

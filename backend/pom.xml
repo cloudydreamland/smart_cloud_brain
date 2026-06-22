@@ -26,6 +26,7 @@
     <module>ai-service</module>
     <module>notification-service</module>
     <module>admin-service</module>
+    <module>coverage-report</module>
   </modules>
 
   <properties>

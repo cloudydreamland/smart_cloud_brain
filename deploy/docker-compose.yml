@@ -155,6 +155,9 @@ services:
       DB_NAME: ${DB_NAME:-smart_cloud_brain}
       DB_USERNAME: ${DB_USERNAME:-scb}
       DB_PASSWORD: ${DB_PASSWORD:-scb_password}
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: ${DB_POOL_MAX_SIZE:-4}
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: ${DB_POOL_MIN_IDLE:-1}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-smart-cloud-brain-internal-local-token-change}
       JWT_SECRET: ${JWT_SECRET:-smart-cloud-brain-local-secret-please-change}
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
@@ -272,6 +275,8 @@ services:
         condition: service_healthy
       triage-service:
         condition: service_healthy
+      ai-service:
+        condition: service_healthy
     environment:
       <<: *domain-env
       SERVER_PORT: 8090
@@ -279,6 +284,7 @@ services:
       REDIS_PORT: 6379
       DOCTOR_SERVICE_BASE_URL: http://doctor-service:8084
       TRIAGE_SERVICE_BASE_URL: http://triage-service:8086
+      AI_SERVICE_BASE_URL: http://ai-service:8081
 
   ai-service:
     build:
@@ -295,6 +301,9 @@ services:
       DB_NAME: ${DB_NAME:-smart_cloud_brain}
       DB_USERNAME: ${DB_USERNAME:-scb}
       DB_PASSWORD: ${DB_PASSWORD:-scb_password}
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: ${DB_POOL_MAX_SIZE:-4}
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: ${DB_POOL_MIN_IDLE:-1}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-smart-cloud-brain-internal-local-token-change}
       AI_PROVIDER: ${AI_PROVIDER:-mock}
       AI_TIMEOUT_MS: ${AI_TIMEOUT_MS:-8000}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
@@ -305,6 +314,7 @@ services:
       DIFY_TRIAGE_API_KEY: ${DIFY_TRIAGE_API_KEY:-}
       DIFY_MEDICAL_RECORD_API_KEY: ${DIFY_MEDICAL_RECORD_API_KEY:-}
       DIFY_PRESCRIPTION_CHECK_API_KEY: ${DIFY_PRESCRIPTION_CHECK_API_KEY:-}
+      DIFY_SCHEDULE_API_KEY: ${DIFY_SCHEDULE_API_KEY:-}
       NO_PROXY: ${NO_PROXY:-localhost,127.0.0.1,host.docker.internal,ai-service,docker-nginx-1,docker-api-1,nginx,api}
       no_proxy: ${NO_PROXY:-localhost,127.0.0.1,host.docker.internal,ai-service,docker-nginx-1,docker-api-1,nginx,api}
       TZ: Asia/Shanghai
@@ -313,6 +323,12 @@ services:
     depends_on:
       db-init:
         condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8081/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
     networks:
       - default
 

@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartcloudbrain.admin.client.InternalAiClient;
 import com.smartcloudbrain.admin.client.InternalDoctorClient;
+import com.smartcloudbrain.admin.client.InternalAiClient;
 import com.smartcloudbrain.admin.client.InternalTriageClient;
 import com.smartcloudbrain.admin.config.AdminRedisCacheConfig;
 import com.smartcloudbrain.admin.dto.admin.DrugSaveRequest;
@@ -175,6 +176,7 @@ class AdminCatalogServiceCacheTest {
         SystemDictRepository systemDictRepository,
         AiScheduleSuggestionRepository aiScheduleSuggestionRepository,
         InternalDoctorClient internalDoctorClient,
+        InternalAiClient internalAiClient,
         InternalTriageClient internalTriageClient,
         InternalAiClient internalAiClient,
         PasswordHashService passwordHashService
@@ -188,6 +190,7 @@ class AdminCatalogServiceCacheTest {
           systemDictRepository,
           aiScheduleSuggestionRepository,
           internalDoctorClient,
+          internalAiClient,
           internalTriageClient,
           internalAiClient,
           passwordHashService,
@@ -203,6 +206,7 @@ class AdminCatalogServiceCacheTest {
     @Bean SystemDictRepository systemDictRepository() { return mock(SystemDictRepository.class); }
     @Bean AiScheduleSuggestionRepository aiScheduleSuggestionRepository() { return mock(AiScheduleSuggestionRepository.class); }
     @Bean InternalDoctorClient internalDoctorClient() { return mock(InternalDoctorClient.class); }
+    @Bean InternalAiClient internalAiClient() { return mock(InternalAiClient.class); }
     @Bean InternalTriageClient internalTriageClient() { return mock(InternalTriageClient.class); }
     @Bean InternalAiClient internalAiClient() { return mock(InternalAiClient.class); }
     @Bean PasswordHashService passwordHashService() { return mock(PasswordHashService.class); }

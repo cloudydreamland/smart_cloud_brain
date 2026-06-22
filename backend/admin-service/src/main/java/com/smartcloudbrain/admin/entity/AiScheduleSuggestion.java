@@ -21,6 +21,8 @@ public class AiScheduleSuggestion extends BaseEntity {
   private Integer capacity;
   private String reason;
   private String status;
+  private String source;
+  private Boolean degraded;
   @Column(name = "updated_at")
   private LocalDateTime updatedAt;
 
@@ -78,6 +80,22 @@ public class AiScheduleSuggestion extends BaseEntity {
 
   public void setStatus(String status) {
     this.status = status;
+  }
+
+  public String getSource() {
+    return source;
+  }
+
+  public void setSource(String source) {
+    this.source = source;
+  }
+
+  public Boolean getDegraded() {
+    return degraded;
+  }
+
+  public void setDegraded(Boolean degraded) {
+    this.degraded = degraded;
   }
 
   public LocalDateTime getUpdatedAt() {
