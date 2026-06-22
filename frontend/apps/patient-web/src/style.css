@@ -680,42 +680,8 @@
   background: #f7f9fc;
 }
 
-.portal-shell {
-  display: grid;
-  grid-template-columns: 304px minmax(0, 1fr);
-  min-height: 100vh;
-  background: #f7f9fc;
-}
-
-.portal-sidebar {
-  position: sticky;
-  top: 0;
-  min-height: 100vh;
-  padding: 34px 22px 120px;
-  background: var(--hospital-navy);
-  color: #fff;
-}
-
-.portal-sidebar a {
-  display: flex;
-  min-height: 54px;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 0 14px;
-  border-left: 3px solid transparent;
-  color: #c7d4e8;
-  font-weight: 800;
-}
-
-.portal-sidebar a.router-link-exact-active,
-.portal-sidebar a.router-link-active {
-  border-color: #8eb8ff;
-  background: rgba(255,255,255,.10);
-  color: #fff;
-}
-
 .portal-workspace {
+  margin-left: 56px;
   min-width: 0;
   background: #f7f9fc;
 }
@@ -805,9 +771,9 @@
 }
 
 .portal-page-head,
-.patient-portal-page > .portal-shell .panel,
-.patient-portal-page > .portal-shell .portal-grid,
-.patient-portal-page > .portal-shell .portal-page-section {
+.patient-portal-page .panel,
+.patient-portal-page .portal-grid,
+.patient-portal-page .portal-page-section {
   width: 100%;
   margin: 0;
 }
@@ -1047,7 +1013,6 @@
   .home-split,
   .home-donate,
   .patient-auth-page,
-  .portal-shell,
   .portal-two-column,
   .patient-portal-page .portal-grid,
   .patient-portal-page .patient-dashboard-grid {
@@ -1078,29 +1043,8 @@
     font-size: 12px;
   }
 
-  .portal-sidebar {
-    position: static;
-    display: flex;
-    min-height: auto;
-    gap: 6px;
-    overflow-x: auto;
-    padding: 12px 18px;
-    background: #fff;
-  }
-
-  .portal-sidebar a {
-    flex: 0 0 auto;
-    min-height: 42px;
-    border-left: 0;
-    border-bottom: 3px solid transparent;
-    color: #41506a;
-  }
-
-  .portal-sidebar a.router-link-exact-active,
-  .portal-sidebar a.router-link-active {
-    border-color: var(--hospital-blue);
-    background: #eef4ff;
-    color: #071528;
+  .portal-workspace {
+    margin-left: 0;
   }
 
   .portal-servicebar,
