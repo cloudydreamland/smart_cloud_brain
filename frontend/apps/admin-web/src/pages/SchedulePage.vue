@@ -1,43 +1,50 @@
 <script setup lang="ts">
 import { reactive, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { aiSourceLabel, aiSourceTone, api, fieldText, formatApiError, toNumber, useAdminWorkflowStore, useAuthStore, usePagination, type DataRow } from "@smart-cloud-brain/shared-api";
-import { EmptyState, ErrorState, FormField, LoadingState, PaginationBar } from "@smart-cloud-brain/shared-ui";
-import ScheduleSuggestionDetailModal from "../components/ScheduleSuggestionDetailModal.vue";
-import PublishScheduleConfirmModal from "../components/PublishScheduleConfirmModal.vue";
+import { aiSourceLabel, aiSourceTone, api, fieldText, formatApiError, toNumber, useAdminWorkflowStore, useAuthStore, usePagination, type DataRow, type ScheduleSaveRequest } from "@smart-cloud-brain/shared-api";
+import { EmptyState, ErrorState, FormField, LoadingState, Modal, PaginationBar, StatusTag } from "@smart-cloud-brain/shared-ui";
 
 const emit = defineEmits<{ refresh: [] }>();
 const auth = useAuthStore();
 const workflow = useAdminWorkflowStore();
-const { suggestions, schedules } = storeToRefs(workflow);
-const form = reactive({ startDate: new Date(Date.now() + 86400000).toISOString().slice(0, 10), days: 3 });
+const { suggestions, schedules, doctors, departments } = storeToRefs(workflow);
+const generateForm = reactive({ startDate: new Date(Date.now() + 86400000).toISOString().slice(0, 10), days: 3 });
+const filter = reactive({ startDate: new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10), endDate: new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10), departmentId: 0, doctorId: 0, status: "" });
+const form = reactive<ScheduleSaveRequest>({ doctorId: 0, departmentId: 0, workDate: new Date(Date.now() + 86400000).toISOString().slice(0, 10), timeRange: "09:00-12:00", capacity: 20, status: "PUBLISHED" });
 const loading = ref(false);
 const error = ref("");
 const notice = ref("");
-const selected = ref<DataRow | null>(null);
-const publishOpen = ref(false);
-const {
-  currentPage: suggestionPage,
-  pageSize: suggestionPageSize,
-  total: suggestionTotal,
-  pageRows: pagedSuggestions,
-} = usePagination(suggestions, 6);
-const {
-  currentPage: schedulePage,
-  pageSize: schedulePageSize,
-  total: scheduleTotal,
-  pageRows: pagedSchedules,
-} = usePagination(schedules, 6);
+const editorOpen = ref(false);
+const { currentPage: schedulePage, pageSize: schedulePageSize, total: scheduleTotal, pageRows: pagedSchedules } = usePagination(schedules, 8);
+const { currentPage: suggestionPage, pageSize: suggestionPageSize, total: suggestionTotal, pageRows: pagedSuggestions } = usePagination(suggestions, 5);
+
+async function loadSchedules() {
+  loading.value = true;
+  error.value = "";
+  try {
+    schedules.value = await api.filteredSchedules(auth.token(), {
+      startDate: filter.startDate,
+      endDate: filter.endDate,
+      departmentId: filter.departmentId || undefined,
+      doctorId: filter.doctorId || undefined,
+      status: filter.status,
+    });
+  } catch (err) {
+    error.value = formatApiError(err, "Schedule list failed");
+  } finally {
+    loading.value = false;
+  }
+}
 
 async function generate() {
   loading.value = true;
   error.value = "";
   notice.value = "";
   try {
-    suggestions.value = await api.generateSchedule(auth.token(), { ...form });
-    notice.value = `已生成 ${suggestions.value.length} 条排班建议。`;
+    suggestions.value = await api.generateSchedule(auth.token(), { ...generateForm });
+    notice.value = `Generated ${suggestions.value.length} AI suggestions`;
   } catch (err) {
-    error.value = formatApiError(err, "排班建议生成失败");
+    error.value = formatApiError(err, "Schedule generation failed");
   } finally {
     loading.value = false;
   }
@@ -46,66 +53,135 @@ async function generate() {
 async function publish() {
   loading.value = true;
   error.value = "";
-  notice.value = "";
   try {
     const ids = suggestions.value.map((item) => toNumber(item.id)).filter(Boolean);
-    schedules.value = await api.publishSchedule(auth.token(), { suggestionIds: ids });
+    await api.publishSchedule(auth.token(), { suggestionIds: ids });
     suggestions.value = [];
-    publishOpen.value = false;
+    await loadSchedules();
     emit("refresh");
-    notice.value = "号源已发布。";
+    notice.value = "Schedules published";
   } catch (err) {
-    error.value = formatApiError(err, "号源发布失败");
+    error.value = formatApiError(err, "Schedule publish failed");
   } finally {
     loading.value = false;
   }
 }
 
-async function openDetail(item: DataRow) {
+function openEditor(item?: DataRow) {
+  form.id = item ? toNumber(item.id, undefined) : undefined;
+  form.doctorId = toNumber(item?.doctorId, toNumber(doctors.value[0]?.id));
+  form.departmentId = toNumber(item?.departmentId, toNumber(doctors.value.find((doctor) => toNumber(doctor.id) === form.doctorId)?.departmentId, toNumber(departments.value[0]?.id)));
+  form.workDate = fieldText(item, "workDate", new Date(Date.now() + 86400000).toISOString().slice(0, 10));
+  form.timeRange = fieldText(item, "timeRange", "09:00-12:00");
+  form.capacity = toNumber(item?.capacity, 20);
+  form.status = fieldText(item, "status", "PUBLISHED");
+  editorOpen.value = true;
+}
+
+function syncDoctorDepartment() {
+  const doctor = doctors.value.find((item) => toNumber(item.id) === toNumber(form.doctorId));
+  if (doctor) form.departmentId = toNumber(doctor.departmentId);
+}
+
+async function saveSchedule() {
   loading.value = true;
   error.value = "";
   try {
-    selected.value = await api.scheduleSuggestionDetail(auth.token(), toNumber(item.id));
+    await api.saveSchedule(auth.token(), { ...form, doctorId: toNumber(form.doctorId), departmentId: toNumber(form.departmentId), capacity: toNumber(form.capacity) });
+    editorOpen.value = false;
+    await loadSchedules();
+    notice.value = "Schedule saved";
   } catch (err) {
-    error.value = formatApiError(err, "排班建议详情加载失败");
+    error.value = formatApiError(err, "Schedule save failed");
   } finally {
     loading.value = false;
   }
 }
+
+async function cancelSchedule(item: DataRow) {
+  loading.value = true;
+  error.value = "";
+  try {
+    await api.cancelSchedule(auth.token(), { scheduleId: toNumber(item.id) });
+    await loadSchedules();
+    notice.value = "Schedule cancelled";
+  } catch (err) {
+    error.value = formatApiError(err, "Schedule cancel failed");
+  } finally {
+    loading.value = false;
+  }
+}
+
+loadSchedules();
 </script>
 
 <template>
   <section class="schedule-layout">
     <section class="panel">
-      <header class="panel-header"><div class="panel-title"><p class="eyebrow">排班发布</p><h2>智能排班与号源发布</h2><p>发布前管理员必须确认。</p></div></header>
+      <header class="panel-header">
+        <div class="panel-title"><p class="eyebrow">Schedule CRUD</p><h2>Doctor Schedule Management</h2><p>Manual schedules create real appointment slots; cancellation is blocked when active registrations exist.</p></div>
+        <button class="primary" type="button" @click="openEditor()">New Schedule</button>
+      </header>
       <div class="panel-body stack">
         <ErrorState v-if="error" :message="error" />
         <div v-if="notice" class="notice success">{{ notice }}</div>
-        <div class="form-grid">
-          <FormField label="开始日期"><input v-model="form.startDate" type="date" /></FormField>
-          <FormField label="生成天数"><input v-model.number="form.days" type="number" min="1" max="14" /></FormField>
+        <div class="admin-filter-row">
+          <input v-model="filter.startDate" type="date" />
+          <input v-model="filter.endDate" type="date" />
+          <select v-model.number="filter.departmentId"><option :value="0">All departments</option><option v-for="department in departments" :key="String(department.id)" :value="toNumber(department.id)">{{ fieldText(department, "name") }}</option></select>
+          <select v-model.number="filter.doctorId"><option :value="0">All doctors</option><option v-for="doctor in doctors" :key="String(doctor.id)" :value="toNumber(doctor.id)">{{ fieldText(doctor, "name") }}</option></select>
+          <select v-model="filter.status"><option value="">All status</option><option value="PUBLISHED">Published</option><option value="CANCELLED">Cancelled</option></select>
+          <button type="button" :disabled="loading" @click="loadSchedules">Search</button>
         </div>
-        <div class="toolbar"><button type="button" :disabled="loading" @click="generate">生成建议</button><button class="primary" type="button" :disabled="loading || !suggestions.length" @click="publishOpen = true">发布号源</button></div>
         <LoadingState v-if="loading" />
-        <div v-if="suggestions.length" class="list">
-          <article v-for="item in pagedSuggestions" :key="String(item.id)" class="list-row">
-            <div class="row-main"><strong>{{ fieldText(item, "workDate") }} {{ fieldText(item, "timeRange") }}</strong><p>{{ fieldText(item, "doctorName") }} · 容量 {{ fieldText(item, "capacity") }}</p><span class="tag" :class="aiSourceTone(item.source)">{{ aiSourceLabel(item.source) }} · {{ fieldText(item, "source", "unknown") }}</span></div>
-            <button type="button" @click="openDetail(item)">详情</button>
-          </article>
-          <PaginationBar v-model="suggestionPage" :total="suggestionTotal" :page-size="suggestionPageSize" />
+        <div v-if="schedules.length" class="table-scroll">
+          <table class="data-table">
+            <thead><tr><th>Date</th><th>Time</th><th>Doctor</th><th>Department</th><th>Capacity</th><th>Booked</th><th>Status</th><th class="actions-cell">Actions</th></tr></thead>
+            <tbody>
+              <tr v-for="item in pagedSchedules" :key="String(item.id)">
+                <td>{{ fieldText(item, "workDate") }}</td>
+                <td>{{ fieldText(item, "timeRange") }}</td>
+                <td>{{ fieldText(item, "doctorName") }}</td>
+                <td>{{ fieldText(item, "departmentName") }}</td>
+                <td>{{ fieldText(item, "capacity") }}</td>
+                <td>{{ fieldText(item, "booked", "0") }}</td>
+                <td><StatusTag :status="fieldText(item, 'status')" /></td>
+                <td class="toolbar"><button type="button" @click="openEditor(item)">Edit</button><button class="danger" type="button" :disabled="fieldText(item, 'status') === 'CANCELLED'" @click="cancelSchedule(item)">Cancel</button></td>
+              </tr>
+            </tbody>
+          </table>
+          <PaginationBar v-model="schedulePage" :total="scheduleTotal" :page-size="schedulePageSize" />
         </div>
-        <EmptyState v-else title="暂无待发布建议" />
+        <EmptyState v-else title="No schedules" />
       </div>
     </section>
     <aside class="panel">
-      <header class="panel-header"><div class="panel-title"><h2>已发布排班</h2><p>后端排班列表。</p></div></header>
-      <div class="list">
-        <article v-for="item in pagedSchedules" :key="String(item.id)" class="list-row"><div class="row-main"><strong>{{ fieldText(item, "workDate") }} {{ fieldText(item, "timeRange") }}</strong><p>{{ fieldText(item, "doctorName") }} · 容量 {{ fieldText(item, "capacity") }}</p></div></article>
-        <PaginationBar v-model="schedulePage" :total="scheduleTotal" :page-size="schedulePageSize" />
-        <EmptyState v-if="!schedules.length" title="暂无已发布排班" />
+      <header class="panel-header"><div class="panel-title"><h2>AI Schedule Suggestions</h2><p>Generate suggestions, inspect source, then publish to real slots.</p></div></header>
+      <div class="panel-body stack">
+        <div class="form-grid">
+          <FormField label="Start date"><input v-model="generateForm.startDate" type="date" /></FormField>
+          <FormField label="Days"><input v-model.number="generateForm.days" type="number" min="1" max="14" /></FormField>
+        </div>
+        <div class="toolbar"><button type="button" :disabled="loading" @click="generate">Generate</button><button class="primary" type="button" :disabled="loading || !suggestions.length" @click="publish">Publish</button></div>
+        <article v-for="item in pagedSuggestions" :key="String(item.id)" class="list-row">
+          <div class="row-main"><strong>{{ fieldText(item, "workDate") }} {{ fieldText(item, "timeRange") }}</strong><p>{{ fieldText(item, "doctorName") }} / capacity {{ fieldText(item, "capacity") }}</p><span class="tag" :class="aiSourceTone(item.source)">{{ aiSourceLabel(item.source) }}</span></div>
+        </article>
+        <PaginationBar v-model="suggestionPage" :total="suggestionTotal" :page-size="suggestionPageSize" />
+        <EmptyState v-if="!suggestions.length" title="No AI suggestions" />
       </div>
     </aside>
-    <ScheduleSuggestionDetailModal :open="Boolean(selected)" :suggestion="selected" @close="selected = null" />
-    <PublishScheduleConfirmModal :open="publishOpen" :busy="loading" @close="publishOpen = false" @confirm="publish" />
+    <Modal :open="editorOpen" title="Schedule" description="Create or update a real doctor schedule and its appointment slot." @close="editorOpen = false">
+      <div class="stack">
+        <div class="form-grid">
+          <FormField label="Doctor"><select v-model.number="form.doctorId" @change="syncDoctorDepartment"><option v-for="doctor in doctors" :key="String(doctor.id)" :value="toNumber(doctor.id)">{{ fieldText(doctor, "name") }} / {{ fieldText(doctor, "departmentName") }}</option></select></FormField>
+          <FormField label="Department"><select v-model.number="form.departmentId" disabled><option v-for="department in departments" :key="String(department.id)" :value="toNumber(department.id)">{{ fieldText(department, "name") }}</option></select></FormField>
+          <FormField label="Date"><input v-model="form.workDate" type="date" /></FormField>
+          <FormField label="Time range"><input v-model.trim="form.timeRange" placeholder="09:00-12:00" /></FormField>
+          <FormField label="Capacity"><input v-model.number="form.capacity" type="number" min="1" max="100" /></FormField>
+          <FormField label="Status"><select v-model="form.status"><option value="PUBLISHED">Published</option><option value="CANCELLED">Cancelled</option></select></FormField>
+        </div>
+      </div>
+      <template #footer><button type="button" @click="editorOpen = false">Cancel</button><button class="primary" type="button" :disabled="loading" @click="saveSchedule">Save</button></template>
+    </Modal>
   </section>
 </template>

@@ -1,6 +1,8 @@
 package com.smartcloudbrain.doctor.service;
 
 import com.smartcloudbrain.doctor.dto.internal.InternalSchedulePublishRequest;
+import com.smartcloudbrain.doctor.dto.internal.InternalScheduleCancelRequest;
+import com.smartcloudbrain.doctor.dto.internal.InternalScheduleSaveRequest;
 import com.smartcloudbrain.doctor.entity.AppointmentSlot;
 import com.smartcloudbrain.doctor.entity.Department;
 import com.smartcloudbrain.doctor.entity.Doctor;
@@ -9,6 +11,9 @@ import com.smartcloudbrain.doctor.repository.AppointmentSlotRepository;
 import com.smartcloudbrain.doctor.repository.DepartmentRepository;
 import com.smartcloudbrain.doctor.repository.DoctorRepository;
 import com.smartcloudbrain.doctor.repository.DoctorScheduleRepository;
+import com.smartcloudbrain.doctor.repository.RegistrationRepository;
+import com.smartcloudbrain.common.error.ErrorCode;
+import com.smartcloudbrain.common.exception.BusinessException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
@@ -23,17 +28,20 @@ public class DoctorScheduleService {
 
   private final DoctorScheduleRepository doctorScheduleRepository;
   private final AppointmentSlotRepository appointmentSlotRepository;
+  private final RegistrationRepository registrationRepository;
   private final DoctorRepository doctorRepository;
   private final DepartmentRepository departmentRepository;
 
   public DoctorScheduleService(
       DoctorScheduleRepository doctorScheduleRepository,
       AppointmentSlotRepository appointmentSlotRepository,
+      RegistrationRepository registrationRepository,
       DoctorRepository doctorRepository,
       DepartmentRepository departmentRepository
   ) {
     this.doctorScheduleRepository = doctorScheduleRepository;
     this.appointmentSlotRepository = appointmentSlotRepository;
+    this.registrationRepository = registrationRepository;
     this.doctorRepository = doctorRepository;
     this.departmentRepository = departmentRepository;
   }
@@ -75,6 +83,56 @@ public class DoctorScheduleService {
         .toList();
   }
 
+  public List<Map<String, Object>> schedules(LocalDate startDate, LocalDate endDate, Long departmentId, Long doctorId, String status) {
+    LocalDate start = startDate == null ? LocalDate.now().minusDays(30) : startDate;
+    LocalDate end = endDate == null ? LocalDate.now().plusDays(90) : endDate;
+    return doctorScheduleRepository.findByWorkDateGreaterThanEqualAndWorkDateLessThanEqualOrderByWorkDateAscDoctorIdAsc(start, end).stream()
+        .filter(schedule -> departmentId == null || departmentId.equals(schedule.getDepartmentId()))
+        .filter(schedule -> doctorId == null || doctorId.equals(schedule.getDoctorId()))
+        .filter(schedule -> status == null || status.isBlank() || status.equalsIgnoreCase(schedule.getStatus()))
+        .map(this::scheduleView)
+        .toList();
+  }
+
+  @Transactional
+  public Map<String, Object> saveSchedule(InternalScheduleSaveRequest request) {
+    validateScheduleRequest(request);
+    DoctorSchedule schedule = request.id() == null
+        ? new DoctorSchedule()
+        : doctorScheduleRepository.findById(request.id()).orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+    schedule.setDoctorId(request.doctorId());
+    schedule.setDepartmentId(request.departmentId());
+    schedule.setWorkDate(request.workDate());
+    schedule.setTimeRange(request.timeRange());
+    schedule.setCapacity(request.capacity());
+    schedule.setStatus(request.status() == null || request.status().isBlank() ? "PUBLISHED" : request.status());
+    schedule.setUpdatedAt(LocalDateTime.now());
+    DoctorSchedule saved = doctorScheduleRepository.save(schedule);
+    upsertSlot(saved);
+    return scheduleView(saved);
+  }
+
+  @Transactional
+  public Map<String, Object> cancelSchedule(InternalScheduleCancelRequest request) {
+    if (request == null || request.scheduleId() == null) {
+      throw new BusinessException(400, "scheduleId is required");
+    }
+    DoctorSchedule schedule = doctorScheduleRepository.findById(request.scheduleId())
+        .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+    AppointmentSlot slot = appointmentSlotRepository.findByScheduleId(schedule.getId()).orElse(null);
+    if (slot != null && registrationRepository.existsBySlotIdAndStatusNot(slot.getId(), "CANCELLED")) {
+      throw new BusinessException(400, "Cannot cancel schedule with active registrations");
+    }
+    schedule.setStatus("CANCELLED");
+    schedule.setUpdatedAt(LocalDateTime.now());
+    if (slot != null) {
+      slot.setStatus("CANCELLED");
+      slot.setUpdatedAt(LocalDateTime.now());
+      appointmentSlotRepository.save(slot);
+    }
+    return scheduleView(doctorScheduleRepository.save(schedule));
+  }
+
   public List<Map<String, Object>> slots() {
     return appointmentSlotRepository.findByStartTimeGreaterThanEqualOrderByStartTimeAscDoctorIdAsc(LocalDateTime.now()).stream()
         .map(this::slotView)
@@ -82,17 +140,60 @@ public class DoctorScheduleService {
   }
 
   private Map<String, Object> scheduleView(DoctorSchedule schedule) {
-    return Map.of(
-        "id", schedule.getId(),
-        "doctorId", schedule.getDoctorId(),
-        "doctorName", doctorName(schedule.getDoctorId()),
-        "departmentId", schedule.getDepartmentId(),
-        "departmentName", departmentName(schedule.getDepartmentId()),
-        "workDate", schedule.getWorkDate().toString(),
-        "timeRange", schedule.getTimeRange(),
-        "capacity", schedule.getCapacity(),
-        "status", schedule.getStatus()
-    );
+    AppointmentSlot slot = appointmentSlotRepository.findByScheduleId(schedule.getId()).orElse(null);
+    int booked = slot == null ? 0 : Math.max(0, (slot.getCapacity() == null ? 0 : slot.getCapacity()) - (slot.getRemainingCapacity() == null ? 0 : slot.getRemainingCapacity()));
+    Map<String, Object> view = new LinkedHashMap<>();
+    view.put("id", schedule.getId());
+    view.put("doctorId", schedule.getDoctorId());
+    view.put("doctorName", doctorName(schedule.getDoctorId()));
+    view.put("departmentId", schedule.getDepartmentId());
+    view.put("departmentName", departmentName(schedule.getDepartmentId()));
+    view.put("workDate", schedule.getWorkDate().toString());
+    view.put("timeRange", schedule.getTimeRange());
+    view.put("capacity", schedule.getCapacity());
+    view.put("booked", booked);
+    view.put("remainingCapacity", slot == null ? schedule.getCapacity() : slot.getRemainingCapacity());
+    view.put("slotId", slot == null ? 0L : slot.getId());
+    view.put("status", schedule.getStatus());
+    return view;
+  }
+
+  private void validateScheduleRequest(InternalScheduleSaveRequest request) {
+    if (request == null || request.doctorId() == null || request.departmentId() == null || request.workDate() == null) {
+      throw new BusinessException(400, "doctorId, departmentId and workDate are required");
+    }
+    Doctor doctor = doctorRepository.findById(request.doctorId()).orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+    if (!request.departmentId().equals(doctor.getDepartmentId())) {
+      throw new BusinessException(400, "Doctor does not belong to selected department");
+    }
+    if (request.capacity() == null || request.capacity() < 1 || request.capacity() > 100) {
+      throw new BusinessException(400, "capacity must be between 1 and 100");
+    }
+    String range = request.timeRange();
+    if (range == null || !range.matches("^([01]\\d|2[0-3]):[0-5]\\d-([01]\\d|2[0-3]):[0-5]\\d$")) {
+      throw new BusinessException(400, "timeRange must be HH:mm-HH:mm");
+    }
+  }
+
+  private void upsertSlot(DoctorSchedule schedule) {
+    AppointmentSlot slot = appointmentSlotRepository.findByScheduleId(schedule.getId()).orElseGet(AppointmentSlot::new);
+    int booked = 0;
+    if (slot.getId() != null) {
+      booked = Math.max(0, (slot.getCapacity() == null ? 0 : slot.getCapacity()) - (slot.getRemainingCapacity() == null ? 0 : slot.getRemainingCapacity()));
+    }
+    if (schedule.getCapacity() < booked) {
+      throw new BusinessException(400, "capacity cannot be lower than existing registrations");
+    }
+    slot.setScheduleId(schedule.getId());
+    slot.setDoctorId(schedule.getDoctorId());
+    slot.setDepartmentId(schedule.getDepartmentId());
+    slot.setStartTime(slotStart(schedule.getWorkDate(), schedule.getTimeRange()));
+    slot.setEndTime(slotEnd(schedule.getWorkDate(), schedule.getTimeRange()));
+    slot.setCapacity(schedule.getCapacity());
+    slot.setRemainingCapacity(schedule.getCapacity() - booked);
+    slot.setStatus("CANCELLED".equalsIgnoreCase(schedule.getStatus()) ? "CANCELLED" : "AVAILABLE");
+    slot.setUpdatedAt(LocalDateTime.now());
+    appointmentSlotRepository.save(slot);
   }
 
   private Map<String, Object> slotView(AppointmentSlot slot) {

@@ -9,6 +9,7 @@ import RecordsPage from "../pages/RecordsPage.vue";
 import PrescriptionsPage from "../pages/PrescriptionsPage.vue";
 import NotificationsPage from "../pages/NotificationsPage.vue";
 import DoctorSettingsPage from "../pages/DoctorSettingsPage.vue";
+import SchedulePage from "../pages/SchedulePage.vue";
 
 const router = createRouter({
   history: createWebHistory(),
@@ -24,6 +25,7 @@ const router = createRouter({
         { path: "consult/:registrationId", name: "doctor-consult", component: ConsultationPage, props: true },
         { path: "records", name: "doctor-records", component: RecordsPage },
         { path: "prescriptions", name: "doctor-prescriptions", component: PrescriptionsPage },
+        { path: "schedule", name: "doctor-schedule", component: SchedulePage },
         { path: "notifications", name: "doctor-notifications", component: NotificationsPage },
         { path: "settings", name: "doctor-settings", component: DoctorSettingsPage },
       ],

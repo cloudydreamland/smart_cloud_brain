@@ -2,7 +2,6 @@ package com.smartcloudbrain.doctor.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -16,6 +15,7 @@ import com.smartcloudbrain.doctor.repository.AppointmentSlotRepository;
 import com.smartcloudbrain.doctor.repository.DepartmentRepository;
 import com.smartcloudbrain.doctor.repository.DoctorRepository;
 import com.smartcloudbrain.doctor.repository.DoctorScheduleRepository;
+import com.smartcloudbrain.doctor.repository.RegistrationRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -32,6 +32,7 @@ class DoctorScheduleServiceTest {
 
   @Mock private DoctorScheduleRepository doctorScheduleRepository;
   @Mock private AppointmentSlotRepository appointmentSlotRepository;
+  @Mock private RegistrationRepository registrationRepository;
   @Mock private DoctorRepository doctorRepository;
   @Mock private DepartmentRepository departmentRepository;
   @InjectMocks private DoctorScheduleService doctorScheduleService;
@@ -125,6 +126,7 @@ class DoctorScheduleServiceTest {
     invalidForView.setCapacity(1);
     invalidForView.setStatus("PUBLISHED");
     when(doctorScheduleRepository.findByWorkDateGreaterThanEqualOrderByWorkDateAscDoctorIdAsc(any())).thenReturn(List.of(invalidForView));
-    assertThrows(NullPointerException.class, () -> doctorScheduleService.schedules());
+    assertEquals("", doctorScheduleService.schedules().get(0).get("doctorName"));
+    assertEquals("", doctorScheduleService.schedules().get(0).get("departmentName"));
   }
 }
