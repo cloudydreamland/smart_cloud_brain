@@ -3,16 +3,26 @@ package com.smartcloudbrain.admin.controller;
 import com.smartcloudbrain.common.result.Result;
 import com.smartcloudbrain.admin.dto.admin.AccountSaveRequest;
 import com.smartcloudbrain.admin.dto.admin.DepartmentSaveRequest;
+import com.smartcloudbrain.admin.dto.admin.DeviceSaveRequest;
+import com.smartcloudbrain.admin.dto.admin.DeviceStatusRequest;
+import com.smartcloudbrain.admin.dto.admin.DeviceUsageSaveRequest;
 import com.smartcloudbrain.admin.dto.admin.DoctorSaveRequest;
 import com.smartcloudbrain.admin.dto.admin.DrugSaveRequest;
 import com.smartcloudbrain.admin.dto.admin.KnowledgeEntrySaveRequest;
+import com.smartcloudbrain.admin.dto.admin.PatientSaveRequest;
 import com.smartcloudbrain.admin.dto.admin.PromptTemplateSaveRequest;
+import com.smartcloudbrain.admin.dto.admin.RolePermissionSaveRequest;
+import com.smartcloudbrain.admin.dto.admin.ScheduleCancelRequest;
 import com.smartcloudbrain.admin.dto.admin.ScheduleGenerateRequest;
 import com.smartcloudbrain.admin.dto.admin.SchedulePublishRequest;
+import com.smartcloudbrain.admin.dto.admin.ScheduleSaveRequest;
 import com.smartcloudbrain.admin.dto.admin.SystemDictSaveRequest;
 import com.smartcloudbrain.admin.dto.admin.TriageAssignRequest;
 import com.smartcloudbrain.admin.service.AdminCatalogService;
+import com.smartcloudbrain.admin.service.AdminOperationsService;
 import com.smartcloudbrain.aiapi.dto.PromptTestRequest;
+import com.smartcloudbrain.common.exception.BusinessException;
+import com.smartcloudbrain.common.security.AuthenticatedUser;
 import com.smartcloudbrain.common.security.CurrentUserService;
 import com.smartcloudbrain.common.security.RoleType;
 import jakarta.validation.Valid;
@@ -28,10 +38,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminController {
 
   private final AdminCatalogService adminCatalogService;
+  private final AdminOperationsService adminOperationsService;
   private final CurrentUserService currentUserService;
 
-  public AdminController(AdminCatalogService adminCatalogService, CurrentUserService currentUserService) {
+  public AdminController(AdminCatalogService adminCatalogService, AdminOperationsService adminOperationsService, CurrentUserService currentUserService) {
     this.adminCatalogService = adminCatalogService;
+    this.adminOperationsService = adminOperationsService;
     this.currentUserService = currentUserService;
   }
 
@@ -144,9 +156,27 @@ public class AdminController {
   }
 
   @GetMapping("/schedule/list")
-  public Result<?> schedules() {
-    requireAdmin();
-    return Result.success(adminCatalogService.schedules());
+  public Result<?> schedules(
+      @RequestParam(name = "startDate", required = false) String startDate,
+      @RequestParam(name = "endDate", required = false) String endDate,
+      @RequestParam(name = "departmentId", required = false) Long departmentId,
+      @RequestParam(name = "doctorId", required = false) Long doctorId,
+      @RequestParam(name = "status", required = false) String status
+  ) {
+    requireAdminPermission("schedule:manage");
+    return Result.success(adminOperationsService.schedules(startDate, endDate, departmentId, doctorId, status));
+  }
+
+  @PostMapping("/schedule/save")
+  public Result<?> saveSchedule(@Valid @RequestBody ScheduleSaveRequest request) {
+    requireAdminPermission("schedule:manage");
+    return Result.success(adminOperationsService.saveSchedule(request));
+  }
+
+  @PostMapping("/schedule/cancel")
+  public Result<?> cancelSchedule(@Valid @RequestBody ScheduleCancelRequest request) {
+    requireAdminPermission("schedule:manage");
+    return Result.success(adminOperationsService.cancelSchedule(request));
   }
 
   @GetMapping("/schedule/suggestion/detail")
@@ -179,8 +209,136 @@ public class AdminController {
     return Result.success(adminCatalogService.closeTriage(request.get("triageRecordId")));
   }
 
+  @GetMapping("/device/list")
+  public Result<?> devices(
+      @RequestParam(name = "keyword", required = false) String keyword,
+      @RequestParam(name = "departmentId", required = false) Long departmentId,
+      @RequestParam(name = "category", required = false) String category,
+      @RequestParam(name = "status", required = false) String status
+  ) {
+    requireAdminPermission("device:manage");
+    return Result.success(adminOperationsService.devices(keyword, departmentId, category, status));
+  }
+
+  @PostMapping("/device/save")
+  public Result<?> saveDevice(@Valid @RequestBody DeviceSaveRequest request) {
+    requireAdminPermission("device:manage");
+    return Result.success(adminOperationsService.saveDevice(request));
+  }
+
+  @PostMapping("/device/status")
+  public Result<?> updateDeviceStatus(@Valid @RequestBody DeviceStatusRequest request) {
+    requireAdminPermission("device:manage");
+    return Result.success(adminOperationsService.updateDeviceStatus(request));
+  }
+
+  @GetMapping("/device/usage/list")
+  public Result<?> deviceUsageList(@RequestParam(name = "deviceId", required = false) Long deviceId) {
+    requireAdminPermission("device:manage");
+    return Result.success(adminOperationsService.deviceUsages(deviceId));
+  }
+
+  @PostMapping("/device/usage/save")
+  public Result<?> saveDeviceUsage(@Valid @RequestBody DeviceUsageSaveRequest request) {
+    requireAdminPermission("device:manage");
+    return Result.success(adminOperationsService.saveDeviceUsage(request));
+  }
+
+  @GetMapping("/patient/list")
+  public Result<?> patients(
+      @RequestParam(name = "keyword", required = false) String keyword,
+      @RequestParam(name = "gender", required = false) String gender,
+      @RequestParam(name = "minAge", required = false) Integer minAge,
+      @RequestParam(name = "maxAge", required = false) Integer maxAge
+  ) {
+    requireAdminPermission("patient:manage");
+    return Result.success(adminOperationsService.patients(keyword, gender, minAge, maxAge));
+  }
+
+  @GetMapping("/patient/detail")
+  public Result<?> patientDetail(@RequestParam("id") Long id) {
+    requireAdminPermission("patient:manage");
+    return Result.success(adminOperationsService.patientDetail(id));
+  }
+
+  @PostMapping("/patient/save")
+  public Result<?> savePatient(@Valid @RequestBody PatientSaveRequest request) {
+    requireAdminPermission("patient:manage");
+    return Result.success(adminOperationsService.savePatient(request));
+  }
+
+  @GetMapping("/statistics/overview")
+  public Result<?> statisticsOverview() {
+    requireAdminPermission("statistics:view");
+    return Result.success(adminOperationsService.overview());
+  }
+
+  @GetMapping("/statistics/trend")
+  public Result<?> statisticsTrend(
+      @RequestParam(name = "startDate", required = false) String startDate,
+      @RequestParam(name = "endDate", required = false) String endDate
+  ) {
+    requireAdminPermission("statistics:view");
+    return Result.success(adminOperationsService.trend(startDate, endDate));
+  }
+
+  @GetMapping("/statistics/doctor-workload")
+  public Result<?> doctorWorkload(
+      @RequestParam(name = "startDate", required = false) String startDate,
+      @RequestParam(name = "endDate", required = false) String endDate
+  ) {
+    requireAdminPermission("statistics:view");
+    return Result.success(adminOperationsService.doctorWorkload(startDate, endDate));
+  }
+
+  @GetMapping("/statistics/patient-distribution")
+  public Result<?> patientDistribution() {
+    requireAdminPermission("statistics:view");
+    return Result.success(adminOperationsService.patientDistribution());
+  }
+
+  @GetMapping("/statistics/device-usage")
+  public Result<?> deviceUsageStatistics() {
+    requireAdminPermission("statistics:view");
+    return Result.success(adminOperationsService.deviceUsage());
+  }
+
+  @GetMapping("/statistics/report")
+  public Result<?> report(
+      @RequestParam(name = "startDate", required = false) String startDate,
+      @RequestParam(name = "endDate", required = false) String endDate
+  ) {
+    requireAdminPermission("statistics:export");
+    return Result.success(adminOperationsService.report(startDate, endDate));
+  }
+
+  @GetMapping("/permission/list")
+  public Result<?> permissions() {
+    requireAdminPermission("permission:manage");
+    return Result.success(adminOperationsService.permissions());
+  }
+
+  @GetMapping("/permission/my")
+  public Result<?> myPermissions() {
+    AuthenticatedUser user = currentUserService.require(RoleType.ADMIN);
+    return Result.success(adminOperationsService.myPermissions(user.role()));
+  }
+
+  @PostMapping("/permission/save-role")
+  public Result<?> saveRolePermissions(@Valid @RequestBody RolePermissionSaveRequest request) {
+    requireAdminPermission("permission:manage");
+    return Result.success(adminOperationsService.saveRolePermissions(request));
+  }
+
   private void requireAdmin() {
     currentUserService.require(RoleType.ADMIN);
+  }
+
+  private void requireAdminPermission(String permissionKey) {
+    AuthenticatedUser user = currentUserService.require(RoleType.ADMIN);
+    if (!adminOperationsService.hasPermission(user.role(), permissionKey)) {
+      throw new BusinessException(403, "Permission denied: " + permissionKey);
+    }
   }
 }
 

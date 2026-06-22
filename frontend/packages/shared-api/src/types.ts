@@ -57,6 +57,25 @@ export type SystemDictSaveRequest = {
 export type ScheduleGenerateRequest = { startDate?: string; days?: number };
 export type SchedulePublishRequest = { suggestionIds?: number[] };
 export type TriageAssignRequest = { triageRecordId: number; doctorId: number };
+export type DeviceSaveRequest = {
+  id?: number; deviceCode: string; name: string; category?: string; departmentId?: number;
+  location?: string; status?: string; purchaseDate?: string; remark?: string;
+};
+export type DeviceStatusRequest = { deviceId: number; status: string };
+export type DeviceUsageSaveRequest = {
+  id?: number; deviceId: number; usageType: string; usedBy?: string; patientId?: number;
+  startedAt?: string; endedAt?: string; resultStatus?: string; remark?: string;
+};
+export type PatientSaveRequest = {
+  id?: number; name: string; gender?: string; age?: number; allergyHistory?: string; pastHistory?: string;
+};
+export type ScheduleSaveRequest = {
+  id?: number; doctorId: number; departmentId: number; workDate: string; timeRange: string; capacity: number; status?: string;
+};
+export type ScheduleCancelRequest = { scheduleId: number };
+export type RolePermissionSaveRequest = { role: Role; permissionKeys: string[] };
+export type StatisticsQuery = { startDate?: string; endDate?: string };
+export type StatisticsReportRow = { metric: string; value: number | string };
 
 export class ApiError extends Error {
   constructor(public message: string, public code: number, public status: number) {

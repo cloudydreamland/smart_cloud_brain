@@ -125,6 +125,11 @@
   line-height: 1.55;
 }
 
+.chart-box {
+  width: 100%;
+  min-height: 320px;
+}
+
 @media (max-width: 980px) {
   .catalog-layout,
   .account-layout,
