@@ -1,23 +1,28 @@
 <script setup lang="ts">
-import { Modal, StatusTag } from "@smart-cloud-brain/shared-ui";
-import { aiSourceLabel, aiSourceTone, fieldText, statusClass, type DataRow } from "@smart-cloud-brain/shared-api";
+import { Modal } from "@smart-cloud-brain/shared-ui";
+import { fieldText, type DataRow } from "@smart-cloud-brain/shared-api";
+import { statusLabel, statusTone } from "../doctorPresentation";
 
 defineProps<{ open: boolean; result: DataRow | null }>();
 defineEmits<{ close: []; confirm: [] }>();
 </script>
 
 <template>
-  <Modal :open="open" title="处方审核结果" description="高风险处方需要再次确认。" @close="$emit('close')">
-    <div v-if="result" class="stack">
-      <StatusTag :status="fieldText(result, 'riskLevel', '未审核')" :tone="statusClass(result.riskLevel)" />
-      <span v-if="fieldText(result, 'provider', '')" class="tag" :class="aiSourceTone(result.provider)">
-        {{ aiSourceLabel(result.provider) }} · {{ fieldText(result, "provider") }}{{ fieldText(result, "model", "") ? ` / ${fieldText(result, "model")}` : "" }}
-      </span>
-      <p>{{ fieldText(result, "suggestions", "请医生复核用药风险。") }}</p>
+  <Modal :open="open" title="处方风险复核" description="高风险处方需要医生二次确认。" @close="$emit('close')">
+    <div class="stack">
+      <div class="notice danger">
+        <strong>{{ statusLabel(fieldText(result, "riskLevel", "HIGH")) }}：</strong>
+        {{ fieldText(result, "suggestions", "患者有青霉素过敏史，当前处方包含阿莫西林胶囊。建议替换为非青霉素类抗菌药，或补充明确的医生确认说明。") }}
+      </div>
+      <div class="dl-grid">
+        <div><b>风险等级</b><span><span class="tag" :class="statusTone(fieldText(result, 'riskLevel', 'HIGH'))">{{ statusLabel(fieldText(result, "riskLevel", "HIGH")) }}</span></span></div>
+        <div><b>审核来源</b><span>{{ fieldText(result, "provider", "AI 审方") }}</span></div>
+        <div class="span"><b>系统建议</b><span>{{ fieldText(result, "suggestions", "复核过敏史，调整抗菌药物；保留氨溴索对症处理。") }}</span></div>
+      </div>
     </div>
     <template #footer>
       <button type="button" @click="$emit('close')">返回修改</button>
-      <button type="button" class="primary" @click="$emit('confirm')">继续确认</button>
+      <button type="button" class="primary" @click="$emit('confirm')">医生确认并继续</button>
     </template>
   </Modal>
 </template>

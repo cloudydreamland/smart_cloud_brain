@@ -7,7 +7,7 @@ const label = computed(() => {
   const raw = String(props.status ?? "").trim();
   if (!raw) return "-";
   const labels: Record<string, string> = {
-    CREATED: "已创建",
+    CREATED: "待接诊",
     CONFIRMED: "已确认",
     COMPLETED: "已完成",
     AVAILABLE: "可预约",
@@ -31,7 +31,7 @@ const label = computed(() => {
     UNREAD: "未读",
     IDLE: "待生成",
     GENERATING: "生成中",
-    DRAFT_READY: "草稿就绪",
+    DRAFT_READY: "草稿已生成",
     PATIENT: "患者",
     DOCTOR: "医生",
     ADMIN: "管理员",
