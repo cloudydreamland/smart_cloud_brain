@@ -9,24 +9,24 @@ class AiServiceConfigTest {
 
   @Test
   void allowsMockWithoutExternalKeys() {
-    assertDoesNotThrow(() -> validator(properties("mock", "", "", "", "")));
+    assertDoesNotThrow(() -> validator(properties("mock", "", "", "", "", "")));
   }
 
   @Test
-  void acceptsThreeTaskSpecificDifyKeys() {
-    assertDoesNotThrow(() -> validator(properties("dify", "", "triage", "medical", "prescription")));
+  void acceptsFourTaskSpecificDifyKeys() {
+    assertDoesNotThrow(() -> validator(properties("dify", "", "triage", "medical", "prescription", "schedule")));
   }
 
   @Test
   void acceptsDeprecatedSharedDifyKeyAsFallback() {
-    assertDoesNotThrow(() -> validator(properties("dify", "legacy", "", "", "")));
+    assertDoesNotThrow(() -> validator(properties("dify", "legacy", "", "", "", "")));
   }
 
   @Test
   void rejectsDifyWhenOneTaskHasNoKeyOrFallback() {
     assertThrows(
         IllegalStateException.class,
-        () -> validator(properties("dify", "", "triage", "medical", ""))
+        () -> validator(properties("dify", "", "triage", "medical", "prescription", ""))
     );
   }
 
@@ -39,7 +39,8 @@ class AiServiceConfigTest {
       String legacy,
       String triage,
       String medical,
-      String prescription
+      String prescription,
+      String schedule
   ) {
     return new AiProviderProperties(
         provider,
@@ -48,7 +49,8 @@ class AiServiceConfigTest {
         new AiProviderProperties.Dify("http://localhost/v1", legacy),
         new AiProviderProperties.DifyWorkflow(triage),
         new AiProviderProperties.DifyWorkflow(medical),
-        new AiProviderProperties.DifyWorkflow(prescription)
+        new AiProviderProperties.DifyWorkflow(prescription),
+        new AiProviderProperties.DifyWorkflow(schedule)
     );
   }
 }

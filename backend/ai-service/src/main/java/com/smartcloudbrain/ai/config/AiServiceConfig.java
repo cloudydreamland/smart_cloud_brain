@@ -31,6 +31,7 @@ public class AiServiceConfig {
         requireTaskKey(properties.difyTriage(), properties.dify(), "DIFY_TRIAGE_API_KEY", provider);
         requireTaskKey(properties.difyMedicalRecord(), properties.dify(), "DIFY_MEDICAL_RECORD_API_KEY", provider);
         requireTaskKey(properties.difyPrescriptionCheck(), properties.dify(), "DIFY_PRESCRIPTION_CHECK_API_KEY", provider);
+        requireTaskKey(properties.difySchedule(), properties.dify(), "DIFY_SCHEDULE_API_KEY", provider);
         return;
       }
       throw new IllegalStateException("Unsupported AI_PROVIDER: " + properties.provider());

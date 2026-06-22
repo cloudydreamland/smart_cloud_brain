@@ -8,5 +8,6 @@ node_modules
 dist
 .env
 *.log
-!backend/*/target/
-!backend/*/target/*.jar
+frontend/prototypes
+参考资料
+提交材料

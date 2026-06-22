@@ -30,7 +30,20 @@ esac
 
 echo "Using Kingbase image: $KINGBASE_IMAGE"
 
+KINGBASE_IMAGE="$KINGBASE_IMAGE" "$ROOT_DIR/scripts/build-images.sh" "$ENV_FILE"
 KINGBASE_IMAGE="$KINGBASE_IMAGE" docker compose \
   --env-file "$ENV_FILE" \
   -f "$ROOT_DIR/deploy/docker-compose.yml" \
-  up -d --build
+  up -d --no-build
+
+if grep -q '^AI_PROVIDER=dify$' "$ENV_FILE" 2>/dev/null; then
+  DIFY_NETWORK="${DIFY_DOCKER_NETWORK:-docker_default}"
+  docker network inspect "$DIFY_NETWORK" >/dev/null 2>&1 || {
+    echo "Dify network $DIFY_NETWORK is missing. Start Dify first." >&2
+    exit 1
+  }
+  if ! docker network inspect "$DIFY_NETWORK" --format '{{range .Containers}}{{println .Name}}{{end}}' | grep -qx 'scb-ai-service'; then
+    docker network connect "$DIFY_NETWORK" scb-ai-service
+  fi
+  echo "Connected ai-service to Dify network: $DIFY_NETWORK"
+fi

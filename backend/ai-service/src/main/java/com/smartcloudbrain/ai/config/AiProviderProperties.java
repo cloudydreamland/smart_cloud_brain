@@ -10,7 +10,8 @@ public record AiProviderProperties(
     Dify dify,
     DifyWorkflow difyTriage,
     DifyWorkflow difyMedicalRecord,
-    DifyWorkflow difyPrescriptionCheck
+    DifyWorkflow difyPrescriptionCheck,
+    DifyWorkflow difySchedule
 ) {
   public record OpenAi(
       String baseUrl,

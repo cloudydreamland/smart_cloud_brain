@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { storeToRefs } from "pinia";
-import { api, fieldText, formatApiError, statusClass, toNumber, useAuthStore, useDoctorWorkflowStore, type DataRow } from "@smart-cloud-brain/shared-api";
-import { EmptyState, ErrorState, LoadingState, StatusTag } from "@smart-cloud-brain/shared-ui";
+import { api, fieldText, formatApiError, statusClass, toNumber, useAuthStore, useDoctorWorkflowStore, usePagination, type DataRow } from "@smart-cloud-brain/shared-api";
+import { EmptyState, ErrorState, LoadingState, PaginationBar, StatusTag } from "@smart-cloud-brain/shared-ui";
 import NotificationDetailModal from "../components/NotificationDetailModal.vue";
 
 const emit = defineEmits<{ refresh: [] }>();
@@ -13,6 +13,7 @@ const selected = ref<DataRow | null>(null);
 const error = ref("");
 const notice = ref("");
 const loading = ref(false);
+const { currentPage, pageSize, total, pageRows } = usePagination(notifications, 8);
 
 async function refresh() {
   loading.value = true;
@@ -59,7 +60,7 @@ refresh();
       <div v-if="notice" class="notice success">{{ notice }}</div>
       <LoadingState v-if="loading" title="正在同步通知" />
       <div v-else-if="notifications.length" class="list">
-        <article v-for="item in notifications" :key="String(item.notificationId)" class="list-row">
+        <article v-for="item in pageRows" :key="String(item.notificationId)" class="list-row">
           <div class="row-main">
             <strong>{{ fieldText(item, "title") }}</strong>
             <p>{{ fieldText(item, "content") }}</p>
@@ -73,6 +74,7 @@ refresh();
             <button type="button" :disabled="fieldText(item, 'readStatus') === 'READ'" @click="markRead(item)">已读</button>
           </div>
         </article>
+        <PaginationBar v-model="currentPage" :total="total" :page-size="pageSize" />
       </div>
       <EmptyState v-else title="暂无通知" />
     </div>

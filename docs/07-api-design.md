@@ -93,7 +93,7 @@ Authorization: Bearer <jwt-token>
 | GET/POST | `/api/admin/prompt-template/**` | Prompt 维护 |
 | GET/POST | `/api/admin/knowledge/**` | 知识库维护 |
 | GET/POST | `/api/admin/dict/**` | 字典维护 |
-| POST | `/api/admin/schedule/generate` | 排班建议生成；AI 服务化接入为后续交接项 |
+| POST | `/api/admin/schedule/generate` | 生成 AI 排班建议；响应包含 `source`、`degraded`，管理员确认后再发布 |
 | POST | `/api/admin/schedule/publish` | 发布排班和号源 |
 | GET | `/api/admin/schedule/list` | 已发布排班列表 |
 | GET | `/api/admin/schedule/suggestion/detail?id={id}` | 排班建议详情 |
@@ -111,7 +111,7 @@ Authorization: Bearer <jwt-token>
 
 ## 10. AI 内部接口
 
-AI 内部接口只允许后端服务调用，不由前端直接访问。
+AI 内部接口只允许后端服务调用，不由前端直接访问。所有 `/internal/**` 请求必须携带 `X-Internal-Token`，值与各服务的 `INTERNAL_SERVICE_TOKEN` 一致；缺失或错误时返回 401。
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
@@ -119,7 +119,7 @@ AI 内部接口只允许后端服务调用，不由前端直接访问。
 | POST | `/internal/ai/medical-record/generate` | 病历生成 |
 | GET | `/internal/ai/medical-record/generate/stream` | 病历生成 SSE |
 | POST | `/internal/ai/prescription/check` | 处方审核 |
+| POST | `/internal/ai/schedule/suggest` | AI 排班建议，输入医生、科室、日期范围和已有排班 |
 | POST | `/internal/ai/prompt-template/resolve` | Prompt 模板解析 |
 
-说明：AI 排班服务化接口已作为后续交接项，不列为本轮已实现内部 AI 接口。
-
+排班结果会在 `admin-service` 中进行二次强校验：医生必须存在且启用、科室匹配、日期处于 1-14 天请求范围内、时间格式与先后顺序合法、容量为 1-100，且同一医生时段不得重复。Dify/OpenAI-compatible 调用异常时四类任务统一回退确定性 Mock，并返回 `degraded=true`。

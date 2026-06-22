@@ -2,6 +2,7 @@ package com.smartcloudbrain.doctor.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -9,6 +10,8 @@ import static org.mockito.Mockito.when;
 import com.smartcloudbrain.doctor.dto.internal.InternalSchedulePublishRequest;
 import com.smartcloudbrain.doctor.entity.AppointmentSlot;
 import com.smartcloudbrain.doctor.entity.DoctorSchedule;
+import com.smartcloudbrain.doctor.entity.Doctor;
+import com.smartcloudbrain.doctor.entity.Department;
 import com.smartcloudbrain.doctor.repository.AppointmentSlotRepository;
 import com.smartcloudbrain.doctor.repository.DepartmentRepository;
 import com.smartcloudbrain.doctor.repository.DoctorRepository;
@@ -16,6 +19,7 @@ import com.smartcloudbrain.doctor.repository.DoctorScheduleRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -72,5 +76,55 @@ class DoctorScheduleServiceTest {
     assertEquals(12, savedSlot.getCapacity());
     assertEquals(12, savedSlot.getRemainingCapacity());
     assertEquals("AVAILABLE", savedSlot.getStatus());
+  }
+
+  @Test
+  void listsSchedulesAndSlotsWithDoctorAndDepartmentNames() {
+    Doctor doctor = new Doctor();
+    doctor.setName("王医生");
+    Department department = new Department();
+    department.setName("心内科");
+    DoctorSchedule schedule = new DoctorSchedule();
+    schedule.setId(1L);
+    schedule.setDoctorId(2L);
+    schedule.setDepartmentId(3L);
+    schedule.setWorkDate(LocalDate.now().plusDays(1));
+    schedule.setTimeRange("09:00-12:00");
+    schedule.setCapacity(12);
+    schedule.setStatus("PUBLISHED");
+    AppointmentSlot slot = new AppointmentSlot();
+    slot.setId(4L);
+    slot.setScheduleId(1L);
+    slot.setDoctorId(2L);
+    slot.setDepartmentId(3L);
+    slot.setStartTime(LocalDateTime.now().plusDays(1));
+    slot.setEndTime(null);
+    slot.setCapacity(null);
+    slot.setRemainingCapacity(null);
+    slot.setStatus("AVAILABLE");
+    when(doctorRepository.findById(2L)).thenReturn(Optional.of(doctor));
+    when(departmentRepository.findById(3L)).thenReturn(Optional.of(department));
+    when(doctorScheduleRepository.findByWorkDateGreaterThanEqualOrderByWorkDateAscDoctorIdAsc(any())).thenReturn(List.of(schedule));
+    when(appointmentSlotRepository.findByStartTimeGreaterThanEqualOrderByStartTimeAscDoctorIdAsc(any())).thenReturn(List.of(slot));
+
+    assertEquals("王医生", doctorScheduleService.schedules().get(0).get("doctorName"));
+    assertEquals(0, doctorScheduleService.slots().get(0).get("capacity"));
+  }
+
+  @Test
+  void acceptsEmptyPublishRequestAndCoversNullNameFallbacks() {
+    when(doctorScheduleRepository.findByWorkDateGreaterThanEqualOrderByWorkDateAscDoctorIdAsc(any())).thenReturn(List.of());
+    assertEquals(List.of(), doctorScheduleService.publishSchedules(null));
+
+    DoctorSchedule invalidForView = new DoctorSchedule();
+    invalidForView.setId(1L);
+    invalidForView.setDoctorId(null);
+    invalidForView.setDepartmentId(null);
+    invalidForView.setWorkDate(LocalDate.now());
+    invalidForView.setTimeRange("09:00-12:00");
+    invalidForView.setCapacity(1);
+    invalidForView.setStatus("PUBLISHED");
+    when(doctorScheduleRepository.findByWorkDateGreaterThanEqualOrderByWorkDateAscDoctorIdAsc(any())).thenReturn(List.of(invalidForView));
+    assertThrows(NullPointerException.class, () -> doctorScheduleService.schedules());
   }
 }

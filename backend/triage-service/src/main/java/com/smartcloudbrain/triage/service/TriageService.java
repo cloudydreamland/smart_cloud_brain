@@ -62,13 +62,15 @@ public class TriageService {
     record.setRecommendedDoctorIds(response.recommendedDoctorIds().stream().map(String::valueOf).collect(Collectors.joining(",")));
     record.setReason(response.reason());
     record.setAiResultJson("""
-        {"departmentCode":"%s","recommendedDoctorDirection":"%s","urgencyLevel":"%s","confidence":%s,"degraded":%s}
+        {"departmentCode":"%s","recommendedDoctorDirection":"%s","urgencyLevel":"%s","confidence":%s,"degraded":%s,"provider":"%s","model":"%s"}
         """.formatted(
         response.departmentCode(),
         response.recommendedDoctorDirection(),
         response.urgencyLevel(),
         response.confidence(),
-        response.degraded()
+        response.degraded(),
+        response.provider(),
+        response.model()
     ).trim());
     record.setStatus(response.degraded() ? "MANUAL_REQUIRED" : "AI_RECOMMENDED");
     return triageView(triageRecordRepository.save(record), response);
@@ -102,6 +104,8 @@ public class TriageService {
     view.put("reason", record.getReason() == null ? "" : record.getReason());
     view.put("status", record.getStatus());
     view.put("degraded", response != null && response.degraded());
+    view.put("provider", response == null ? "" : response.provider());
+    view.put("model", response == null ? "" : response.model());
     return view;
   }
 }

@@ -1,5 +1,8 @@
 package com.smartcloudbrain.admin.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.smartcloudbrain.admin.client.InternalAiClient;
 import com.smartcloudbrain.admin.client.InternalDoctorClient;
 import com.smartcloudbrain.admin.client.InternalTriageClient;
 import com.smartcloudbrain.admin.dto.admin.DepartmentSaveRequest;
@@ -24,15 +27,26 @@ import com.smartcloudbrain.admin.repository.DrugRepository;
 import com.smartcloudbrain.admin.repository.KnowledgeEntryRepository;
 import com.smartcloudbrain.admin.repository.PromptTemplateRepository;
 import com.smartcloudbrain.admin.repository.SystemDictRepository;
+import com.smartcloudbrain.aiapi.dto.PromptTestRequest;
 import com.smartcloudbrain.common.error.ErrorCode;
 import com.smartcloudbrain.common.exception.BusinessException;
 import com.smartcloudbrain.common.security.PasswordHashService;
+import com.smartcloudbrain.aiapi.dto.ExistingSchedule;
+import com.smartcloudbrain.aiapi.dto.ScheduleDepartmentCandidate;
+import com.smartcloudbrain.aiapi.dto.ScheduleDoctorCandidate;
+import com.smartcloudbrain.aiapi.dto.ScheduleSuggestRequest;
+import com.smartcloudbrain.aiapi.dto.ScheduleSuggestResponse;
+import com.smartcloudbrain.aiapi.dto.ScheduleSuggestionItem;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeParseException;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -49,8 +63,10 @@ public class AdminCatalogService {
   private final SystemDictRepository systemDictRepository;
   private final AiScheduleSuggestionRepository aiScheduleSuggestionRepository;
   private final InternalDoctorClient internalDoctorClient;
+  private final InternalAiClient internalAiClient;
   private final InternalTriageClient internalTriageClient;
   private final PasswordHashService passwordHashService;
+  private final ObjectMapper objectMapper;
 
   public AdminCatalogService(
       DepartmentRepository departmentRepository,
@@ -61,8 +77,10 @@ public class AdminCatalogService {
       SystemDictRepository systemDictRepository,
       AiScheduleSuggestionRepository aiScheduleSuggestionRepository,
       InternalDoctorClient internalDoctorClient,
+      InternalAiClient internalAiClient,
       InternalTriageClient internalTriageClient,
-      PasswordHashService passwordHashService
+      PasswordHashService passwordHashService,
+      ObjectMapper objectMapper
   ) {
     this.departmentRepository = departmentRepository;
     this.doctorRepository = doctorRepository;
@@ -72,8 +90,10 @@ public class AdminCatalogService {
     this.systemDictRepository = systemDictRepository;
     this.aiScheduleSuggestionRepository = aiScheduleSuggestionRepository;
     this.internalDoctorClient = internalDoctorClient;
+    this.internalAiClient = internalAiClient;
     this.internalTriageClient = internalTriageClient;
     this.passwordHashService = passwordHashService;
+    this.objectMapper = objectMapper;
   }
 
   public List<Map<String, Object>> departments() {
@@ -136,17 +156,38 @@ public class AdminCatalogService {
   @CacheEvict(cacheNames = "adminCatalog", allEntries = true)
   @Transactional
   public Map<String, Object> savePrompt(PromptTemplateSaveRequest request) {
+    requireSupportedPromptTask(request.taskType());
+    String outputSchema = normalizeOutputSchema(request.taskType(), request.outputSchema());
+    validatePromptOutputSchema(request.taskType(), outputSchema);
     PromptTemplate prompt = request.id() == null ? new PromptTemplate() : promptTemplateRepository.findById(request.id()).orElseGet(PromptTemplate::new);
     prompt.setTaskType(request.taskType());
     prompt.setDepartmentCode(request.departmentCode());
     prompt.setTemplateName(request.templateName());
     prompt.setTemplateContent(request.templateContent());
-    prompt.setOutputSchema(request.outputSchema() == null ? "{\"type\":\"object\"}" : request.outputSchema());
+    prompt.setOutputSchema(outputSchema);
     prompt.setVersion(request.version() == null ? "v1" : request.version());
     prompt.setEnabled(request.enabled() == null || request.enabled());
     prompt.setUpdatedAt(LocalDateTime.now());
     PromptTemplate saved = promptTemplateRepository.save(prompt);
     return promptView(saved);
+  }
+
+  public Object testPrompt(PromptTestRequest request) {
+    requireSupportedPromptTask(request.taskType());
+    String outputSchema = normalizeOutputSchema(request.taskType(), request.outputSchema());
+    validatePromptOutputSchema(request.taskType(), outputSchema);
+    return internalAiClient.testPrompt(new PromptTestRequest(
+        request.taskType(),
+        request.departmentCode(),
+        request.templateName(),
+        request.templateContent(),
+        outputSchema,
+        request.sampleInput()
+    ));
+  }
+
+  public Object aiLogs() {
+    return internalAiClient.recentLogs();
   }
 
   public List<Map<String, Object>> knowledgeEntries() {
@@ -236,27 +277,121 @@ public class AdminCatalogService {
   public List<Map<String, Object>> generateScheduleSuggestions(ScheduleGenerateRequest request) {
     LocalDate startDate = request.startDate() == null ? LocalDate.now().plusDays(1) : request.startDate();
     int days = request.days() == null ? 3 : Math.max(1, Math.min(request.days(), 14));
+    List<Department> departments = departmentRepository.findAll();
+    Map<Long, Department> departmentById = departments.stream()
+        .collect(java.util.stream.Collectors.toMap(Department::getId, department -> department));
     List<Doctor> doctors = doctorRepository.findAll().stream()
         .filter(doctor -> "ENABLED".equalsIgnoreCase(doctor.getStatus()))
         .toList();
-    for (Doctor doctor : doctors) {
-      for (int offset = 0; offset < days; offset++) {
-        LocalDate date = startDate.plusDays(offset);
-        AiScheduleSuggestion suggestion = new AiScheduleSuggestion();
-        suggestion.setDoctorId(doctor.getId());
-        suggestion.setDepartmentId(doctor.getDepartmentId());
-        suggestion.setWorkDate(date);
-        suggestion.setTimeRange(offset % 2 == 0 ? "09:00-12:00" : "14:00-17:00");
-        suggestion.setCapacity(12);
-        suggestion.setReason("基于演示门诊量和医生科室自动生成");
-        suggestion.setStatus("DRAFT");
-        suggestion.setUpdatedAt(LocalDateTime.now());
-        aiScheduleSuggestionRepository.save(suggestion);
-      }
+    if (doctors.isEmpty()) {
+      throw new BusinessException(600, "没有可参与排班的启用医生");
+    }
+
+    List<ExistingSchedule> existingSchedules = internalDoctorClient.schedules().stream()
+        .map(this::existingSchedule)
+        .filter(java.util.Objects::nonNull)
+        .toList();
+    ScheduleSuggestRequest aiRequest = new ScheduleSuggestRequest(
+        startDate,
+        days,
+        doctors.stream().map(doctor -> {
+          Department department = departmentById.get(doctor.getDepartmentId());
+          return new ScheduleDoctorCandidate(
+              doctor.getId(), doctor.getName(), doctor.getDepartmentId(),
+              department == null ? "" : department.getCode(), doctor.getSpecialty(), true);
+        }).toList(),
+        departments.stream().map(department -> new ScheduleDepartmentCandidate(
+            department.getId(), department.getCode(), department.getName())).toList(),
+        existingSchedules
+    );
+    ScheduleSuggestResponse aiResponse = internalAiClient.suggestSchedule(aiRequest);
+    List<ScheduleSuggestionItem> validated = validateSuggestions(
+        aiResponse.suggestions(), doctors, startDate, days, existingSchedules);
+
+    aiScheduleSuggestionRepository.deleteAll(
+        aiScheduleSuggestionRepository.findByStatusOrderByWorkDateAscDoctorIdAsc("DRAFT"));
+    for (ScheduleSuggestionItem item : validated) {
+      AiScheduleSuggestion suggestion = new AiScheduleSuggestion();
+      suggestion.setDoctorId(item.doctorId());
+      suggestion.setDepartmentId(item.departmentId());
+      suggestion.setWorkDate(item.workDate());
+      suggestion.setTimeRange(item.timeRange());
+      suggestion.setCapacity(item.capacity());
+      suggestion.setReason(item.reason());
+      suggestion.setStatus("DRAFT");
+      suggestion.setSource(aiResponse.provider());
+      suggestion.setDegraded(aiResponse.degraded());
+      suggestion.setUpdatedAt(LocalDateTime.now());
+      aiScheduleSuggestionRepository.save(suggestion);
     }
     return aiScheduleSuggestionRepository.findByStatusOrderByWorkDateAscDoctorIdAsc("DRAFT").stream()
         .map(this::scheduleSuggestionView)
         .toList();
+  }
+
+  private List<ScheduleSuggestionItem> validateSuggestions(
+      List<ScheduleSuggestionItem> suggestions,
+      List<Doctor> enabledDoctors,
+      LocalDate startDate,
+      int days,
+      List<ExistingSchedule> existingSchedules
+  ) {
+    if (suggestions == null || suggestions.isEmpty()) {
+      throw new BusinessException(600, "AI 未返回任何排班建议");
+    }
+    Map<Long, Doctor> doctorById = enabledDoctors.stream()
+        .collect(java.util.stream.Collectors.toMap(Doctor::getId, doctor -> doctor));
+    HashSet<String> occupied = new HashSet<>();
+    existingSchedules.forEach(item -> occupied.add(scheduleKey(item.doctorId(), item.workDate(), item.timeRange())));
+    List<ScheduleSuggestionItem> validated = new java.util.ArrayList<>();
+    LocalDate endDate = startDate.plusDays(days);
+    for (ScheduleSuggestionItem item : suggestions) {
+      Doctor doctor = item == null ? null : doctorById.get(item.doctorId());
+      if (doctor == null || !doctor.getDepartmentId().equals(item.departmentId())) {
+        throw new BusinessException(600, "AI 排班包含无效医生或科室不匹配");
+      }
+      if (item.workDate() == null || item.workDate().isBefore(startDate) || !item.workDate().isBefore(endDate)) {
+        throw new BusinessException(600, "AI 排班日期超出请求范围");
+      }
+      validateTimeRange(item.timeRange());
+      if (item.capacity() == null || item.capacity() < 1 || item.capacity() > 100) {
+        throw new BusinessException(600, "AI 排班容量必须在 1-100 之间");
+      }
+      String key = scheduleKey(item.doctorId(), item.workDate(), item.timeRange());
+      if (!occupied.add(key)) {
+        throw new BusinessException(600, "AI 排班包含重复或已存在的医生时段");
+      }
+      validated.add(item);
+    }
+    return validated;
+  }
+
+  private void validateTimeRange(String timeRange) {
+    if (timeRange == null || !timeRange.matches("^([01]\\d|2[0-3]):[0-5]\\d-([01]\\d|2[0-3]):[0-5]\\d$")) {
+      throw new BusinessException(600, "AI 排班时段格式必须为 HH:mm-HH:mm");
+    }
+    String[] parts = timeRange.split("-");
+    if (!LocalTime.parse(parts[0]).isBefore(LocalTime.parse(parts[1]))) {
+      throw new BusinessException(600, "AI 排班结束时间必须晚于开始时间");
+    }
+  }
+
+  private ExistingSchedule existingSchedule(Map<String, Object> schedule) {
+    try {
+      Long doctorId = numberValue(schedule.get("doctorId"));
+      Object dateValue = schedule.get("workDate");
+      Object rangeValue = schedule.get("timeRange");
+      if (doctorId == null || dateValue == null || rangeValue == null) {
+        return null;
+      }
+      return new ExistingSchedule(doctorId, LocalDate.parse(String.valueOf(dateValue)), String.valueOf(rangeValue));
+    } catch (DateTimeParseException ex) {
+      return null;
+    }
+  }
+
+  private String scheduleKey(Long doctorId, LocalDate workDate, String timeRange) {
+    return doctorId + "|" + workDate + "|" + timeRange;
   }
 
   @Transactional
@@ -312,6 +447,96 @@ public class AdminCatalogService {
 
   private boolean contains(String value, String query) {
     return normalize(value).contains(query);
+  }
+
+  private void validatePromptOutputSchema(String taskType, String outputSchema) {
+    JsonNode schema;
+    try {
+      schema = objectMapper.readTree(outputSchema);
+    } catch (Exception ex) {
+      throw new BusinessException(400, "outputSchema must be valid JSON");
+    }
+    Set<String> required = requiredFieldsForTask(taskType);
+    if (required.isEmpty()) {
+      return;
+    }
+    for (String field : required) {
+      if (!schemaMentionsField(schema, field)) {
+        throw new BusinessException(400, "outputSchema missing required field: " + field);
+      }
+    }
+  }
+
+  private void requireSupportedPromptTask(String taskType) {
+    if (requiredFieldsForTask(taskType).isEmpty()) {
+      throw new BusinessException(400, "Unsupported prompt task type: " + taskType);
+    }
+  }
+
+  private String normalizeOutputSchema(String taskType, String outputSchema) {
+    if (outputSchema != null && !outputSchema.isBlank()) {
+      return outputSchema;
+    }
+    return defaultOutputSchema(taskType);
+  }
+
+  private String defaultOutputSchema(String taskType) {
+    return switch (normalize(taskType).toUpperCase(Locale.ROOT)) {
+      case "TRIAGE" -> """
+          {"type":"object","required":["recommendedDepartment","departmentCode","recommendedDoctorDirection","urgencyLevel","confidence","recommendedDoctorIds","reason"]}
+          """.trim();
+      case "MEDICAL_RECORD" -> """
+          {"type":"object","required":["chiefComplaint","presentIllness","pastHistory","physicalExam","diagnosis","treatmentAdvice","soapContent"]}
+          """.trim();
+      case "PRESCRIPTION_CHECK" -> """
+          {"type":"object","required":["riskLevel","riskDescription","suggestions","interactions","contraindications","adjustmentSuggestions"]}
+          """.trim();
+      default -> "{\"type\":\"object\"}";
+    };
+  }
+
+  private Set<String> requiredFieldsForTask(String taskType) {
+    return switch (normalize(taskType).toUpperCase(Locale.ROOT)) {
+      case "TRIAGE" -> Set.of(
+          "recommendedDepartment",
+          "departmentCode",
+          "recommendedDoctorDirection",
+          "urgencyLevel",
+          "confidence",
+          "recommendedDoctorIds",
+          "reason"
+      );
+      case "MEDICAL_RECORD" -> Set.of(
+          "chiefComplaint",
+          "presentIllness",
+          "pastHistory",
+          "physicalExam",
+          "diagnosis",
+          "treatmentAdvice",
+          "soapContent"
+      );
+      case "PRESCRIPTION_CHECK" -> Set.of(
+          "riskLevel",
+          "riskDescription",
+          "suggestions",
+          "interactions",
+          "contraindications",
+          "adjustmentSuggestions"
+      );
+      default -> Set.of();
+    };
+  }
+
+  private boolean schemaMentionsField(JsonNode schema, String field) {
+    JsonNode required = schema.path("required");
+    if (required.isArray()) {
+      for (JsonNode item : required) {
+        if (field.equals(item.asText())) {
+          return true;
+        }
+      }
+    }
+    return schema.path("properties").has(field);
   }
 
   private String normalize(String value) {
@@ -387,18 +612,20 @@ public class AdminCatalogService {
   }
 
   private Map<String, Object> scheduleSuggestionView(AiScheduleSuggestion suggestion) {
-    return Map.of(
-        "id", suggestion.getId(),
-        "doctorId", suggestion.getDoctorId(),
-        "doctorName", doctorName(suggestion.getDoctorId()),
-        "departmentId", suggestion.getDepartmentId(),
-        "departmentName", departmentName(suggestion.getDepartmentId()),
-        "workDate", suggestion.getWorkDate().toString(),
-        "timeRange", suggestion.getTimeRange(),
-        "capacity", suggestion.getCapacity(),
-        "reason", suggestion.getReason() == null ? "" : suggestion.getReason(),
-        "status", suggestion.getStatus()
-    );
+    Map<String, Object> view = new LinkedHashMap<>();
+    view.put("id", suggestion.getId());
+    view.put("doctorId", suggestion.getDoctorId());
+    view.put("doctorName", doctorName(suggestion.getDoctorId()));
+    view.put("departmentId", suggestion.getDepartmentId());
+    view.put("departmentName", departmentName(suggestion.getDepartmentId()));
+    view.put("workDate", suggestion.getWorkDate().toString());
+    view.put("timeRange", suggestion.getTimeRange());
+    view.put("capacity", suggestion.getCapacity());
+    view.put("reason", suggestion.getReason() == null ? "" : suggestion.getReason());
+    view.put("status", suggestion.getStatus());
+    view.put("source", suggestion.getSource() == null ? "unknown" : suggestion.getSource());
+    view.put("degraded", Boolean.TRUE.equals(suggestion.getDegraded()));
+    return view;
   }
 
   private Map<String, Object> enrichTriageView(Map<String, Object> record) {
@@ -429,5 +656,3 @@ public class AdminCatalogService {
     return null;
   }
 }
-
-

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { api, fieldText, formatApiError, statusClass, statusText, toNumber, useAuthStore, usePatientWorkflowStore, type DataRow } from "@smart-cloud-brain/shared-api";
-import { EmptyState, ErrorState, LoadingState, StatusTag } from "@smart-cloud-brain/shared-ui";
+import { api, fieldText, formatApiError, statusClass, statusText, toNumber, useAuthStore, usePagination, usePatientWorkflowStore, type DataRow } from "@smart-cloud-brain/shared-api";
+import { EmptyState, ErrorState, LoadingState, PaginationBar, StatusTag } from "@smart-cloud-brain/shared-ui";
 import ConfirmAppointmentModal from "../components/ConfirmAppointmentModal.vue";
 
 const auth = useAuthStore();
@@ -17,6 +17,18 @@ const confirmOpen = ref(false);
 const recommendedDepartment = computed(() => fieldText(triageHistory.value[0], "recommendedDepartment", ""));
 const visibleSlots = computed(() => slots.value.filter((slot) => !recommendedDepartment.value || fieldText(slot, "departmentName", "").includes(recommendedDepartment.value)));
 const displaySlots = computed(() => visibleSlots.value.length ? visibleSlots.value : slots.value);
+const {
+  currentPage: slotPage,
+  pageSize: slotPageSize,
+  total: slotTotal,
+  pageRows: pagedSlots,
+} = usePagination(displaySlots, 6);
+const {
+  currentPage: departmentPage,
+  pageSize: departmentPageSize,
+  total: departmentTotal,
+  pageRows: pagedDepartments,
+} = usePagination(departments, 5);
 
 async function refresh() {
   loading.value = true;
@@ -84,7 +96,7 @@ refresh();
         </div>
         <LoadingState v-if="loading" />
         <div v-else-if="displaySlots.length" class="stack">
-          <article v-for="slot in displaySlots" :key="String(slot.slotId)" class="slot-card" :class="{ selected: selectedSlot?.slotId === slot.slotId }">
+          <article v-for="slot in pagedSlots" :key="String(slot.slotId)" class="slot-card" :class="{ selected: selectedSlot?.slotId === slot.slotId }">
             <div class="row-main">
               <strong>{{ fieldText(slot, "departmentName") }} · {{ fieldText(slot, "doctorName") }}</strong>
               <p>{{ fieldText(slot, "startTime") }} · 余号 {{ fieldText(slot, "remainingCapacity", "0") }}/{{ fieldText(slot, "capacity", "0") }}</p>
@@ -94,6 +106,7 @@ refresh();
               <button class="primary" type="button" @click="choose(slot)">选择</button>
             </div>
           </article>
+          <PaginationBar v-model="slotPage" :total="slotTotal" :page-size="slotPageSize" />
         </div>
         <EmptyState v-else title="暂无号源" message="当前推荐科室暂无可预约号源，请刷新或稍后再试。" />
       </div>
@@ -101,10 +114,11 @@ refresh();
     <aside class="panel">
       <header class="panel-header"><div class="panel-title"><h2>科室与医生</h2><p>后端公开科室和医生信息。</p></div></header>
       <div class="panel-body stack">
-        <div v-for="department in departments" :key="String(department.id)" class="clinical-note">
+        <div v-for="department in pagedDepartments" :key="String(department.id)" class="clinical-note">
           <strong>{{ fieldText(department, "name") }}</strong>
           <p>{{ fieldText(department, "description", "暂无说明") }}</p>
         </div>
+        <PaginationBar v-model="departmentPage" :total="departmentTotal" :page-size="departmentPageSize" />
         <EmptyState v-if="!departments.length" title="暂无科室数据" />
       </div>
     </aside>

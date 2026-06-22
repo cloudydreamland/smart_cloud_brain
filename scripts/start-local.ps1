@@ -46,28 +46,47 @@ $KingbaseImage = if ($Architecture -match "^(Arm64|ARM64)$") {
 $env:KINGBASE_IMAGE = $KingbaseImage
 Write-Host "Using Kingbase image: $KingbaseImage"
 
-if (-not $NoBuild) {
-  Write-Host "Packaging backend jars ..."
-  $BackendPom = Join-Path $Root "backend\pom.xml"
-  & mvn -f $BackendPom clean package -DskipTests
-  if ($LASTEXITCODE -ne 0) {
-    throw "Backend packaging failed with exit code $LASTEXITCODE."
-  }
-}
-
 $args = @(
   "--env-file", $EnvFile,
   "-f", $ComposeFile
 )
-$args += @("up", "-d")
 if (-not $NoBuild) {
-  $args += "--build"
+  $BuildServices = @(
+    "gateway-service", "auth-service", "patient-service", "doctor-service",
+    "registration-service", "triage-service", "medical-record-service",
+    "prescription-service", "notification-service", "admin-service", "ai-service",
+    "patient-web", "doctor-web", "admin-web"
+  )
+  foreach ($Service in $BuildServices) {
+    & docker compose @args build $Service
+    if ($LASTEXITCODE -ne 0) {
+      throw "Docker image build failed for '$Service'."
+    }
+  }
 }
+$args += @("up", "-d", "--no-build")
 
 Write-Host "Starting Docker Compose services with environment '$Profile' ..."
 & docker compose @args
 if ($LASTEXITCODE -ne 0) {
   throw "Docker Compose startup failed with exit code $LASTEXITCODE."
+}
+
+$AiProviderLine = Get-Content -LiteralPath $EnvFile | Where-Object { $_ -eq "AI_PROVIDER=dify" }
+if ($AiProviderLine) {
+  $DifyNetwork = if ($env:DIFY_DOCKER_NETWORK) { $env:DIFY_DOCKER_NETWORK } else { "docker_default" }
+  & docker network inspect $DifyNetwork *> $null
+  if ($LASTEXITCODE -ne 0) {
+    throw "Dify network '$DifyNetwork' is missing. Start Dify first."
+  }
+  $ConnectedNames = & docker network inspect $DifyNetwork --format '{{range .Containers}}{{println .Name}}{{end}}'
+  if ($ConnectedNames -notcontains "scb-ai-service") {
+    & docker network connect $DifyNetwork scb-ai-service
+    if ($LASTEXITCODE -ne 0) {
+      throw "Failed to connect ai-service to Dify network '$DifyNetwork'."
+    }
+  }
+  Write-Host "Connected ai-service to Dify network: $DifyNetwork"
 }
 
 Write-Host ""

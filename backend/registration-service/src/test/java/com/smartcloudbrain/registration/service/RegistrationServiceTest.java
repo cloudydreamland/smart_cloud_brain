@@ -93,6 +93,11 @@ class RegistrationServiceTest {
 
     assertThrows(BusinessException.class,
         () -> registrationService.create(new CreateRegistrationRequest(2L, 3L, LocalDateTime.now(), null, 4L)));
+
+    when(registrationRepository.existsByPatientIdAndSlotIdAndStatusNot(1L, 4L, "CANCELLED")).thenReturn(false);
+    slot.setStatus("FULL");
+    assertThrows(BusinessException.class,
+        () -> registrationService.create(new CreateRegistrationRequest(2L, 3L, LocalDateTime.now(), null, 4L)));
   }
 
   @Test
@@ -121,6 +126,9 @@ class RegistrationServiceTest {
 
     assertEquals("COMPLETED", registrationService.complete(9L).get("status"));
 
+    registration.setDoctorId(3L);
+    assertThrows(BusinessException.class, () -> registrationService.complete(9L));
+    registration.setDoctorId(2L);
     registration.setStatus("CANCELLED");
     assertThrows(BusinessException.class, () -> registrationService.complete(9L));
   }
@@ -132,6 +140,14 @@ class RegistrationServiceTest {
     when(registrationRepository.findByPatientId(1L)).thenReturn(List.of(patientRegistration));
     assertEquals(1, registrationService.list().size());
 
+    when(currentUserService.get()).thenReturn(new AuthenticatedUser(2L, RoleType.DOCTOR, "doctor"));
+    when(registrationRepository.findByDoctorId(2L)).thenReturn(List.of(patientRegistration));
+    assertEquals(1, registrationService.list().size());
+
+    when(currentUserService.get()).thenReturn(new AuthenticatedUser(9L, RoleType.ADMIN, "admin"));
+    when(registrationRepository.findAll()).thenReturn(List.of(patientRegistration));
+    assertEquals(1, registrationService.list().size());
+
     AppointmentSlot available = slot(4L, 2L, 3L, 1, "AVAILABLE");
     when(appointmentSlotRepository.findByStatusAndStartTimeGreaterThanEqualOrderByStartTimeAscDoctorIdAsc(
         any(), any())).thenReturn(List.of(available, slot(5L, 2L, 3L, 0, "AVAILABLE")));
@@ -139,6 +155,33 @@ class RegistrationServiceTest {
     when(departmentRepository.findById(3L)).thenReturn(Optional.of(department(3L)));
 
     assertEquals(1, registrationService.slots().size());
+  }
+
+  @Test
+  void rejectsDoctorCancellingAnotherDoctorsRegistration() {
+    Registration registration = registration(9L, 1L, 2L, 3L, null, "CREATED");
+    when(currentUserService.get()).thenReturn(new AuthenticatedUser(3L, RoleType.DOCTOR, "other"));
+    when(registrationRepository.findById(9L)).thenReturn(Optional.of(registration));
+
+    assertThrows(BusinessException.class, () -> registrationService.cancel(9L));
+  }
+
+  @Test
+  void cancellationIsIdempotentAndHandlesMissingSlotData() {
+    Registration registration = registration(9L, 1L, 2L, 3L, null, "CANCELLED");
+    when(currentUserService.get()).thenReturn(new AuthenticatedUser(1L, RoleType.PATIENT, "patient"));
+    when(registrationRepository.findById(9L)).thenReturn(Optional.of(registration));
+    when(registrationRepository.save(registration)).thenReturn(registration);
+
+    assertEquals("CANCELLED", registrationService.cancel(9L).get("status"));
+
+    registration.setStatus("CREATED");
+    assertEquals("CANCELLED", registrationService.cancel(9L).get("status"));
+
+    registration.setStatus("CREATED");
+    registration.setSlotId(10L);
+    when(appointmentSlotRepository.findByIdForUpdate(10L)).thenReturn(Optional.empty());
+    assertEquals("CANCELLED", registrationService.cancel(9L).get("status"));
   }
 
   private static Doctor doctor(Long id) {

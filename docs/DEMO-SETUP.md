@@ -11,7 +11,7 @@ Dify 需要提前配置好模型和 Workflow。如果你是首次部署：
 
 1. 登录 Dify 控制台（http://localhost）
 2. 在 **设置 → 模型供应商** 中添加 DeepSeek（或其他 LLM）
-3. 导入 3 个 Workflow（分诊 / 病历生成 / 处方审核）
+3. 导入 4 个 Workflow（分诊 / 病历生成 / 处方审核 / AI 排班）
 
 > 这些配置由负责 AI 的同学统一完成，队友只需粘贴 API Key 即可。
 
@@ -24,8 +24,8 @@ bash scripts/setup-demo.sh
 
 脚本会自动完成：
 1. 启动 Dify（AI 平台）
-2. 打开浏览器让你导入 3 个 Workflow
-3. 提示你粘贴 3 个 API Key
+2. 打开浏览器让你导入 4 个 Workflow
+3. 提示你粘贴 4 个 API Key
 4. 启动数据库、后端、前端所有服务
 5. 仅将 AI 服务接入 Dify 的 Docker 网络
 
@@ -38,10 +38,11 @@ bash scripts/setup-demo.sh
 1. 浏览器自动打开 **http://localhost/apps**
 2. 注册/登录 Dify
 3. 点击「创建应用」→「导入 DSL 文件」
-4. 依次导入 `deploy/dify-workflows/` 下的 3 个文件：
+4. 依次导入 `deploy/dify-workflows/` 下的 4 个文件：
    - `triage.yml`（分诊）
    - `medical-record.yml`（病历生成）
    - `prescription.yml`（处方审核）
+   - `schedule.yml`（AI 排班建议）
 
 ### 复制 API Key
 
@@ -86,7 +87,7 @@ A: 打开 Docker Desktop，等左下角图标变绿再运行脚本。
 A: 首次启动 Dify 需要下载镜像，可能要 5-10 分钟。超过 10 分钟按 Ctrl+C 后重新运行。
 
 **Q: AI 功能返回 degraded=true**
-A: 检查 3 个 Workflow 是否都已导入，且对应的 API Key 是否正确粘贴。
+A: 这表示系统已自动使用规则降级结果。检查 4 个 Workflow 是否都已导入并发布、对应 API Key 是否正确，以及 AI 容器是否接入 Dify 网络。
 
 **Q: 端口被占用 (5173/5174/18080)**
 A: 检查端口占用：`lsof -i :5173`，找到 PID 后 kill 掉，或修改 `deploy/env/.env` 中的端口。

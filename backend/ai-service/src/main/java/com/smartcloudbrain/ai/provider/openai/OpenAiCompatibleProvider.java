@@ -10,9 +10,13 @@ import com.smartcloudbrain.aiapi.dto.MedicalRecordGenerateResponse;
 import com.smartcloudbrain.aiapi.dto.PrescriptionCheckRequest;
 import com.smartcloudbrain.aiapi.dto.PrescriptionCheckResponse;
 import com.smartcloudbrain.aiapi.dto.PromptResolveResponse;
+import com.smartcloudbrain.aiapi.dto.ScheduleSuggestRequest;
+import com.smartcloudbrain.aiapi.dto.ScheduleSuggestResponse;
+import com.smartcloudbrain.aiapi.dto.ScheduleSuggestionItem;
 import com.smartcloudbrain.aiapi.dto.TriageRequest;
 import com.smartcloudbrain.aiapi.dto.TriageResponse;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -160,6 +164,40 @@ public class OpenAiCompatibleProvider implements AiProvider {
     );
   }
 
+  @Override
+  public ScheduleSuggestResponse suggestSchedule(ScheduleSuggestRequest request, PromptResolveResponse prompt) {
+    JsonNode json = completeJson(prompt, """
+        Return JSON only with a suggestions array. Every suggestion must contain doctorId, departmentId, workDate (yyyy-MM-dd), timeRange (HH:mm-HH:mm), capacity (1-100), and reason.
+        Start date: %s
+        Days: %s
+        Enabled doctor candidates: %s
+        Departments: %s
+        Existing schedules that must not be duplicated: %s
+        """.formatted(
+        request.startDate(),
+        request.days(),
+        jsonText(request.doctors()),
+        jsonText(request.departments()),
+        jsonText(request.existingSchedules())
+    ));
+    JsonNode items = json.path("suggestions");
+    if (!items.isArray()) {
+      throw new IllegalStateException("AI response missing required array: suggestions");
+    }
+    List<ScheduleSuggestionItem> suggestions = new ArrayList<>();
+    for (JsonNode item : items) {
+      suggestions.add(new ScheduleSuggestionItem(
+          requiredLong(item, "doctorId"),
+          requiredLong(item, "departmentId"),
+          LocalDate.parse(requiredText(item, "workDate")),
+          requiredText(item, "timeRange"),
+          requiredInt(item, "capacity"),
+          requiredText(item, "reason")
+      ));
+    }
+    return new ScheduleSuggestResponse(suggestions, "openai", false);
+  }
+
   private JsonNode completeJson(PromptResolveResponse prompt, String userContent) {
     return withPermit(() -> {
       RuntimeException last = null;
@@ -241,6 +279,20 @@ public class OpenAiCompatibleProvider implements AiProvider {
     return json.get(field).asDouble();
   }
 
+  private long requiredLong(JsonNode json, String field) {
+    if (!json.has(field) || !json.get(field).canConvertToLong()) {
+      throw new IllegalStateException("AI response missing numeric field: " + field);
+    }
+    return json.get(field).asLong();
+  }
+
+  private int requiredInt(JsonNode json, String field) {
+    if (!json.has(field) || !json.get(field).canConvertToInt()) {
+      throw new IllegalStateException("AI response missing numeric field: " + field);
+    }
+    return json.get(field).asInt();
+  }
+
   private List<Long> longList(JsonNode json) {
     List<Long> values = new ArrayList<>();
     if (json != null && json.isArray()) {
@@ -277,6 +329,14 @@ public class OpenAiCompatibleProvider implements AiProvider {
 
   private String textInput(Object value) {
     return value == null ? "" : String.valueOf(value);
+  }
+
+  private String jsonText(Object value) {
+    try {
+      return objectMapper.writeValueAsString(value);
+    } catch (Exception ex) {
+      throw new IllegalArgumentException("Failed to serialize AI input", ex);
+    }
   }
 
   private String drugLine(DrugItem drug) {

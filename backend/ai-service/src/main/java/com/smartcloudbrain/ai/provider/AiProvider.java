@@ -5,6 +5,8 @@ import com.smartcloudbrain.aiapi.dto.MedicalRecordGenerateResponse;
 import com.smartcloudbrain.aiapi.dto.PrescriptionCheckRequest;
 import com.smartcloudbrain.aiapi.dto.PrescriptionCheckResponse;
 import com.smartcloudbrain.aiapi.dto.PromptResolveResponse;
+import com.smartcloudbrain.aiapi.dto.ScheduleSuggestRequest;
+import com.smartcloudbrain.aiapi.dto.ScheduleSuggestResponse;
 import com.smartcloudbrain.aiapi.dto.TriageRequest;
 import com.smartcloudbrain.aiapi.dto.TriageResponse;
 
@@ -35,4 +37,10 @@ public interface AiProvider {
   }
 
   PrescriptionCheckResponse checkPrescription(PrescriptionCheckRequest request, PromptResolveResponse prompt);
+
+  default ScheduleSuggestResponse suggestSchedule(ScheduleSuggestRequest request) {
+    return suggestSchedule(request, null);
+  }
+
+  ScheduleSuggestResponse suggestSchedule(ScheduleSuggestRequest request, PromptResolveResponse prompt);
 }

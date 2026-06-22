@@ -9,28 +9,35 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.smartcloudbrain.ai.application.AiOrchestrationService;
+import com.smartcloudbrain.ai.application.AiTaskLogService;
 import com.smartcloudbrain.ai.service.PromptTemplateService;
 import com.smartcloudbrain.aiapi.dto.PromptResolveRequest;
+import com.smartcloudbrain.aiapi.dto.ScheduleSuggestRequest;
 import com.smartcloudbrain.aiapi.dto.TriageRequest;
 import com.smartcloudbrain.common.error.ErrorCode;
 import com.smartcloudbrain.common.exception.BusinessException;
 import com.smartcloudbrain.common.security.InternalRequestGuard;
+import java.time.LocalDate;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class InternalAiControllerSecurityTest {
 
   private final AiOrchestrationService aiOrchestrationService = mock(AiOrchestrationService.class);
+  private final AiTaskLogService aiTaskLogService = mock(AiTaskLogService.class);
   private final PromptTemplateService promptTemplateService = mock(PromptTemplateService.class);
   private final InternalRequestGuard internalRequestGuard = mock(InternalRequestGuard.class);
   private final InternalAiController controller =
-      new InternalAiController(aiOrchestrationService, promptTemplateService, internalRequestGuard);
+      new InternalAiController(aiOrchestrationService, aiTaskLogService, promptTemplateService, internalRequestGuard);
 
   @Test
   void validatesInternalTokenForAiEndpoints() {
     controller.triage(new TriageRequest(1L, "fever", "", null, null, null, null));
     controller.resolvePrompt(new PromptResolveRequest("TRIAGE", "GENERAL"));
+    controller.suggestSchedule(new ScheduleSuggestRequest(
+        LocalDate.of(2026, 6, 21), 1, List.of(), List.of(), List.of()));
 
-    verify(internalRequestGuard, times(2)).requireServiceRequest();
+    verify(internalRequestGuard, times(3)).requireServiceRequest();
   }
 
   @Test

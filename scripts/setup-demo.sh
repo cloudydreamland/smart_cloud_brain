@@ -55,14 +55,18 @@ else
 fi
 
 cd "$DIFY_DIR"
-if docker compose ps --format '{{.Names}}' 2>/dev/null | grep -q 'api-1'; then
+if docker compose ps --status running --format '{{.Names}}' 2>/dev/null | grep -q 'api-1'; then
     info "Dify 已在运行"
 else
     warn "首次启动 Dify 约需 2-3 分钟..."
     docker compose up -d
     printf '  等待 Dify 就绪 '
     for i in $(seq 1 60); do
-        if curl -fsS http://localhost/health 2>/dev/null | grep -q 'ok'; then
+        API_CONTAINER=$(docker compose ps -q api 2>/dev/null || true)
+        NGINX_CONTAINER=$(docker compose ps -q nginx 2>/dev/null || true)
+        if [ -n "$API_CONTAINER" ] && [ -n "$NGINX_CONTAINER" ] \
+            && [ "$(docker inspect -f '{{.State.Status}}' "$API_CONTAINER" 2>/dev/null)" = "running" ] \
+            && [ "$(docker inspect -f '{{.State.Status}}' "$NGINX_CONTAINER" 2>/dev/null)" = "running" ]; then
             echo ""
             info "Dify 已就绪"
             break
@@ -114,7 +118,7 @@ elif command -v xdg-open >/dev/null 2>&1; then
 fi
 
 # ----------------------------------------------------------
-#  3. 获取 3 个 API Key
+#  3. 获取 4 个 API Key
 # ----------------------------------------------------------
 echo ""
 echo ">>> 步骤 3/5: 配置 API Key"
@@ -123,17 +127,19 @@ echo ""
 TRIAGE_KEY=""
 MEDICAL_KEY=""
 PRESCRIPTION_KEY=""
+SCHEDULE_KEY=""
 
 if [ -f "$PROJECT_ENV" ]; then
     TRIAGE_KEY=$(grep '^DIFY_TRIAGE_API_KEY=' "$PROJECT_ENV" 2>/dev/null | head -1 | cut -d'=' -f2-)
     MEDICAL_KEY=$(grep '^DIFY_MEDICAL_RECORD_API_KEY=' "$PROJECT_ENV" 2>/dev/null | head -1 | cut -d'=' -f2-)
     PRESCRIPTION_KEY=$(grep '^DIFY_PRESCRIPTION_CHECK_API_KEY=' "$PROJECT_ENV" 2>/dev/null | head -1 | cut -d'=' -f2-)
+    SCHEDULE_KEY=$(grep '^DIFY_SCHEDULE_API_KEY=' "$PROJECT_ENV" 2>/dev/null | head -1 | cut -d'=' -f2-)
 fi
 
-if [ -n "$TRIAGE_KEY" ] && [ -n "$MEDICAL_KEY" ] && [ -n "$PRESCRIPTION_KEY" ]; then
+if [ -n "$TRIAGE_KEY" ] && [ -n "$MEDICAL_KEY" ] && [ -n "$PRESCRIPTION_KEY" ] && [ -n "$SCHEDULE_KEY" ]; then
     info "使用已有 API Key"
 else
-    warn "请从 Dify 控制台复制 3 个应用的 API Key"
+    warn "请从 Dify 控制台复制 4 个应用的 API Key"
     echo ""
 
     if [ -z "$TRIAGE_KEY" ]; then
@@ -151,7 +157,12 @@ else
         echo ""
         [ -z "$PRESCRIPTION_KEY" ] && fail "未输入处方 Key，中止"
     fi
-    info "已获取 3 个 API Key"
+    if [ -z "$SCHEDULE_KEY" ]; then
+        read -r -s -p "  AI 排班 Workflow API Key: " SCHEDULE_KEY
+        echo ""
+        [ -z "$SCHEDULE_KEY" ] && fail "未输入排班 Key，中止"
+    fi
+    info "已获取 4 个 API Key"
 fi
 
 # ----------------------------------------------------------
@@ -181,18 +192,20 @@ eval "$SED_I" "'s|^DIFY_BASE_URL=.*|DIFY_BASE_URL=http://docker-nginx-1/v1|'" "$
 # 删除旧的单一 DIFY_API_KEY（如果有）
 grep -v '^DIFY_API_KEY=' "$PROJECT_ENV" > "$PROJECT_ENV.tmp" && mv "$PROJECT_ENV.tmp" "$PROJECT_ENV"
 
-# 写入 3 个独立 Key
+# 写入 4 个独立 Key
 grep -q '^DIFY_TRIAGE_API_KEY=' "$PROJECT_ENV" 2>/dev/null || echo "DIFY_TRIAGE_API_KEY=$TRIAGE_KEY" >> "$PROJECT_ENV"
 grep -q '^DIFY_MEDICAL_RECORD_API_KEY=' "$PROJECT_ENV" 2>/dev/null || echo "DIFY_MEDICAL_RECORD_API_KEY=$MEDICAL_KEY" >> "$PROJECT_ENV"
 grep -q '^DIFY_PRESCRIPTION_CHECK_API_KEY=' "$PROJECT_ENV" 2>/dev/null || echo "DIFY_PRESCRIPTION_CHECK_API_KEY=$PRESCRIPTION_KEY" >> "$PROJECT_ENV"
+grep -q '^DIFY_SCHEDULE_API_KEY=' "$PROJECT_ENV" 2>/dev/null || echo "DIFY_SCHEDULE_API_KEY=$SCHEDULE_KEY" >> "$PROJECT_ENV"
 
 eval "$SED_I" "'s|^DIFY_TRIAGE_API_KEY=.*|DIFY_TRIAGE_API_KEY=$TRIAGE_KEY|'" "$PROJECT_ENV"
 eval "$SED_I" "'s|^DIFY_MEDICAL_RECORD_API_KEY=.*|DIFY_MEDICAL_RECORD_API_KEY=$MEDICAL_KEY|'" "$PROJECT_ENV"
 eval "$SED_I" "'s|^DIFY_PRESCRIPTION_CHECK_API_KEY=.*|DIFY_PRESCRIPTION_CHECK_API_KEY=$PRESCRIPTION_KEY|'" "$PROJECT_ENV"
+eval "$SED_I" "'s|^DIFY_SCHEDULE_API_KEY=.*|DIFY_SCHEDULE_API_KEY=$SCHEDULE_KEY|'" "$PROJECT_ENV"
 
 info "AI_PROVIDER -> dify"
 info "DIFY_BASE_URL -> http://docker-nginx-1/v1"
-info "3 个 Workflow API Key 已写入"
+info "4 个 Workflow API Key 已写入"
 
 # ----------------------------------------------------------
 #  5. 启动主项目
@@ -203,10 +216,11 @@ echo ""
 
 cd "$ROOT_DIR"
 
+KINGBASE_IMAGE="$KINGBASE_IMAGE" "$ROOT_DIR/scripts/build-images.sh" "$PROJECT_ENV"
 KINGBASE_IMAGE="$KINGBASE_IMAGE" docker compose \
     --env-file "$PROJECT_ENV" \
     -f deploy/docker-compose.yml \
-    up -d --build
+    up -d --no-build
 
 docker network inspect "$DIFY_NETWORK" >/dev/null 2>&1 \
     || fail "Dify 网络 $DIFY_NETWORK 不存在，请确认 Dify 已启动"

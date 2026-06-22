@@ -5,6 +5,9 @@ import com.smartcloudbrain.ai.entity.AiGenerationLog;
 import com.smartcloudbrain.ai.repository.AiGenerationLogRepository;
 import com.smartcloudbrain.aiapi.dto.PromptResolveResponse;
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -55,6 +58,25 @@ public class AiTaskLogService {
     }
   }
 
+  public List<Map<String, Object>> recentLogs() {
+    return repository.findTop20ByOrderByCreatedAtDesc().stream()
+        .map(entry -> {
+          Map<String, Object> view = new LinkedHashMap<>();
+          view.put("taskType", nullToEmpty(entry.getTaskType()));
+          view.put("provider", nullToEmpty(entry.getProvider()));
+          view.put("model", nullToEmpty(entry.getModel()));
+          view.put("requestId", nullToEmpty(entry.getRequestId()));
+          view.put("status", nullToEmpty(entry.getStatus()));
+          view.put("success", Boolean.TRUE.equals(entry.getSuccess()));
+          view.put("latencyMs", entry.getLatencyMs() == null ? 0L : entry.getLatencyMs());
+          view.put("promptTemplateId", entry.getPromptTemplateId() == null ? 0L : entry.getPromptTemplateId());
+          view.put("errorMessage", nullToEmpty(entry.getErrorMessage()));
+          view.put("createdAt", entry.getCreatedAt() == null ? "" : entry.getCreatedAt().toString());
+          return view;
+        })
+        .toList();
+  }
+
   private String summary(Object value) {
     if (value == null) {
       return "";
@@ -74,5 +96,9 @@ public class AiTaskLogService {
       return text;
     }
     return text.substring(0, SUMMARY_LIMIT);
+  }
+
+  private String nullToEmpty(String value) {
+    return value == null ? "" : value;
   }
 }

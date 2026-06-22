@@ -1,10 +1,13 @@
 package com.smartcloudbrain.ai.controller;
 
 import com.smartcloudbrain.ai.application.AiOrchestrationService;
+import com.smartcloudbrain.ai.application.AiTaskLogService;
 import com.smartcloudbrain.aiapi.constant.AiInternalApi;
 import com.smartcloudbrain.aiapi.dto.MedicalRecordGenerateRequest;
 import com.smartcloudbrain.aiapi.dto.PrescriptionCheckRequest;
 import com.smartcloudbrain.aiapi.dto.PromptResolveRequest;
+import com.smartcloudbrain.aiapi.dto.PromptTestRequest;
+import com.smartcloudbrain.aiapi.dto.ScheduleSuggestRequest;
 import com.smartcloudbrain.aiapi.dto.TriageRequest;
 import com.smartcloudbrain.ai.service.PromptTemplateService;
 import com.smartcloudbrain.common.result.Result;
@@ -25,15 +28,18 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 public class InternalAiController {
 
   private final AiOrchestrationService aiOrchestrationService;
+  private final AiTaskLogService aiTaskLogService;
   private final PromptTemplateService promptTemplateService;
   private final InternalRequestGuard internalRequestGuard;
 
   public InternalAiController(
       AiOrchestrationService aiOrchestrationService,
+      AiTaskLogService aiTaskLogService,
       PromptTemplateService promptTemplateService,
       InternalRequestGuard internalRequestGuard
   ) {
     this.aiOrchestrationService = aiOrchestrationService;
+    this.aiTaskLogService = aiTaskLogService;
     this.promptTemplateService = promptTemplateService;
     this.internalRequestGuard = internalRequestGuard;
   }
@@ -83,9 +89,27 @@ public class InternalAiController {
     return Result.success(aiOrchestrationService.checkPrescription(request));
   }
 
+  @PostMapping("/schedule/suggest")
+  public Result<?> suggestSchedule(@Valid @RequestBody ScheduleSuggestRequest request) {
+    internalRequestGuard.requireServiceRequest();
+    return Result.success(aiOrchestrationService.suggestSchedule(request));
+  }
+
   @PostMapping("/prompt-template/resolve")
   public Result<?> resolvePrompt(@Valid @RequestBody PromptResolveRequest request) {
     internalRequestGuard.requireServiceRequest();
     return Result.success(promptTemplateService.resolve(request.taskType(), request.departmentCode()));
+  }
+
+  @PostMapping("/prompt-template/test")
+  public Result<?> testPrompt(@Valid @RequestBody PromptTestRequest request) {
+    internalRequestGuard.requireServiceRequest();
+    return Result.success(aiOrchestrationService.testPrompt(request));
+  }
+
+  @GetMapping("/logs/recent")
+  public Result<?> recentLogs() {
+    internalRequestGuard.requireServiceRequest();
+    return Result.success(aiTaskLogService.recentLogs());
   }
 }

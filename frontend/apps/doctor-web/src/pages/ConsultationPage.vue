@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from "vue";
+import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import {
   api,
+  aiSourceLabel,
+  aiSourceTone,
   fieldText,
   formatApiError,
   medicalRecordStreamUrl,
@@ -25,6 +28,7 @@ const props = defineProps<{ registrationId: string }>();
 const emit = defineEmits<{ refresh: [] }>();
 const auth = useAuthStore();
 const workflow = useDoctorWorkflowStore();
+const router = useRouter();
 const { registrations, triageRecords, drugs, streamText, streamStatus } = storeToRefs(workflow);
 const loading = reactive({ record: false, prescription: false, complete: false });
 const error = ref("");
@@ -37,11 +41,14 @@ const highRiskOpen = ref(false);
 const completeOpen = ref(false);
 const dialogueText = ref("");
 const checkResult = ref<DataRow | null>(null);
+const recordAiProvider = ref("");
+const recordAiModel = ref("");
 let recordStream: AbortController | null = null;
 
 const registration = computed(() => registrations.value.find((item) => toNumber(item.registrationId) === toNumber(props.registrationId)) ?? null);
 const triage = computed(() => triageRecords.value.find((item) => toNumber(item.triageRecordId) === toNumber(registration.value?.triageRecordId)) ?? null);
 const patientName = computed(() => fieldText(registration.value, "patientName", `患者${fieldText(registration.value, "patientId", "-")}`));
+const isCompleted = computed(() => fieldText(registration.value, "status", "").toUpperCase() === "COMPLETED");
 const medicalForm = reactive({
   registrationId: toNumber(props.registrationId),
   chiefComplaint: "",
@@ -85,6 +92,27 @@ function applyDraft(draft: DataRow) {
   medicalForm.treatmentAdvice = fieldText(draft, "treatmentAdvice", medicalForm.treatmentAdvice);
 }
 
+function normalizeDraft(payload: DataRow) {
+  const nested = payload.data;
+  return nested && typeof nested === "object" && !Array.isArray(nested) ? nested as DataRow : payload;
+}
+
+function formatDraft(draft: DataRow) {
+  const sections = [
+    ["主诉", fieldText(draft, "chiefComplaint", "")],
+    ["现病史", fieldText(draft, "presentIllness", "")],
+    ["既往史", fieldText(draft, "pastHistory", "")],
+    ["体格检查", fieldText(draft, "physicalExam", "")],
+    ["诊断", fieldText(draft, "diagnosis", "")],
+    ["处理建议", fieldText(draft, "treatmentAdvice", "")],
+  ];
+  const text = sections
+    .filter(([, value]) => value)
+    .map(([label, value]) => `${label}：${value}`)
+    .join("\n");
+  return text || fieldText(draft, "soapContent", "暂无生成内容");
+}
+
 function parseEventData(raw: string) {
   try { return JSON.parse(raw) as DataRow; } catch { return { text: raw }; }
 }
@@ -98,7 +126,11 @@ function handleStreamBlock(block: string) {
     const data = parseEventData(dataText);
     streamText.value += `${fieldText(data, "text", dataText)}\n`;
   } else if (eventName === "structured") {
-    applyDraft(parseEventData(dataText));
+    const draft = normalizeDraft(parseEventData(dataText));
+    applyDraft(draft);
+    recordAiProvider.value = fieldText(draft, "provider", "");
+    recordAiModel.value = fieldText(draft, "model", "");
+    streamText.value = formatDraft(draft);
     streamStatus.value = "DRAFT_READY";
   } else if (eventName === "error") {
     throw new Error(fieldText(parseEventData(dataText), "message", "智能病历生成失败"));
@@ -108,9 +140,11 @@ function handleStreamBlock(block: string) {
 async function generateRecord() {
   if (!dialogueText.value.trim()) return setError("请先填写问诊摘要。");
   loading.record = true;
-  error.value = "";
-  streamText.value = "";
-  streamStatus.value = "GENERATING";
+    error.value = "";
+    streamText.value = "";
+    recordAiProvider.value = "";
+    recordAiModel.value = "";
+    streamStatus.value = "GENERATING";
   try {
     recordStream?.abort();
     recordStream = new AbortController();
@@ -223,8 +257,8 @@ async function completeRegistration() {
   try {
     await api.completeRegistration(auth.token(), medicalForm.registrationId);
     completeOpen.value = false;
-    emit("refresh");
-    setNotice("接诊已完成。");
+    await workflow.refresh(auth.token());
+    await router.push({ name: "doctor-queue" });
   } catch (err) {
     setError(formatApiError(err, "完成接诊失败"));
   } finally {
@@ -251,7 +285,7 @@ watch(() => props.registrationId, applyRegistration, { immediate: true });
       </div>
       <div class="encounter-actions">
         <button type="button" @click="contextOpen = true">上下文</button>
-        <button type="button" class="primary" :disabled="loading.complete" @click="completeOpen = true">完成接诊</button>
+        <button v-if="!isCompleted" type="button" class="primary" :disabled="loading.complete" @click="completeOpen = true">完成接诊</button>
       </div>
     </header>
 
@@ -290,6 +324,9 @@ watch(() => props.registrationId, applyRegistration, { immediate: true });
           <div class="ai-draft-pane full">
             <div class="inline-toolbar">
               <strong>智能草稿</strong>
+              <span v-if="recordAiProvider" class="tag" :class="aiSourceTone(recordAiProvider)">
+                {{ aiSourceLabel(recordAiProvider) }} · {{ recordAiProvider }}{{ recordAiModel ? ` / ${recordAiModel}` : "" }}
+              </span>
               <button type="button" class="compact-action" :disabled="!streamText" @click="previewOpen = true">预览</button>
             </div>
             <LoadingState v-if="loading.record" title="正在处理病历" />

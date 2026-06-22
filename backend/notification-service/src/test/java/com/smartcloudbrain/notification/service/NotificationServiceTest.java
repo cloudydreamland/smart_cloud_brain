@@ -18,6 +18,7 @@ import com.smartcloudbrain.notification.entity.NotificationMessage;
 import com.smartcloudbrain.notification.repository.NotificationMessageRepository;
 import com.smartcloudbrain.notification.websocket.NotificationWebSocketHandler;
 import java.util.Optional;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -94,5 +95,23 @@ class NotificationServiceTest {
 
     assertThrows(BusinessException.class, () -> service.markRead(10L));
     verify(notificationRepository, never()).save(any());
+  }
+
+  @Test
+  void listsAllAndFilteredNotificationsForCurrentDoctor() {
+    NotificationMessage message = new NotificationMessage();
+    message.setId(10L);
+    message.setDoctorId(8L);
+    message.setType("PRESCRIPTION_RISK");
+    message.setTitle("Risk");
+    message.setContent("Check dose");
+    message.setReadStatus("UNREAD");
+    when(currentUserService.require(RoleType.DOCTOR)).thenReturn(new AuthenticatedUser(8L, RoleType.DOCTOR, "doctor"));
+    when(notificationRepository.findByDoctorId(8L)).thenReturn(List.of(message));
+    when(notificationRepository.findByDoctorIdAndReadStatus(8L, "UNREAD")).thenReturn(List.of(message));
+    NotificationService service = new NotificationService(notificationRepository, currentUserService, webSocketHandler);
+
+    assertEquals(1, service.list(null).size());
+    assertEquals(1, service.list("UNREAD").size());
   }
 }

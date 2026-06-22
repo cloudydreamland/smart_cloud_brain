@@ -8,7 +8,8 @@ defineEmits<{ logout: [] }>();
     <div class="mayo-utility">
       <RouterLink to="/">患者服务</RouterLink>
       <RouterLink to="/triage">症状分诊</RouterLink>
-      <RouterLink to="/records">病历处方</RouterLink>
+      <RouterLink to="/records">病历</RouterLink>
+      <RouterLink to="/prescriptions">处方</RouterLink>
       <span v-if="userName">{{ userName }} · 已登录</span>
     </div>
     <div class="mayo-mainbar">
@@ -20,7 +21,8 @@ defineEmits<{ logout: [] }>();
         <RouterLink to="/triage">症状分诊</RouterLink>
         <RouterLink to="/doctors">预约医生</RouterLink>
         <RouterLink to="/appointments">我的挂号</RouterLink>
-        <RouterLink to="/records">病历处方</RouterLink>
+        <RouterLink to="/records">病历</RouterLink>
+        <RouterLink to="/prescriptions">处方</RouterLink>
         <RouterLink to="/profile">个人资料</RouterLink>
       </nav>
       <div class="mayo-actions">

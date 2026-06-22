@@ -1,12 +1,16 @@
 package com.smartcloudbrain.ai.provider.mock;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.smartcloudbrain.aiapi.dto.DrugItem;
 import com.smartcloudbrain.aiapi.dto.PrescriptionCheckRequest;
 import com.smartcloudbrain.aiapi.dto.TriageRequest;
+import com.smartcloudbrain.aiapi.dto.MedicalRecordGenerateRequest;
+import com.smartcloudbrain.aiapi.dto.ExistingSchedule;
+import com.smartcloudbrain.aiapi.dto.ScheduleDoctorCandidate;
+import com.smartcloudbrain.aiapi.dto.ScheduleSuggestRequest;
+import java.time.LocalDate;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -19,7 +23,7 @@ class MockAiProviderTest {
     var response = provider.triage(new TriageRequest(1L, "chest pain with shortness of breath"));
 
     assertEquals("CARDIOLOGY", response.departmentCode());
-    assertFalse(response.degraded());
+    assertTrue(response.degraded());
   }
 
   @Test
@@ -32,5 +36,22 @@ class MockAiProviderTest {
 
     assertEquals("MEDIUM", response.riskLevel());
     assertTrue(response.suggestions().contains("bleeding"));
+  }
+
+  @Test
+  void generatesDegradedMedicalRecordAndNonConflictingSchedule() {
+    assertTrue(provider.generateMedicalRecord(
+        new MedicalRecordGenerateRequest(1L, "CARDIOLOGY", "胸痛")).degraded());
+    var response = provider.suggestSchedule(new ScheduleSuggestRequest(
+        LocalDate.of(2026, 6, 21), 2,
+        List.of(
+            new ScheduleDoctorCandidate(1L, "医生", 1L, "CARDIOLOGY", "胸痛", true),
+            new ScheduleDoctorCandidate(2L, "停用医生", 1L, "CARDIOLOGY", "胸痛", false)),
+        List.of(),
+        List.of(new ExistingSchedule(1L, LocalDate.of(2026, 6, 21), "09:00-12:00"))));
+
+    assertTrue(response.degraded());
+    assertEquals(1, response.suggestions().size());
+    assertEquals("14:00-17:00", response.suggestions().get(0).timeRange());
   }
 }

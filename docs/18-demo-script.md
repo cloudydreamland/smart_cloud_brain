@@ -4,14 +4,14 @@
 
 推荐开场：
 
-> 我们的项目是智慧云脑诊疗平台，重点不是做一个静态 AI 页面，而是做患者、医生、管理员三端贯通的真实诊疗流程。前端所有核心数据都通过 Gateway 调后端服务，数据来自 KingbaseES 兼容数据库。AI 当前使用 Mock Provider，但请求链路走 `ai-service`，所以 Mock 的只是模型输出，不是业务流程。
+> 我们的项目是智慧云脑诊疗平台，重点不是做一个静态 AI 页面，而是做患者、医生、管理员三端贯通的真实诊疗流程。前端所有核心数据都通过 Gateway 调后端服务，数据来自 KingbaseES 兼容数据库。演示环境使用 Dify + DeepSeek；模型异常时由 `ai-service` 自动回退确定性 Mock 并明确标记降级。
 
 ## 2. 患者端演示
 
 1. 打开患者端 `http://localhost:5173`。
 2. 使用 `13800000001 / 123456` 登录。
-3. 输入“咽痛、低热、鼻塞两天”，提交 AI 分诊。
-4. 说明链路：患者端 -> Gateway -> `triage-service` -> `ai-service` -> Mock Provider。
+3. 输入高风险病例“胸痛、气短两天，活动后加重”，提交 AI 分诊。
+4. 说明链路：患者端 -> Gateway -> `triage-service` -> `ai-service` -> Dify Workflow -> DeepSeek。
 5. 展示推荐科室、医生和分诊原因。
 6. 进入号源列表，选择数据库中可预约号源完成挂号。
 7. 取消一条挂号，再重新预约一条有效挂号。
@@ -33,7 +33,7 @@
 2. 使用 `admin / 123456` 登录。
 3. 展示科室、医生、药品、Prompt、知识库和系统字典维护。
 4. 生成排班建议。
-5. 说明当前排班发布动作会写入医生排班和可预约号源；AI 排班服务化链路作为后续交接项，不纳入本轮完善范围。
+5. 展示建议来源和 `degraded` 状态，说明后端会校验医生、科室、日期、时段、容量与重复排班；管理员确认后才发布。
 6. 发布排班后回到患者端刷新号源，确认新增号源可见。
 7. 打开分诊工作台，查看分诊记录详情，演示分配医生和关闭记录。
 
@@ -44,7 +44,7 @@
 - KingbaseES 事实库：演示数据、流程数据和管理数据均可查库验证。
 - RabbitMQ + Outbox：处方风险事件异步投递，避免主事务成功但消息丢失。
 - WebSocket：医生端实时接收风险通知。
-- AI 服务化：当前 Mock Provider 可稳定演示，后续可替换真实模型。
+- AI 服务化：四个 Dify Workflow 统一接入，异常时自动降级并保留可识别状态。
 - 人机协作边界：病历、处方和排班建议都需要医生或管理员确认。
 
 ## 6. Docker 部署说明
@@ -61,7 +61,7 @@ docker compose --env-file deploy\env\.env -f deploy\docker-compose.yml up -d --b
 
 - Compose 启动 Gateway、各业务微服务、三端 Web、RabbitMQ、Nginx 和兼容数据库。
 - `sql/kingbase_schema.sql` 初始化基础表和演示数据。
-- Maven 本地仓库固定为 `D:\DEVELOP\maven`，后端离线编译命令已写入 README 和验收清单。
+- 后端 Dockerfile 从当前源码多阶段构建，不再复用宿主机陈旧 JAR。
 
 ## 7. 截图清单
 
@@ -79,4 +79,3 @@ docker compose --env-file deploy\env\.env -f deploy\docker-compose.yml up -d --b
 - 数据库中 `appointment_slot`、`doctor_schedule`、`registration`、`medical_record`、`prescription`、`notification_message` 查询结果。
 - RabbitMQ 管理台队列或连接状态。
 - Docker Compose 服务运行状态。
-
