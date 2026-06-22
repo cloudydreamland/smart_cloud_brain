@@ -27,7 +27,7 @@ refresh();
 </script>
 
 <template>
-  <section class="panel clinical-page prescriptions-workbench">
+  <section class="panel">
     <header class="panel-header">
       <div class="panel-title"><p class="eyebrow">处方记录</p><h2>处方记录</h2><p>查看已创建处方、处方状态和风险等级。</p></div>
       <button type="button" :disabled="loading" @click="refresh">刷新</button>

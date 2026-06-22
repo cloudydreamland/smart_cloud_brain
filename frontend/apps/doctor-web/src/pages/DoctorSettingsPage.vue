@@ -5,7 +5,7 @@ const auth = useAuthStore();
 </script>
 
 <template>
-  <section class="panel clinical-page settings-workbench">
+  <section class="panel">
     <header class="panel-header"><div class="panel-title"><p class="eyebrow">账号设置</p><h2>医生账号设置</h2><p>当前版本展示登录态和实时通知策略。</p></div></header>
     <div class="panel-body">
       <div class="summary-strip">

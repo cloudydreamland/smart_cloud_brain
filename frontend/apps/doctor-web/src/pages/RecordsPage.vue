@@ -27,7 +27,7 @@ refresh();
 </script>
 
 <template>
-  <section class="panel clinical-page records-workbench">
+  <section class="panel">
     <header class="panel-header">
       <div class="panel-title"><p class="eyebrow">病历记录</p><h2>已保存病历</h2><p>快速回看当前医生账号下的病历记录。</p></div>
       <button type="button" :disabled="loading" @click="refresh">刷新</button>
