@@ -30,6 +30,11 @@ describe("closed-loop page smoke tests", () => {
     expect(wrapper.text()).toContain("提交分诊");
   });
 
+  it("keeps patient triage submit available before validation", () => {
+    const wrapper = shallowMount(TriagePage);
+    expect((wrapper.get("button.primary").element as HTMLButtonElement).disabled).toBe(false);
+  });
+
   it("renders doctor consultation", () => {
     const workflow = useDoctorWorkflowStore();
     workflow.registrations = [{ registrationId: 1, patientId: 1, patientName: "患者" }];

@@ -15,14 +15,14 @@ const loading = ref(false);
 const error = ref("");
 const notice = ref("");
 const resultOpen = ref(false);
-const canSubmit = computed(() => form.symptoms.trim().length >= 6 && form.duration.trim().length > 0);
+const canSubmit = computed(() => form.symptoms.trim().length > 0);
 const severityLabels: Record<string, string> = { LOW: "轻度", MEDIUM: "中度", HIGH: "重度或明显加重" };
 const { currentPage, pageSize, total, pageRows } = usePagination(triageHistory, 5);
 
 function complaint() {
   return [
     `症状：${form.symptoms.trim()}`,
-    `持续时间：${form.duration.trim()}`,
+    form.duration.trim() ? `持续时间：${form.duration.trim()}` : "",
     `严重程度：${severityLabels[form.severity] ?? form.severity}`,
     form.extra.trim() ? `补充说明：${form.extra.trim()}` : "",
   ].filter(Boolean).join("；");
@@ -30,7 +30,7 @@ function complaint() {
 
 async function submit() {
   if (!canSubmit.value) {
-    error.value = "请至少填写症状和持续时间。";
+    error.value = "请先填写主要症状。";
     return;
   }
   loading.value = true;
@@ -64,7 +64,7 @@ async function submit() {
           </FormField>
         </div>
         <FormField label="补充说明"><textarea v-model.trim="form.extra" rows="3" /></FormField>
-        <button class="primary" type="submit" :disabled="loading || !canSubmit">{{ loading ? "分析中" : "提交分诊" }}</button>
+        <button class="primary" type="submit" :disabled="loading">{{ loading ? "分析中" : "提交分诊" }}</button>
       </div>
     </form>
     <aside class="stack">
