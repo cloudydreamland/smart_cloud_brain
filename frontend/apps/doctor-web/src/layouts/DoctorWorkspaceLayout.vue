@@ -7,9 +7,9 @@ import {
   useAuthStore,
   useDoctorWorkflowStore,
 } from "@smart-cloud-brain/shared-api";
+import { CollapsibleSidebar } from "@smart-cloud-brain/shared-ui";
 import {
   statusLabel,
-  statusTone,
   withDemo,
   demoNotifications,
   demoRegistrations,
@@ -45,13 +45,18 @@ const flowSteps = computed(() => [
   { no: "06", label: "通知闭环", state: route.name === "doctor-notifications" ? "now" : "" },
 ]);
 const navItems = computed(() => [
-  { label: "首页", icon: "首", to: "/", name: "doctor-dashboard", badge: activeQueue.value },
-  { label: "队列", icon: "列", to: "/queue", name: "doctor-queue", badge: activeQueue.value },
-  { label: "接诊", icon: "诊", to: activeQueue.value ? `/consult/${displayRegistrations.value[0]?.registrationId || 10023}` : "/queue", name: "doctor-consult" },
-  { label: "病历", icon: "历", to: "/records", name: "doctor-records" },
-  { label: "处方", icon: "方", to: "/prescriptions", name: "doctor-prescriptions", badge: 2 },
-  { label: "通知", icon: "知", to: "/notifications", name: "doctor-notifications", badge: unread.value },
-  { label: "设置", icon: "设", to: "/settings", name: "doctor-settings" },
+  { label: "首页", to: "/", name: "doctor-dashboard", badge: activeQueue.value },
+  { label: "队列", to: "/queue", name: "doctor-queue", badge: activeQueue.value },
+  { label: "接诊", to: activeQueue.value ? `/consult/${displayRegistrations.value[0]?.registrationId || 10023}` : "/queue", name: "doctor-consult" },
+  { label: "病历", to: "/records", name: "doctor-records" },
+  { label: "处方", to: "/prescriptions", name: "doctor-prescriptions", badge: 2 },
+  { label: "通知", to: "/notifications", name: "doctor-notifications", badge: unread.value },
+  { label: "设置", to: "/settings", name: "doctor-settings" },
+]);
+
+const sidebarGroups = computed(() => [
+  { items: navItems.value.slice(0, 4) },
+  { items: navItems.value.slice(4) },
 ]);
 
 async function refresh() {
@@ -122,39 +127,19 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="doctor-shell">
-    <aside class="doctor-nav" aria-label="医生端导航">
-      <div class="nav-head">
-        <div class="brand-mark">医</div>
-        <div>
-          <strong>智慧云脑医生端</strong>
-          <span>门诊接诊中心</span>
-        </div>
-      </div>
-      <nav>
-        <RouterLink
-          v-for="item in navItems"
-          :key="item.to"
-          class="doctor-nav-link"
-          :class="{ active: route.name === item.name || (item.to !== '/' && route.path.startsWith(item.to)) }"
-          :to="item.to"
-        >
-          <span class="nav-icon">{{ item.icon }}</span>
-          <span>{{ item.label }}</span>
-          <b v-if="item.badge">{{ item.badge }}</b>
-        </RouterLink>
-      </nav>
-      <div class="doctor-card">
-        <strong>{{ session?.name || "陈明 主治医师" }}</strong>
-        <span>呼吸内科 · {{ statusLabel(session?.role, "医生") }} #{{ session?.userId || "D2048" }}</span>
-        <span>{{ socketStatus }}，15 秒自动同步</span>
-      </div>
-    </aside>
+    <CollapsibleSidebar
+      mark="医"
+      title="医生工作台"
+      :groups="sidebarGroups"
+      :user-name="session?.name || '医生'"
+      :user-meta="`${statusLabel(session?.role, '医生')} #${session?.userId || '-'}`"
+    />
 
     <div class="doctor-app">
       <header class="doctor-topline">
-        <div class="top-title">
+        <div class="doctor-session">
           <strong>{{ pageTitle }}</strong>
-          <span>2026-06-22 · 呼吸内科上午门诊</span>
+          <span>{{ session?.name || "医生" }} · {{ statusLabel(session?.role, "医生") }} #{{ session?.userId || "-" }}</span>
         </div>
         <div class="doctor-topline-status">
           <span class="status-pill"><i class="dot"></i>{{ socketStatus }}</span>
