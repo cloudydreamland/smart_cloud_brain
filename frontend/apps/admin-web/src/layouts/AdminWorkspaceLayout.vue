@@ -22,6 +22,7 @@ const navGroups = computed(() => [
     { label: "药品", to: "/drugs" },
     { label: "排班", to: "/schedule" },
     { label: "分诊台", to: "/triage-desk", badge: highRisk.value },
+    { label: "账户权限", to: "/accounts" },
   ] },
   { label: "配置", items: [
     { label: "知识库", to: "/knowledge" },
@@ -58,7 +59,7 @@ onBeforeUnmount(() => unbind?.());
   <AppShell
     mark="管"
     title="运营管理工作台"
-    subtitle="基础数据 · 号源 · 知识库"
+    subtitle="基础数据 · 号源 · 知识库 · 权限"
     :user-name="session?.name"
     :user-meta="`${statusText(session?.role, '')} #${session?.userId || ''}`"
     :nav-groups="navGroups"
@@ -67,7 +68,7 @@ onBeforeUnmount(() => unbind?.());
     <template #user>
       <div class="row-meta"><span class="tag success">已登录</span><span class="tag warning">{{ highRisk }} 条需关注</span></div>
     </template>
-    <TopBar eyebrow="管理端" title="基础数据、号源与智能配置统一维护" description="管理端强调批量浏览、快速编辑、分诊改派和数据发布状态。">
+    <TopBar eyebrow="管理端" title="基础数据、号源、权限与智能配置统一维护" description="管理端强调批量浏览、快速编辑、分诊改派、账号访问控制和数据发布状态。">
       <template #actions><button type="button" :disabled="loading" @click="refresh">刷新数据</button></template>
     </TopBar>
     <div class="admin-notices"><div v-if="permissionError" class="notice error">{{ permissionError }}</div></div>

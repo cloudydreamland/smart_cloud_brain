@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartcloudbrain.admin.client.InternalAiClient;
 import com.smartcloudbrain.admin.client.InternalDoctorClient;
 import com.smartcloudbrain.admin.client.InternalTriageClient;
+import com.smartcloudbrain.admin.dto.admin.AccountSaveRequest;
 import com.smartcloudbrain.admin.dto.admin.DepartmentSaveRequest;
 import com.smartcloudbrain.admin.dto.admin.DoctorSaveRequest;
 import com.smartcloudbrain.admin.dto.admin.DrugSaveRequest;
@@ -13,6 +14,7 @@ import com.smartcloudbrain.admin.dto.admin.PromptTemplateSaveRequest;
 import com.smartcloudbrain.admin.dto.admin.ScheduleGenerateRequest;
 import com.smartcloudbrain.admin.dto.admin.SchedulePublishRequest;
 import com.smartcloudbrain.admin.dto.admin.SystemDictSaveRequest;
+import com.smartcloudbrain.admin.entity.AdminUser;
 import com.smartcloudbrain.admin.entity.Department;
 import com.smartcloudbrain.admin.entity.AiScheduleSuggestion;
 import com.smartcloudbrain.admin.entity.Doctor;
@@ -20,6 +22,7 @@ import com.smartcloudbrain.admin.entity.Drug;
 import com.smartcloudbrain.admin.entity.KnowledgeEntry;
 import com.smartcloudbrain.admin.entity.PromptTemplate;
 import com.smartcloudbrain.admin.entity.SystemDict;
+import com.smartcloudbrain.admin.repository.AdminUserRepository;
 import com.smartcloudbrain.admin.repository.AiScheduleSuggestionRepository;
 import com.smartcloudbrain.admin.repository.DepartmentRepository;
 import com.smartcloudbrain.admin.repository.DoctorRepository;
@@ -31,6 +34,7 @@ import com.smartcloudbrain.aiapi.dto.PromptTestRequest;
 import com.smartcloudbrain.common.error.ErrorCode;
 import com.smartcloudbrain.common.exception.BusinessException;
 import com.smartcloudbrain.common.security.PasswordHashService;
+import com.smartcloudbrain.common.security.RoleType;
 import com.smartcloudbrain.aiapi.dto.ExistingSchedule;
 import com.smartcloudbrain.aiapi.dto.ScheduleDepartmentCandidate;
 import com.smartcloudbrain.aiapi.dto.ScheduleDoctorCandidate;
@@ -62,6 +66,7 @@ public class AdminCatalogService {
   private final KnowledgeEntryRepository knowledgeEntryRepository;
   private final SystemDictRepository systemDictRepository;
   private final AiScheduleSuggestionRepository aiScheduleSuggestionRepository;
+  private final AdminUserRepository adminUserRepository;
   private final InternalDoctorClient internalDoctorClient;
   private final InternalAiClient internalAiClient;
   private final InternalTriageClient internalTriageClient;
@@ -76,6 +81,7 @@ public class AdminCatalogService {
       KnowledgeEntryRepository knowledgeEntryRepository,
       SystemDictRepository systemDictRepository,
       AiScheduleSuggestionRepository aiScheduleSuggestionRepository,
+      AdminUserRepository adminUserRepository,
       InternalDoctorClient internalDoctorClient,
       InternalAiClient internalAiClient,
       InternalTriageClient internalTriageClient,
@@ -89,6 +95,7 @@ public class AdminCatalogService {
     this.knowledgeEntryRepository = knowledgeEntryRepository;
     this.systemDictRepository = systemDictRepository;
     this.aiScheduleSuggestionRepository = aiScheduleSuggestionRepository;
+    this.adminUserRepository = adminUserRepository;
     this.internalDoctorClient = internalDoctorClient;
     this.internalAiClient = internalAiClient;
     this.internalTriageClient = internalTriageClient;
@@ -98,6 +105,47 @@ public class AdminCatalogService {
 
   public List<Map<String, Object>> departments() {
     return departmentRepository.findAll().stream().map(this::departmentView).toList();
+  }
+
+  public List<Map<String, Object>> accounts() {
+    List<Map<String, Object>> rows = new java.util.ArrayList<>();
+    adminUserRepository.findAll().stream().map(this::adminAccountView).forEach(rows::add);
+    doctorRepository.findAll().stream().map(this::doctorAccountView).forEach(rows::add);
+    return rows.stream()
+        .sorted(java.util.Comparator
+            .comparing((Map<String, Object> row) -> String.valueOf(row.get("role")))
+            .thenComparing(row -> String.valueOf(row.get("account"))))
+        .toList();
+  }
+
+  public List<Map<String, Object>> roles() {
+    return List.of(
+        roleView(RoleType.ADMIN, "系统管理员", "系统配置、基础目录、AI 配置、排班发布、分诊台、账户与权限管理"),
+        roleView(RoleType.DOCTOR, "医生", "医生工作台、接诊队列、病历书写、处方审核、医生通知"),
+        roleView(RoleType.PATIENT, "患者", "患者端登录、症状分诊、预约挂号、病历处方查看")
+    );
+  }
+
+  @CacheEvict(cacheNames = "adminCatalog", allEntries = true)
+  @Transactional
+  public Map<String, Object> saveAccount(AccountSaveRequest request) {
+    RoleType role = parseRole(request.role());
+    if (role == RoleType.ADMIN) {
+      return saveAdminAccount(request);
+    }
+    if (role == RoleType.DOCTOR) {
+      return doctorAccountView(saveDoctorEntity(new DoctorSaveRequest(
+          request.id(),
+          request.name(),
+          request.account(),
+          request.password(),
+          request.departmentId(),
+          request.title(),
+          request.specialty(),
+          request.status()
+      )));
+    }
+    throw new BusinessException(400, "Patient accounts are self-registered and cannot be assigned in admin console");
   }
 
   @CacheEvict(cacheNames = "adminCatalog", allEntries = true)
@@ -115,6 +163,10 @@ public class AdminCatalogService {
   @CacheEvict(cacheNames = "adminCatalog", allEntries = true)
   @Transactional
   public Map<String, Object> saveDoctor(DoctorSaveRequest request) {
+    return doctorView(saveDoctorEntity(request));
+  }
+
+  private Doctor saveDoctorEntity(DoctorSaveRequest request) {
     Doctor doctor = request.id() == null ? new Doctor() : doctorRepository.findById(request.id()).orElseGet(Doctor::new);
     doctor.setName(request.name());
     doctor.setPhone(request.phone());
@@ -127,7 +179,7 @@ public class AdminCatalogService {
     doctor.setTitle(request.title());
     doctor.setSpecialty(request.specialty());
     doctor.setStatus(request.status() == null ? "ENABLED" : request.status());
-    return doctorView(doctorRepository.save(doctor));
+    return doctorRepository.save(doctor);
   }
 
   @Cacheable(cacheNames = "adminCatalog", key = "'drugs'")
@@ -609,6 +661,78 @@ public class AdminCatalogService {
         "sort", dict.getSort() == null ? 0 : dict.getSort(),
         "status", dict.getStatus() == null ? "ENABLED" : dict.getStatus()
     );
+  }
+
+  private Map<String, Object> saveAdminAccount(AccountSaveRequest request) {
+    AdminUser admin = request.id() == null
+        ? adminUserRepository.findByUsername(request.account()).orElseGet(AdminUser::new)
+        : adminUserRepository.findById(request.id()).orElseGet(AdminUser::new);
+    String nextStatus = request.status() == null || request.status().isBlank() ? "ENABLED" : request.status();
+    if ("DISABLED".equalsIgnoreCase(nextStatus)
+        && admin.getId() != null
+        && "ENABLED".equalsIgnoreCase(admin.getStatus())
+        && adminUserRepository.countByStatus("ENABLED") <= 1) {
+      throw new BusinessException(400, "At least one administrator account must remain enabled");
+    }
+    if (admin.getId() == null && (request.password() == null || request.password().isBlank())) {
+      throw new BusinessException(400, "Password is required for new administrator accounts");
+    }
+    admin.setUsername(request.account());
+    admin.setName(request.name());
+    admin.setStatus(nextStatus);
+    if (request.password() != null && !request.password().isBlank()) {
+      admin.setPasswordHash(passwordHashService.encode(request.password()));
+    }
+    admin.setUpdatedAt(LocalDateTime.now());
+    return adminAccountView(adminUserRepository.save(admin));
+  }
+
+  private RoleType parseRole(String role) {
+    try {
+      return RoleType.valueOf(normalize(role).toUpperCase(Locale.ROOT));
+    } catch (Exception ex) {
+      throw new BusinessException(400, "Unsupported role: " + role);
+    }
+  }
+
+  private Map<String, Object> roleView(RoleType role, String label, String permissions) {
+    return Map.of(
+        "role", role.name(),
+        "label", label,
+        "permissions", permissions
+    );
+  }
+
+  private Map<String, Object> adminAccountView(AdminUser admin) {
+    Map<String, Object> view = new LinkedHashMap<>();
+    view.put("id", admin.getId());
+    view.put("role", RoleType.ADMIN.name());
+    view.put("roleLabel", "系统管理员");
+    view.put("account", admin.getUsername());
+    view.put("name", admin.getName());
+    view.put("departmentId", 0L);
+    view.put("departmentName", "");
+    view.put("title", "");
+    view.put("specialty", "");
+    view.put("status", admin.getStatus() == null ? "ENABLED" : admin.getStatus());
+    view.put("permissions", "系统配置、基础目录、AI 配置、排班发布、分诊台、账户与权限管理");
+    return view;
+  }
+
+  private Map<String, Object> doctorAccountView(Doctor doctor) {
+    Map<String, Object> view = new LinkedHashMap<>();
+    view.put("id", doctor.getId());
+    view.put("role", RoleType.DOCTOR.name());
+    view.put("roleLabel", "医生");
+    view.put("account", doctor.getPhone() == null ? "" : doctor.getPhone());
+    view.put("name", doctor.getName());
+    view.put("departmentId", doctor.getDepartmentId() == null ? 0L : doctor.getDepartmentId());
+    view.put("departmentName", departmentName(doctor.getDepartmentId()));
+    view.put("title", doctor.getTitle() == null ? "" : doctor.getTitle());
+    view.put("specialty", doctor.getSpecialty() == null ? "" : doctor.getSpecialty());
+    view.put("status", doctor.getStatus() == null ? "ENABLED" : doctor.getStatus());
+    view.put("permissions", "医生工作台、接诊队列、病历书写、处方审核、医生通知");
+    return view;
   }
 
   private Map<String, Object> scheduleSuggestionView(AiScheduleSuggestion suggestion) {

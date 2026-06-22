@@ -1,6 +1,7 @@
 package com.smartcloudbrain.admin.controller;
 
 import com.smartcloudbrain.common.result.Result;
+import com.smartcloudbrain.admin.dto.admin.AccountSaveRequest;
 import com.smartcloudbrain.admin.dto.admin.DepartmentSaveRequest;
 import com.smartcloudbrain.admin.dto.admin.DoctorSaveRequest;
 import com.smartcloudbrain.admin.dto.admin.DrugSaveRequest;
@@ -38,6 +39,24 @@ public class AdminController {
   public Result<?> departments() {
     requireAdmin();
     return Result.success(adminCatalogService.departments());
+  }
+
+  @GetMapping("/account/list")
+  public Result<?> accounts() {
+    requireAdmin();
+    return Result.success(adminCatalogService.accounts());
+  }
+
+  @GetMapping("/role/list")
+  public Result<?> roles() {
+    requireAdmin();
+    return Result.success(adminCatalogService.roles());
+  }
+
+  @PostMapping("/account/save")
+  public Result<?> saveAccount(@Valid @RequestBody AccountSaveRequest request) {
+    requireAdmin();
+    return Result.success(adminCatalogService.saveAccount(request));
   }
 
   @PostMapping("/department/save")

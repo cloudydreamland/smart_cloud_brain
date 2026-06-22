@@ -1,5 +1,6 @@
 import {
   ApiError,
+  type AccountSaveRequest,
   type ApiResult,
   type CurrentUser,
   type DataRow,
@@ -135,6 +136,9 @@ export const doctorApi = {
 
 export const adminApi = {
   login: authApi.loginAdmin,
+  accounts: (token: string) => get<DataRow[]>("/admin/account/list", token),
+  roles: (token: string) => get<DataRow[]>("/admin/role/list", token),
+  saveAccount: (token: string, body: AccountSaveRequest) => post<DataRow>("/admin/account/save", body, token),
   departments: (token: string) => get<DataRow[]>("/admin/department/list", token),
   publicDoctors: patientApi.doctors,
   saveDepartment: (token: string, body: DepartmentSaveRequest) => post<DataRow>("/admin/department/save", body, token),
@@ -176,6 +180,7 @@ export const api = {
   prescriptions: patientApi.prescriptions, prescriptionDetail: patientApi.prescriptionDetail,
   notifications: doctorApi.notifications, markNotificationRead: doctorApi.markNotificationRead,
   saveDepartment: adminApi.saveDepartment, adminDepartments: adminApi.departments,
+  accounts: adminApi.accounts, roles: adminApi.roles, saveAccount: adminApi.saveAccount,
   saveDoctor: adminApi.saveDoctor, saveDrug: adminApi.saveDrug, prompts: adminApi.prompts,
   savePrompt: adminApi.savePrompt, testPrompt: adminApi.testPrompt, aiLogs: adminApi.aiLogs, knowledgeEntries: adminApi.knowledgeEntries,
   saveKnowledgeEntry: adminApi.saveKnowledgeEntry, dicts: adminApi.dicts, saveDict: adminApi.saveDict,

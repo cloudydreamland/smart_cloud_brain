@@ -7,6 +7,7 @@
 }
 
 .catalog-layout,
+.account-layout,
 .schedule-layout,
 .triage-layout,
 .search-results {
@@ -40,8 +41,30 @@
   white-space: pre-wrap;
 }
 
+.role-template-list {
+  display: grid;
+  gap: 10px;
+}
+
+.role-template {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.role-template p,
+.permission-cell {
+  max-width: 360px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
 @media (max-width: 980px) {
   .catalog-layout,
+  .account-layout,
   .schedule-layout,
   .triage-layout,
   .search-results {

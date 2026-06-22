@@ -12,6 +12,7 @@ import DictsPage from "../pages/DictsPage.vue";
 import SchedulePage from "../pages/SchedulePage.vue";
 import TriageDeskPage from "../pages/TriageDeskPage.vue";
 import SearchPage from "../pages/SearchPage.vue";
+import AccountsPage from "../pages/AccountsPage.vue";
 
 const router = createRouter({
   history: createWebHistory(),
@@ -31,6 +32,7 @@ const router = createRouter({
         { path: "dicts", name: "admin-dicts", component: DictsPage },
         { path: "schedule", name: "admin-schedule", component: SchedulePage },
         { path: "triage-desk", name: "admin-triage", component: TriageDeskPage },
+        { path: "accounts", name: "admin-accounts", component: AccountsPage },
         { path: "search", name: "admin-search", component: SearchPage },
       ],
     },
