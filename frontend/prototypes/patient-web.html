@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>东软智慧云脑诊疗平台 - 患者端</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --bg: #fafafa;
+      --card: #ffffff;
+      --text: #262626;
+      --muted: #595959;
+      --weak: #8c8c8c;
+      --border: #e5e7eb;
+      --hover-border: #d1d5db;
+      --success: #16a34a;
+      --warning: #ea580c;
+      --danger: #dc2626;
+      --shadow: 0 1px 3px rgba(0,0,0,0.06);
+      --shadow-hover: 0 8px 30px rgba(0,0,0,0.08);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--text); background: var(--bg); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 14px; letter-spacing: 0; }
+    button, input, select, textarea { font: inherit; }
+    .top {
+      height: 72px;
+      display: grid;
+      grid-template-columns: 220px minmax(0,1fr) auto;
+      align-items: center;
+      gap: 32px;
+      padding: 0 48px;
+      background: #ffffff;
+      box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; color: var(--text); font-size: 20px; font-weight: 700; white-space: nowrap; }
+    .brand-mark { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 12px; color: #ffffff; background: var(--primary); box-shadow: var(--shadow); }
+    .top-nav { display: flex; justify-content: center; gap: 8px; }
+    .top-nav button {
+      height: 40px;
+      border: 0;
+      border-radius: 8px;
+      padding: 0 18px;
+      color: var(--muted);
+      background: transparent;
+      cursor: pointer;
+      font-weight: 700;
+      transition: color 200ms ease, background 200ms ease, transform 200ms ease;
+    }
+    .top-nav button:hover, .top-nav button.active { color: var(--primary); background: #f5f8ff; }
+    .top-nav button:active { transform: translateY(1px); }
+    .user-box { display: flex; align-items: center; gap: 12px; color: var(--muted); }
+    .avatar { width: 40px; height: 40px; border-radius: 999px; display: grid; place-items: center; color: #ffffff; background: var(--primary); font-weight: 700; }
+    .content { max-width: 1240px; margin: 0 auto; padding: 48px 32px; }
+    .page { display: none; }
+    .page.active { display: block; }
+    .panel, .hub-card, .metric {
+      background: var(--card);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      margin-bottom: 24px;
+      transition: transform 200ms ease, box-shadow 200ms ease;
+    }
+    .panel:hover, .hub-card:hover, .metric:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
+    .panel-h { min-height: 68px; padding: 24px 24px 16px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .panel-h h2, .panel-h h3 { margin: 0; font-size: 20px; line-height: 1.3; font-weight: 700; }
+    .panel-b { padding: 0 24px 24px; }
+    .hint { color: var(--weak); font-size: 12px; }
+    .grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; }
+    .grid.two { grid-template-columns: repeat(2,1fr); }
+    .field { display: flex; flex-direction: column; gap: 8px; }
+    .field label { font-weight: 700; color: var(--text); }
+    .field input, .field select, .field textarea {
+      min-height: 40px;
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 12px;
+      color: var(--text);
+      background: #ffffff;
+      outline: none;
+      transition: border-color 200ms ease, box-shadow 200ms ease;
+    }
+    .field textarea { min-height: 96px; resize: vertical; line-height: 1.6; }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
+    .actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 20px; }
+    .btn {
+      min-height: 40px;
+      border: 1px solid var(--primary);
+      border-radius: 8px;
+      padding: 8px 16px;
+      color: #ffffff;
+      background: var(--primary);
+      cursor: pointer;
+      font-weight: 700;
+      transition: transform 200ms ease, box-shadow 200ms ease;
+    }
+    .btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-hover); }
+    .btn.secondary { color: var(--primary); background: #ffffff; }
+    .btn.gray { border-color: transparent; color: var(--primary); background: transparent; }
+    table { width: 100%; border-collapse: collapse; background: #ffffff; }
+    th, td { border-bottom: 1px solid var(--border); padding: 14px 12px; text-align: left; vertical-align: top; }
+    th { color: var(--muted); font-size: 12px; font-weight: 700; background: #ffffff; }
+    tbody tr:hover { background: #fafafa; }
+    .tag { display: inline-flex; align-items: center; border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 700; color: var(--muted); background: #f5f5f5; white-space: nowrap; }
+    .tag.blue { color: var(--primary); background: #eff6ff; }
+    .tag.ok { color: var(--success); background: #f0fdf4; }
+    .tag.warn { color: var(--warning); background: #fff7ed; }
+    .tag.danger { color: var(--danger); background: #fef2f2; }
+    .journey { padding: 24px; overflow-x: auto; }
+    .journey-track { min-width: 760px; display: grid; grid-template-columns: repeat(7,1fr); position: relative; align-items: start; }
+    .journey-track::before { content: ""; position: absolute; left: 8%; right: 8%; top: 24px; height: 3px; background: #dbeafe; border-radius: 999px; z-index: 0; }
+    .journey-node { position: relative; z-index: 1; display: grid; justify-items: center; gap: 12px; color: var(--muted); font-size: 12px; text-align: center; }
+    .node-dot { width: 48px; height: 48px; border-radius: 999px; display: grid; place-items: center; background: #ffffff; box-shadow: var(--shadow); }
+    .journey-node.done .node-dot { color: #ffffff; background: var(--success); }
+    .journey-node.current .node-dot { color: #ffffff; background: var(--primary); animation: pulse 1400ms ease-in-out infinite; }
+    .journey-node.pending .node-dot { border: 2px dashed #d1d5db; color: var(--weak); box-shadow: none; }
+    .journey-node strong { font-size: 12px; font-weight: 700; }
+    @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.1); opacity: .7; } 100% { transform: scale(1); opacity: 1; } }
+    .hub-grid { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+    .hub-card { margin: 0; padding: 32px; min-height: 188px; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; }
+    .hub-card svg { color: var(--primary); margin-bottom: 24px; }
+    .hub-card h3 { margin: 0 0 8px; font-size: 20px; font-weight: 700; }
+    .hub-card p { margin: 0; color: var(--muted); line-height: 1.7; }
+    .summary { display: grid; grid-template-columns: repeat(4,1fr); gap: 24px; margin-bottom: 24px; }
+    .metric { margin: 0; padding: 24px; }
+    .metric b { display: block; margin-bottom: 8px; color: var(--primary); font-size: 32px; line-height: 1; font-weight: 700; }
+    .metric span { color: var(--muted); }
+    .split { display: grid; grid-template-columns: minmax(0,1fr) 400px; gap: 24px; }
+    .chat-shell { height: 560px; display: flex; flex-direction: column; overflow: hidden; }
+    .chat-feed { flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 16px; scroll-behavior: smooth; }
+    .message { display: flex; }
+    .message.ai { justify-content: flex-start; }
+    .message.patient { justify-content: flex-end; }
+    .bubble { max-width: 72%; padding: 12px 16px; border-radius: 16px; line-height: 1.7; box-shadow: var(--shadow); }
+    .message.ai .bubble { color: #ffffff; background: var(--primary); border-bottom-left-radius: 4px; }
+    .message.patient .bubble { color: var(--text); background: #f5f5f5; border-bottom-right-radius: 4px; }
+    .chat-quick { padding: 16px 24px 24px; display: flex; flex-wrap: wrap; gap: 12px; }
+    .quick-btn { border: 0; border-radius: 999px; padding: 8px 12px; color: var(--primary); background: #eff6ff; cursor: pointer; transition: transform 200ms ease, box-shadow 200ms ease; }
+    .quick-btn:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
+    .empty-state { border: 1px dashed var(--border); border-radius: 12px; padding: 32px; color: var(--weak); text-align: center; background: #ffffff; }
+    .notice { border-radius: 12px; padding: 16px 20px; color: #1d4ed8; background: #ffffff; box-shadow: var(--shadow); }
+    .toast-stack { position: fixed; top: 88px; right: 24px; width: 340px; display: grid; gap: 12px; z-index: 20; pointer-events: none; }
+    .toast { pointer-events: auto; position: relative; overflow: hidden; border-left: 4px solid var(--primary); border-radius: 12px; padding: 14px 42px 16px 16px; background: #ffffff; box-shadow: var(--shadow-hover); animation: slideIn 220ms ease both; }
+    .toast.success { border-left-color: var(--success); }
+    .toast.warning { border-left-color: var(--warning); }
+    .toast.danger { border-left-color: var(--danger); }
+    .toast strong { display: block; margin-bottom: 4px; font-weight: 700; }
+    .toast span { color: var(--muted); font-size: 12px; }
+    .toast button { position: absolute; top: 10px; right: 10px; border: 0; background: transparent; color: var(--weak); cursor: pointer; font-size: 16px; }
+    .toast::after { content: ""; position: absolute; left: 0; bottom: 0; height: 3px; width: 100%; background: var(--primary); animation: toastTimer 3000ms linear forwards; }
+    .toast.leaving { animation: slideOut 180ms ease both; }
+    @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+    @keyframes slideOut { from { transform: translateX(0); } to { transform: translateX(110%); } }
+    @keyframes toastTimer { from { width: 100%; } to { width: 0; } }
+    svg { display: block; }
+    @media(max-width: 960px) {
+      .top { height: auto; grid-template-columns: 1fr; padding: 16px 20px; }
+      .top-nav { justify-content: flex-start; flex-wrap: wrap; }
+      .content { padding: 24px 16px; }
+      .grid, .grid.two, .summary, .split, .hub-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="brand"><span class="brand-mark"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 3h4v7h7v4h-7v7h-4v-7H3v-4h7V3Z" fill="currentColor"/></svg></span>智慧云脑</div>
+    <nav class="top-nav">
+      <button class="active" data-page="home">首页</button>
+      <button data-page="triage">问诊</button>
+      <button data-page="booking">挂号</button>
+      <button data-page="records">记录</button>
+      <button data-page="prescriptions">处方</button>
+    </nav>
+    <div class="user-box"><span class="avatar">李</span><span>李晓雨</span></div>
+  </header>
+  <main class="content">
+    <section id="login" class="page">
+      <div class="panel">
+        <div class="panel-h"><h2>患者登录</h2><span class="tag blue">角色校验</span></div>
+        <div class="panel-b">
+          <div class="grid">
+            <div class="field"><label>手机号</label><input value="13810247365"></div>
+            <div class="field"><label>密码</label><input type="password" value="123456"></div>
+            <div class="field"><label>角色</label><select><option>患者</option><option>医生</option><option>管理员</option></select></div>
+            <div class="field"><label>验证码状态</label><input value="模拟通过"></div>
+          </div>
+          <div class="actions"><button class="btn" data-jump="home">登录进入患者首页</button><button class="btn secondary" data-jump="register">去注册</button></div>
+        </div>
+      </div>
+    </section>
+    <section id="register" class="page">
+      <div class="panel">
+        <div class="panel-h"><h2>患者注册</h2><span class="hint">采集基础健康信息，用于智能分诊参考</span></div>
+        <div class="panel-b">
+          <div class="grid">
+            <div class="field"><label>姓名</label><input value="李晓雨"></div><div class="field"><label>手机号</label><input value="13810247365"></div><div class="field"><label>密码</label><input type="password" value="123456"></div><div class="field"><label>确认密码</label><input type="password" value="123456"></div>
+            <div class="field"><label>性别</label><select><option>女</option><option>男</option></select></div><div class="field"><label>年龄</label><input value="28"></div><div class="field"><label>过敏史</label><input value="青霉素过敏"></div><div class="field"><label>既往史</label><input value="季节性鼻炎"></div>
+          </div>
+          <div class="actions"><button class="btn" data-toast="注册信息已保存">提交注册</button><button class="btn secondary" data-jump="login">返回登录</button></div>
+        </div>
+      </div>
+    </section>
+    <section id="home" class="page active">
+      <div class="panel">
+        <div class="panel-h"><h2>患者旅程地图</h2><span class="hint">轻症诊疗全链路</span></div>
+        <div class="journey">
+          <div class="journey-track">
+            <div class="journey-node done"><span class="node-dot"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 16.6 4.9 12l1.4-1.4 3.2 3.2 8.2-8.2L19.1 7 9.5 16.6Z" fill="currentColor"/></svg></span><strong>注册</strong></div>
+            <div class="journey-node done"><span class="node-dot"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 16.6 4.9 12l1.4-1.4 3.2 3.2 8.2-8.2L19.1 7 9.5 16.6Z" fill="currentColor"/></svg></span><strong>AI问诊</strong></div>
+            <div class="journey-node current"><span class="node-dot"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 4 6v6c0 4.1 3.4 6.9 8 8 4.6-1.1 8-3.9 8-8V6l-8-4Z" fill="currentColor"/></svg></span><strong>分诊推荐</strong></div>
+            <div class="journey-node pending"><span class="node-dot"></span><strong>挂号</strong></div>
+            <div class="journey-node pending"><span class="node-dot"></span><strong>就诊</strong></div>
+            <div class="journey-node pending"><span class="node-dot"></span><strong>病历</strong></div>
+            <div class="journey-node pending"><span class="node-dot"></span><strong>处方</strong></div>
+          </div>
+        </div>
+      </div>
+      <div class="hub-grid">
+        <button class="hub-card" data-jump="triage"><span><svg width="36" height="36" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v12H8l-4 4V4Zm5 4v2h6V8H9Zm0 4v2h9v-2H9Z" fill="currentColor"/></svg><h3>AI智能问诊</h3><p>以对话方式补充主诉、持续时间和过敏史，生成轻症分诊建议。</p></span></button>
+        <button class="hub-card" data-jump="booking"><span><svg width="36" height="36" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h2v3h6V2h2v3h3v16H4V5h3V2Zm-1 8v9h12v-9H6Z" fill="currentColor"/></svg><h3>在线挂号</h3><p>根据推荐科室与医生选择可预约号源，不包含支付和医保流程。</p></span></button>
+        <button class="hub-card" data-jump="records"><span><svg width="36" height="36" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18H6V3Zm3 4h6v2H9V7Zm0 4h6v2H9v-2Zm0 4h4v2H9v-2Z" fill="currentColor"/></svg><h3>查看记录</h3><p>集中查看历史挂号、医生确认病历和处方审核结果。</p></span></button>
+      </div>
+      <div class="summary">
+        <div class="metric"><b>2</b><span>待就诊挂号</span></div><div class="metric"><b>5</b><span>历史病历</span></div><div class="metric"><b>3</b><span>处方记录</span></div><div class="metric"><b>低</b><span>最近处方风险</span></div>
+      </div>
+      <div class="panel">
+        <div class="panel-h"><h2>最近挂号记录</h2></div>
+        <div class="panel-b"><table><thead><tr><th>挂号编号</th><th>科室</th><th>医生</th><th>时间段</th><th>状态</th><th>操作</th></tr></thead><tbody>
+          <tr><td>GH20260615018</td><td>呼吸内科</td><td>张明 主任医师</td><td>2026-06-16 09:00-09:30</td><td><span class="tag blue">待就诊</span></td><td><button class="btn secondary" data-jump="records">查看</button></td></tr>
+          <tr><td>GH20260612007</td><td>儿科</td><td>王倩 副主任医师</td><td>2026-06-12 14:30-15:00</td><td><span class="tag ok">已完成</span></td><td><button class="btn secondary" data-jump="records">病历</button></td></tr>
+        </tbody></table></div>
+      </div>
+    </section>
+    <section id="triage" class="page">
+      <div class="split">
+        <div class="panel">
+          <div class="panel-h"><h2>AI 对话式分诊</h2><span class="tag warn">AI 辅助建议</span></div>
+          <div class="chat-shell">
+            <div class="chat-feed" id="chatFeed">
+              <div class="message ai"><div class="bubble">请描述您的主要症状。</div></div>
+              <div class="message patient"><div class="bubble">咳嗽三天，咽痛，低热 37.8°C，无胸痛，夜间咳嗽明显，既往有季节性鼻炎。</div></div>
+              <div class="message ai"><div class="bubble">持续多久了？是否伴随气促、胸痛或明显乏力？</div></div>
+              <div class="message patient"><div class="bubble">持续 3 天，没有胸痛和气促，有青霉素过敏史。</div></div>
+            </div>
+            <div class="chat-quick"><button class="quick-btn" data-reply="没有其他症状">没有其他症状</button><button class="quick-btn" data-reply="有过敏史">有过敏史</button><button class="quick-btn" data-reply="需要紧急就医">需要紧急就医</button><button class="quick-btn" data-reply="想预约明天上午">想预约明天上午</button></div>
+          </div>
+          <div class="panel-b"><div class="field"><label>主诉文本</label><textarea id="complaint">咳嗽三天，咽痛，低热 37.8°C，无胸痛，夜间咳嗽明显，既往有季节性鼻炎。</textarea></div><div class="actions"><button class="btn" id="runTriage">生成 AI 分诊建议</button><button class="btn secondary" data-jump="booking">去挂号</button></div></div>
+        </div>
+        <div class="panel"><div class="panel-h"><h2>AI 推荐结果</h2></div><div class="panel-b" id="triageResult"><p><b>推荐科室：</b>呼吸内科</p><p><b>推荐医生：</b>张明 主任医师</p><p><b>推荐理由：</b>咳嗽、咽痛、低热符合上呼吸道感染常见表现，既往鼻炎可能加重夜间咳嗽。</p><p><b>风险提示：</b><span class="tag warn">中风险</span> 如出现持续高热、气促、胸痛需线下急诊。</p></div><div class="empty-state">对话完成后，推荐结果会同步更新到这里。</div></div>
+      </div>
+    </section>
+    <section id="booking" class="page">
+      <div class="panel"><div class="panel-h"><h2>在线挂号</h2><span class="hint">轻症门诊预约，不包含住院、医保和支付流程</span></div><div class="panel-b"><div class="grid">
+        <div class="field"><label>科室</label><select><option>呼吸内科</option><option>内科</option><option>儿科</option><option>皮肤科</option></select></div><div class="field"><label>医生</label><select><option>张明 主任医师</option><option>刘海 副主任医师</option><option>王倩 副主任医师</option></select></div><div class="field"><label>日期</label><input type="date" value="2026-06-16"></div><div class="field"><label>时间段</label><select><option>09:00-09:30 余号 4</option><option>10:00-10:30 余号 2</option><option>14:00-14:30 余号 6</option></select></div>
+      </div><div class="actions"><button class="btn" data-toast="预约已提交">确认预约</button><button class="btn secondary" data-toast="挂号草稿已保存">保存草稿</button></div></div></div>
+      <div class="panel"><div class="panel-h"><h2>可预约号源</h2></div><div class="panel-b"><table><thead><tr><th>科室</th><th>医生</th><th>职称</th><th>排班</th><th>余号</th><th>建议</th></tr></thead><tbody>
+        <tr><td>呼吸内科</td><td>张明</td><td>主任医师</td><td>周二上午</td><td>4</td><td><span class="tag blue">AI 推荐</span></td></tr><tr><td>内科</td><td>陈思</td><td>主治医师</td><td>周二下午</td><td>7</td><td>可选</td></tr><tr><td>儿科</td><td>王倩</td><td>副主任医师</td><td>周三上午</td><td>5</td><td>年龄不匹配</td></tr>
+      </tbody></table></div></div>
+    </section>
+    <section id="records" class="page">
+      <div class="panel"><div class="panel-h"><h2>我的挂号</h2><button class="btn" data-jump="booking">新增挂号</button></div><div class="panel-b"><table><thead><tr><th>编号</th><th>科室</th><th>医生</th><th>时间</th><th>分诊来源</th><th>状态</th><th>操作</th></tr></thead><tbody>
+        <tr><td>GH20260615018</td><td>呼吸内科</td><td>张明 主任医师</td><td>2026-06-16 09:00</td><td>AI 分诊 T20260615003</td><td><span class="tag blue">待就诊</span></td><td><button class="btn gray" data-toast="挂号已取消">取消</button></td></tr>
+        <tr><td>GH20260612007</td><td>儿科</td><td>王倩 副主任医师</td><td>2026-06-12 14:30</td><td>人工选择</td><td><span class="tag ok">已完成</span></td><td><button class="btn secondary">查看病历</button></td></tr>
+        <tr><td>GH20260529012</td><td>内科</td><td>陈思 主治医师</td><td>2026-05-29 10:00</td><td>AI 分诊 T20260529002</td><td><span class="tag ok">已完成</span></td><td><button class="btn secondary" data-jump="prescriptions">处方</button></td></tr>
+      </tbody></table></div></div>
+      <div class="panel"><div class="panel-h"><h2>我的病历</h2><span class="hint">最终病历由医生确认</span></div><div class="panel-b"><table><thead><tr><th>病历号</th><th>就诊日期</th><th>科室</th><th>医生</th><th>主诉</th><th>诊断</th><th>确认状态</th></tr></thead><tbody>
+        <tr><td>MR20260612007</td><td>2026-06-12</td><td>儿科</td><td>王倩</td><td>咽痛伴低热 2 天</td><td>急性上呼吸道感染</td><td><span class="tag ok">医生已确认</span></td></tr><tr><td>MR20260529012</td><td>2026-05-29</td><td>内科</td><td>陈思</td><td>胃部不适，反酸</td><td>慢性胃炎待观察</td><td><span class="tag ok">医生已确认</span></td></tr>
+      </tbody></table></div></div>
+      <div class="panel"><div class="panel-h"><h2>病历详情</h2></div><div class="panel-b"><div class="grid two"><div><p><b>主诉：</b>咽痛伴低热 2 天。</p><p><b>现病史：</b>患者 2 天前出现咽痛、轻微咳嗽，自测体温最高 37.9°C。</p><p><b>既往史：</b>季节性鼻炎，无慢性基础疾病。</p></div><div><p><b>体格检查：</b>咽部充血，双肺呼吸音清，未闻及明显啰音。</p><p><b>诊断：</b>急性上呼吸道感染。</p><p><b>治疗建议：</b>多饮水，注意休息，按医嘱服药，若高热不退及时复诊。</p></div></div></div></div>
+    </section>
+    <section id="prescriptions" class="page">
+      <div class="panel"><div class="panel-h"><h2>我的处方</h2><span class="hint">处方经 AI 审核后由医生签署</span></div><div class="panel-b"><table><thead><tr><th>处方号</th><th>开具时间</th><th>医生</th><th>药品明细</th><th>AI 审核</th><th>医生确认</th></tr></thead><tbody>
+        <tr><td>RX20260612007</td><td>2026-06-12 15:08</td><td>王倩</td><td>布洛芬缓释胶囊 0.3g 口服 必要时；氯雷他定片 10mg 每日一次</td><td><span class="tag warn">中风险：过敏史需关注</span></td><td><span class="tag ok">已确认</span></td></tr><tr><td>RX20260529012</td><td>2026-05-29 10:42</td><td>陈思</td><td>铝碳酸镁咀嚼片 1g 每日三次 餐后</td><td><span class="tag ok">低风险</span></td><td><span class="tag ok">已确认</span></td></tr>
+      </tbody></table></div></div>
+      <div class="notice">提示：本教学系统不连接真实药房库存，不处理支付、医保报销和住院业务。</div>
+    </section>
+  </main>
+  <div class="toast-stack" id="toastStack"></div>
+  <script>
+    const buttons=document.querySelectorAll('[data-page]');
+    const pages=document.querySelectorAll('.page');
+    function show(id){pages.forEach(p=>p.classList.toggle('active',p.id===id));buttons.forEach(b=>b.classList.toggle('active',b.dataset.page===id));localStorage.setItem('patient-page',id)}
+    buttons.forEach(b=>b.addEventListener('click',()=>show(b.dataset.page)));
+    document.querySelectorAll('[data-jump]').forEach(b=>b.addEventListener('click',()=>show(b.dataset.jump)));
+    const toastStack=document.getElementById('toastStack'),toastQueue=[];
+    function renderToast(message,type='success'){if(toastStack.children.length>=3){toastQueue.push([message,type]);return;}const node=document.createElement('div');node.className='toast '+type;node.innerHTML='<button aria-label="关闭">×</button><strong>'+message+'</strong><span>系统已记录本次操作，3 秒后自动关闭。</span>';toastStack.appendChild(node);const close=()=>{node.classList.add('leaving');setTimeout(()=>{node.remove();if(toastQueue.length)renderToast(...toastQueue.shift());},180)};node.querySelector('button').addEventListener('click',close);setTimeout(close,3000)}
+    document.querySelectorAll('[data-toast]').forEach(btn=>btn.addEventListener('click',()=>renderToast(btn.dataset.toast,'success')));
+    const feed=document.getElementById('chatFeed');
+    function addMessage(kind,text,typing=false){const row=document.createElement('div');row.className='message '+kind;const bubble=document.createElement('div');bubble.className='bubble';row.appendChild(bubble);feed.appendChild(row);feed.scrollTop=feed.scrollHeight;if(!typing){bubble.textContent=text;return;}let i=0;const timer=setInterval(()=>{bubble.textContent=text.slice(0,++i);feed.scrollTop=feed.scrollHeight;if(i>=text.length)clearInterval(timer)},30)}
+    document.querySelectorAll('.quick-btn').forEach(btn=>btn.addEventListener('click',()=>{addMessage('patient',btn.dataset.reply);setTimeout(()=>addMessage('ai','已记录您的补充信息。根据当前症状，建议优先预约呼吸内科，并提醒医生关注青霉素过敏史。',true),260)}));
+    document.getElementById('runTriage').addEventListener('click',()=>{document.getElementById('triageResult').innerHTML='<p><b>推荐科室：</b>呼吸内科</p><p><b>推荐医生：</b>张明 主任医师</p><p><b>推荐理由：</b>主诉包含咳嗽、咽痛、低热，符合轻症呼吸道感染分诊路径。</p><p><b>下一步：</b><span class="tag blue">建议预约 2026-06-16 上午门诊</span></p>';addMessage('ai','分诊完成：推荐呼吸内科张明主任医师，建议预约 2026-06-16 上午门诊。',true);renderToast('AI 分诊建议已生成','warning')});
+    const saved=localStorage.getItem('patient-page');
+    show(['home','triage','booking','records','prescriptions','login','register'].includes(saved)?saved:'home');
+  </script>
+</body>
+</html>

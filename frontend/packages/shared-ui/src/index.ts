@@ -1,3 +1,4 @@
+export { default as CollapsibleSidebar } from "./components/CollapsibleSidebar.vue";
 export { default as AppShell } from "./components/AppShell.vue";
 export { default as ConfirmDialog } from "./components/ConfirmDialog.vue";
 export { default as DataTable } from "./components/DataTable.vue";

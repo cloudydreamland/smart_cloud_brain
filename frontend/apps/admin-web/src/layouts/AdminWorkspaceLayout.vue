@@ -2,8 +2,8 @@
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
-import { api, statusText, useAdminWorkflowStore, useAuthStore } from "@smart-cloud-brain/shared-api";
-import { AppShell, TopBar } from "@smart-cloud-brain/shared-ui";
+import { statusText, useAdminWorkflowStore, useAuthStore } from "@smart-cloud-brain/shared-api";
+import { CollapsibleSidebar, TopBar } from "@smart-cloud-brain/shared-ui";
 
 const auth = useAuthStore();
 const workflow = useAdminWorkflowStore();
@@ -11,44 +11,31 @@ const router = useRouter();
 const { session, permissionError } = storeToRefs(auth);
 const { departments, doctors, triageDesk } = storeToRefs(workflow);
 const loading = ref(false);
-const permissions = ref<Set<string>>(new Set());
 let unbind: (() => void) | null = null;
 
 const highRisk = computed(() => triageDesk.value.filter((item) => ["MANUAL_REQUIRED", "HIGH"].includes(String(item.status))).length);
-const can = (key: string) => !permissions.value.size || permissions.value.has(key);
 const navGroups = computed(() => [
-  {
-    label: "Operations",
-    items: [
-      { label: "Workspace", to: "/", permission: "dashboard:view" },
-      { label: "Departments", to: "/departments", badge: departments.value.length, permission: "department:manage" },
-      { label: "Doctors", to: "/doctors", badge: doctors.value.length, permission: "doctor:manage" },
-      { label: "Drugs", to: "/drugs", permission: "drug:manage" },
-      { label: "Schedules", to: "/schedule", permission: "schedule:manage" },
-      { label: "Triage desk", to: "/triage-desk", badge: highRisk.value, permission: "triage:manage" },
-      { label: "Devices", to: "/devices", permission: "device:manage" },
-      { label: "Patients", to: "/patients", permission: "patient:manage" },
-      { label: "Statistics", to: "/statistics", permission: "statistics:view" },
-      { label: "Accounts", to: "/accounts", permission: "account:manage" },
-      { label: "Permissions", to: "/permissions", permission: "permission:manage" },
-    ].filter((item) => can(item.permission)),
-  },
-  {
-    label: "Configuration",
-    items: [
-      { label: "Knowledge", to: "/knowledge", permission: "knowledge:manage" },
-      { label: "Prompts", to: "/prompts", permission: "prompt:manage" },
-      { label: "Dictionaries", to: "/dicts", permission: "dict:manage" },
-      { label: "Search", to: "/search", permission: "search:view" },
-    ].filter((item) => can(item.permission)),
-  },
+  { label: "运维入口", items: [
+    { label: "工作台", to: "/" },
+    { label: "科室", to: "/departments", badge: departments.value.length },
+    { label: "医生", to: "/doctors", badge: doctors.value.length },
+    { label: "药品", to: "/drugs" },
+    { label: "排班", to: "/schedule" },
+    { label: "分诊台", to: "/triage-desk", badge: highRisk.value },
+    { label: "账户权限", to: "/accounts" },
+  ] },
+  { label: "配置", items: [
+    { label: "知识库", to: "/knowledge" },
+    { label: "提示词", to: "/prompts" },
+    { label: "字典", to: "/dicts" },
+    { label: "搜索", to: "/search" },
+  ] },
 ]);
 
 async function refresh() {
   if (!session.value || !auth.requireRole("ADMIN")) return;
   loading.value = true;
   try {
-    permissions.value = new Set(await api.myPermissions(auth.token()));
     await workflow.refresh(auth.token());
   } finally {
     loading.value = false;
@@ -69,29 +56,29 @@ onBeforeUnmount(() => unbind?.());
 </script>
 
 <template>
-  <AppShell
-    mark="ADM"
-    title="Operations Console"
-    subtitle="Catalogs / schedules / devices / patients / permissions"
-    :user-name="session?.name"
-    :user-meta="`${statusText(session?.role, '')} #${session?.userId || ''}`"
-    :nav-groups="navGroups"
-    @logout="logout"
-  >
-    <template #user>
-      <div class="row-meta">
-        <span class="tag success">Signed in</span>
-        <span class="tag warning">{{ highRisk }} triage alerts</span>
-      </div>
-    </template>
-    <TopBar
-      eyebrow="Admin"
-      title="Real operational data and access control"
-      description="Manage catalogs, schedules, triage, devices, patients, statistics and role permissions from live APIs."
-    >
-      <template #actions><button type="button" :disabled="loading" @click="refresh">Refresh</button></template>
-    </TopBar>
-    <div class="admin-notices"><div v-if="permissionError" class="notice error">{{ permissionError }}</div></div>
-    <RouterView @refresh="refresh" />
-  </AppShell>
+  <div class="admin-shell">
+    <CollapsibleSidebar
+      mark="管"
+      title="管理控制台"
+      :groups="navGroups"
+      :user-name="session?.name || '管理员'"
+      :user-meta="`${statusText(session?.role, '')} #${session?.userId || ''}`"
+    />
+
+    <div class="admin-app">
+      <TopBar eyebrow="管理端" title="基础数据、号源与智能配置统一维护" description="管理端强调批量浏览、快速编辑、分诊改派和数据发布状态。">
+        <template #actions>
+          <div class="row-meta">
+            <span class="tag success">已登录</span>
+            <span class="tag warning">{{ highRisk }} 条需关注</span>
+          </div>
+          <button type="button" :disabled="loading" @click="refresh">刷新数据</button>
+          <button type="button" @click="logout">退出登录</button>
+        </template>
+      </TopBar>
+
+      <div class="admin-notices"><div v-if="permissionError" class="notice error">{{ permissionError }}</div></div>
+      <RouterView @refresh="refresh" />
+    </div>
+  </div>
 </template>

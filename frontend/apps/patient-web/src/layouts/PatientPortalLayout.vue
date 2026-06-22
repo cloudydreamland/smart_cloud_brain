@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { useRouter } from "vue-router";
 import { fieldText, formatApiError, useAuthStore, usePatientWorkflowStore } from "@smart-cloud-brain/shared-api";
+import { CollapsibleSidebar } from "@smart-cloud-brain/shared-ui";
 import SessionExpiredModal from "../components/SessionExpiredModal.vue";
 
 const auth = useAuthStore();
@@ -15,14 +16,22 @@ const sessionExpired = ref(false);
 const loadError = ref("");
 let unbind: (() => void) | null = null;
 
-const navItems = [
-  { label: "首页", to: { name: "patient-dashboard" }, index: "01" },
-  { label: "AI 分诊", to: { name: "patient-triage" }, index: "02" },
-  { label: "预约医生", to: { name: "patient-doctors" }, index: "03" },
-  { label: "我的挂号", to: { name: "patient-appointments" }, index: "04" },
-  { label: "病历", to: { name: "patient-records" }, index: "05" },
-  { label: "处方", to: { name: "patient-prescriptions" }, index: "06" },
-  { label: "个人资料", to: { name: "patient-profile" }, index: "07" },
+const sidebarGroups = [
+  {
+    items: [
+      { label: "首页", to: "/portal" },
+      { label: "AI 分诊", to: "/portal/triage" },
+      { label: "预约医生", to: "/portal/doctors" },
+      { label: "我的挂号", to: "/portal/appointments" },
+    ],
+  },
+  {
+    items: [
+      { label: "病历", to: "/portal/records" },
+      { label: "处方", to: "/portal/prescriptions" },
+      { label: "个人资料", to: "/portal/profile" },
+    ],
+  },
 ];
 
 const activeAppointment = computed(() => registrations.value.find((item) => {
@@ -63,46 +72,42 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <main class="patient-page theme-patient patient-portal-page">
-    <RouterLink class="floating-brand" :to="{ name: 'patient-home' }" aria-label="返回智慧云脑首页">
-      <span>智慧<br />云脑</span>
-      <i></i><i></i>
-    </RouterLink>
+  <div class="patient-page theme-patient patient-portal-page">
+    <CollapsibleSidebar
+      mark="患"
+      title="患者服务中心"
+      :groups="sidebarGroups"
+      :user-name="session?.name || '患者'"
+      :user-meta="`患者 #${session?.userId || '-'}`"
+      @logout="logout"
+    />
 
-    <section class="portal-shell">
-      <aside class="portal-sidebar" aria-label="患者端导航">
-        <RouterLink v-for="item in navItems" :key="item.label" :to="item.to">
-          {{ item.label }} <span>{{ item.index }}</span>
-        </RouterLink>
-      </aside>
-
-      <div class="portal-workspace">
-        <header class="portal-servicebar">
-          <div>
-            <strong>患者服务中心</strong>
-            <span>{{ fieldText(patient, "name", session?.name || "患者") }} · 普通门诊预约</span>
-          </div>
-          <div class="portal-service-actions">
-            <span class="portal-status online">在线</span>
-            <span v-if="activeAppointment" class="portal-status">待就诊</span>
-            <button type="button" @click="refresh">刷新</button>
-            <button type="button" @click="logout">退出</button>
-          </div>
-        </header>
-
-        <div v-if="permissionError" class="portal-message error">
-          <span>{{ permissionError }}</span>
-          <button type="button" @click="logout">切换账号</button>
+    <div class="portal-workspace">
+      <header class="portal-servicebar">
+        <div>
+          <strong>患者服务中心</strong>
+          <span>{{ fieldText(patient, "name", session?.name || "患者") }} · 普通门诊预约</span>
         </div>
-        <div v-else-if="loadError" class="portal-message error">
-          <span>{{ loadError }}</span>
-          <button type="button" @click="refresh">重试</button>
+        <div class="portal-service-actions">
+          <span class="portal-status online">在线</span>
+          <span v-if="activeAppointment" class="portal-status">待就诊</span>
+          <button type="button" @click="refresh">刷新</button>
+          <button type="button" @click="logout">退出</button>
         </div>
+      </header>
 
-        <RouterView :boot-loading="loading" @refresh="refresh" />
+      <div v-if="permissionError" class="portal-message error">
+        <span>{{ permissionError }}</span>
+        <button type="button" @click="logout">切换账号</button>
       </div>
-    </section>
+      <div v-else-if="loadError" class="portal-message error">
+        <span>{{ loadError }}</span>
+        <button type="button" @click="refresh">重试</button>
+      </div>
+
+      <RouterView :boot-loading="loading" @refresh="refresh" />
+    </div>
 
     <SessionExpiredModal :open="sessionExpired" @close="logout" />
-  </main>
+  </div>
 </template>
