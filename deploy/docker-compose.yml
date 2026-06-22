@@ -35,7 +35,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "KINGBASE_PASSWORD=$$DB_PASSWORD /home/kingbase/install/kingbase/bin/ksql -h 127.0.0.1 -p ${DB_INTERNAL_PORT:-54321} -U $$DB_USER -d kingbase -c 'SELECT 1' >/dev/null 2>&1"
+          "if command -v pg_isready >/dev/null 2>&1; then pg_isready -h 127.0.0.1 -p ${DB_INTERNAL_PORT:-54321} -U $$POSTGRES_USER -d $$POSTGRES_DB >/dev/null 2>&1; else KINGBASE_PASSWORD=$$DB_PASSWORD /home/kingbase/install/kingbase/bin/ksql -h 127.0.0.1 -p ${DB_INTERNAL_PORT:-54321} -U $$DB_USER -d kingbase -c 'SELECT 1' >/dev/null 2>&1; fi"
         ]
       interval: 10s
       timeout: 5s
@@ -55,20 +55,32 @@ services:
       DB_USER: ${DB_USERNAME:-scb}
       DB_PASSWORD: ${DB_PASSWORD:-scb_password}
       TZ: Asia/Shanghai
-    entrypoint: ["/bin/bash", "-lc"]
+    entrypoint: ["/bin/sh", "-lc"]
     command:
       - |
         set -e
-        BIN=/home/kingbase/install/kingbase/bin
-        export KINGBASE_PASSWORD="$${DB_PASSWORD}"
-        until "$${BIN}/ksql" -h "$${DB_HOST}" -p "$${DB_PORT}" -U "$${DB_USER}" -d kingbase -c "SELECT 1" >/dev/null 2>&1; do
-          echo "waiting for kingbase..."
-          sleep 2
-        done
-        if ! "$${BIN}/ksql" -h "$${DB_HOST}" -p "$${DB_PORT}" -U "$${DB_USER}" -d kingbase -Atc "SELECT 1 FROM pg_database WHERE datname = '$${DB_NAME}'" | grep -q 1; then
-          "$${BIN}/createdb" -h "$${DB_HOST}" -p "$${DB_PORT}" -U "$${DB_USER}" "$${DB_NAME}"
+        if command -v psql >/dev/null 2>&1; then
+          export PGPASSWORD="$${DB_PASSWORD}"
+          until psql -h "$${DB_HOST}" -p "$${DB_PORT}" -U "$${DB_USER}" -d postgres -c "SELECT 1" >/dev/null 2>&1; do
+            echo "waiting for postgres..."
+            sleep 2
+          done
+          if ! psql -h "$${DB_HOST}" -p "$${DB_PORT}" -U "$${DB_USER}" -d postgres -Atc "SELECT 1 FROM pg_database WHERE datname = '$${DB_NAME}'" | grep -q 1; then
+            createdb -h "$${DB_HOST}" -p "$${DB_PORT}" -U "$${DB_USER}" "$${DB_NAME}"
+          fi
+          psql -v ON_ERROR_STOP=1 -h "$${DB_HOST}" -p "$${DB_PORT}" -U "$${DB_USER}" -d "$${DB_NAME}" -f /sql/kingbase_schema.sql
+        else
+          BIN=/home/kingbase/install/kingbase/bin
+          export KINGBASE_PASSWORD="$${DB_PASSWORD}"
+          until "$${BIN}/ksql" -h "$${DB_HOST}" -p "$${DB_PORT}" -U "$${DB_USER}" -d kingbase -c "SELECT 1" >/dev/null 2>&1; do
+            echo "waiting for kingbase..."
+            sleep 2
+          done
+          if ! "$${BIN}/ksql" -h "$${DB_HOST}" -p "$${DB_PORT}" -U "$${DB_USER}" -d kingbase -Atc "SELECT 1 FROM pg_database WHERE datname = '$${DB_NAME}'" | grep -q 1; then
+            "$${BIN}/createdb" -h "$${DB_HOST}" -p "$${DB_PORT}" -U "$${DB_USER}" "$${DB_NAME}"
+          fi
+          "$${BIN}/ksql" -v ON_ERROR_STOP=1 -h "$${DB_HOST}" -p "$${DB_PORT}" -U "$${DB_USER}" -d "$${DB_NAME}" -f /sql/kingbase_schema.sql
         fi
-        "$${BIN}/ksql" -v ON_ERROR_STOP=1 -h "$${DB_HOST}" -p "$${DB_PORT}" -U "$${DB_USER}" -d "$${DB_NAME}" -f /sql/kingbase_schema.sql
     volumes:
       - ../sql/kingbase_schema.sql:/sql/kingbase_schema.sql:ro
 
@@ -305,6 +317,7 @@ services:
       DIFY_TRIAGE_API_KEY: ${DIFY_TRIAGE_API_KEY:-}
       DIFY_MEDICAL_RECORD_API_KEY: ${DIFY_MEDICAL_RECORD_API_KEY:-}
       DIFY_PRESCRIPTION_CHECK_API_KEY: ${DIFY_PRESCRIPTION_CHECK_API_KEY:-}
+      DIFY_SCHEDULE_API_KEY: ${DIFY_SCHEDULE_API_KEY:-}
       NO_PROXY: ${NO_PROXY:-localhost,127.0.0.1,host.docker.internal,ai-service,docker-nginx-1,docker-api-1,nginx,api}
       no_proxy: ${NO_PROXY:-localhost,127.0.0.1,host.docker.internal,ai-service,docker-nginx-1,docker-api-1,nginx,api}
       TZ: Asia/Shanghai
@@ -315,6 +328,7 @@ services:
         condition: service_completed_successfully
     networks:
       - default
+      - dify
 
   patient-web:
     build:
@@ -381,3 +395,8 @@ volumes:
   kingbase-data:
   rabbitmq-data:
   redis-data:
+
+networks:
+  dify:
+    external: true
+    name: ${DIFY_DOCKER_NETWORK:-docker_default}
