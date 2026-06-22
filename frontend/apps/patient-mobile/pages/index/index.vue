@@ -62,6 +62,13 @@
 
         <text v-if="!slots.length" class="empty">暂无可预约号源，请先由管理端发布排班。</text>
         <text v-else-if="!slotLabels.length" class="empty">暂无匹配推荐科室的号源，可刷新后重试。</text>
+        <view v-if="visibleSlots.length > pageSize" class="pagination">
+          <text>第 {{ slotPage }} / {{ pageCount(visibleSlots) }} 页</text>
+          <view class="pagination-actions">
+            <button class="ghost small" :disabled="slotPage <= 1" @click="changePage('slotPage', visibleSlots, -1)">上一页</button>
+            <button class="ghost small" :disabled="slotPage >= pageCount(visibleSlots)" @click="changePage('slotPage', visibleSlots, 1)">下一页</button>
+          </view>
+        </view>
         <button :disabled="busy || !selectedSlot" @click="createRegistration">确认预约</button>
       </view>
 
@@ -70,7 +77,7 @@
           <text class="section-title">我的挂号</text>
           <button class="ghost small" :disabled="busy" @click="reloadRecords">刷新</button>
         </view>
-        <view v-for="item in registrations" :key="String(item.registrationId)" class="record">
+        <view v-for="item in pagedRegistrations" :key="String(item.registrationId)" class="record">
           <text class="strong">#{{ item.registrationId }} {{ item.departmentName || "科室" }}</text>
           <text>{{ item.doctorName || "医生" }} · {{ item.appointmentTime || "时间待定" }}</text>
           <text class="muted">状态：{{ item.status }}</text>
@@ -82,25 +89,46 @@
             取消预约
           </button>
         </view>
+        <view v-if="registrations.length > pageSize" class="pagination">
+          <text>第 {{ registrationsPage }} / {{ pageCount(registrations) }} 页</text>
+          <view class="pagination-actions">
+            <button class="ghost small" :disabled="registrationsPage <= 1" @click="changePage('registrationsPage', registrations, -1)">上一页</button>
+            <button class="ghost small" :disabled="registrationsPage >= pageCount(registrations)" @click="changePage('registrationsPage', registrations, 1)">下一页</button>
+          </view>
+        </view>
         <text v-if="!registrations.length" class="empty">暂无挂号记录。</text>
       </view>
 
       <view class="panel">
         <text class="section-title">病历</text>
-        <view v-for="item in medicalRecords" :key="String(item.medicalRecordId)" class="record">
+        <view v-for="item in pagedMedicalRecords" :key="String(item.medicalRecordId)" class="record">
           <text class="strong">病历 #{{ item.medicalRecordId }}</text>
           <text>{{ item.diagnosis || "暂无诊断" }}</text>
           <text class="muted">{{ item.treatmentAdvice || "暂无治疗建议" }}</text>
+        </view>
+        <view v-if="medicalRecords.length > pageSize" class="pagination">
+          <text>第 {{ medicalRecordsPage }} / {{ pageCount(medicalRecords) }} 页</text>
+          <view class="pagination-actions">
+            <button class="ghost small" :disabled="medicalRecordsPage <= 1" @click="changePage('medicalRecordsPage', medicalRecords, -1)">上一页</button>
+            <button class="ghost small" :disabled="medicalRecordsPage >= pageCount(medicalRecords)" @click="changePage('medicalRecordsPage', medicalRecords, 1)">下一页</button>
+          </view>
         </view>
         <text v-if="!medicalRecords.length" class="empty">暂无病历记录。</text>
       </view>
 
       <view class="panel">
         <text class="section-title">处方</text>
-        <view v-for="item in prescriptions" :key="String(item.prescriptionId)" class="record">
+        <view v-for="item in pagedPrescriptions" :key="String(item.prescriptionId)" class="record">
           <text class="strong">处方 #{{ item.prescriptionId }}</text>
           <text>风险：{{ item.riskLevel || "未评估" }}</text>
           <text class="muted">状态：{{ item.status || "暂无" }}</text>
+        </view>
+        <view v-if="prescriptions.length > pageSize" class="pagination">
+          <text>第 {{ prescriptionsPage }} / {{ pageCount(prescriptions) }} 页</text>
+          <view class="pagination-actions">
+            <button class="ghost small" :disabled="prescriptionsPage <= 1" @click="changePage('prescriptionsPage', prescriptions, -1)">上一页</button>
+            <button class="ghost small" :disabled="prescriptionsPage >= pageCount(prescriptions)" @click="changePage('prescriptionsPage', prescriptions, 1)">下一页</button>
+          </view>
         </view>
         <text v-if="!prescriptions.length" class="empty">暂无处方记录。</text>
       </view>
@@ -165,6 +193,11 @@ export default {
       registrations: [],
       medicalRecords: [],
       prescriptions: [],
+      slotPage: 1,
+      registrationsPage: 1,
+      medicalRecordsPage: 1,
+      prescriptionsPage: 1,
+      pageSize: 5,
       message: "",
       busy: false
     };
@@ -177,14 +210,26 @@ export default {
       });
       return matched.length ? matched : this.slots;
     },
+    pagedVisibleSlots() {
+      return this.pageItems(this.visibleSlots, this.slotPage);
+    },
     slotLabels() {
-      return this.visibleSlots.map((slot) => this.slotLabel(slot));
+      return this.pagedVisibleSlots.map((slot) => this.slotLabel(slot));
     },
     selectedSlot() {
       if (this.selectedSlotIndex < 0) {
         return null;
       }
-      return this.visibleSlots[this.selectedSlotIndex] || null;
+      return this.pagedVisibleSlots[this.selectedSlotIndex] || null;
+    },
+    pagedRegistrations() {
+      return this.pageItems(this.registrations, this.registrationsPage);
+    },
+    pagedMedicalRecords() {
+      return this.pageItems(this.medicalRecords, this.medicalRecordsPage);
+    },
+    pagedPrescriptions() {
+      return this.pageItems(this.prescriptions, this.prescriptionsPage);
     }
   },
   async onLoad() {
@@ -220,6 +265,19 @@ export default {
     api(path, method = "GET", data = null) {
       return request(this.apiBase, path, method, data, this.token());
     },
+    pageCount(items) {
+      return Math.max(1, Math.ceil((items || []).length / this.pageSize));
+    },
+    pageItems(items, page) {
+      const start = (Math.max(1, page) - 1) * this.pageSize;
+      return (items || []).slice(start, start + this.pageSize);
+    },
+    changePage(key, items, delta) {
+      this[key] = Math.min(Math.max(1, this[key] + delta), this.pageCount(items));
+      if (key === "slotPage") {
+        this.selectedSlotIndex = -1;
+      }
+    },
     async login() {
       await this.run("登录", async () => {
         this.session = await request(this.apiBase, "/patient/login", "POST", {
@@ -235,6 +293,10 @@ export default {
       this.triageResult = null;
       this.slots = [];
       this.selectedSlotIndex = -1;
+      this.slotPage = 1;
+      this.registrationsPage = 1;
+      this.medicalRecordsPage = 1;
+      this.prescriptionsPage = 1;
       this.registrations = [];
       this.medicalRecords = [];
       this.prescriptions = [];
@@ -258,6 +320,7 @@ export default {
       const nextSlots = await this.api("/registration/slots");
       this.slots = Array.isArray(nextSlots) ? nextSlots : [];
       this.selectedSlotIndex = -1;
+      this.slotPage = 1;
     },
     onSlotChange(event) {
       this.selectedSlotIndex = Number(event.detail.value);
@@ -309,6 +372,9 @@ export default {
       this.registrations = Array.isArray(registrations) ? registrations : [];
       this.medicalRecords = Array.isArray(medicalRecords) ? medicalRecords : [];
       this.prescriptions = Array.isArray(prescriptions) ? prescriptions : [];
+      this.registrationsPage = 1;
+      this.medicalRecordsPage = 1;
+      this.prescriptionsPage = 1;
     }
   }
 };
@@ -375,11 +441,23 @@ page {
 }
 
 .user-card,
-.panel-head {
+.panel-head,
+.pagination,
+.pagination-actions {
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
+}
+
+.pagination {
+  gap: 16rpx;
+  color: #5d6b66;
+  font-size: 24rpx;
+}
+
+.pagination-actions {
+  gap: 12rpx;
 }
 
 .section-title {

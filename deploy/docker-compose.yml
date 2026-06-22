@@ -35,7 +35,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "KINGBASE_PASSWORD=$$DB_PASSWORD /home/kingbase/install/kingbase/bin/ksql -h 127.0.0.1 -p ${DB_INTERNAL_PORT:-54321} -U $$DB_USER -d kingbase -c 'SELECT 1' >/dev/null 2>&1"
+          "if command -v pg_isready >/dev/null 2>&1; then pg_isready -h 127.0.0.1 -p ${DB_INTERNAL_PORT:-54321} -U $$POSTGRES_USER -d $$POSTGRES_DB >/dev/null 2>&1; else KINGBASE_PASSWORD=$$DB_PASSWORD /home/kingbase/install/kingbase/bin/ksql -h 127.0.0.1 -p ${DB_INTERNAL_PORT:-54321} -U $$DB_USER -d kingbase -c 'SELECT 1' >/dev/null 2>&1; fi"
         ]
       interval: 10s
       timeout: 5s
@@ -55,20 +55,32 @@ services:
       DB_USER: ${DB_USERNAME:-scb}
       DB_PASSWORD: ${DB_PASSWORD:-scb_password}
       TZ: Asia/Shanghai
-    entrypoint: ["/bin/bash", "-lc"]
+    entrypoint: ["/bin/sh", "-lc"]
     command:
       - |
         set -e
-        BIN=/home/kingbase/install/kingbase/bin
-        export KINGBASE_PASSWORD="$${DB_PASSWORD}"
-        until "$${BIN}/ksql" -h "$${DB_HOST}" -p "$${DB_PORT}" -U "$${DB_USER}" -d kingbase -c "SELECT 1" >/dev/null 2>&1; do
-          echo "waiting for kingbase..."
-          sleep 2
-        done
-        if ! "$${BIN}/ksql" -h "$${DB_HOST}" -p "$${DB_PORT}" -U "$${DB_USER}" -d kingbase -Atc "SELECT 1 FROM pg_database WHERE datname = '$${DB_NAME}'" | grep -q 1; then
-          "$${BIN}/createdb" -h "$${DB_HOST}" -p "$${DB_PORT}" -U "$${DB_USER}" "$${DB_NAME}"
+        if command -v psql >/dev/null 2>&1; then
+          export PGPASSWORD="$${DB_PASSWORD}"
+          until psql -h "$${DB_HOST}" -p "$${DB_PORT}" -U "$${DB_USER}" -d postgres -c "SELECT 1" >/dev/null 2>&1; do
+            echo "waiting for postgres..."
+            sleep 2
+          done
+          if ! psql -h "$${DB_HOST}" -p "$${DB_PORT}" -U "$${DB_USER}" -d postgres -Atc "SELECT 1 FROM pg_database WHERE datname = '$${DB_NAME}'" | grep -q 1; then
+            createdb -h "$${DB_HOST}" -p "$${DB_PORT}" -U "$${DB_USER}" "$${DB_NAME}"
+          fi
+          psql -v ON_ERROR_STOP=1 -h "$${DB_HOST}" -p "$${DB_PORT}" -U "$${DB_USER}" -d "$${DB_NAME}" -f /sql/kingbase_schema.sql
+        else
+          BIN=/home/kingbase/install/kingbase/bin
+          export KINGBASE_PASSWORD="$${DB_PASSWORD}"
+          until "$${BIN}/ksql" -h "$${DB_HOST}" -p "$${DB_PORT}" -U "$${DB_USER}" -d kingbase -c "SELECT 1" >/dev/null 2>&1; do
+            echo "waiting for kingbase..."
+            sleep 2
+          done
+          if ! "$${BIN}/ksql" -h "$${DB_HOST}" -p "$${DB_PORT}" -U "$${DB_USER}" -d kingbase -Atc "SELECT 1 FROM pg_database WHERE datname = '$${DB_NAME}'" | grep -q 1; then
+            "$${BIN}/createdb" -h "$${DB_HOST}" -p "$${DB_PORT}" -U "$${DB_USER}" "$${DB_NAME}"
+          fi
+          "$${BIN}/ksql" -v ON_ERROR_STOP=1 -h "$${DB_HOST}" -p "$${DB_PORT}" -U "$${DB_USER}" -d "$${DB_NAME}" -f /sql/kingbase_schema.sql
         fi
-        "$${BIN}/ksql" -v ON_ERROR_STOP=1 -h "$${DB_HOST}" -p "$${DB_PORT}" -U "$${DB_USER}" -d "$${DB_NAME}" -f /sql/kingbase_schema.sql
     volumes:
       - ../sql/kingbase_schema.sql:/sql/kingbase_schema.sql:ro
 
@@ -155,9 +167,6 @@ services:
       DB_NAME: ${DB_NAME:-smart_cloud_brain}
       DB_USERNAME: ${DB_USERNAME:-scb}
       DB_PASSWORD: ${DB_PASSWORD:-scb_password}
-      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: ${DB_POOL_MAX_SIZE:-4}
-      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: ${DB_POOL_MIN_IDLE:-1}
-      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-smart-cloud-brain-internal-local-token-change}
       JWT_SECRET: ${JWT_SECRET:-smart-cloud-brain-local-secret-please-change}
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
@@ -275,8 +284,6 @@ services:
         condition: service_healthy
       triage-service:
         condition: service_healthy
-      ai-service:
-        condition: service_healthy
     environment:
       <<: *domain-env
       SERVER_PORT: 8090
@@ -284,7 +291,6 @@ services:
       REDIS_PORT: 6379
       DOCTOR_SERVICE_BASE_URL: http://doctor-service:8084
       TRIAGE_SERVICE_BASE_URL: http://triage-service:8086
-      AI_SERVICE_BASE_URL: http://ai-service:8081
 
   ai-service:
     build:
@@ -301,13 +307,10 @@ services:
       DB_NAME: ${DB_NAME:-smart_cloud_brain}
       DB_USERNAME: ${DB_USERNAME:-scb}
       DB_PASSWORD: ${DB_PASSWORD:-scb_password}
-      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: ${DB_POOL_MAX_SIZE:-4}
-      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: ${DB_POOL_MIN_IDLE:-1}
-      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-smart-cloud-brain-internal-local-token-change}
-      AI_PROVIDER: ${AI_PROVIDER:-mock}
+      AI_PROVIDER: ${AI_PROVIDER:-dify}
       AI_TIMEOUT_MS: ${AI_TIMEOUT_MS:-8000}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.deepseek.com}
       OPENAI_MODEL: ${OPENAI_MODEL:-}
       DIFY_BASE_URL: ${DIFY_BASE_URL:-}
       DIFY_API_KEY: ${DIFY_API_KEY:-}
@@ -323,14 +326,9 @@ services:
     depends_on:
       db-init:
         condition: service_completed_successfully
-    healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8081/actuator/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 12
-      start_period: 30s
     networks:
       - default
+      - dify
 
   patient-web:
     build:
@@ -397,3 +395,8 @@ volumes:
   kingbase-data:
   rabbitmq-data:
   redis-data:
+
+networks:
+  dify:
+    external: true
+    name: ${DIFY_DOCKER_NETWORK:-docker_default}

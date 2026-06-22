@@ -1,6 +1,7 @@
 package com.smartcloudbrain.admin.controller;
 
 import com.smartcloudbrain.common.result.Result;
+import com.smartcloudbrain.admin.dto.admin.AccountSaveRequest;
 import com.smartcloudbrain.admin.dto.admin.DepartmentSaveRequest;
 import com.smartcloudbrain.admin.dto.admin.DoctorSaveRequest;
 import com.smartcloudbrain.admin.dto.admin.DrugSaveRequest;
@@ -11,6 +12,7 @@ import com.smartcloudbrain.admin.dto.admin.SchedulePublishRequest;
 import com.smartcloudbrain.admin.dto.admin.SystemDictSaveRequest;
 import com.smartcloudbrain.admin.dto.admin.TriageAssignRequest;
 import com.smartcloudbrain.admin.service.AdminCatalogService;
+import com.smartcloudbrain.aiapi.dto.PromptTestRequest;
 import com.smartcloudbrain.common.security.CurrentUserService;
 import com.smartcloudbrain.common.security.RoleType;
 import jakarta.validation.Valid;
@@ -37,6 +39,24 @@ public class AdminController {
   public Result<?> departments() {
     requireAdmin();
     return Result.success(adminCatalogService.departments());
+  }
+
+  @GetMapping("/account/list")
+  public Result<?> accounts() {
+    requireAdmin();
+    return Result.success(adminCatalogService.accounts());
+  }
+
+  @GetMapping("/role/list")
+  public Result<?> roles() {
+    requireAdmin();
+    return Result.success(adminCatalogService.roles());
+  }
+
+  @PostMapping("/account/save")
+  public Result<?> saveAccount(@Valid @RequestBody AccountSaveRequest request) {
+    requireAdmin();
+    return Result.success(adminCatalogService.saveAccount(request));
   }
 
   @PostMapping("/department/save")
@@ -73,6 +93,18 @@ public class AdminController {
   public Result<?> savePrompt(@Valid @RequestBody PromptTemplateSaveRequest request) {
     requireAdmin();
     return Result.success(adminCatalogService.savePrompt(request));
+  }
+
+  @PostMapping("/prompt-template/test")
+  public Result<?> testPrompt(@Valid @RequestBody PromptTestRequest request) {
+    requireAdmin();
+    return Result.success(adminCatalogService.testPrompt(request));
+  }
+
+  @GetMapping("/ai-log/list")
+  public Result<?> aiLogs() {
+    requireAdmin();
+    return Result.success(adminCatalogService.aiLogs());
   }
 
   @GetMapping("/knowledge/list")

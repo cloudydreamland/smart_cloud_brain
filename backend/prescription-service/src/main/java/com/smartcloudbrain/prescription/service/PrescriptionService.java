@@ -9,6 +9,7 @@ import com.smartcloudbrain.common.error.ErrorCode;
 import com.smartcloudbrain.common.exception.BusinessException;
 import com.smartcloudbrain.common.security.RoleType;
 import com.smartcloudbrain.prescription.entity.MedicalRecord;
+import com.smartcloudbrain.prescription.entity.Drug;
 import com.smartcloudbrain.prescription.entity.Patient;
 import com.smartcloudbrain.prescription.dto.prescription.PrescriptionCreateRequest;
 import com.smartcloudbrain.prescription.entity.Prescription;
@@ -16,15 +17,20 @@ import com.smartcloudbrain.prescription.entity.PrescriptionCheckRecord;
 import com.smartcloudbrain.prescription.entity.PrescriptionItem;
 import com.smartcloudbrain.prescription.event.OutboxEventPublisher;
 import com.smartcloudbrain.prescription.repository.PrescriptionCheckRecordRepository;
+import com.smartcloudbrain.prescription.repository.DrugRepository;
 import com.smartcloudbrain.prescription.repository.PrescriptionItemRepository;
 import com.smartcloudbrain.prescription.repository.PrescriptionRepository;
 import com.smartcloudbrain.prescription.repository.MedicalRecordRepository;
 import com.smartcloudbrain.prescription.repository.PatientRepository;
 import com.smartcloudbrain.common.security.AuthenticatedUser;
 import com.smartcloudbrain.common.security.CurrentUserService;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +43,7 @@ public class PrescriptionService {
   private final PrescriptionCheckRecordRepository checkRecordRepository;
   private final MedicalRecordRepository medicalRecordRepository;
   private final PatientRepository patientRepository;
+  private final DrugRepository drugRepository;
   private final OutboxEventPublisher outboxEventPublisher;
   private final CurrentUserService currentUserService;
 
@@ -47,6 +54,7 @@ public class PrescriptionService {
       PrescriptionCheckRecordRepository checkRecordRepository,
       MedicalRecordRepository medicalRecordRepository,
       PatientRepository patientRepository,
+      DrugRepository drugRepository,
       OutboxEventPublisher outboxEventPublisher,
       CurrentUserService currentUserService
   ) {
@@ -56,6 +64,7 @@ public class PrescriptionService {
     this.checkRecordRepository = checkRecordRepository;
     this.medicalRecordRepository = medicalRecordRepository;
     this.patientRepository = patientRepository;
+    this.drugRepository = drugRepository;
     this.outboxEventPublisher = outboxEventPublisher;
     this.currentUserService = currentUserService;
   }
@@ -69,6 +78,11 @@ public class PrescriptionService {
     }
     Patient patient = patientRepository.findById(request.patientId()).orElse(null);
     MedicalRecord medicalRecord = resolveMedicalRecord(request, doctorId);
+    List<DrugItem> requestedDrugs = request.drugs() == null ? List.of() : request.drugs();
+    Map<String, Drug> catalogDrugs = catalogDrugs(requestedDrugs);
+    List<DrugItem> enrichedDrugs = requestedDrugs.stream()
+        .map(drug -> enrichDrugItem(drug, catalogDrugs.get(normalizeDrugName(drug.drugName()))))
+        .toList();
     PrescriptionCheckResponse response = aiGatewayService.checkPrescription(new PrescriptionCheckRequest(
         request.patientId(),
         doctorId,
@@ -78,7 +92,7 @@ public class PrescriptionService {
         patient == null ? request.patientGender() : patient.getGender(),
         patient == null ? request.allergyHistory() : patient.getAllergyHistory(),
         combinedPastHistory(request.pastHistory(), patient, medicalRecord),
-        request.drugs()
+        enrichedDrugs
     ));
     PrescriptionCheckRecord record = new PrescriptionCheckRecord();
     record.setPatientId(request.patientId());
@@ -86,18 +100,23 @@ public class PrescriptionService {
     record.setRiskLevel(response.riskLevel());
     record.setSuggestions(nullToEmpty(response.suggestions()));
     record.setInteractions(String.join(",", safeInteractions(response)));
-    record.setAiResultJson("{\"degraded\":" + response.degraded() + "}");
+    record.setAiResultJson("{\"degraded\":" + response.degraded()
+        + ",\"provider\":\"" + nullToEmpty(response.provider())
+        + "\",\"model\":\"" + nullToEmpty(response.model()) + "\"}");
     checkRecordRepository.save(record);
-    return Map.of(
-        "riskLevel", response.riskLevel(),
-        "riskDescription", nullToEmpty(response.riskDescription()),
-        "suggestions", nullToEmpty(response.suggestions()),
-        "interactions", safeInteractions(response),
-        "contraindications", response.contraindications() == null ? List.of() : response.contraindications(),
-        "adjustmentSuggestions", response.adjustmentSuggestions() == null ? List.of() : response.adjustmentSuggestions(),
-        "degraded", response.degraded(),
-        "checkRecordId", record.getId()
-    );
+    Map<String, Object> result = new LinkedHashMap<>();
+    result.put("riskLevel", response.riskLevel());
+    result.put("riskDescription", nullToEmpty(response.riskDescription()));
+    result.put("suggestions", nullToEmpty(response.suggestions()));
+    result.put("interactions", safeInteractions(response));
+    result.put("contraindications", response.contraindications() == null ? List.of() : response.contraindications());
+    result.put("adjustmentSuggestions", response.adjustmentSuggestions() == null ? List.of() : response.adjustmentSuggestions());
+    result.put("drugKnowledge", drugKnowledge(requestedDrugs, catalogDrugs));
+    result.put("degraded", response.degraded());
+    result.put("provider", nullToEmpty(response.provider()));
+    result.put("model", nullToEmpty(response.model()));
+    result.put("checkRecordId", record.getId());
+    return result;
   }
 
   @Transactional
@@ -212,6 +231,78 @@ public class PrescriptionService {
     payload.put("type", "PRESCRIPTION_HIGH_RISK");
     payload.put("title", "AI prescription risk alert");
     return payload;
+  }
+
+  private Map<String, Drug> catalogDrugs(List<DrugItem> drugs) {
+    List<String> names = drugs.stream()
+        .map(DrugItem::drugName)
+        .map(this::normalizeDrugName)
+        .filter(name -> !name.isBlank())
+        .toList();
+    if (names.isEmpty()) {
+      return Map.of();
+    }
+    return drugRepository.findByStatusIgnoreCase("ENABLED").stream()
+        .filter(drug -> names.contains(normalizeDrugName(drug.getName())))
+        .collect(Collectors.toMap(
+            drug -> normalizeDrugName(drug.getName()),
+            Function.identity(),
+            (first, ignored) -> first,
+            LinkedHashMap::new
+        ));
+  }
+
+  private DrugItem enrichDrugItem(DrugItem item, Drug catalogDrug) {
+    if (catalogDrug == null) {
+      return item;
+    }
+    return new DrugItem(
+        item.drugName(),
+        item.dosage(),
+        item.frequency(),
+        item.usageMethod(),
+        item.days(),
+        appendDrugKnowledge(item.remark(), catalogDrug)
+    );
+  }
+
+  private String appendDrugKnowledge(String originalRemark, Drug drug) {
+    List<String> details = new ArrayList<>();
+    addDrugDetail(details, "specification", drug.getSpecification());
+    addDrugDetail(details, "contraindication", drug.getContraindication());
+    addDrugDetail(details, "interactionRule", drug.getInteractionRule());
+    if (details.isEmpty()) {
+      return nullToEmpty(originalRemark);
+    }
+    String drugKnowledge = "Drug catalog: " + String.join("; ", details);
+    return originalRemark == null || originalRemark.isBlank()
+        ? drugKnowledge
+        : originalRemark + "\n" + drugKnowledge;
+  }
+
+  private void addDrugDetail(List<String> details, String label, String value) {
+    if (value != null && !value.isBlank()) {
+      details.add(label + "=" + value.trim());
+    }
+  }
+
+  private List<Map<String, Object>> drugKnowledge(List<DrugItem> requestedDrugs, Map<String, Drug> catalogDrugs) {
+    return requestedDrugs.stream()
+        .map(drug -> catalogDrugs.get(normalizeDrugName(drug.drugName())))
+        .filter(Objects::nonNull)
+        .map(drug -> {
+          Map<String, Object> payload = new LinkedHashMap<>();
+          payload.put("name", nullToEmpty(drug.getName()));
+          payload.put("specification", nullToEmpty(drug.getSpecification()));
+          payload.put("contraindication", nullToEmpty(drug.getContraindication()));
+          payload.put("interactionRule", nullToEmpty(drug.getInteractionRule()));
+          return payload;
+        })
+        .toList();
+  }
+
+  private String normalizeDrugName(String name) {
+    return name == null ? "" : name.trim().toLowerCase();
   }
 
   private List<String> safeInteractions(PrescriptionCheckResponse response) {

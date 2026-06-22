@@ -3,7 +3,6 @@ import { computed } from "vue";
 import { storeToRefs } from "pinia";
 import { fieldText, statusClass, statusText, useAuthStore, usePatientWorkflowStore } from "@smart-cloud-brain/shared-api";
 import { EmptyState, LoadingState, StatusTag } from "@smart-cloud-brain/shared-ui";
-import PatientHero from "../components/PatientHero.vue";
 
 defineProps<{ bootLoading?: boolean }>();
 defineEmits<{ refresh: [] }>();
@@ -11,64 +10,85 @@ defineEmits<{ refresh: [] }>();
 const auth = useAuthStore();
 const workflow = usePatientWorkflowStore();
 const { patient, triageHistory, registrations, records, prescriptions, slots } = storeToRefs(workflow);
+
 const latestTriage = computed(() => triageHistory.value[0] ?? workflow.triage ?? null);
-const latestRegistration = computed(() => registrations.value[0] ?? null);
+const activeRegistration = computed(() => registrations.value.find((item) => {
+  const status = fieldText(item, "status");
+  return !["COMPLETED", "CANCELLED"].includes(status);
+}) ?? registrations.value[0] ?? null);
 const latestRecord = computed(() => records.value[0] ?? null);
 const latestPrescription = computed(() => prescriptions.value[0] ?? null);
+const patientName = computed(() => fieldText(patient.value, "name", auth.session?.name || "患者"));
+const nextRoute = computed(() => latestTriage.value ? { name: "patient-doctors" } : { name: "patient-triage" });
+const nextText = computed(() => latestTriage.value ? "查看推荐号源" : "开始 AI 分诊");
 </script>
 
 <template>
-  <PatientHero />
   <LoadingState v-if="bootLoading" title="正在同步患者资料" />
   <template v-else>
-    <section class="patient-card-grid">
-      <div class="patient-summary-card"><span>当前患者</span><strong>{{ fieldText(patient, "name", auth.session?.name || "-") }}</strong></div>
-      <div class="patient-summary-card"><span>推荐科室</span><strong>{{ fieldText(latestTriage, "recommendedDepartment", "待分诊") }}</strong></div>
-      <div class="patient-summary-card"><span>可约号源</span><strong>{{ slots.length }}</strong></div>
-      <div class="patient-summary-card"><span>诊后记录</span><strong>{{ records.length + prescriptions.length }}</strong></div>
-    </section>
-    <section class="patient-dashboard-grid">
-      <div class="stack">
-        <section class="panel">
-          <header class="panel-header"><div class="panel-title"><h2>当前分诊结果</h2><p>用于挂号推荐，医生接诊时会再次确认。</p></div></header>
-          <div class="panel-body">
-            <div v-if="latestTriage" class="clinical-note">
-              <StatusTag :status="statusText(latestTriage.status)" :tone="statusClass(latestTriage.status)" />
-              <h3>{{ fieldText(latestTriage, "recommendedDepartment", "待确认") }}</h3>
-              <p>{{ fieldText(latestTriage, "reason", "暂无说明") }}</p>
-            </div>
-            <EmptyState v-else title="暂无分诊记录" message="请先提交症状信息，系统会给出科室建议。" />
-          </div>
-        </section>
-        <section class="panel">
-          <header class="panel-header"><div class="panel-title"><h2>最近挂号</h2><p>展示当前患者最新预约状态。</p></div></header>
-          <div class="panel-body">
-            <div v-if="latestRegistration" class="record-card">
-              <strong>{{ fieldText(latestRegistration, "departmentName") }} · {{ fieldText(latestRegistration, "doctorName") }}</strong>
-              <span>{{ fieldText(latestRegistration, "appointmentTime") }}</span>
-              <StatusTag :status="statusText(latestRegistration.status)" :tone="statusClass(latestRegistration.status)" />
-            </div>
-            <EmptyState v-else title="暂无挂号" message="选择号源后，预约会显示在这里。" />
-          </div>
-        </section>
+    <section class="portal-page-head">
+      <div>
+        <h1>您好，{{ patientName }}</h1>
+        <p>当前就诊旅程会根据分诊、挂号、病历和处方状态自动推进。</p>
       </div>
-      <aside class="stack">
-        <section class="panel">
-          <header class="panel-header"><div class="panel-title"><h2>下一步</h2><p>按实际就诊流程继续。</p></div></header>
-          <div class="panel-body toolbar">
-            <RouterLink class="button primary" :to="latestTriage ? '/doctors' : '/triage'">{{ latestTriage ? "查看号源" : "提交分诊" }}</RouterLink>
-            <button type="button" @click="$emit('refresh')">刷新资料</button>
+      <RouterLink class="patient-primary" :to="nextRoute">{{ nextText }}</RouterLink>
+    </section>
+
+    <section class="portal-metrics">
+      <article><span>当前患者</span><strong>{{ patientName }}</strong></article>
+      <article><span>推荐科室</span><strong>{{ fieldText(latestTriage, "recommendedDepartment", "待分诊") }}</strong></article>
+      <article><span>可预约号源</span><strong>{{ slots.length }} 个</strong></article>
+      <article><span>诊后资料</span><strong>{{ records.length + prescriptions.length }} 份</strong></article>
+    </section>
+
+    <section class="portal-two-column">
+      <article class="portal-feature-card">
+        <h2>完成预约的下一步</h2>
+        <p v-if="latestTriage">系统已生成推荐科室，优先展示与分诊结果匹配的医生号源。医生接诊时仍会再次确认诊断。</p>
+        <p v-else>描述症状后，系统会生成推荐科室和安全提示，并把结果带入号源筛选。</p>
+        <RouterLink class="patient-primary" :to="nextRoute">{{ nextText }}</RouterLink>
+        <div class="journey-rail">
+          <span class="done"></span>
+          <span :class="{ done: latestTriage }"></span>
+          <span :class="{ done: activeRegistration }"></span>
+          <span :class="{ done: latestRecord || latestPrescription }"></span>
+        </div>
+      </article>
+
+      <section class="portal-list-card">
+        <div v-if="latestTriage" class="portal-list-row">
+          <div>
+            <strong>当前分诊结果</strong>
+            <p>{{ fieldText(latestTriage, "recommendedDepartment", "待确认") }} · {{ fieldText(latestTriage, "reason", "暂无说明") }}</p>
           </div>
-        </section>
-        <section class="panel">
-          <header class="panel-header"><div class="panel-title"><h2>诊后信息</h2><p>病历和处方由医生保存后同步。</p></div></header>
-          <div class="panel-body stack">
-            <div v-if="latestRecord" class="clinical-note"><strong>{{ fieldText(latestRecord, "diagnosis") }}</strong><p>{{ fieldText(latestRecord, "chiefComplaint") }}</p></div>
-            <div v-if="latestPrescription" class="clinical-note"><strong>处方 #{{ fieldText(latestPrescription, "prescriptionId") }}</strong><p>风险等级：{{ statusText(latestPrescription.riskLevel, "未审核") }}</p></div>
-            <EmptyState v-if="!latestRecord && !latestPrescription" title="暂无诊后记录" />
+          <StatusTag :status="statusText(latestTriage.status)" :tone="statusClass(latestTriage.status)" />
+        </div>
+        <div v-else class="portal-list-row">
+          <div><strong>分诊建议</strong><p>尚未提交本次症状。</p></div>
+          <span class="portal-status warning">待处理</span>
+        </div>
+
+        <div v-if="activeRegistration" class="portal-list-row">
+          <div>
+            <strong>最近挂号</strong>
+            <p>{{ fieldText(activeRegistration, "departmentName") }} · {{ fieldText(activeRegistration, "doctorName") }} · {{ fieldText(activeRegistration, "appointmentTime", "待定") }}</p>
           </div>
-        </section>
-      </aside>
+          <StatusTag :status="statusText(activeRegistration.status)" :tone="statusClass(activeRegistration.status)" />
+        </div>
+        <div v-else class="portal-list-row">
+          <div><strong>挂号记录</strong><p>暂无未完成挂号。</p></div>
+          <span class="portal-status">0 条</span>
+        </div>
+
+        <div v-if="latestRecord || latestPrescription" class="portal-list-row">
+          <div>
+            <strong>诊后资料</strong>
+            <p>{{ fieldText(latestRecord, "diagnosis", "病历待同步") }} · 处方 {{ latestPrescription ? `#${fieldText(latestPrescription, "prescriptionId")}` : "待同步" }}</p>
+          </div>
+          <RouterLink class="portal-link" :to="{ name: 'patient-records' }">查看</RouterLink>
+        </div>
+        <EmptyState v-if="!latestTriage && !activeRegistration && !latestRecord && !latestPrescription" title="暂无就诊记录" message="完成分诊后，旅程状态会显示在这里。" />
+      </section>
     </section>
   </template>
 </template>

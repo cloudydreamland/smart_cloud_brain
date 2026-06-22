@@ -7,21 +7,25 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.smartcloudbrain.admin.client.InternalDoctorClient;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartcloudbrain.admin.client.InternalAiClient;
+import com.smartcloudbrain.admin.client.InternalDoctorClient;
 import com.smartcloudbrain.admin.client.InternalTriageClient;
 import com.smartcloudbrain.admin.dto.admin.SchedulePublishRequest;
 import com.smartcloudbrain.admin.dto.admin.ScheduleGenerateRequest;
+import com.smartcloudbrain.admin.dto.admin.AccountSaveRequest;
 import com.smartcloudbrain.admin.dto.admin.DepartmentSaveRequest;
 import com.smartcloudbrain.admin.dto.admin.DoctorSaveRequest;
 import com.smartcloudbrain.admin.dto.admin.KnowledgeEntrySaveRequest;
 import com.smartcloudbrain.admin.dto.admin.PromptTemplateSaveRequest;
+import com.smartcloudbrain.admin.entity.AdminUser;
 import com.smartcloudbrain.admin.entity.AiScheduleSuggestion;
 import com.smartcloudbrain.admin.entity.Department;
 import com.smartcloudbrain.admin.entity.Drug;
 import com.smartcloudbrain.admin.entity.KnowledgeEntry;
 import com.smartcloudbrain.admin.entity.PromptTemplate;
 import com.smartcloudbrain.admin.entity.Doctor;
+import com.smartcloudbrain.admin.repository.AdminUserRepository;
 import com.smartcloudbrain.admin.repository.AiScheduleSuggestionRepository;
 import com.smartcloudbrain.admin.repository.DepartmentRepository;
 import com.smartcloudbrain.admin.repository.DoctorRepository;
@@ -43,6 +47,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -55,10 +60,12 @@ class AdminCatalogServiceTest {
   @Mock private KnowledgeEntryRepository knowledgeEntryRepository;
   @Mock private SystemDictRepository systemDictRepository;
   @Mock private AiScheduleSuggestionRepository aiScheduleSuggestionRepository;
+  @Mock private AdminUserRepository adminUserRepository;
   @Mock private InternalDoctorClient internalDoctorClient;
   @Mock private InternalAiClient internalAiClient;
   @Mock private InternalTriageClient internalTriageClient;
   @Mock private PasswordHashService passwordHashService;
+  @Spy private ObjectMapper objectMapper = new ObjectMapper();
   @InjectMocks private AdminCatalogService adminCatalogService;
 
   @Test
@@ -128,6 +135,49 @@ class AdminCatalogServiceTest {
     assertEquals("Doctor Eight", assigned.get("assignedDoctorName"));
     assertEquals("CLOSED", closed.get("status"));
     assertNotNull(closed.get("assignedDoctorName"));
+  }
+
+  @Test
+  void managesAdminAndDoctorAccountsWithRolePermissions() {
+    AdminUser admin = new AdminUser();
+    admin.setId(1L);
+    admin.setUsername("admin2");
+    admin.setName("Admin Two");
+    admin.setStatus("ENABLED");
+    Doctor doctor = new Doctor();
+    doctor.setId(2L);
+    doctor.setName("Doctor Two");
+    doctor.setPhone("13800000002");
+    doctor.setDepartmentId(3L);
+    doctor.setStatus("ENABLED");
+    Department department = new Department();
+    department.setId(3L);
+    department.setName("Cardiology");
+
+    when(adminUserRepository.findAll()).thenReturn(List.of(admin));
+    when(doctorRepository.findAll()).thenReturn(List.of(doctor));
+    when(departmentRepository.findById(3L)).thenReturn(Optional.of(department));
+
+    List<Map<String, Object>> accounts = adminCatalogService.accounts();
+
+    assertEquals(2, accounts.size());
+    assertEquals("ADMIN", accounts.get(0).get("role"));
+    assertEquals("DOCTOR", accounts.get(1).get("role"));
+    assertEquals(3, adminCatalogService.roles().size());
+
+    when(adminUserRepository.findByUsername("newadmin")).thenReturn(Optional.empty());
+    when(passwordHashService.encode("123456")).thenReturn("{bcrypt}hash");
+    when(adminUserRepository.save(any(AdminUser.class))).thenAnswer(invocation -> {
+      AdminUser value = invocation.getArgument(0);
+      value.setId(9L);
+      return value;
+    });
+
+    Map<String, Object> saved = adminCatalogService.saveAccount(new AccountSaveRequest(
+        null, "ADMIN", "newadmin", "New Admin", "123456", null, null, null, "ENABLED"));
+
+    assertEquals("ADMIN", saved.get("role"));
+    assertEquals("newadmin", saved.get("account"));
   }
 
   @Test
@@ -265,8 +315,8 @@ class AdminCatalogServiceTest {
     assertEquals("新医生", adminCatalogService.saveDoctor(
         new DoctorSaveRequest(null, "新医生", "2", "", 3L, null, null, null)).get("name"));
     assertEquals(1, adminCatalogService.prompts().size());
-    assertEquals("SCHEDULE", adminCatalogService.savePrompt(
-        new PromptTemplateSaveRequest(null, "SCHEDULE", null, "模板", "内容", null, null, null)).get("taskType"));
+    assertEquals("TRIAGE", adminCatalogService.savePrompt(
+        new PromptTemplateSaveRequest(null, "TRIAGE", null, "模板", "内容", null, null, null)).get("taskType"));
     assertEquals(1, adminCatalogService.knowledgeEntries().size());
     assertEquals("胸痛", adminCatalogService.saveKnowledgeEntry(
         new KnowledgeEntrySaveRequest(null, "胸痛", "胸痛", null, "就诊", "CARDIOLOGY", null)).get("title"));

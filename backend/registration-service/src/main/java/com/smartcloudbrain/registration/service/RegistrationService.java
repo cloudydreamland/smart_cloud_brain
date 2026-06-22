@@ -162,6 +162,7 @@ public class RegistrationService {
     view.put("doctorName", doctor == null ? "" : doctor.getName());
     view.put("departmentId", registration.getDepartmentId());
     view.put("departmentName", department == null ? "" : department.getName());
+    view.put("createdAt", registration.getCreatedAt() == null ? "" : registration.getCreatedAt().toString());
     view.put("appointmentTime", registration.getAppointmentTime() == null ? "" : registration.getAppointmentTime().toString());
     view.put("slotId", registration.getSlotId() == null ? 0L : registration.getSlotId());
     view.put("status", registration.getStatus());

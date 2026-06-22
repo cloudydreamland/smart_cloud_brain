@@ -6,6 +6,7 @@ import PatientLoginPage from "../patient-web/src/pages/LoginPage.vue";
 import TriagePage from "../patient-web/src/pages/TriagePage.vue";
 import ConsultationPage from "../doctor-web/src/pages/ConsultationPage.vue";
 import SchedulePage from "../admin-web/src/pages/SchedulePage.vue";
+import AccountsPage from "../admin-web/src/pages/AccountsPage.vue";
 import { useDoctorWorkflowStore } from "../../packages/shared-api/src/index";
 
 vi.mock("vue-router", () => ({
@@ -30,6 +31,11 @@ describe("closed-loop page smoke tests", () => {
     expect(wrapper.text()).toContain("提交分诊");
   });
 
+  it("keeps patient triage submit available before validation", () => {
+    const wrapper = shallowMount(TriagePage);
+    expect((wrapper.get("button.primary").element as HTMLButtonElement).disabled).toBe(false);
+  });
+
   it("renders doctor consultation", () => {
     const workflow = useDoctorWorkflowStore();
     workflow.registrations = [{ registrationId: 1, patientId: 1, patientName: "患者" }];
@@ -42,5 +48,11 @@ describe("closed-loop page smoke tests", () => {
     const wrapper = shallowMount(SchedulePage);
     expect(wrapper.text()).toContain("智能排班与号源发布");
     expect(wrapper.text()).toContain("生成建议");
+  });
+
+  it("renders administrator account permissions", () => {
+    const wrapper = shallowMount(AccountsPage);
+    expect(wrapper.text()).toContain("账户与权限管理");
+    expect(wrapper.text()).toContain("新增账户");
   });
 });

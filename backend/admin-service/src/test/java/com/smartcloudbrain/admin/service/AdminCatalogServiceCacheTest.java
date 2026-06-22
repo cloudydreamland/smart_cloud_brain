@@ -8,8 +8,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.smartcloudbrain.admin.client.InternalDoctorClient;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartcloudbrain.admin.client.InternalAiClient;
+import com.smartcloudbrain.admin.client.InternalDoctorClient;
 import com.smartcloudbrain.admin.client.InternalTriageClient;
 import com.smartcloudbrain.admin.config.AdminRedisCacheConfig;
 import com.smartcloudbrain.admin.dto.admin.DrugSaveRequest;
@@ -18,6 +19,7 @@ import com.smartcloudbrain.admin.entity.Drug;
 import com.smartcloudbrain.admin.entity.KnowledgeEntry;
 import com.smartcloudbrain.admin.entity.SystemDict;
 import com.smartcloudbrain.admin.repository.AiScheduleSuggestionRepository;
+import com.smartcloudbrain.admin.repository.AdminUserRepository;
 import com.smartcloudbrain.admin.repository.DepartmentRepository;
 import com.smartcloudbrain.admin.repository.DoctorRepository;
 import com.smartcloudbrain.admin.repository.DrugRepository;
@@ -173,6 +175,7 @@ class AdminCatalogServiceCacheTest {
         KnowledgeEntryRepository knowledgeEntryRepository,
         SystemDictRepository systemDictRepository,
         AiScheduleSuggestionRepository aiScheduleSuggestionRepository,
+        AdminUserRepository adminUserRepository,
         InternalDoctorClient internalDoctorClient,
         InternalAiClient internalAiClient,
         InternalTriageClient internalTriageClient,
@@ -186,10 +189,12 @@ class AdminCatalogServiceCacheTest {
           knowledgeEntryRepository,
           systemDictRepository,
           aiScheduleSuggestionRepository,
+          adminUserRepository,
           internalDoctorClient,
           internalAiClient,
           internalTriageClient,
-          passwordHashService
+          passwordHashService,
+          new ObjectMapper()
       );
     }
 
@@ -200,6 +205,7 @@ class AdminCatalogServiceCacheTest {
     @Bean KnowledgeEntryRepository knowledgeEntryRepository() { return mock(KnowledgeEntryRepository.class); }
     @Bean SystemDictRepository systemDictRepository() { return mock(SystemDictRepository.class); }
     @Bean AiScheduleSuggestionRepository aiScheduleSuggestionRepository() { return mock(AiScheduleSuggestionRepository.class); }
+    @Bean AdminUserRepository adminUserRepository() { return mock(AdminUserRepository.class); }
     @Bean InternalDoctorClient internalDoctorClient() { return mock(InternalDoctorClient.class); }
     @Bean InternalAiClient internalAiClient() { return mock(InternalAiClient.class); }
     @Bean InternalTriageClient internalTriageClient() { return mock(InternalTriageClient.class); }

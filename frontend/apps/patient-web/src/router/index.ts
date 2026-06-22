@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import { useAuthStore } from "@smart-cloud-brain/shared-api";
 import PatientPublicLayout from "../layouts/PatientPublicLayout.vue";
 import PatientPortalLayout from "../layouts/PatientPortalLayout.vue";
+import HomePage from "../pages/HomePage.vue";
 import LoginPage from "../pages/LoginPage.vue";
 import RegisterPage from "../pages/RegisterPage.vue";
 import PatientDashboard from "../pages/PatientDashboard.vue";
@@ -17,6 +18,15 @@ const router = createRouter({
   routes: [
     {
       path: "/",
+      component: PatientPublicLayout,
+      children: [
+        { path: "", name: "patient-home", component: HomePage },
+        { path: "login", name: "patient-login", component: LoginPage },
+        { path: "register", name: "patient-register", component: RegisterPage },
+      ],
+    },
+    {
+      path: "/portal",
       component: PatientPortalLayout,
       meta: { requiresAuth: true },
       children: [
@@ -29,14 +39,12 @@ const router = createRouter({
         { path: "profile", name: "patient-profile", component: ProfilePage },
       ],
     },
-    {
-      path: "/",
-      component: PatientPublicLayout,
-      children: [
-        { path: "login", name: "patient-login", component: LoginPage },
-        { path: "register", name: "patient-register", component: RegisterPage },
-      ],
-    },
+    { path: "/triage", redirect: "/portal/triage" },
+    { path: "/doctors", redirect: "/portal/doctors" },
+    { path: "/appointments", redirect: "/portal/appointments" },
+    { path: "/records", redirect: "/portal/records" },
+    { path: "/prescriptions", redirect: "/portal/prescriptions" },
+    { path: "/profile", redirect: "/portal/profile" },
   ],
 });
 

@@ -51,11 +51,11 @@ refresh();
           <thead><tr><th>病历号</th><th>主诉</th><th>诊断</th><th>方式</th><th class="actions-cell">操作</th></tr></thead>
           <tbody>
             <tr v-for="item in records" :key="String(item.medicalRecordId)">
-              <td>#{{ fieldText(item, "medicalRecordId") }}</td>
-              <td>{{ fieldText(item, "chiefComplaint") }}</td>
-              <td>{{ fieldText(item, "diagnosis") }}</td>
-              <td>{{ item.aiGenerated ? "智能草稿确认" : "医生录入" }}</td>
-              <td><button type="button" @click="open(item)">详情</button></td>
+              <td data-label="病历号">#{{ fieldText(item, "medicalRecordId") }}</td>
+              <td data-label="主诉">{{ fieldText(item, "chiefComplaint") }}</td>
+              <td data-label="诊断">{{ fieldText(item, "diagnosis") }}</td>
+              <td data-label="方式">{{ item.aiGenerated ? "智能草稿确认" : "医生录入" }}</td>
+              <td data-label="操作"><button type="button" @click="open(item)">详情</button></td>
             </tr>
           </tbody>
         </table>

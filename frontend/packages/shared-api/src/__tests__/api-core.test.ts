@@ -65,6 +65,9 @@ describe("shared api request handling", () => {
       api.createPrescription("jwt", { patientId: 1, medicalRecordId: 2, drugs: [] }),
       api.notifications("jwt", "UNREAD"),
       api.markNotificationRead("jwt", 1),
+      api.accounts("jwt"),
+      api.roles("jwt"),
+      api.saveAccount("jwt", { role: "ADMIN", account: "admin2", name: "管理员", password: "123456" }),
       api.adminDepartments("jwt"),
       api.saveDepartment("jwt", { code: "CARD", name: "Cardiology" }),
       api.saveDoctor("jwt", { name: "doctor", phone: "13900000001", departmentId: 1 }),
@@ -72,6 +75,7 @@ describe("shared api request handling", () => {
       api.saveDrug("jwt", { name: "aspirin" }),
       api.prompts("jwt"),
       api.savePrompt("jwt", { taskType: "TRIAGE", templateName: "default", templateContent: "content" }),
+      api.testPrompt("jwt", { taskType: "TRIAGE", templateContent: "content", outputSchema: "{\"type\":\"object\"}" }),
       api.knowledgeEntries("jwt"),
       api.saveKnowledgeEntry("jwt", { title: "cold", symptoms: "cough", advice: "rest" }),
       api.dicts("jwt", "gender"),
@@ -90,6 +94,8 @@ describe("shared api request handling", () => {
 
     expect(fetch.mock.calls.length).toBeGreaterThan(30);
     expect(fetch.mock.calls.map((call) => String(call[0])).join("\n")).toContain("/admin/schedule/publish");
+    expect(fetch.mock.calls.map((call) => String(call[0])).join("\n")).toContain("/admin/prompt-template/test");
+    expect(fetch.mock.calls.map((call) => String(call[0])).join("\n")).toContain("/admin/account/list");
   });
 
   it("throws business, http, network, empty-body and invalid-json errors", async () => {

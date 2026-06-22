@@ -38,7 +38,7 @@ public class AiServiceConfig {
     }
 
     private String normalize(String provider) {
-      return provider == null || provider.isBlank() ? "mock" : provider.trim().toLowerCase();
+      return provider == null || provider.isBlank() ? "dify" : provider.trim().toLowerCase();
     }
 
     private void require(String value, String name, String provider) {
