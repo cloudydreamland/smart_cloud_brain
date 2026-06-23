@@ -964,6 +964,93 @@
   box-shadow: 0 0 0 2px rgba(37, 99, 235, .12);
 }
 
+.patient-portal-page .slot-schedule {
+  display: grid;
+  gap: 22px;
+}
+
+.patient-portal-page .slot-date-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.patient-portal-page .slot-date-option {
+  display: grid;
+  gap: 4px;
+  min-height: 92px;
+  padding: 14px 16px;
+  border: 1px solid var(--hospital-line);
+  background: #fff;
+  color: var(--hospital-text);
+  text-align: left;
+}
+
+.patient-portal-page .slot-date-option.active {
+  border-color: var(--hospital-blue);
+  background: #f0f7ff;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, .12);
+}
+
+.patient-portal-page .slot-date-option span,
+.patient-portal-page .slot-date-option em {
+  color: var(--hospital-muted);
+  font-size: 13px;
+  font-style: normal;
+}
+
+.patient-portal-page .doctor-schedule-list {
+  display: grid;
+  gap: 18px;
+}
+
+.patient-portal-page .doctor-schedule-card {
+  border: 1px solid var(--hospital-line);
+  background: #fff;
+}
+
+.patient-portal-page .doctor-schedule-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--hospital-line);
+  background: #f7fbff;
+}
+
+.patient-portal-page .doctor-schedule-header div {
+  display: grid;
+  gap: 4px;
+}
+
+.patient-portal-page .doctor-schedule-header strong {
+  font-size: 18px;
+}
+
+.patient-portal-page .doctor-schedule-header span,
+.patient-portal-page .doctor-period-label span {
+  color: var(--hospital-muted);
+  font-size: 13px;
+}
+
+.patient-portal-page .doctor-period-list {
+  display: grid;
+  gap: 18px;
+  padding: 20px 22px 22px;
+}
+
+.patient-portal-page .doctor-period-group {
+  display: grid;
+  gap: 12px;
+}
+
+.patient-portal-page .doctor-period-label {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
 .patient-portal-page .panel {
   margin: 42px clamp(34px, 5vw, 72px) 64px;
   border-radius: 0;
@@ -1147,6 +1234,11 @@
   }
 
   .patient-portal-page .slot-date-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .patient-portal-page .doctor-schedule-header {
     align-items: flex-start;
     flex-direction: column;
   }
