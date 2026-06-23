@@ -204,6 +204,171 @@
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 
+/* ── TopBar buttons ── */
+.topbar-meta {
+  height: 32px; padding: 0 12px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--surface); font-size: 12px; font-weight: 600; color: var(--ink);
+  display: inline-flex; align-items: center; cursor: default;
+}
+
+.topbar-refresh {
+  height: 32px; padding: 0 12px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--surface); font-size: 12px; font-weight: 600; color: var(--ink);
+  transition: background 0.15s;
+}
+
+.topbar-refresh:hover { background: var(--surface-alt); }
+
+.topbar-logout {
+  height: 32px; padding: 0 12px; border: 1px solid #fecaca; border-radius: 8px;
+  background: var(--surface); font-size: 12px; font-weight: 600; color: #dc2626;
+  transition: background 0.15s;
+}
+
+.topbar-logout:hover { background: #fef2f2; }
+
+/* ── Dashboard layout ── */
+.dashboard {
+  max-width: 1200px;
+  display: grid;
+  gap: 20px;
+}
+
+/* ── Metric Cards ── */
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.metric-card {
+  background: var(--surface);
+  border: 1px solid rgba(229, 231, 235, 0.8);
+  border-radius: 14px;
+  padding: 16px 18px;
+  display: grid;
+  gap: 8px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+}
+
+.metric-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.metric-value {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.metric-value.blue { color: #2563eb; }
+.metric-value.orange { color: #ea580c; }
+
+/* ── Panel ── */
+.panel {
+  background: var(--surface);
+  border: 1px solid rgba(229, 231, 235, 0.8);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.panel-header strong { font-size: 14px; }
+.panel-header a { font-size: 12px; color: #2563eb; font-weight: 600; }
+.panel-header a:hover { text-decoration: underline; }
+
+/* ── Quick Actions ── */
+.quick-actions {
+  padding: 14px 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.quick-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+
+.quick-btn:hover {
+  background: #eff6ff;
+  color: #2563eb;
+  border-color: #2563eb;
+}
+
+/* ── Content Grid ── */
+.content-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.content-grid table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.content-grid th {
+  text-align: left;
+  color: var(--muted);
+  font-weight: 600;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  background: #f3f5f8;
+  font-size: 12px;
+}
+
+.content-grid td {
+  padding: 11px 14px;
+  border-bottom: 1px solid #f0f1f3;
+}
+
+.content-grid tr:hover td { background: #fafbfc; }
+
+/* ── Status Tags ── */
+.status-tag {
+  display: inline-flex;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.status-tag.done { background: #ecfdf5; color: #16a34a; }
+.status-tag.cancelled { background: #fef2f2; color: #dc2626; }
+.status-tag.pending { background: #fff7ed; color: #ea580c; }
+.status-tag.active { background: #eff6ff; color: #2563eb; }
+
 /* ── Table enhancements ── */
 .table-scroll table,
 .catalog-layout table {
