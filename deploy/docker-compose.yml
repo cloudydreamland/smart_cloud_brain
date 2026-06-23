@@ -137,6 +137,8 @@ services:
       NOTIFICATION_SERVICE_URI: http://notification-service:8089
       NOTIFICATION_WS_URI: ws://notification-service:8089
       ADMIN_SERVICE_URI: http://admin-service:8090
+      NO_PROXY: ${NO_PROXY:-localhost,127.0.0.1,auth-service,patient-service,doctor-service,registration-service,triage-service,medical-record-service,prescription-service,notification-service,admin-service,ai-service}
+      no_proxy: ${NO_PROXY:-localhost,127.0.0.1,auth-service,patient-service,doctor-service,registration-service,triage-service,medical-record-service,prescription-service,notification-service,admin-service,ai-service}
       TZ: Asia/Shanghai
     ports:
       - "${GATEWAY_PORT:-18080}:8080"

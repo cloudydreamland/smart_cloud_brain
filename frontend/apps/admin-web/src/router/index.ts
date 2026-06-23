@@ -1,22 +1,27 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { useAuthStore } from "@smart-cloud-brain/shared-api";
-import AdminLoginPage from "../pages/AdminLoginPage.vue";
+
+/* Layout（首屏必需，不懒加载） */
 import AdminWorkspaceLayout from "../layouts/AdminWorkspaceLayout.vue";
-import AdminDashboard from "../pages/AdminDashboard.vue";
-import DepartmentsPage from "../pages/DepartmentsPage.vue";
-import DoctorsPage from "../pages/DoctorsPage.vue";
-import DrugsPage from "../pages/DrugsPage.vue";
-import KnowledgePage from "../pages/KnowledgePage.vue";
-import PromptsPage from "../pages/PromptsPage.vue";
-import DictsPage from "../pages/DictsPage.vue";
-import SchedulePage from "../pages/SchedulePage.vue";
-import TriageDeskPage from "../pages/TriageDeskPage.vue";
-import SearchPage from "../pages/SearchPage.vue";
-import AccountsPage from "../pages/AccountsPage.vue";
-import DevicesPage from "../pages/DevicesPage.vue";
-import PatientsPage from "../pages/PatientsPage.vue";
-import StatisticsPage from "../pages/StatisticsPage.vue";
-import PermissionsPage from "../pages/PermissionsPage.vue";
+
+/* 页面组件（懒加载，访问时才加载） */
+const AdminLoginPage = () => import("../pages/AdminLoginPage.vue");
+const AdminDashboard = () => import("../pages/AdminDashboard.vue");
+const DepartmentsPage = () => import("../pages/DepartmentsPage.vue");
+const DoctorsPage = () => import("../pages/DoctorsPage.vue");
+const DrugsPage = () => import("../pages/DrugsPage.vue");
+const KnowledgePage = () => import("../pages/KnowledgePage.vue");
+const PromptsPage = () => import("../pages/PromptsPage.vue");
+const DictsPage = () => import("../pages/DictsPage.vue");
+const SchedulePage = () => import("../pages/SchedulePage.vue");
+const TriageDeskPage = () => import("../pages/TriageDeskPage.vue");
+const SearchPage = () => import("../pages/SearchPage.vue");
+const AccountsPage = () => import("../pages/AccountsPage.vue");
+const DevicesPage = () => import("../pages/DevicesPage.vue");
+const PatientsPage = () => import("../pages/PatientsPage.vue");
+const StatisticsPage = () => import("../pages/StatisticsPage.vue");
+const PermissionsPage = () => import("../pages/PermissionsPage.vue");
+const NotFound = () => import("../pages/NotFound.vue");
 
 const router = createRouter({
   history: createWebHistory(),
@@ -44,6 +49,8 @@ const router = createRouter({
         { path: "search", name: "admin-search", component: SearchPage },
       ],
     },
+    /* 404 兜底 */
+    { path: "/:pathMatch(.*)*", name: "not-found", component: NotFound },
   ],
 });
 

@@ -1,15 +1,20 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { useAuthStore } from "@smart-cloud-brain/shared-api";
-import DoctorLoginPage from "../pages/DoctorLoginPage.vue";
+
+/* Layout（首屏必需，不懒加载） */
 import DoctorWorkspaceLayout from "../layouts/DoctorWorkspaceLayout.vue";
-import DoctorDashboard from "../pages/DoctorDashboard.vue";
-import QueuePage from "../pages/QueuePage.vue";
-import ConsultationPage from "../pages/ConsultationPage.vue";
-import RecordsPage from "../pages/RecordsPage.vue";
-import PrescriptionsPage from "../pages/PrescriptionsPage.vue";
-import NotificationsPage from "../pages/NotificationsPage.vue";
-import DoctorSettingsPage from "../pages/DoctorSettingsPage.vue";
-import SchedulePage from "../pages/SchedulePage.vue";
+
+/* 页面组件（懒加载，访问时才加载） */
+const DoctorLoginPage = () => import("../pages/DoctorLoginPage.vue");
+const DoctorDashboard = () => import("../pages/DoctorDashboard.vue");
+const QueuePage = () => import("../pages/QueuePage.vue");
+const ConsultationPage = () => import("../pages/ConsultationPage.vue");
+const RecordsPage = () => import("../pages/RecordsPage.vue");
+const PrescriptionsPage = () => import("../pages/PrescriptionsPage.vue");
+const NotificationsPage = () => import("../pages/NotificationsPage.vue");
+const DoctorSettingsPage = () => import("../pages/DoctorSettingsPage.vue");
+const SchedulePage = () => import("../pages/SchedulePage.vue");
+const NotFound = () => import("../pages/NotFound.vue");
 
 const router = createRouter({
   history: createWebHistory(),
@@ -30,6 +35,8 @@ const router = createRouter({
         { path: "settings", name: "doctor-settings", component: DoctorSettingsPage },
       ],
     },
+    /* 404 兜底 */
+    { path: "/:pathMatch(.*)*", name: "not-found", component: NotFound },
   ],
 });
 

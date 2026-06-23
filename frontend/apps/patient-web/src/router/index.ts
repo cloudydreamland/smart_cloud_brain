@@ -1,22 +1,27 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { useAuthStore } from "@smart-cloud-brain/shared-api";
+
+/* Layout（首屏必需，不懒加载） */
 import PatientPublicLayout from "../layouts/PatientPublicLayout.vue";
 import PatientPortalLayout from "../layouts/PatientPortalLayout.vue";
-import AppointmentsPage from "../pages/AppointmentsPage.vue";
-import DepartmentsPage from "../pages/DepartmentsPage.vue";
-import DoctorSlotsPage from "../pages/DoctorSlotsPage.vue";
-import HomePage from "../pages/HomePage.vue";
-import LoginPage from "../pages/LoginPage.vue";
-import MedicalRecordsPage from "../pages/MedicalRecordsPage.vue";
-import PatientDashboard from "../pages/PatientDashboard.vue";
-import PrescriptionsPage from "../pages/PrescriptionsPage.vue";
-import ProfilePage from "../pages/ProfilePage.vue";
-import PublicInfoPage from "../pages/PublicInfoPage.vue";
-import PublicSearchPage from "../pages/PublicSearchPage.vue";
-import RegisterPage from "../pages/RegisterPage.vue";
 import StaticPage from "../pages/StaticPage.vue";
-import TriagePage from "../pages/TriagePage.vue";
-import VisitPeoplePage from "../pages/VisitPeoplePage.vue";
+
+/* 页面组件（懒加载，访问时才加载） */
+const HomePage = () => import("../pages/HomePage.vue");
+const LoginPage = () => import("../pages/LoginPage.vue");
+const RegisterPage = () => import("../pages/RegisterPage.vue");
+const PatientDashboard = () => import("../pages/PatientDashboard.vue");
+const TriagePage = () => import("../pages/TriagePage.vue");
+const DoctorSlotsPage = () => import("../pages/DoctorSlotsPage.vue");
+const AppointmentsPage = () => import("../pages/AppointmentsPage.vue");
+const MedicalRecordsPage = () => import("../pages/MedicalRecordsPage.vue");
+const PrescriptionsPage = () => import("../pages/PrescriptionsPage.vue");
+const ProfilePage = () => import("../pages/ProfilePage.vue");
+const VisitPeoplePage = () => import("../pages/VisitPeoplePage.vue");
+const PublicInfoPage = () => import("../pages/PublicInfoPage.vue");
+const PublicSearchPage = () => import("../pages/PublicSearchPage.vue");
+const DepartmentsPage = () => import("../pages/DepartmentsPage.vue");
+const NotFound = () => import("../pages/NotFound.vue");
 
 const staticRoutes = [
   { path: "services/internet-clinic", name: "service-internet-clinic" },
@@ -50,14 +55,6 @@ const router = createRouter({
       component: PatientPublicLayout,
       children: [
         { path: "", name: "patient-home", component: HomePage },
-        { path: "guide", name: "public-guide", component: PublicInfoPage },
-        { path: "conditions", name: "public-conditions", component: PublicInfoPage },
-        { path: "departments", name: "public-departments", component: DepartmentsPage },
-        { path: "locations", name: "public-locations", component: PublicInfoPage },
-        { path: "professionals", name: "public-professionals", component: PublicInfoPage },
-        { path: "research", name: "public-research", component: PublicInfoPage },
-        { path: "giving", name: "public-giving", component: PublicInfoPage },
-        { path: "search", name: "public-search", component: PublicSearchPage },
         { path: "login", name: "patient-login", component: LoginPage },
         { path: "register", name: "patient-register", component: RegisterPage },
         ...staticRoutes,
@@ -81,6 +78,7 @@ const router = createRouter({
         { path: "family", name: "patient-visitors", component: VisitPeoplePage },
       ],
     },
+    /* 旧路径兼容重定向 */
     { path: "/portal", redirect: "/patient-services" },
     { path: "/portal/:pathMatch(.*)*", redirect: (to) => `/patient-services/${to.params.pathMatch || ""}` },
     { path: "/triage", redirect: "/patient-services/triage" },
@@ -90,6 +88,8 @@ const router = createRouter({
     { path: "/prescriptions", redirect: "/patient-services/prescriptions" },
     { path: "/profile", redirect: "/patient-services/profile" },
     { path: "/visitors", redirect: "/patient-services/family" },
+    /* 404 兜底（必须放最后） */
+    { path: "/:pathMatch(.*)*", name: "not-found", component: NotFound },
   ],
 });
 

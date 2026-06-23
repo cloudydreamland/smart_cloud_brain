@@ -1,5 +1,10 @@
 @import "../../../packages/shared-ui/src/styles/index.css";
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
 :root {
   /* 匹配 patient-web.html 原型的 shadcn 蓝色主题 */
   --hospital-ink: #0f172a;
