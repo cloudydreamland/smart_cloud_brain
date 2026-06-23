@@ -178,6 +178,8 @@ services:
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-scb}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-scb_password}
+      NO_PROXY: ${NO_PROXY:-localhost,127.0.0.1,auth-service,patient-service,doctor-service,registration-service,triage-service,medical-record-service,prescription-service,notification-service,admin-service,ai-service,kingbase,redis,rabbitmq}
+      no_proxy: ${NO_PROXY:-localhost,127.0.0.1,auth-service,patient-service,doctor-service,registration-service,triage-service,medical-record-service,prescription-service,notification-service,admin-service,ai-service,kingbase,redis,rabbitmq}
       TZ: Asia/Shanghai
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:$${SERVER_PORT}/actuator/health >/dev/null"]
