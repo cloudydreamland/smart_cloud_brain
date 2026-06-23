@@ -45,7 +45,15 @@ cd D:\smart_cloud_brain
 docker compose --env-file deploy\env\.env -f deploy\docker-compose.yml up -d --build
 ```
 
-默认配置为纯 Docker 运行：KingbaseES、RabbitMQ、后端微服务和三个前端都会由 Docker Compose 启动，不需要本机安装数据库服务。当前 Compose 不包含未实际接入的服务治理组件。
+默认配置为纯 Docker 运行：KingbaseES、RabbitMQ、后端微服务和统一 Nginx 前端容器都会由 Docker Compose 启动，不需要本机安装数据库服务。当前 Compose 不包含未实际接入的服务治理组件。
+
+前端 Docker 部署使用一个统一 Nginx 容器，不再启动独立的 `patient-web`、`doctor-web`、`admin-web` 三个 Nginx 运行容器。构建阶段仍会分别构建三个 Vue 应用，并复制到统一镜像内：
+
+- patient-web: `/usr/share/nginx/html/patient`
+- doctor-web: `/usr/share/nginx/html/doctor`
+- admin-web: `/usr/share/nginx/html/admin`
+
+统一 Nginx 同时监听 `5173`、`5174`、`5175`，分别服务患者端、医生端、管理端，并为每个端口配置 Vue Router history fallback。三端的 `/api/` 请求都会代理到 `http://gateway-service:8080/api/`。`NGINX_PORT` 保留，默认 `18000`，映射到统一 Nginx 的 80 端口作为总入口/状态页；三端业务入口仍使用 5173/5174/5175。
 
 ### 演示环境（含 AI）
 

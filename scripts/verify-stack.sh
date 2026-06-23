@@ -12,7 +12,7 @@ if [ -f "$ENV_FILE" ]; then
 fi
 compose+=(-f "$COMPOSE_FILE")
 
-required_services="kingbase rabbitmq redis gateway-service auth-service patient-service doctor-service registration-service triage-service medical-record-service prescription-service notification-service admin-service ai-service patient-web doctor-web admin-web nginx"
+required_services="kingbase rabbitmq redis gateway-service auth-service patient-service doctor-service registration-service triage-service medical-record-service prescription-service notification-service admin-service ai-service nginx"
 
 for service in $required_services; do
   container_id=$("${compose[@]}" ps -q "$service")
