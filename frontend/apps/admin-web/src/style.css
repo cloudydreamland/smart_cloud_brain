@@ -140,6 +140,97 @@
   min-height: 320px;
 }
 
+/* ── Stat cards with icons ── */
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.metric {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  transition: box-shadow 0.15s;
+}
+
+.metric:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.metric-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.metric-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.metric-info span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.metric-info strong {
+  color: var(--ink);
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+/* ── Table enhancements ── */
+.table-scroll table,
+.catalog-layout table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.table-scroll th,
+.catalog-layout th {
+  padding: 8px 10px;
+  border-bottom: 2px solid var(--line);
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.table-scroll td,
+.catalog-layout td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  background: #fff;
+}
+
+.table-scroll tbody tr:nth-child(even) td,
+.catalog-layout tbody tr:nth-child(even) td {
+  background: #f8fafc;
+}
+
+.table-scroll tbody tr:hover td,
+.catalog-layout tbody tr:hover td {
+  background: #eef4f8;
+}
+
 @media (max-width: 980px) {
   .catalog-layout,
   .account-layout,

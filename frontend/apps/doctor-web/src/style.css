@@ -406,6 +406,50 @@ button.ghost {
   min-width: 820px;
 }
 
+.queue-table tbody tr:nth-child(even) td {
+  background: #f8fafb;
+}
+
+.queue-table tbody tr:hover td {
+  background: #edf4f8;
+}
+
+/* ── Consultation grid layout ── */
+.consult-grid {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr) 320px;
+  gap: 16px;
+  align-items: start;
+}
+
+.consult-grid > .panel {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.consult-grid > .panel.sticky-rail {
+  position: sticky;
+  top: 60px;
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+}
+
+.consult-grid > main.panel {
+  min-height: 0;
+}
+
+@media (max-width: 1100px) {
+  .consult-grid {
+    grid-template-columns: 1fr;
+  }
+  .consult-grid > .panel.sticky-rail {
+    position: static;
+    max-height: none;
+  }
+}
+
 .queue-toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -749,6 +793,18 @@ button.ghost {
   .queue-search {
     max-width: none;
   }
+}
+
+/* ── Notification read/unread ── */
+.feed-row.unread {
+  border-left: 3px solid var(--primary);
+  background: #f0f7ff;
+  padding-left: 12px;
+}
+
+.feed-row.unread strong {
+  color: var(--ink);
+  font-weight: 800;
 }
 
 @media (max-width: 560px) {

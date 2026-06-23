@@ -7,6 +7,7 @@ import {
   demoPrescriptions,
   demoRecords,
   demoRegistrations,
+  formatTime,
   patientName,
   riskText,
   statusLabel,
@@ -92,7 +93,7 @@ const workloadBars = computed(() => [
                 <td><strong>{{ patientName(item) }}</strong></td>
                 <td>#{{ fieldText(item, "registrationId") }}</td>
                 <td>{{ fieldText(item, "departmentName") }}</td>
-                <td>{{ fieldText(item, "appointmentTime") }}</td>
+                <td>{{ formatTime(fieldText(item, "appointmentTime")) }}</td>
                 <td><span class="tag" :class="statusTone(item.riskLevel)">{{ riskText(item) }}</span></td>
                 <td><span class="tag" :class="statusTone(item.status)">{{ statusLabel(item.status) }}</span></td>
                 <td>
