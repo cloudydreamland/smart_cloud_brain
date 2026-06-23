@@ -230,8 +230,7 @@ async function logout() {
       <div class="site-actions">
         <RouterLink class="site-appointment-link" :to="{ name: 'patient-doctors' }" @click="closeMenus">预约就诊</RouterLink>
         <template v-if="!isSignedIn">
-          <RouterLink class="site-login-link" :to="{ name: 'patient-login' }" @click="closeMenus">登录</RouterLink>
-          <RouterLink class="site-register-link" :to="{ name: 'patient-register' }" @click="closeMenus">注册</RouterLink>
+          <RouterLink class="site-login-link" :to="{ name: 'patient-login' }" @click="closeMenus">登录/注册</RouterLink>
         </template>
         <div v-else class="site-user-menu">
           <button type="button" :aria-expanded="userOpen" @click="userOpen = !userOpen">

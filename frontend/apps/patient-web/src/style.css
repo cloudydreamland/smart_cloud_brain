@@ -522,7 +522,6 @@
 }
 
 .site-login-link,
-.site-register-link,
 .site-user-menu > button {
   display: inline-flex;
   min-height: auto;
@@ -535,10 +534,6 @@
   font-size: 14px;
   font-weight: 420;
   white-space: nowrap;
-}
-
-.site-register-link {
-  color: #174d91;
 }
 
 .site-user-menu {
@@ -2143,7 +2138,6 @@ button.danger-text {
   }
 
   .site-login-link,
-  .site-register-link,
   .site-user-menu > button {
     padding: 0 10px;
     font-size: 13px;
