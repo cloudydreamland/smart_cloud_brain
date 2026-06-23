@@ -60,7 +60,7 @@ refresh();
         <h2>通知中心</h2>
         <p>处方、病历、系统消息统一处理。</p>
       </div>
-      <button type="button" :disabled="loading" @click="refresh">{{ loading ? "刷新中" : "刷新" }}</button>
+      <button class="refresh-btn" type="button" :disabled="loading" @click="refresh">{{ loading ? "刷新中" : "刷新" }}</button>
     </header>
     <div class="panel-body stack">
       <ErrorState v-if="error" :message="error" />
@@ -73,15 +73,14 @@ refresh();
           class="feed-row"
           :class="{ unread: fieldText(item, 'readStatus', 'UNREAD').toUpperCase() !== 'READ' }"
         >
-          <div>
+          <div class="feed-content">
             <strong>{{ fieldText(item, "title") }}</strong>
             <span>{{ fieldText(item, "content") }}</span>
           </div>
-          <div class="toolbar">
+          <div class="feed-actions">
             <span class="tag" :class="statusTone(fieldText(item, 'riskLevel', 'INFO'))">{{ statusLabel(fieldText(item, "riskLevel", "INFO")) }}</span>
-            <span class="tag" :class="statusTone(fieldText(item, 'readStatus', 'UNREAD'))">{{ statusLabel(fieldText(item, "readStatus", "UNREAD")) }}</span>
-            <button type="button" @click="selected = item">详情</button>
-            <button type="button" :disabled="fieldText(item, 'readStatus') === 'READ'" @click="markRead(item)">已读</button>
+            <span class="status-dot" :class="fieldText(item, 'readStatus', 'UNREAD').toUpperCase() !== 'READ' ? 'unread' : 'read'" :title="fieldText(item, 'readStatus', 'UNREAD').toUpperCase() !== 'READ' ? '未读' : '已读'"></span>
+            <button type="button" class="btn" @click="selected = item">详情</button>
           </div>
         </article>
       </div>

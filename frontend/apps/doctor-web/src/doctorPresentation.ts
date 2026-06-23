@@ -1,7 +1,7 @@
 import { computed, type Ref } from "vue";
 import { fieldText, type DataRow } from "@smart-cloud-brain/shared-api";
 
-export type Tone = "success" | "info" | "warning" | "danger";
+export type Tone = "success" | "info" | "warning" | "danger" | "low" | "pending" | "active";
 
 export function liveRows(source: Ref<DataRow[]>) {
   return computed(() => source.value);
@@ -30,15 +30,20 @@ export function statusLabel(status: unknown, fallback = "-") {
     IDLE: "空闲",
     DOCTOR: "医生",
     PUBLISHED: "已发布",
+    CLOSED: "已关闭",
+    OPEN: "进行中",
   };
   return labels[raw.toUpperCase()] ?? raw;
 }
 
 export function statusTone(status: unknown): Tone {
   const value = String(status || "").toUpperCase();
-  if (["COMPLETED", "CREATED", "LOW", "READ", "DRAFT_READY", "PUBLISHED"].includes(value)) return "success";
+  if (["LOW", "READ", "DRAFT_READY"].includes(value)) return "low";
+  if (["COMPLETED", "PUBLISHED"].includes(value)) return "success";
   if (["HIGH", "FAILED", "CANCELLED"].includes(value)) return "danger";
-  if (["MEDIUM", "PENDING", "UNREVIEWED", "UNREAD", "GENERATING", "CONFIRMED"].includes(value)) return "warning";
+  if (["MEDIUM", "PENDING", "UNREVIEWED", "UNREAD", "GENERATING"].includes(value)) return "warning";
+  if (["CREATED"].includes(value)) return "pending";
+  if (["CONFIRMED"].includes(value)) return "active";
   return "info";
 }
 

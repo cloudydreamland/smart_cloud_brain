@@ -142,6 +142,7 @@ onBeforeUnmount(() => {
         <div class="doctor-topline-status">
           <span class="status-pill"><i class="dot"></i>{{ socketStatus }}</span>
           <span class="status-pill">队列 {{ activeQueue }}</span>
+          <span v-if="unread" class="status-pill">未读 {{ unread }}</span>
           <button type="button" class="topbar-btn" :disabled="loading" @click="refresh">{{ loading ? "同步中" : "同步" }}</button>
           <button type="button" class="topbar-btn danger" @click="logout">退出</button>
         </div>

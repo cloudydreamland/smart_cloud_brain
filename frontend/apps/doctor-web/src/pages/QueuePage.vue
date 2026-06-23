@@ -9,15 +9,15 @@ const auth = useAuthStore();
 const workflow = useDoctorWorkflowStore();
 const { registrations } = storeToRefs(workflow);
 const sourceRows = liveRows(registrations);
-const filter = ref("CREATED");
+const filter = ref("");
 const keyword = ref("");
 const loading = ref(false);
 const error = ref("");
 const options = [
+  { label: "全部", value: "" },
   { label: "待接诊", value: "CREATED" },
   { label: "已确认", value: "CONFIRMED" },
   { label: "已完成", value: "COMPLETED" },
-  { label: "全部", value: "" },
 ];
 
 const rows = computed(() => sourceRows.value.filter((item) => {
@@ -56,7 +56,7 @@ refresh();
           {{ item.label }}
         </button>
       </div>
-      <span class="status-pill">匹配 {{ rows.length }} 条</span>
+      <span class="match-pill">匹配 {{ rows.length }} 条</span>
     </header>
 
     <section class="panel">
@@ -66,7 +66,7 @@ refresh();
           <h2>患者队列筛选</h2>
           <p>支持状态筛选、患者搜索和快速进入接诊。</p>
         </div>
-        <button type="button" :disabled="loading" @click="refresh">{{ loading ? "刷新中" : "刷新" }}</button>
+        <button class="refresh-btn" type="button" :disabled="loading" @click="refresh">{{ loading ? "刷新中" : "刷新" }}</button>
       </header>
       <div class="panel-body stack">
         <ErrorState v-if="error" :message="error" />
@@ -96,8 +96,8 @@ refresh();
                 <td>{{ fieldText(item, "chiefComplaint", "待医生问诊补充") }}</td>
                 <td><span class="tag" :class="statusTone(item.riskLevel)">{{ riskText(item) }}</span></td>
                 <td><span class="tag" :class="statusTone(item.status)">{{ statusLabel(item.status) }}</span></td>
-                <td>
-                  <RouterLink class="button" :class="{ primary: fieldText(item, 'status').toUpperCase() !== 'COMPLETED' }" :to="`/consult/${item.registrationId}`">
+                <td class="actions-cell">
+                  <RouterLink class="action-btn primary" :to="`/consult/${item.registrationId}`">
                     {{ fieldText(item, "status").toUpperCase() === "COMPLETED" ? "查看" : "接诊" }}
                   </RouterLink>
                 </td>

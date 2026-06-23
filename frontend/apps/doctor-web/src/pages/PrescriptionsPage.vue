@@ -38,7 +38,7 @@ refresh();
         <h2>处方审核结果</h2>
         <p>重点突出高风险和待复核处方。</p>
       </div>
-      <button type="button" :disabled="loading" @click="refresh">{{ loading ? "刷新中" : "刷新" }}</button>
+      <button class="refresh-btn" type="button" :disabled="loading" @click="refresh">{{ loading ? "刷新中" : "刷新" }}</button>
     </header>
     <div class="panel-body stack">
       <ErrorState v-if="error" :message="error" />
@@ -64,7 +64,7 @@ refresh();
               <td>{{ fieldText(item, "drugCount", "2") }}</td>
               <td><span class="tag" :class="statusTone(item.status)">{{ statusLabel(item.status) }}</span></td>
               <td><span class="tag" :class="statusTone(item.riskLevel)">{{ statusLabel(item.riskLevel, "未审核") }}</span></td>
-              <td><button type="button" @click="selected = item">{{ fieldText(item, "riskLevel").toUpperCase() === "HIGH" ? "复核" : "详情" }}</button></td>
+              <td style="text-align:right"><button :class="fieldText(item, 'riskLevel').toUpperCase() === 'HIGH' ? 'action-btn danger' : 'action-btn'" type="button" @click="selected = item">{{ fieldText(item, "riskLevel").toUpperCase() === "HIGH" ? "复核" : "详情" }}</button></td>
             </tr>
           </tbody>
         </table>

@@ -13,7 +13,7 @@ const auth = useAuthStore();
         <h2>工作台偏好</h2>
         <p>设置默认科室、AI 草稿策略和通知方式。</p>
       </div>
-      <button class="primary" type="button">保存设置</button>
+      <button class="save-btn" type="button">保存设置</button>
     </header>
     <div class="panel-body stack">
       <div class="summary-strip">
