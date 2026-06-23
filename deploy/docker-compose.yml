@@ -137,6 +137,10 @@ services:
       NOTIFICATION_SERVICE_URI: http://notification-service:8089
       NOTIFICATION_WS_URI: ws://notification-service:8089
       ADMIN_SERVICE_URI: http://admin-service:8090
+      PATIENT_WEB_ORIGIN: ${PATIENT_WEB_ORIGIN:-http://localhost:5173}
+      DOCTOR_WEB_ORIGIN: ${DOCTOR_WEB_ORIGIN:-http://localhost:5174}
+      ADMIN_WEB_ORIGIN: ${ADMIN_WEB_ORIGIN:-http://localhost:5175}
+      PUBLIC_WEB_ORIGIN: ${PUBLIC_WEB_ORIGIN:-http://localhost}
       NO_PROXY: ${NO_PROXY:-localhost,127.0.0.1,auth-service,patient-service,doctor-service,registration-service,triage-service,medical-record-service,prescription-service,notification-service,admin-service,ai-service}
       no_proxy: ${NO_PROXY:-localhost,127.0.0.1,auth-service,patient-service,doctor-service,registration-service,triage-service,medical-record-service,prescription-service,notification-service,admin-service,ai-service}
       TZ: Asia/Shanghai
