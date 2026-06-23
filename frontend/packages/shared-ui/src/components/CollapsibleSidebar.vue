@@ -1,86 +1,37 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { RouterLink, useRoute } from "vue-router";
 
-interface NavItem {
+export interface NavItem {
   label: string;
   to: string;
   badge?: string | number;
   icon?: string;
 }
 
-interface NavGroup {
+export interface NavGroup {
   label?: string;
   items: NavItem[];
 }
 
-defineProps<{
+const props = withDefaults(defineProps<{
   mark: string;
   title: string;
   groups: NavGroup[];
   userName?: string;
   userMeta?: string;
-}>();
+  currentPath?: string;
+  icons?: Record<string, string>;
+}>(), {
+  currentPath: "/",
+  icons: () => ({}),
+});
 
 defineEmits<{ logout: [] }>();
 
-const route = useRoute();
 const open = ref(false);
 
-function isActive(to: string) {
-  if (to === "/") return route.path === "/";
-  return route.path === to || route.path.startsWith(to + "/");
-}
-</script>
-
-<template>
-  <aside class="c-sidebar" :class="{ open }" @mouseenter="open = true" @mouseleave="open = false">
-    <div class="c-sidebar-inner">
-      <!-- Brand -->
-      <div class="c-org-bar">
-        <div class="c-ghost-btn">
-          <span class="c-mark">{{ mark }}</span>
-          <span class="c-label">{{ title }}</span>
-        </div>
-      </div>
-
-      <!-- Navigation -->
-      <nav class="c-nav-wrap">
-        <template v-for="(group, gi) in groups" :key="group.label ?? gi">
-          <div v-if="group.label" class="c-group-label">{{ group.label }}</div>
-          <div class="c-nav-group">
-            <RouterLink
-              v-for="item in group.items"
-              :key="item.to"
-              class="c-nav-item"
-              :class="{ active: isActive(item.to) }"
-              :to="item.to"
-            >
-              <span class="c-nav-icon" v-html="getIcon(item.icon || item.label)" />
-              <span class="c-label">{{ item.label }}</span>
-              <span v-if="item.badge !== undefined" class="c-badge">{{ item.badge }}</span>
-            </RouterLink>
-          </div>
-          <div v-if="gi < groups.length - 1" class="c-divider" />
-        </template>
-      </nav>
-
-      <!-- Footer: User -->
-      <div class="c-sidebar-footer">
-        <div class="c-ghost-btn">
-          <span class="c-avatar">{{ userName?.charAt(0) || '?' }}</span>
-          <span class="c-label">{{ userName }}</span>
-          <span class="c-chevron">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="m7 9 5-5 5 5M7 15l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </span>
-        </div>
-      </div>
-    </div>
-  </aside>
-</template>
-
-<script lang="ts">
-const icons: Record<string, string> = {
+/* 默认图标 map（仅在 props.icons 未覆盖时使用） */
+const defaultIcons: Record<string, string> = {
   首页: '<svg viewBox="0 0 24 24" fill="none"><path d="M4 13h7V4H4v9Zm9 7h7V4h-7v16ZM4 20h7v-5H4v5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
   队列: '<svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h10M4 18h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
   病历: '<svg viewBox="0 0 24 24" fill="none"><rect x="5" y="2" width="14" height="20" rx="2" stroke="currentColor" stroke-width="2"/><path d="M9 7h6M9 11h6M9 15h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
@@ -101,9 +52,62 @@ const icons: Record<string, string> = {
 };
 
 function getIcon(name: string): string {
-  return icons[name] || icons["首页"];
+  const merged = { ...defaultIcons, ...props.icons };
+  return merged[name] || merged["首页"];
+}
+
+function isActive(to: string) {
+  const p = props.currentPath;
+  if (to === "/") return p === "/";
+  return p === to || p.startsWith(to + "/");
 }
 </script>
+
+<template>
+  <aside class="c-sidebar" :class="{ open }" @mouseenter="open = true" @mouseleave="open = false">
+    <div class="c-sidebar-inner">
+      <!-- Brand -->
+      <div class="c-org-bar">
+        <div class="c-ghost-btn">
+          <span class="c-mark">{{ mark }}</span>
+          <span class="c-label">{{ title }}</span>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="c-nav-wrap">
+        <template v-for="(group, gi) in groups" :key="group.label ?? gi">
+          <div v-if="group.label" class="c-group-label">{{ group.label }}</div>
+          <div class="c-nav-group">
+            <a
+              v-for="item in group.items"
+              :key="item.to"
+              :href="item.to"
+              class="c-nav-item"
+              :class="{ active: isActive(item.to) }"
+            >
+              <span class="c-nav-icon" v-html="getIcon(item.icon || item.label)" />
+              <span class="c-label">{{ item.label }}</span>
+              <span v-if="item.badge !== undefined" class="c-badge">{{ item.badge }}</span>
+            </a>
+          </div>
+          <div v-if="gi < groups.length - 1" class="c-divider" />
+        </template>
+      </nav>
+
+      <!-- Footer: User -->
+      <div class="c-sidebar-footer">
+        <div class="c-ghost-btn">
+          <span class="c-avatar">{{ userName?.charAt(0) || '?' }}</span>
+          <span class="c-label">{{ userName }}</span>
+          <span class="c-chevron">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="m7 9 5-5 5 5M7 15l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+        </div>
+      </div>
+    </div>
+  </aside>
+</template>
 
 <style scoped>
 .c-sidebar {

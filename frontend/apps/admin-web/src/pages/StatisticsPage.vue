@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, ref } from "vue";
-import * as echarts from "echarts";
+import echarts from "../echarts";
 import { api, fieldText, formatApiError, useAuthStore, type DataRow } from "@smart-cloud-brain/shared-api";
 import { ErrorState, LoadingState } from "@smart-cloud-brain/shared-ui";
 
@@ -18,7 +18,7 @@ const trendEl = ref<HTMLDivElement | null>(null);
 const workloadEl = ref<HTMLDivElement | null>(null);
 const patientEl = ref<HTMLDivElement | null>(null);
 const deviceEl = ref<HTMLDivElement | null>(null);
-let charts: echarts.ECharts[] = [];
+let charts: import("../echarts").ECharts[] = [];
 
 async function refresh() {
   loading.value = true;

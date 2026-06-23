@@ -7,6 +7,15 @@ const wsTarget = gatewayTarget.replace(/^http/, "ws");
 
 export default defineConfig({
   plugins: [vue()],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          echarts: ["echarts/core", "echarts/charts", "echarts/components", "echarts/renderers"],
+        },
+      },
+    },
+  },
   define: {
     "import.meta.env.VITE_API_BASE": JSON.stringify(process.env.VITE_API_BASE ?? "/api"),
   },

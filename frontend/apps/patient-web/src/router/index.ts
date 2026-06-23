@@ -45,6 +45,16 @@ const staticRoutes = [
   { path: "about/news", name: "about-news" },
   { path: "about/careers", name: "about-careers" },
   { path: "about/contact", name: "about-contact" },
+  { path: "research", name: "public-research" },
+  { path: "conditions", name: "public-conditions" },
+  { path: "departments", name: "public-departments" },
+  { path: "giving", name: "public-giving" },
+  { path: "guide", name: "public-guide" },
+  { path: "locations", name: "public-locations" },
+  { path: "professionals", name: "public-professionals" },
+  { path: "search", name: "public-search" },
+
+
 ].map((route) => ({ ...route, component: StaticPage }));
 
 const router = createRouter({

@@ -3,8 +3,10 @@ import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { statusText, useAdminWorkflowStore, useAuthStore } from "@smart-cloud-brain/shared-api";
+import { useRoute } from "vue-router";
 import { CollapsibleSidebar, TopBar } from "@smart-cloud-brain/shared-ui";
 
+const route = useRoute();
 const auth = useAuthStore();
 const workflow = useAdminWorkflowStore();
 const router = useRouter();
@@ -64,6 +66,8 @@ onBeforeUnmount(() => unbind?.());
       :groups="navGroups"
       :user-name="session?.name || '管理员'"
       :user-meta="`${statusText(session?.role, '')} #${session?.userId || ''}`"
+      :current-path="route.path"
+
     />
 
     <div class="admin-app">

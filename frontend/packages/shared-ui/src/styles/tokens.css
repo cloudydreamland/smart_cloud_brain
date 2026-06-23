@@ -73,3 +73,39 @@
   --accent: #2563eb;
   --accent-soft: #eff6ff;
 }
+
+/* ===== 医生端主题：匹配 doctor-web 青色风格 ===== */
+.theme-doctor {
+  --bg: #eef2f4;
+  --surface: #ffffff;
+  --surface-alt: #f6f8f9;
+  --surface-2: #f3f5f8;
+  --ink: #17212b;
+  --muted: #596777;
+  --subtle: #7d8792;
+  --weak: #a1a1aa;
+  --line: #ccd4dc;
+  --line-strong: #9eaab6;
+  --primary: #0b5f78;
+  --primary-strong: #07485c;
+  --primary-soft: #e0eef3;
+  --success: #1f7a4d;
+  --success-soft: #e5f2eb;
+  --warning: #9b6716;
+  --warning-soft: #fff2d7;
+  --danger: #b3261e;
+  --danger-soft: #fbe5e2;
+  --red: #dc2626;
+  --red-soft: #fef2f2;
+  --info: #245ca8;
+  --info-soft: #e4edf8;
+  --teal: #0b5f78;
+  --teal-soft: #e0f2f1;
+  --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --radius: 14px;
+  --radius-sm: 8px;
+  --radius-xs: 6px;
+  --focus: 0 0 0 2px rgba(11, 95, 120, 0.22);
+}

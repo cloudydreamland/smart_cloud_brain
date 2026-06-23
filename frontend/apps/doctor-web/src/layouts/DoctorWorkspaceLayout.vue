@@ -13,10 +13,10 @@ import {
   statusLabel,
 } from "../doctorPresentation";
 
+const route = useRoute();
 const auth = useAuthStore();
 const workflow = useDoctorWorkflowStore();
 const router = useRouter();
-const route = useRoute();
 const { session, permissionError } = storeToRefs(auth);
 const { registrations, notifications } = storeToRefs(workflow);
 const displayRegistrations = liveRows(registrations);
@@ -131,6 +131,7 @@ onBeforeUnmount(() => {
       :groups="sidebarGroups"
       :user-name="session?.name || '医生'"
       :user-meta="`${statusLabel(session?.role, '医生')} #${session?.userId || '-'}`"
+      :current-path="route.path"
     />
 
     <div class="doctor-app">
