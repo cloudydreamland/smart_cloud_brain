@@ -9,10 +9,8 @@ import {
 } from "@smart-cloud-brain/shared-api";
 import { CollapsibleSidebar } from "@smart-cloud-brain/shared-ui";
 import {
+  liveRows,
   statusLabel,
-  withDemo,
-  demoNotifications,
-  demoRegistrations,
 } from "../doctorPresentation";
 
 const auth = useAuthStore();
@@ -21,8 +19,8 @@ const router = useRouter();
 const route = useRoute();
 const { session, permissionError } = storeToRefs(auth);
 const { registrations, notifications } = storeToRefs(workflow);
-const displayRegistrations = withDemo(registrations, demoRegistrations);
-const displayNotifications = withDemo(notifications, demoNotifications);
+const displayRegistrations = liveRows(registrations);
+const displayNotifications = liveRows(notifications);
 const loading = ref(false);
 const socketStatus = ref("未连接");
 let socket: WebSocket | null = null;
@@ -65,7 +63,7 @@ async function refresh() {
   try {
     await workflow.refresh(auth.token());
   } catch {
-    socketStatus.value = "演示数据";
+    socketStatus.value = "同步失败";
   } finally {
     loading.value = false;
   }
@@ -102,7 +100,7 @@ function connectNotifications() {
       }
     };
   } catch {
-    socketStatus.value = "演示数据";
+    socketStatus.value = "轮询";
     startPolling();
   }
 }

@@ -20,14 +20,11 @@ import PrescriptionRiskModal from "../components/PrescriptionRiskModal.vue";
 import HighRiskConfirmModal from "../components/HighRiskConfirmModal.vue";
 import CompleteRegistrationConfirmModal from "../components/CompleteRegistrationConfirmModal.vue";
 import {
-  demoDrugs,
-  demoRegistrations,
-  demoTriageRecords,
   formatAiDraft,
+  liveRows,
   patientName,
   statusLabel,
   statusTone,
-  withDemo,
 } from "../doctorPresentation";
 
 const props = defineProps<{ registrationId: string }>();
@@ -36,9 +33,9 @@ const auth = useAuthStore();
 const workflow = useDoctorWorkflowStore();
 const router = useRouter();
 const { registrations, triageRecords, drugs, streamText, streamStatus } = storeToRefs(workflow);
-const displayRegistrations = withDemo(registrations, demoRegistrations);
-const displayTriage = withDemo(triageRecords, demoTriageRecords);
-const displayDrugs = withDemo(drugs, demoDrugs);
+const displayRegistrations = liveRows(registrations);
+const displayTriage = liveRows(triageRecords);
+const displayDrugs = liveRows(drugs);
 const loading = reactive({ record: false, prescription: false, complete: false });
 const error = ref("");
 const notice = ref("");
@@ -181,7 +178,7 @@ async function generateRecord() {
     streamText.value = formatAiDraft();
     streamStatus.value = "DRAFT_READY";
     previewOpen.value = true;
-    setNotice(`${formatApiError(err, "病历生成服务不可用")}；当前展示演示草稿。`);
+    setNotice(`${formatApiError(err, "病历生成服务不可用")}；已保留本地空白草稿，请确认后再保存。`);
   } finally {
     loading.record = false;
     recordStream = null;
@@ -193,14 +190,13 @@ async function saveRecord() {
   loading.record = true;
   try {
     const saved = await api.saveMedicalRecord(auth.token(), { ...medicalForm });
-    prescription.medicalRecordId = toNumber(saved.medicalRecordId, 90031);
+    prescription.medicalRecordId = toNumber(saved.medicalRecordId);
     emit("refresh");
     saveConfirmOpen.value = false;
     setNotice("病历已保存，可以继续处方录入和审核。");
   } catch (err) {
-    prescription.medicalRecordId = 90031;
     saveConfirmOpen.value = false;
-    setNotice(`${formatApiError(err, "病历保存接口不可用")}；已在演示流程中标记为已保存。`);
+    setError(formatApiError(err, "病历保存失败，请稍后重试。"));
   } finally {
     loading.record = false;
   }
@@ -231,16 +227,14 @@ async function checkPrescription() {
       drugs: prescription.drugs,
     });
     prescription.riskLevel = fieldText(checkResult.value, "riskLevel", "UNREVIEWED");
-  } catch {
-    checkResult.value = {
-      riskLevel: "HIGH",
-      provider: "AI 审方",
-      suggestions: "患者有青霉素过敏史，当前处方包含阿莫西林胶囊。建议替换药物或由医生二次确认。",
-    };
-    prescription.riskLevel = "HIGH";
+  } catch (err) {
+    checkResult.value = null;
+    prescription.riskLevel = "UNREVIEWED";
+    setError(formatApiError(err, "处方风险审核失败，请稍后重试。"));
+    return;
   } finally {
     loading.prescription = false;
-    riskOpen.value = true;
+    if (checkResult.value) riskOpen.value = true;
   }
 }
 
@@ -262,7 +256,7 @@ async function createPrescription() {
     emit("refresh");
     setNotice("处方已创建。");
   } catch (err) {
-    setNotice(`${formatApiError(err, "处方创建接口不可用")}；演示流程已继续。`);
+    setError(formatApiError(err, "处方创建失败，请稍后重试。"));
   } finally {
     riskOpen.value = false;
     highRiskOpen.value = false;

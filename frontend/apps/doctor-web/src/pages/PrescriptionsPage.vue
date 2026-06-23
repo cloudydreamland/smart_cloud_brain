@@ -4,12 +4,12 @@ import { storeToRefs } from "pinia";
 import { fieldText, formatApiError, useAuthStore, useDoctorWorkflowStore, usePagination, type DataRow } from "@smart-cloud-brain/shared-api";
 import { ErrorState, LoadingState, PaginationBar } from "@smart-cloud-brain/shared-ui";
 import PrescriptionRiskModal from "../components/PrescriptionRiskModal.vue";
-import { demoPrescriptions, statusLabel, statusTone, withDemo } from "../doctorPresentation";
+import { liveRows, statusLabel, statusTone } from "../doctorPresentation";
 
 const auth = useAuthStore();
 const workflow = useDoctorWorkflowStore();
 const { prescriptions } = storeToRefs(workflow);
-const displayPrescriptions = withDemo(prescriptions, demoPrescriptions);
+const displayPrescriptions = liveRows(prescriptions);
 const loading = ref(false);
 const error = ref("");
 const selected = ref<DataRow | null>(null);
@@ -21,7 +21,7 @@ async function refresh() {
   try {
     await workflow.refresh(auth.token());
   } catch (err) {
-    error.value = formatApiError(err, "处方列表加载失败，当前展示演示数据。");
+    error.value = formatApiError(err, "处方列表加载失败，请稍后重试。");
   } finally {
     loading.value = false;
   }

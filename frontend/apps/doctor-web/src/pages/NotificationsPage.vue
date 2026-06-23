@@ -4,13 +4,13 @@ import { storeToRefs } from "pinia";
 import { api, fieldText, formatApiError, toNumber, useAuthStore, useDoctorWorkflowStore, usePagination, type DataRow } from "@smart-cloud-brain/shared-api";
 import { ErrorState, LoadingState, PaginationBar } from "@smart-cloud-brain/shared-ui";
 import NotificationDetailModal from "../components/NotificationDetailModal.vue";
-import { demoNotifications, statusLabel, statusTone, withDemo } from "../doctorPresentation";
+import { liveRows, statusLabel, statusTone } from "../doctorPresentation";
 
 const emit = defineEmits<{ refresh: [] }>();
 const auth = useAuthStore();
 const workflow = useDoctorWorkflowStore();
 const { notifications } = storeToRefs(workflow);
-const displayNotifications = withDemo(notifications, demoNotifications);
+const displayNotifications = liveRows(notifications);
 const selected = ref<DataRow | null>(null);
 const error = ref("");
 const notice = ref("");
@@ -24,7 +24,7 @@ async function refresh() {
   try {
     await workflow.refresh(auth.token());
   } catch (err) {
-    error.value = formatApiError(err, "通知列表加载失败，当前展示演示数据。");
+    error.value = formatApiError(err, "通知列表加载失败，请稍后重试。");
   } finally {
     loading.value = false;
   }
@@ -43,7 +43,7 @@ async function markRead(item = selected.value) {
     notice.value = "通知已标记为已读。";
   } catch (err) {
     selected.value = null;
-    notice.value = `${formatApiError(err, "标记通知失败")}；演示流程已继续。`;
+    error.value = formatApiError(err, "标记通知失败，请刷新后重试。");
   } finally {
     loading.value = false;
   }
