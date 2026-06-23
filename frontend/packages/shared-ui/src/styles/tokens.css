@@ -28,15 +28,48 @@
   --font: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
 }
 
+/* ===== 患者端主题：匹配 patient-web.html 原型的 shadcn 风格 ===== */
 .theme-patient {
-  --primary: #0057b8;
-  --primary-strong: #003b79;
-  --primary-soft: #e7f0fb;
+  /* 主色：blue-600 */
+  --primary: #2563eb;
+  --primary-strong: #1d4ed8;
+  --primary-soft: #eff6ff;
+
+  /* 背景与表面 */
   --bg: #ffffff;
-  --surface-alt: #f4f7f9;
-  --ink: #182c40;
-  --muted: #526577;
-  --line: #d8dde3;
-  --line-strong: #b7c2cc;
-  --shadow: none;
+  --surface: #ffffff;
+  --surface-alt: #f8fafc;
+
+  /* 文字 */
+  --ink: #0f172a;
+  --muted: #64748b;
+  --subtle: #94a3b8;
+
+  /* 边框 */
+  --line: #e2e8f0;
+  --line-strong: #cbd5e1;
+
+  /* 圆角：匹配原型 */
+  --radius: 16px;
+  --radius-sm: 8px;
+
+  /* 阴影 */
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+
+  /* Focus ring */
+  --focus: 0 0 0 3px rgba(37, 99, 235, 0.2);
+
+  /* 功能色：匹配原型 */
+  --success: #16a34a;
+  --success-soft: #f0fdf4;
+  --warning: #f59e0b;
+  --warning-soft: #fffbeb;
+  --danger: #ef4444;
+  --danger-soft: #fef2f2;
+  --info: #7c3aed;
+  --info-soft: #f5f3ff;
+
+  /* 强调色 */
+  --accent: #2563eb;
+  --accent-soft: #eff6ff;
 }

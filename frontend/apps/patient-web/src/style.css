@@ -1,14 +1,42 @@
 @import "../../../packages/shared-ui/src/styles/index.css";
 
 :root {
-  --hospital-ink: #111318;
-  --hospital-muted: #566174;
-  --hospital-line: #d9e1ed;
-  --hospital-blue: #0057b8;
-  --hospital-navy: #06172d;
-  --hospital-gold: #ffd24d;
-  --hospital-bg: #f7f9fc;
-  --hospital-serif: Georgia, "Times New Roman", serif;
+  /* 匹配 patient-web.html 原型的 shadcn 蓝色主题 */
+  --hospital-ink: #0f172a;
+  --hospital-muted: #64748b;
+  --hospital-line: #e2e8f0;
+  --hospital-blue: #2563eb;
+  --hospital-navy: #0f172a;
+  --hospital-gold: #f59e0b;
+  --hospital-bg: #ffffff;
+  --hospital-serif: -apple-system, "Microsoft YaHei", "PingFang SC", sans-serif;
+
+  /* 覆盖共享组件的 CSS 变量，让 Button/Badge/Alert 等自动变蓝 */
+  --primary: #2563eb;
+  --primary-strong: #1d4ed8;
+  --primary-soft: #eff6ff;
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-alt: #f8fafc;
+  --ink: #0f172a;
+  --muted: #64748b;
+  --subtle: #94a3b8;
+  --line: #e2e8f0;
+  --line-strong: #cbd5e1;
+  --radius: 16px;
+  --radius-sm: 8px;
+  --focus: 0 0 0 3px rgba(37, 99, 235, 0.2);
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --success: #16a34a;
+  --success-soft: #f0fdf4;
+  --warning: #f59e0b;
+  --warning-soft: #fffbeb;
+  --danger: #ef4444;
+  --danger-soft: #fef2f2;
+  --info: #7c3aed;
+  --info-soft: #f5f3ff;
+  --accent: #2563eb;
+  --accent-soft: #eff6ff;
 }
 
 .patient-page {
@@ -35,7 +63,7 @@
 .patient-page textarea,
 .patient-page select {
   max-width: 100%;
-  border-radius: 0;
+  border-radius: 6px;
   font: inherit;
 }
 
@@ -751,8 +779,8 @@
 
 .portal-status.online,
 .portal-status.success {
-  background: #e7f7ef;
-  color: #137044;
+  background: var(--success-soft);
+  color: var(--success);
 }
 
 .portal-status.warning {
@@ -819,8 +847,9 @@
 .portal-list-card,
 .patient-portal-page .panel {
   border: 1px solid var(--hospital-line);
+  border-radius: 24px;
   background: #fff;
-  box-shadow: 0 14px 36px rgba(16, 32, 55, .06);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 .portal-metrics article {
@@ -883,6 +912,7 @@
 
 .journey-rail .done {
   background: var(--hospital-blue);
+  border-radius: 4px;
 }
 
 .portal-list-row,
@@ -1071,7 +1101,7 @@
 .patient-portal-page .panel {
   width: auto;
   margin: 42px clamp(34px, 5vw, 72px) 64px;
-  border-radius: 0;
+  border-radius: 24px;
 }
 
 .patient-portal-page .portal-grid .panel,

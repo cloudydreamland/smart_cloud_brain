@@ -2,7 +2,7 @@
 import { computed } from "vue";
 import { storeToRefs } from "pinia";
 import { fieldText, statusClass, statusText, useAuthStore, usePatientWorkflowStore } from "@smart-cloud-brain/shared-api";
-import { EmptyState, LoadingState, StatusTag } from "@smart-cloud-brain/shared-ui";
+import { Badge, Button, EmptyState, LoadingState, StatusTag } from "@smart-cloud-brain/shared-ui";
 
 defineProps<{ bootLoading?: boolean }>();
 defineEmits<{ refresh: [] }>();
@@ -31,7 +31,9 @@ const nextText = computed(() => latestTriage.value ? "查看推荐号源" : "开
         <h1>您好，{{ patientName }}</h1>
         <p>当前就诊旅程会根据分诊、挂号、病历和处方状态自动推进。</p>
       </div>
-      <RouterLink class="patient-primary" :to="nextRoute">{{ nextText }}</RouterLink>
+      <RouterLink :to="nextRoute">
+        <Button>{{ nextText }}</Button>
+      </RouterLink>
     </section>
 
     <section class="portal-metrics">
@@ -46,7 +48,9 @@ const nextText = computed(() => latestTriage.value ? "查看推荐号源" : "开
         <h2>完成预约的下一步</h2>
         <p v-if="latestTriage">系统已生成推荐科室，优先展示与分诊结果匹配的医生号源。医生接诊时仍会再次确认诊断。</p>
         <p v-else>描述症状后，系统会生成推荐科室和安全提示，并把结果带入号源筛选。</p>
-        <RouterLink class="patient-primary" :to="nextRoute">{{ nextText }}</RouterLink>
+        <RouterLink :to="nextRoute">
+          <Button>{{ nextText }}</Button>
+        </RouterLink>
         <div class="journey-rail">
           <span class="done"></span>
           <span :class="{ done: latestTriage }"></span>
@@ -65,7 +69,7 @@ const nextText = computed(() => latestTriage.value ? "查看推荐号源" : "开
         </div>
         <div v-else class="portal-list-row">
           <div><strong>分诊建议</strong><p>尚未提交本次症状。</p></div>
-          <span class="portal-status warning">待处理</span>
+          <Badge variant="warning">待处理</Badge>
         </div>
 
         <div v-if="activeRegistration" class="portal-list-row">
@@ -77,7 +81,7 @@ const nextText = computed(() => latestTriage.value ? "查看推荐号源" : "开
         </div>
         <div v-else class="portal-list-row">
           <div><strong>挂号记录</strong><p>暂无未完成挂号。</p></div>
-          <span class="portal-status">0 条</span>
+          <Badge variant="muted">0 条</Badge>
         </div>
 
         <div v-if="latestRecord || latestPrescription" class="portal-list-row">
