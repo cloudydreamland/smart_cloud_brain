@@ -10,6 +10,7 @@
   --hospital-gold: #f59e0b;
   --hospital-bg: #ffffff;
   --hospital-serif: -apple-system, "Microsoft YaHei", "PingFang SC", sans-serif;
+  --site-nav-font: "Noto Sans SC", "Source Han Sans SC", "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
 
   /* 覆盖共享组件的 CSS 变量，让 Button/Badge/Alert 等自动变蓝 */
   --primary: #2563eb;
@@ -332,6 +333,7 @@
   border-bottom: 1px solid #e5ebf3;
   background: rgba(255, 255, 255, .96);
   backdrop-filter: blur(16px);
+  font-family: var(--site-nav-font);
 }
 
 .site-header-inner {
@@ -386,7 +388,9 @@
   color: #1f2d42;
   cursor: pointer;
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 420;
+  letter-spacing: 0;
+  line-height: 1.25;
   white-space: nowrap;
 }
 
@@ -506,28 +510,35 @@
 .site-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 18px;
   margin-left: auto;
+}
+
+.site-appointment-link {
+  color: #071528;
+  font-size: 14px;
+  font-weight: 620;
+  white-space: nowrap;
 }
 
 .site-login-link,
 .site-register-link,
 .site-user-menu > button {
   display: inline-flex;
-  min-height: 40px;
+  min-height: auto;
   align-items: center;
   justify-content: center;
-  padding: 0 16px;
-  border: 1px solid #b8c8dc;
-  background: #fff;
+  padding: 0;
+  border: 0;
+  background: transparent;
   color: #0f2746;
-  font-weight: 850;
+  font-size: 14px;
+  font-weight: 420;
+  white-space: nowrap;
 }
 
 .site-register-link {
-  border-color: var(--hospital-blue);
-  background: var(--hospital-blue);
-  color: #fff;
+  color: #174d91;
 }
 
 .site-user-menu {
@@ -536,8 +547,23 @@
 
 .site-user-menu > button {
   gap: 10px;
-  min-width: 118px;
   cursor: pointer;
+}
+
+.site-search-button {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: #071528;
+  cursor: pointer;
+}
+
+.site-search-button .search-symbol {
+  width: 23px;
+  height: 23px;
 }
 
 .site-user-dropdown {
@@ -2119,9 +2145,21 @@ button.danger-text {
   .site-login-link,
   .site-register-link,
   .site-user-menu > button {
-    min-height: 36px;
     padding: 0 10px;
     font-size: 13px;
+  }
+
+  .site-actions {
+    gap: 10px;
+  }
+
+  .site-appointment-link {
+    font-size: 13px;
+  }
+
+  .site-search-button {
+    width: 36px;
+    height: 36px;
   }
 
   .site-menu-button {

@@ -174,6 +174,11 @@ function isMenuActive(menu: NavMenu) {
   });
 }
 
+function openSearch() {
+  closeMenus();
+  router.push({ name: "public-search" });
+}
+
 async function logout() {
   auth.logout();
   closeMenus();
@@ -223,6 +228,7 @@ async function logout() {
       </nav>
 
       <div class="site-actions">
+        <RouterLink class="site-appointment-link" :to="{ name: 'patient-doctors' }" @click="closeMenus">预约就诊</RouterLink>
         <template v-if="!isSignedIn">
           <RouterLink class="site-login-link" :to="{ name: 'patient-login' }" @click="closeMenus">登录</RouterLink>
           <RouterLink class="site-register-link" :to="{ name: 'patient-register' }" @click="closeMenus">注册</RouterLink>
@@ -239,6 +245,9 @@ async function logout() {
             <button type="button" @click="logout">退出登录</button>
           </div>
         </div>
+        <button class="site-search-button" type="button" aria-label="搜索" @click="openSearch">
+          <span class="search-symbol" aria-hidden="true"></span>
+        </button>
         <button class="site-menu-button" type="button" aria-label="打开菜单" @click="mobileOpen = !mobileOpen">
           <span></span>
         </button>
