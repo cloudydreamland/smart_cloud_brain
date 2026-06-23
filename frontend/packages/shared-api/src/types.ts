@@ -7,7 +7,6 @@ export type DataRow = Record<string, unknown>;
 
 export type PatientRegisterRequest = {
   name: string; phone: string; password: string; gender?: string; age?: number;
-  allergyHistory?: string; pastHistory?: string;
 };
 export type TriageRequest = { patientId?: number; chiefComplaint: string };
 export type RegistrationCreateRequest = {
@@ -68,6 +67,13 @@ export type DeviceUsageSaveRequest = {
 };
 export type PatientSaveRequest = {
   id?: number; name: string; gender?: string; age?: number; allergyHistory?: string; pastHistory?: string;
+  address?: string; emergencyContact?: string; emergencyPhone?: string; bloodType?: string;
+  heightCm?: number; weightKg?: number;
+};
+export type PatientVisitorSaveRequest = {
+  id?: number; name: string; relationship?: string; phone?: string; gender?: string; age?: number;
+  address?: string; emergencyContact?: string; emergencyPhone?: string; bloodType?: string;
+  heightCm?: number; weightKg?: number; allergyHistory?: string; pastHistory?: string;
 };
 export type ScheduleSaveRequest = {
   id?: number; doctorId: number; departmentId: number; workDate: string; timeRange: string; capacity: number; status?: string;

@@ -12,6 +12,7 @@ import AppointmentsPage from "../pages/AppointmentsPage.vue";
 import MedicalRecordsPage from "../pages/MedicalRecordsPage.vue";
 import PrescriptionsPage from "../pages/PrescriptionsPage.vue";
 import ProfilePage from "../pages/ProfilePage.vue";
+import VisitPeoplePage from "../pages/VisitPeoplePage.vue";
 
 const router = createRouter({
   history: createWebHistory(),
@@ -37,6 +38,7 @@ const router = createRouter({
         { path: "records", name: "patient-records", component: MedicalRecordsPage },
         { path: "prescriptions", name: "patient-prescriptions", component: PrescriptionsPage },
         { path: "profile", name: "patient-profile", component: ProfilePage },
+        { path: "visitors", name: "patient-visitors", component: VisitPeoplePage },
       ],
     },
     { path: "/triage", redirect: "/portal/triage" },
@@ -45,6 +47,7 @@ const router = createRouter({
     { path: "/records", redirect: "/portal/records" },
     { path: "/prescriptions", redirect: "/portal/prescriptions" },
     { path: "/profile", redirect: "/portal/profile" },
+    { path: "/visitors", redirect: "/portal/visitors" },
   ],
 });
 

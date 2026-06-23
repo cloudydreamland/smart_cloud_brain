@@ -2,7 +2,7 @@
 import { reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 import { api, formatApiError } from "@smart-cloud-brain/shared-api";
-import { Alert, Badge, Button, Input, Textarea } from "@smart-cloud-brain/shared-ui";
+import { Alert, Button, Input } from "@smart-cloud-brain/shared-ui";
 
 const router = useRouter();
 const loading = ref(false);
@@ -14,8 +14,6 @@ const form = reactive({
   password: "",
   gender: "FEMALE",
   age: 30,
-  allergyHistory: "",
-  pastHistory: "",
 });
 
 function validate() {
@@ -80,9 +78,7 @@ async function submit() {
             <option value="UNKNOWN">未说明</option>
           </select>
         </div>
-        <Input v-model="form.allergyHistory" label="过敏史" placeholder="如无可留空" />
       </div>
-      <Textarea v-model="form.pastHistory" label="既往史" placeholder="请输入既往病史" :rows="3" />
       <Button type="submit" :loading="loading" class="w-full">
         {{ loading ? "注册中" : "创建档案并继续" }}
       </Button>

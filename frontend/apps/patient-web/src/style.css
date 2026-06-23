@@ -1224,6 +1224,65 @@
   background: #f5f8fd;
 }
 
+.profile-section-title {
+  margin-top: 6px;
+  color: var(--hospital-ink);
+  font-size: 15px;
+  font-weight: 850;
+}
+
+.visitor-list {
+  display: grid;
+  gap: 14px;
+}
+
+.visitor-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: start;
+  padding: 20px 22px;
+  border: 1px solid var(--hospital-line);
+  background: #fff;
+}
+
+.visitor-row-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.visitor-row-title strong {
+  color: var(--hospital-ink);
+  font-size: 20px;
+}
+
+.visitor-row p {
+  margin: 8px 0 0;
+  color: var(--hospital-muted);
+  font-size: 14px;
+}
+
+.visitor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+button.secondary {
+  border-color: var(--hospital-line);
+  background: #fff;
+  color: var(--hospital-ink);
+}
+
+button.danger-text {
+  border-color: #fecaca;
+  background: #fff;
+  color: var(--danger);
+}
+
 @media (max-width: 980px) {
   .home-topbar {
     height: 74px;
@@ -1346,8 +1405,13 @@
   .portal-list-row,
   .patient-portal-page .list-row,
   .patient-portal-page .slot-card,
-  .patient-portal-page .record-card {
+  .patient-portal-page .record-card,
+  .visitor-row {
     grid-template-columns: 1fr;
+  }
+
+  .visitor-actions {
+    justify-content: flex-start;
   }
 
   .patient-portal-page .slot-card-grid {

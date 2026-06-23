@@ -29,7 +29,13 @@ const sidebarGroups = [
     items: [
       { label: "病历", to: "/portal/records" },
       { label: "处方", to: "/portal/prescriptions" },
+    ],
+  },
+  {
+    label: "账户",
+    items: [
       { label: "个人资料", to: "/portal/profile" },
+      { label: "就诊人管理", to: "/portal/visitors" },
     ],
   },
 ];

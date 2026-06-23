@@ -10,6 +10,7 @@ import com.smartcloudbrain.common.security.CurrentUserService;
 import com.smartcloudbrain.common.security.RoleType;
 import com.smartcloudbrain.patient.entity.Patient;
 import com.smartcloudbrain.patient.repository.PatientRepository;
+import com.smartcloudbrain.patient.repository.PatientVisitorRepository;
 import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -22,6 +23,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class PatientServiceTest {
 
   @Mock private PatientRepository patientRepository;
+  @Mock private PatientVisitorRepository patientVisitorRepository;
   @Mock private CurrentUserService currentUserService;
   @InjectMocks private PatientService patientService;
 

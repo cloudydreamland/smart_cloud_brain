@@ -7,19 +7,16 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "patient")
-public class Patient extends BaseEntity {
+@Table(name = "patient_visitor")
+public class PatientVisitor extends BaseEntity {
 
+  @Column(name = "owner_patient_id")
+  private Long ownerPatientId;
   private String name;
+  private String relationship;
   private String phone;
-  @Column(name = "password_hash")
-  private String passwordHash;
   private String gender;
   private Integer age;
-  @Column(name = "allergy_history")
-  private String allergyHistory;
-  @Column(name = "past_history")
-  private String pastHistory;
   private String address;
   @Column(name = "emergency_contact")
   private String emergencyContact;
@@ -31,8 +28,20 @@ public class Patient extends BaseEntity {
   private Integer heightCm;
   @Column(name = "weight_kg")
   private BigDecimal weightKg;
+  @Column(name = "allergy_history")
+  private String allergyHistory;
+  @Column(name = "past_history")
+  private String pastHistory;
   @Column(name = "updated_at")
   private LocalDateTime updatedAt;
+
+  public Long getOwnerPatientId() {
+    return ownerPatientId;
+  }
+
+  public void setOwnerPatientId(Long ownerPatientId) {
+    this.ownerPatientId = ownerPatientId;
+  }
 
   public String getName() {
     return name;
@@ -42,20 +51,20 @@ public class Patient extends BaseEntity {
     this.name = name;
   }
 
+  public String getRelationship() {
+    return relationship;
+  }
+
+  public void setRelationship(String relationship) {
+    this.relationship = relationship;
+  }
+
   public String getPhone() {
     return phone;
   }
 
   public void setPhone(String phone) {
     this.phone = phone;
-  }
-
-  public String getPasswordHash() {
-    return passwordHash;
-  }
-
-  public void setPasswordHash(String passwordHash) {
-    this.passwordHash = passwordHash;
   }
 
   public String getGender() {
@@ -72,22 +81,6 @@ public class Patient extends BaseEntity {
 
   public void setAge(Integer age) {
     this.age = age;
-  }
-
-  public String getAllergyHistory() {
-    return allergyHistory;
-  }
-
-  public void setAllergyHistory(String allergyHistory) {
-    this.allergyHistory = allergyHistory;
-  }
-
-  public String getPastHistory() {
-    return pastHistory;
-  }
-
-  public void setPastHistory(String pastHistory) {
-    this.pastHistory = pastHistory;
   }
 
   public String getAddress() {
@@ -138,6 +131,22 @@ public class Patient extends BaseEntity {
     this.weightKg = weightKg;
   }
 
+  public String getAllergyHistory() {
+    return allergyHistory;
+  }
+
+  public void setAllergyHistory(String allergyHistory) {
+    this.allergyHistory = allergyHistory;
+  }
+
+  public String getPastHistory() {
+    return pastHistory;
+  }
+
+  public void setPastHistory(String pastHistory) {
+    this.pastHistory = pastHistory;
+  }
+
   public LocalDateTime getUpdatedAt() {
     return updatedAt;
   }
@@ -146,5 +155,3 @@ public class Patient extends BaseEntity {
     this.updatedAt = updatedAt;
   }
 }
-
-

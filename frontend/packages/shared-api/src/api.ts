@@ -14,6 +14,7 @@ import {
   type MedicalRecordGenerateRequest,
   type MedicalRecordSaveRequest,
   type PatientSaveRequest,
+  type PatientVisitorSaveRequest,
   type PatientRegisterRequest,
   type PrescriptionCheckRequest,
   type PrescriptionCreateRequest,
@@ -122,6 +123,9 @@ export const patientApi = {
   prescriptions: (token: string) => get<DataRow[]>("/prescription/list", token),
   prescriptionDetail: (token: string, id: number) => get<DataRow>(`/prescription/detail${query({ id })}`, token),
   saveProfile: (token: string, body: PatientSaveRequest) => post<DataRow>("/patient/profile/save", body, token),
+  visitors: (token: string) => get<DataRow[]>("/patient/visitor/list", token),
+  saveVisitor: (token: string, body: PatientVisitorSaveRequest) => post<DataRow>("/patient/visitor/save", body, token),
+  deleteVisitor: (token: string, id: number) => post<DataRow>("/patient/visitor/delete", { id }, token),
 };
 
 export const doctorApi = {
@@ -219,6 +223,7 @@ export const api = {
   triageDesk: adminApi.triageDesk, triageDetail: adminApi.triageDetail,
   assignTriage: adminApi.assignTriage, closeTriage: adminApi.closeTriage,
   saveProfile: patientApi.saveProfile, doctorSchedules: doctorApi.schedules,
+  patientVisitors: patientApi.visitors, savePatientVisitor: patientApi.saveVisitor, deletePatientVisitor: patientApi.deleteVisitor,
   filteredSchedules: adminApi.filteredSchedules, saveSchedule: adminApi.saveSchedule, cancelSchedule: adminApi.cancelSchedule,
   devices: adminApi.devices, saveDevice: adminApi.saveDevice, updateDeviceStatus: adminApi.updateDeviceStatus,
   deviceUsages: adminApi.deviceUsages, saveDeviceUsage: adminApi.saveDeviceUsage,
