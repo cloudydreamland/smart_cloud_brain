@@ -1,0 +1,180 @@
+/* ── Flow strip ── */
+.flow-strip {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.flow-step {
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.flow-step span {
+  display: block;
+  color: var(--subtle);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.flow-step strong {
+  display: block;
+  margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.flow-step.done {
+  border-color: #b8dcc6;
+  background: var(--success-soft);
+}
+
+.flow-step.now {
+  border-color: #9bcac7;
+  background: var(--primary-soft);
+  box-shadow: 0 6px 18px rgba(16, 36, 52, 0.08);
+}
+
+.doctor-main {
+  min-width: 0;
+  padding: 24px 28px;
+}
+
+.clinical-page {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.clinical-section,
+.clinical-statusbar,
+.queue-toolbar,
+.patient-context-bar {
+  min-width: 0;
+  border: 1px solid var(--line);
+  background: #fff;
+}
+
+.section-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--line);
+  background: #f8fafb;
+}
+
+.section-toolbar h2 {
+  min-width: 0;
+  margin: 0 auto 0 0;
+  font-size: 15px;
+  line-height: 1.2;
+}
+
+.compact-action {
+  min-height: 28px;
+  padding: 0 8px;
+  font-size: 12px;
+}
+
+.clinical-statusbar {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  border-right: 0;
+}
+
+.status-cell {
+  min-width: 0;
+  padding: 8px 10px;
+  border-right: 1px solid var(--line);
+  background: #fff;
+}
+
+.status-cell span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.status-cell strong {
+  display: block;
+  margin-top: 1px;
+  font-size: 18px;
+  line-height: 1.1;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--right-panel-w);
+  gap: 10px;
+  align-items: start;
+}
+
+.dashboard-queue {
+  grid-row: span 2;
+}
+
+.dashboard-side {
+  min-height: 0;
+}
+
+.table-scroll {
+  width: 100%;
+  overflow: auto;
+}
+
+.clinical-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.clinical-table th,
+.clinical-table td {
+  min-width: 0;
+  padding: 7px 9px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: middle;
+  transition: background 0.15s ease;
+}
+
+.clinical-table th {
+  background: var(--surface-alt);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.clinical-table td {
+  background: var(--surface);
+}
+
+.clinical-table tbody tr:hover td {
+  background: var(--surface-alt);
+}
+
+.actions-cell {
+  width: 1%;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.queue-table {
+  min-width: 820px;
+}
+
+.queue-table tbody tr:nth-child(even) td {
+  background: var(--surface-alt);
+}
+
+.queue-table tbody tr:hover td {
+  background: var(--surface-alt);
+}
+

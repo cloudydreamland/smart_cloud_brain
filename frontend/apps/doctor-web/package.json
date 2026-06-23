@@ -9,6 +9,9 @@
   },
   "dependencies": {
     "@smart-cloud-brain/shared-api": "workspace:*",
-    "@smart-cloud-brain/shared-ui": "workspace:*"
+    "@smart-cloud-brain/shared-ui": "workspace:*",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.0",
+    "pinia": "^2.3.0"
   }
 }

@@ -1,0 +1,293 @@
+/* ── Dashboard V2 ── */
+.dashboard-v2 {
+  display: grid;
+  gap: 16px;
+  max-width: 1200px;
+}
+
+/* Flow Steps */
+.flow-strip {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+}
+
+.flow-step {
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  transition: all 0.15s ease;
+}
+
+.flow-step .step-num {
+  font-size: 11px;
+  font-weight: 700;
+  color: #a1a1aa;
+  letter-spacing: 0.04em;
+}
+
+.flow-step .step-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-top: 2px;
+}
+
+.flow-step.active {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+.flow-step.active .step-num { color: var(--primary); }
+.flow-step.active .step-label { color: var(--primary); }
+
+.flow-step.done {
+  border-color: var(--success);
+  background: var(--success-soft);
+}
+.flow-step.done .step-num { color: var(--success); }
+.flow-step.done .step-label { color: var(--success); }
+
+/* Metric Cards */
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.metric-card {
+  background: var(--surface);
+  border: 1px solid rgba(229, 231, 235, 0.8);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  display: grid;
+  gap: 8px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.metric-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.metric-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.metric-label {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.metric-value {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.metric-value.teal { color: var(--primary); }
+.metric-value.green { color: var(--success); }
+.metric-value.blue { color: var(--info); }
+.metric-value.orange { color: var(--warning); }
+
+.metric-sub {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* Panel */
+.dashboard-v2 .panel {
+  background: var(--surface);
+  border: 1px solid rgba(229, 231, 235, 0.8);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.panel-header,
+.panel > header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line);
+}
+.panel-header strong,
+.panel > header .panel-title strong { font-size: 14px; }
+.panel-header a,
+.panel > header .panel-title a { font-size: 12px; color: var(--primary); font-weight: 600; }
+.panel-header a:hover,
+.panel > header .panel-title a:hover { text-decoration: underline; }
+
+/* Quick Actions */
+.quick-actions {
+  padding: 14px 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.quick-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+.quick-btn:hover {
+  background: var(--primary-soft);
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+/* Content Grid */
+.content-grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+.left-col {
+  display: grid;
+  gap: 16px;
+}
+
+/* Table */
+.content-grid table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.content-grid th {
+  text-align: left;
+  color: var(--muted);
+  font-weight: 600;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-alt);
+  font-size: 12px;
+}
+.content-grid td {
+  padding: 11px 14px;
+  border-bottom: 1px solid #f0f1f3;
+  transition: background 0.15s ease;
+}
+.content-grid tr:hover td { background: var(--surface-alt); }
+
+.action-link {
+  color: var(--primary);
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+.action-link:hover { text-decoration: underline; }
+
+/* Side Panel */
+.side-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.workload-card { padding: 18px; }
+
+.workload-rows {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.workload-row {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr 28px;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+  color: var(--muted);
+}
+.workload-row strong {
+  color: var(--ink);
+  text-align: right;
+  font-size: 13px;
+}
+
+.bar-track {
+  height: 8px;
+  border-radius: 9999px;
+  background: var(--surface-alt);
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+.bar-fill.teal { background: var(--primary); }
+.bar-fill.green { background: var(--success); }
+.bar-fill.orange { background: var(--warning); }
+
+/* Notification Card */
+.notification-card { padding: 14px 18px; }
+
+.notif-item {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 8px;
+  transition: background 0.15s ease;
+}
+.notif-item:hover { background: var(--surface-alt); }
+.notif-item.unread {
+  border-left: 3px solid var(--primary);
+  background: var(--primary-soft);
+}
+.notif-item strong {
+  display: block;
+  font-size: 12px;
+  color: var(--ink);
+  margin-bottom: 2px;
+}
+.notif-item span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.notif-tag {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.notif-tag.success { background: var(--success-soft); color: var(--success); }
+.notif-tag.warning { background: var(--warning-soft); color: var(--warning); }
+.notif-tag.danger { background: var(--danger-soft); color: var(--danger); }
+.notif-tag.info { background: var(--info-soft); color: var(--info); }
+

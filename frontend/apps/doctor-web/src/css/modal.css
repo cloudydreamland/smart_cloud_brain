@@ -1,0 +1,171 @@
+/* ── Design Mockup Button Classes ── */
+.btn {
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 160ms ease;
+}
+.btn:hover { background: var(--surface-2, var(--surface-alt)); }
+.btn.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+.btn.primary:hover { background: var(--primary-strong); }
+
+/* ── Modal (Tailwind fallback) ── */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 101;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.modal-backdrop .absolute {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+}
+.modal-backdrop .relative {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  background: var(--surface);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+}
+.modal-backdrop .absolute + .relative {
+  z-index: 1;
+}
+.modal-backdrop .px-6 { padding-left: 24px; padding-right: 24px; }
+.modal-backdrop .pt-6 { padding-top: 24px; }
+.modal-backdrop .pb-4 { padding-bottom: 16px; }
+.modal-backdrop .pb-6 { padding-bottom: 24px; }
+.modal-backdrop .pt-2 { padding-top: 8px; }
+.modal-backdrop .mt-1 { margin-top: 4px; }
+.modal-backdrop .text-lg { font-size: 18px; font-weight: 600; color: var(--ink); }
+.modal-backdrop .text-sm { font-size: 14px; color: var(--muted); }
+.modal-backdrop .flex { display: flex; }
+.modal-backdrop .items-center { align-items: center; }
+.modal-backdrop .justify-center { justify-content: center; }
+.modal-backdrop .justify-between { justify-content: space-between; }
+.modal-backdrop .gap-8 { gap: 8px; }
+.modal-backdrop .font-semibold { font-weight: 600; }
+
+/* Modal close button */
+.modal-backdrop .absolute.top-3 {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 0;
+  background: var(--surface-2, var(--surface-alt));
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+  color: var(--muted);
+  transition: background 0.15s ease;
+}
+.modal-backdrop .absolute.top-3:hover {
+  background: var(--line);
+}
+
+/* Modal transitions */
+.modal-backdrop .transition-opacity { transition: opacity 0.2s ease; }
+.modal-backdrop .duration-200 { transition-duration: 200ms; }
+.modal-backdrop .duration-150 { transition-duration: 150ms; }
+.modal-backdrop .opacity-0 { opacity: 0; }
+.modal-backdrop .opacity-100 { opacity: 1; }
+.modal-backdrop .scale-95 { transform: scale(0.95); }
+.modal-backdrop .scale-100 { transform: scale(1); }
+.modal-backdrop .translate-y-2 { transform: translateY(8px); }
+.modal-backdrop .translate-y-0 { transform: translateY(0); }
+.modal-backdrop .transition-all { transition: all 0.2s ease; }
+.modal-backdrop .ease-out { transition-timing-function: ease-out; }
+.modal-backdrop .ease-in { transition-timing-function: ease-in; }
+
+.refresh-btn {
+  height: 32px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background 160ms ease;
+}
+.refresh-btn:hover { background: var(--surface-2, var(--surface-alt)); }
+
+.action-btn {
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 160ms ease;
+  white-space: nowrap;
+}
+.action-btn:hover { background: var(--surface-2, var(--surface-alt)); }
+.action-btn.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+.action-btn.primary:hover { background: var(--primary-strong); border-color: var(--primary-strong); }
+.action-btn.danger { color: var(--danger); border-color: var(--danger-soft); background: var(--surface); }
+.action-btn.danger:hover { background: var(--danger-soft); }
+
+.save-btn {
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 0;
+  background: var(--primary);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 160ms ease;
+}
+.save-btn:hover { background: var(--primary-strong); }
+
+.detail-btn {
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 160ms ease;
+}
+.detail-btn:hover { background: var(--primary-soft); color: var(--primary); border-color: var(--primary); }
+
+.match-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--surface-2, var(--surface-alt));
+  color: var(--muted);
+  white-space: nowrap;
+}
+
