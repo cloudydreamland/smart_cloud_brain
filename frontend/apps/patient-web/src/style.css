@@ -9,8 +9,9 @@
   --hospital-navy: #0f172a;
   --hospital-gold: #f59e0b;
   --hospital-bg: #ffffff;
-  --hospital-serif: -apple-system, "Microsoft YaHei", "PingFang SC", sans-serif;
-  --site-nav-font: "Noto Sans SC", "Source Han Sans SC", "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+  --hospital-sans: "HarmonyOS Sans SC", "MiSans", "Source Han Sans SC", "Noto Sans CJK SC", "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei UI", sans-serif;
+  --hospital-serif: "Source Han Serif SC", "Noto Serif CJK SC", "Noto Serif SC", "Songti SC", "STSong", "SimSun", serif;
+  --site-nav-font: var(--hospital-sans);
 
   /* 覆盖共享组件的 CSS 变量，让 Button/Badge/Alert 等自动变蓝 */
   --primary: #2563eb;
@@ -46,6 +47,12 @@
   overflow-x: clip;
   color: var(--hospital-ink);
   background: #fff;
+  font-family: var(--hospital-sans);
+  font-weight: 350;
+  letter-spacing: 0;
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .patient-page a {
@@ -77,8 +84,8 @@
   width: 68px;
   color: #050608;
   font-size: 13px;
-  font-weight: 900;
-  letter-spacing: .06em;
+  font-weight: 520;
+  letter-spacing: 0;
   line-height: .92;
 }
 
@@ -249,7 +256,7 @@
   color: #fff;
   font-family: var(--hospital-serif);
   font-size: 25px;
-  font-weight: 700;
+  font-weight: 520;
   white-space: normal;
 }
 
@@ -260,7 +267,7 @@
 .home-appointment {
   margin-left: auto;
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 520;
   white-space: nowrap;
 }
 
@@ -438,15 +445,15 @@
   margin: 0 0 12px;
   color: #174d91;
   font-size: 13px;
-  font-weight: 900;
-  letter-spacing: .06em;
+  font-weight: 520;
+  letter-spacing: 0;
 }
 
 .site-mega-lead h2 {
   margin: 0 0 16px;
   font-family: var(--hospital-serif);
   font-size: 34px;
-  font-weight: 560;
+  font-weight: 400;
   line-height: 1.08;
 }
 
@@ -474,6 +481,7 @@
 .site-mega-links strong {
   color: #10233f;
   font-size: 18px;
+  font-weight: 460;
 }
 
 .site-mega-feature {
@@ -504,7 +512,7 @@
   padding-bottom: 3px;
   border-bottom: 2px solid currentColor;
   color: #fff;
-  font-weight: 900;
+  font-weight: 520;
 }
 
 .site-actions {
@@ -517,7 +525,7 @@
 .site-appointment-link {
   color: #071528;
   font-size: 14px;
-  font-weight: 620;
+  font-weight: 460;
   white-space: nowrap;
 }
 
@@ -583,7 +591,7 @@
   color: #10233f;
   cursor: pointer;
   font-size: 14px;
-  font-weight: 760;
+  font-weight: 420;
   text-align: left;
 }
 
@@ -656,12 +664,13 @@
   margin-bottom: 6px;
   color: #10233f;
   font-size: 16px;
+  font-weight: 520;
 }
 
 .site-footer nav a {
   color: #174d91;
   font-size: 14px;
-  font-weight: 760;
+  font-weight: 420;
 }
 
 .site-footer-meta {
@@ -2059,6 +2068,67 @@
   color: var(--hospital-muted);
   font-size: 16px;
   line-height: 1.75;
+}
+
+.patient-page :where(
+  .home-hero h1,
+  .portal-page-head h1,
+  .home-split h2,
+  .home-section-head h2,
+  .home-donate h2,
+  .resource-header h1,
+  .resource-block h2,
+  .resource-related h2,
+  .resource-section-head h2,
+  .auth-visual h1,
+  .portal-feature-card h2,
+  .patient-portal-page .panel-title h2,
+  .static-info-grid h2
+) {
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.patient-page :where(
+  strong,
+  .home-eyebrow,
+  .resource-label,
+  .portal-status,
+  .portal-metrics span,
+  .patient-summary-card span,
+  .profile-section-title,
+  .record-kicker,
+  .record-meta,
+  .auth-form label span
+) {
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.patient-page :where(
+  .home-pill,
+  .patient-primary,
+  .portal-service-actions button,
+  .portal-link,
+  .auth-tabs a,
+  .auth-tabs button,
+  .home-letters a,
+  .home-care-grid a,
+  .home-footer-links a,
+  .resource-header nav a,
+  .resource-toc a,
+  .resource-links a,
+  .resource-related a,
+  .search-result-card > a,
+  .resource-search-form button
+) {
+  font-weight: 520;
+  letter-spacing: 0;
+}
+
+.patient-page :where(.portal-metrics strong, .patient-summary-card strong) {
+  font-weight: 420;
+  letter-spacing: 0;
 }
 
 button.secondary {

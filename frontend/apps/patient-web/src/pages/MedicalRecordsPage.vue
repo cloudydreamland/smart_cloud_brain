@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { api, fieldText, formatApiError, useAuthStore, usePatientWorkflowStore, type DataRow } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, LoadingState } from "@smart-cloud-brain/shared-ui";
@@ -26,18 +26,28 @@ async function refresh() {
 }
 
 async function open(item: DataRow) {
+  const id = recordId(item);
+  if (!id) {
+    error.value = "无法识别这条病历记录，请刷新后重试。";
+    return;
+  }
   detailLoading.value = true;
   error.value = "";
   try {
-    selected.value = await api.medicalRecordDetail(auth.token(), Number(item.medicalRecordId));
+    selected.value = await api.medicalRecordDetail(auth.token(), id);
   } catch (err) {
-    error.value = formatApiError(err, "病历详情加载失败");
+    error.value = formatApiError(err, "病历详情加载失败，请稍后重试");
   } finally {
     detailLoading.value = false;
   }
 }
 
-refresh();
+function recordId(item: DataRow) {
+  const value = Number(item.medicalRecordId ?? item.id);
+  return Number.isFinite(value) && value > 0 ? value : 0;
+}
+
+onMounted(refresh);
 </script>
 
 <template>
@@ -54,9 +64,9 @@ refresh();
       <ErrorState v-if="error" :message="error" />
       <LoadingState v-if="loading || detailLoading" />
       <div v-else-if="records.length" class="record-list">
-        <article v-for="item in records" :key="String(item.medicalRecordId)" class="record-card">
+        <article v-for="item in records" :key="String(recordId(item) || fieldText(item, 'createdAt'))" class="record-card">
           <div>
-            <span class="record-kicker">病历 #{{ fieldText(item, "medicalRecordId") }}</span>
+            <span class="record-kicker">病历 #{{ fieldText(item, "medicalRecordId", fieldText(item, "id")) }}</span>
             <h3>{{ fieldText(item, "diagnosis", "诊断待同步") }}</h3>
             <p>{{ fieldText(item, "chiefComplaint", "暂无主诉记录") }}</p>
             <div class="record-meta">
