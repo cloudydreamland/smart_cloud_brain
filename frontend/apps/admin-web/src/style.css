@@ -8,6 +8,7 @@
 .admin-app {
   margin-left: 56px;
   min-width: 0;
+  padding: 0 24px 32px;
 }
 
 .admin-notices {
@@ -269,6 +270,29 @@
   font-weight: 800;
   letter-spacing: -0.04em;
   line-height: 1;
+}
+
+.metric-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.metric-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.metric-label {
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .metric-value.blue { color: #2563eb; }
