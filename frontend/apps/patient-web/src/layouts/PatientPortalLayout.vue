@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { onBeforeUnmount, onMounted, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { useRouter } from "vue-router";
-import { fieldText, formatApiError, useAuthStore, usePatientWorkflowStore } from "@smart-cloud-brain/shared-api";
+import { formatApiError, useAuthStore, usePatientWorkflowStore } from "@smart-cloud-brain/shared-api";
 import PatientSiteFooter from "../components/PatientSiteFooter.vue";
 import PatientSiteHeader from "../components/PatientSiteHeader.vue";
 import SessionExpiredModal from "../components/SessionExpiredModal.vue";
@@ -11,18 +11,10 @@ const auth = useAuthStore();
 const workflow = usePatientWorkflowStore();
 const router = useRouter();
 const { session, permissionError } = storeToRefs(auth);
-const { patient, registrations } = storeToRefs(workflow);
 const loading = ref(true);
 const sessionExpired = ref(false);
 const loadError = ref("");
 let unbind: (() => void) | null = null;
-
-const activeAppointment = computed(() => registrations.value.find((item) => {
-  const status = fieldText(item, "status");
-  return !["COMPLETED", "CANCELLED"].includes(status);
-}));
-
-const patientName = computed(() => fieldText(patient.value, "name", session.value?.name || "患者"));
 
 async function refresh() {
   if (!session.value || !auth.requireRole("PATIENT")) return;
@@ -61,19 +53,6 @@ onBeforeUnmount(() => {
     <PatientSiteHeader />
 
     <main class="patient-site-main">
-      <section class="portal-servicebar">
-        <div>
-          <strong>患者服务</strong>
-          <span>{{ patientName }} · 同一医院官网内的预约、病历、处方与消息服务</span>
-        </div>
-        <div class="portal-service-actions">
-          <span class="portal-status online">已登录</span>
-          <span v-if="activeAppointment" class="portal-status">待就诊</span>
-          <button type="button" @click="refresh">刷新</button>
-          <button type="button" @click="logout">退出登录</button>
-        </div>
-      </section>
-
       <div v-if="permissionError" class="portal-message error">
         <span>{{ permissionError }}</span>
         <button type="button" @click="logout">切换账号</button>
