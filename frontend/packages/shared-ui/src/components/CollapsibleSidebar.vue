@@ -223,6 +223,9 @@ function getIcon(name: string): string {
   letter-spacing: 0.06em;
   color: var(--weak, #a1a1aa);
   padding: 8px 8px 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   opacity: 0;
   transition: opacity 160ms ease;
 }

@@ -149,7 +149,7 @@ public class PrescriptionService {
     if ("HIGH".equalsIgnoreCase(saved.getRiskLevel()) || "MEDIUM".equalsIgnoreCase(saved.getRiskLevel())) {
       publishRiskNotification(user.userId(), request.patientId(), saved.getId(), new PrescriptionCheckResponse(
           saved.getRiskLevel(),
-          "Confirmed prescription requires risk follow-up.",
+          "已确认的处方需要风险随访。",
           List.of(),
           false
       ));
@@ -229,7 +229,7 @@ public class PrescriptionService {
     payload.put("suggestions", nullToEmpty(response.suggestions()));
     payload.put("interactions", safeInteractions(response));
     payload.put("type", "PRESCRIPTION_HIGH_RISK");
-    payload.put("title", "AI prescription risk alert");
+    payload.put("title", "AI处方风险提醒");
     return payload;
   }
 

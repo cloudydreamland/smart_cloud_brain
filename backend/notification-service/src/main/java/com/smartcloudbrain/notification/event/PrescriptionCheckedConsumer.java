@@ -39,7 +39,7 @@ public class PrescriptionCheckedConsumer {
         asLong(payload.get("patientId")),
         zeroToNull(asLong(payload.get("prescriptionId"))),
         asString(payload.getOrDefault("type", "PRESCRIPTION_HIGH_RISK")),
-        asString(payload.getOrDefault("title", "AI prescription risk alert")),
+        asString(payload.getOrDefault("title", "AI处方风险提醒")),
         asString(payload.get("suggestions")),
         riskLevel
     ));
