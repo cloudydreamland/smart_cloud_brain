@@ -46,7 +46,7 @@ spring:
         - id: admin-service
           uri: ${ADMIN_SERVICE_URI:http://localhost:8090}
           predicates:
-            - Path=/api/admin/**,/api/search/**
+            - Path=/api/admin/**,/api/search/**,/api/patient-site/**
       globalcors:
         cors-configurations:
           "[/**]":

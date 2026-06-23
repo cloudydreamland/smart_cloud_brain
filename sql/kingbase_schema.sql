@@ -455,6 +455,20 @@ CREATE TABLE IF NOT EXISTS role_permission (
   CONSTRAINT uk_role_permission UNIQUE (role, permission_key)
 );
 
+CREATE TABLE IF NOT EXISTS patient_site_config (
+  id BIGSERIAL PRIMARY KEY,
+  config_key VARCHAR(80) NOT NULL,
+  config_json TEXT NOT NULL,
+  status VARCHAR(32) NOT NULL DEFAULT 'DRAFT',
+  version INTEGER NOT NULL DEFAULT 1,
+  remark VARCHAR(255),
+  created_by BIGINT,
+  updated_by BIGINT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT uk_patient_site_config_key_status_version UNIQUE (config_key, status, version)
+);
+
 ALTER TABLE doctor_schedule ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
 ALTER TABLE appointment_slot ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
 ALTER TABLE patient ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
@@ -462,6 +476,7 @@ ALTER TABLE patient ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURREN
 CREATE INDEX IF NOT EXISTS idx_device_department_status ON medical_device(department_id, status);
 CREATE INDEX IF NOT EXISTS idx_device_usage_device_time ON device_usage_record(device_id, started_at);
 CREATE INDEX IF NOT EXISTS idx_role_permission_role ON role_permission(role, enabled);
+CREATE INDEX IF NOT EXISTS idx_patient_site_config_key_status ON patient_site_config(config_key, status);
 CREATE INDEX IF NOT EXISTS idx_patient_name_phone ON patient(name, phone);
 CREATE INDEX IF NOT EXISTS idx_registration_status_time ON registration(status, appointment_time);
 CREATE INDEX IF NOT EXISTS idx_registration_department_time ON registration(department_id, appointment_time);
@@ -482,6 +497,7 @@ INSERT INTO role_permission (role, permission_key, enabled) VALUES
   ('ADMIN', 'knowledge:manage', TRUE),
   ('ADMIN', 'prompt:manage', TRUE),
   ('ADMIN', 'dict:manage', TRUE),
+  ('ADMIN', 'patient-site:manage', TRUE),
   ('ADMIN', 'search:view', TRUE),
   ('DOCTOR', 'doctor-dashboard:view', TRUE),
   ('DOCTOR', 'doctor-schedule:view', TRUE),
@@ -492,3 +508,4 @@ ON CONFLICT (role, permission_key) DO NOTHING;
 SELECT setval(pg_get_serial_sequence('medical_device', 'id'), COALESCE((SELECT MAX(id) FROM medical_device), 1));
 SELECT setval(pg_get_serial_sequence('device_usage_record', 'id'), COALESCE((SELECT MAX(id) FROM device_usage_record), 1));
 SELECT setval(pg_get_serial_sequence('role_permission', 'id'), COALESCE((SELECT MAX(id) FROM role_permission), 1));
+SELECT setval(pg_get_serial_sequence('patient_site_config', 'id'), COALESCE((SELECT MAX(id) FROM patient_site_config), 1));

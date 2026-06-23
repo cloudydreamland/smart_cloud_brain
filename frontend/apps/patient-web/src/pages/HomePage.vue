@@ -2,13 +2,31 @@
 import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { api, type DataRow } from "@smart-cloud-brain/shared-api";
+import { usePatientSiteConfig } from "../site-config/usePatientSiteConfig";
+import type { RouteTargetConfig } from "../site-config/types";
 
 const router = useRouter();
 const departments = ref<DataRow[]>([]);
 const doctors = ref<DataRow[]>([]);
 const conditionQuery = ref("");
+const { config, load: loadSiteConfig } = usePatientSiteConfig();
 
 const featuredDepartments = computed(() => departments.value.slice(0, 12));
+const hero = computed(() => config.value.home.hero);
+const notice = computed(() => config.value.home.modules.find((module) => module.type === "notice"));
+const quickActions = computed(() => {
+  const module = config.value.home.modules.find((item) => item.type === "quick_actions");
+  const items = module?.content?.items;
+  return Array.isArray(items) ? items.filter(isRouteAction) : [];
+});
+
+function isRouteAction(value: unknown): value is RouteTargetConfig {
+  return Boolean(value && typeof value === "object" && "label" in value && "routeName" in value);
+}
+
+function toRoute(link: RouteTargetConfig) {
+  return link.query ? { name: link.routeName, query: link.query } : { name: link.routeName };
+}
 
 function goSearch(q = "") {
   const queryText = q.trim();
@@ -16,6 +34,7 @@ function goSearch(q = "") {
 }
 
 onMounted(async () => {
+  await loadSiteConfig();
   try {
     const [departmentRows, doctorRows] = await Promise.all([api.departments(), api.doctors()]);
     departments.value = departmentRows;
@@ -29,21 +48,29 @@ onMounted(async () => {
 
 <template>
   <main class="home-page">
-    <section class="home-hero">
+    <section v-if="hero.enabled !== false" class="home-hero">
       <div class="home-hero-content">
-        <p class="home-eyebrow">智慧云脑医疗服务</p>
-        <h1>专业照护，从清晰入口开始</h1>
+        <p class="home-eyebrow">{{ hero.eyebrow }}</p>
+        <h1>{{ hero.title }}</h1>
         <div class="home-hero-actions">
-          <RouterLink :to="{ name: 'patient-doctors' }">预约就诊</RouterLink>
-          <RouterLink class="home-pill" :to="{ name: 'patient-triage' }">AI智能分诊</RouterLink>
+          <RouterLink v-if="hero.primaryAction" :to="toRoute(hero.primaryAction)">{{ hero.primaryAction.label }}</RouterLink>
+          <RouterLink v-if="hero.secondaryAction" class="home-pill" :to="toRoute(hero.secondaryAction)">
+            {{ hero.secondaryAction.label }}
+          </RouterLink>
         </div>
       </div>
     </section>
 
-    <div class="home-alert">
+    <div v-if="notice" class="home-alert">
       <strong>!</strong>
-      <span>如出现胸痛、呼吸困难、意识改变、单侧肢体无力或大量出血，请立即前往急诊或拨打急救电话。</span>
+      <span>{{ String(notice.content?.text || "") }}</span>
     </div>
+
+    <section v-if="quickActions.length" class="home-section home-care-grid">
+      <RouterLink v-for="action in quickActions" :key="action.label" :to="toRoute(action)">
+        {{ action.label }} <span>→</span>
+      </RouterLink>
+    </section>
 
     <section class="home-section home-conditions">
       <div>
@@ -116,11 +143,11 @@ onMounted(async () => {
           :key="String(dept.departmentId || dept.id || dept.name)"
           :to="{ name: 'public-search', query: { q: String(dept.name || dept.departmentName || '科室') } }"
         >
-          {{ dept.name || dept.departmentName || "科室" }} <span>›</span>
+          {{ dept.name || dept.departmentName || "科室" }} <span>→</span>
         </RouterLink>
         <template v-if="!featuredDepartments.length">
           <RouterLink v-for="name in ['神经内科','心血管内科','呼吸内科','消化内科','骨科','妇科','儿科','肿瘤科','康复医学科']" :key="name" :to="{ name: 'public-search', query: { q: name } }">
-            {{ name }} <span>›</span>
+            {{ name }} <span>→</span>
           </RouterLink>
         </template>
       </div>

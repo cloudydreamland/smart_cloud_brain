@@ -27,6 +27,7 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered {
       "/api/doctor/list",
       "/api/doctor/detail",
       "/api/doctor/department/list",
+      "/api/patient-site/config",
       "/actuator/health"
   );
 

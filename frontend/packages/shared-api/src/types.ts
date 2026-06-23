@@ -82,6 +82,8 @@ export type ScheduleCancelRequest = { scheduleId: number };
 export type RolePermissionSaveRequest = { role: Role; permissionKeys: string[] };
 export type StatisticsQuery = { startDate?: string; endDate?: string };
 export type StatisticsReportRow = { metric: string; value: number | string };
+export type PatientSiteConfigSaveRequest = { configKey: string; configJson: string; remark?: string };
+export type PatientSiteConfigPublishRequest = { configKey: string };
 
 export class ApiError extends Error {
   constructor(public message: string, public code: number, public status: number) {

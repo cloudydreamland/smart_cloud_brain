@@ -1,0 +1,46 @@
+export const patientRouteOptions = [
+  { name: "patient-home", label: "患者端首页" },
+  { name: "patient-dashboard", label: "患者服务首页" },
+  { name: "patient-triage", label: "AI 智能分诊" },
+  { name: "patient-doctors", label: "在线挂号" },
+  { name: "patient-appointments", label: "我的预约" },
+  { name: "patient-records", label: "我的病历" },
+  { name: "patient-prescriptions", label: "我的处方" },
+  { name: "patient-reports", label: "检查报告" },
+  { name: "patient-invoices", label: "电子发票" },
+  { name: "patient-messages", label: "消息中心" },
+  { name: "patient-profile", label: "账户设置" },
+  { name: "patient-visitors", label: "家庭成员" },
+  { name: "public-search", label: "公共搜索" },
+  { name: "public-departments", label: "科室导航" },
+  { name: "public-conditions", label: "疾病百科" },
+  { name: "public-guide", label: "就医指南" },
+  { name: "public-research", label: "科研与教育" },
+  { name: "service-internet-clinic", label: "互联网门诊" },
+  { name: "service-exam-booking", label: "检查检验预约" },
+  { name: "service-inpatient", label: "住院服务" },
+  { name: "service-emergency", label: "急诊指南" },
+  { name: "service-international", label: "国际医疗" },
+  { name: "doctor-experts", label: "专家团队" },
+  { name: "doctor-centers", label: "专病中心" },
+  { name: "doctor-schedules", label: "医生出诊时间" },
+  { name: "library-symptoms", label: "症状百科" },
+  { name: "library-drugs", label: "药品百科" },
+  { name: "library-tests", label: "检查项目" },
+  { name: "library-rehab", label: "康复指导" },
+  { name: "library-articles", label: "健康文章" },
+  { name: "ai-symptom", label: "AI 症状咨询" },
+  { name: "ai-record-summary", label: "AI 病历摘要" },
+  { name: "ai-medication", label: "AI 用药助手" },
+  { name: "ai-assessment", label: "AI 健康评估" },
+  { name: "about-hospital", label: "医院介绍" },
+  { name: "about-news", label: "新闻动态" },
+  { name: "about-careers", label: "招聘信息" },
+  { name: "about-contact", label: "联系我们" },
+] as const;
+
+export const patientRouteWhitelist = new Set(patientRouteOptions.map((route) => route.name));
+
+export function isAllowedPatientRoute(routeName = "") {
+  return patientRouteWhitelist.has(routeName);
+}

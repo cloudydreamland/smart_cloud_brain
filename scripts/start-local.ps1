@@ -37,6 +37,29 @@ function Invoke-Compose {
   }
 }
 
+function Get-EnvValue {
+  param(
+    [string]$Path,
+    [string]$Name,
+    [string]$Default
+  )
+  if (-not (Test-Path $Path)) {
+    return $Default
+  }
+  $Line = Get-Content -LiteralPath $Path | Where-Object { $_ -match "^$([regex]::Escape($Name))=" } | Select-Object -First 1
+  if (-not $Line) {
+    return $Default
+  }
+  $Value = $Line.Substring($Name.Length + 1).Trim()
+  if ($Value) { return $Value }
+  return $Default
+}
+
+function Invoke-DockerBuild {
+  param([string[]]$DockerArgs)
+  & docker build @DockerArgs
+}
+
 if (-not (Test-Path $EnvFile)) {
   Copy-Item -LiteralPath $EnvExample -Destination $EnvFile
   Write-Host "Created local environment file: $EnvFile"
@@ -73,14 +96,31 @@ if (-not $NoBuild) {
   $BuildServices = @(
     "gateway-service", "auth-service", "patient-service", "doctor-service",
     "registration-service", "triage-service", "medical-record-service",
-    "prescription-service", "notification-service", "admin-service", "ai-service",
-    "nginx"
+    "prescription-service", "notification-service", "admin-service", "ai-service"
   )
   foreach ($Service in $BuildServices) {
-    Invoke-Compose ($args + @("build", $Service))
+    Invoke-DockerBuild @(
+      "-f", (Join-Path $Root "backend\Dockerfile.service"),
+      "--build-arg", "SERVICE=$Service",
+      "-t", "deploy-$Service",
+      $Root
+    )
     if ($LASTEXITCODE -ne 0) {
       throw "Docker image build failed for '$Service'."
     }
+  }
+
+  $PnpmVersion = Get-EnvValue -Path $EnvFile -Name "PNPM_VERSION" -Default "9.15.0"
+  $NpmRegistry = Get-EnvValue -Path $EnvFile -Name "NPM_REGISTRY" -Default "https://registry.npmmirror.com"
+  Invoke-DockerBuild @(
+    "-f", (Join-Path $Root "deploy\nginx\Dockerfile"),
+    "--build-arg", "PNPM_VERSION=$PnpmVersion",
+    "--build-arg", "NPM_REGISTRY=$NpmRegistry",
+    "-t", "deploy-nginx",
+    $Root
+  )
+  if ($LASTEXITCODE -ne 0) {
+    throw "Docker image build failed for 'nginx'."
   }
 }
 $args += @("up", "-d", "--no-build")

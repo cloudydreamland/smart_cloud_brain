@@ -28,6 +28,7 @@ const navGroups = computed(() => [
     { label: "知识库", to: "/knowledge" },
     { label: "提示词", to: "/prompts" },
     { label: "字典", to: "/dicts" },
+    { label: "患者端配置", to: "/patient-site" },
     { label: "搜索", to: "/search" },
   ] },
 ]);

@@ -1,10 +1,8 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { useAuthStore } from "@smart-cloud-brain/shared-api";
 
-/* Layout（首屏必需，不懒加载） */
 import AdminWorkspaceLayout from "../layouts/AdminWorkspaceLayout.vue";
 
-/* 页面组件（懒加载，访问时才加载） */
 const AdminLoginPage = () => import("../pages/AdminLoginPage.vue");
 const AdminDashboard = () => import("../pages/AdminDashboard.vue");
 const DepartmentsPage = () => import("../pages/DepartmentsPage.vue");
@@ -21,6 +19,7 @@ const DevicesPage = () => import("../pages/DevicesPage.vue");
 const PatientsPage = () => import("../pages/PatientsPage.vue");
 const StatisticsPage = () => import("../pages/StatisticsPage.vue");
 const PermissionsPage = () => import("../pages/PermissionsPage.vue");
+const PatientSiteConfigPage = () => import("../pages/PatientSiteConfigPage.vue");
 const NotFound = () => import("../pages/NotFound.vue");
 
 const router = createRouter({
@@ -46,10 +45,10 @@ const router = createRouter({
         { path: "statistics", name: "admin-statistics", component: StatisticsPage },
         { path: "accounts", name: "admin-accounts", component: AccountsPage },
         { path: "permissions", name: "admin-permissions", component: PermissionsPage },
+        { path: "patient-site", name: "admin-patient-site", component: PatientSiteConfigPage },
         { path: "search", name: "admin-search", component: SearchPage },
       ],
     },
-    /* 404 兜底 */
     { path: "/:pathMatch(.*)*", name: "not-found", component: NotFound },
   ],
 });

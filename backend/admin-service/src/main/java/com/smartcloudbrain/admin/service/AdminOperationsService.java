@@ -46,6 +46,7 @@ public class AdminOperationsService {
       permission("knowledge:manage", "Knowledge", "Manage knowledge entries"),
       permission("prompt:manage", "Prompts", "Manage AI prompt templates"),
       permission("dict:manage", "Dictionaries", "Manage dictionaries"),
+      permission("patient-site:manage", "Patient site", "Manage patient site navigation and content"),
       permission("search:view", "Search", "Use admin search")
   );
 

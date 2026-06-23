@@ -16,6 +16,8 @@ import {
   type PatientSaveRequest,
   type PatientVisitorSaveRequest,
   type PatientRegisterRequest,
+  type PatientSiteConfigPublishRequest,
+  type PatientSiteConfigSaveRequest,
   type PrescriptionCheckRequest,
   type PrescriptionCreateRequest,
   type PromptTestRequest,
@@ -108,6 +110,7 @@ export const authApi = {
 
 export const patientApi = {
   info: (token: string) => get<DataRow>("/patient/info", token),
+  siteConfig: () => get<DataRow>("/patient-site/config"),
   departments: () => get<DataRow[]>("/doctor/department/list"),
   doctors: (departmentId?: number | string) => get<DataRow[]>(`/doctor/list${query({ departmentId })}`),
   doctorDetail: (id: number) => get<DataRow>(`/doctor/detail${query({ id })}`),
@@ -195,6 +198,10 @@ export const adminApi = {
   permissions: (token: string) => get<DataRow>("/admin/permission/list", token),
   myPermissions: (token: string) => get<string[]>("/admin/permission/my", token),
   saveRolePermissions: (token: string, body: RolePermissionSaveRequest) => post<DataRow>("/admin/permission/save-role", body, token),
+  patientSiteConfig: (token: string, configKey?: string) => get<DataRow>(`/admin/patient-site/config${query({ configKey })}`, token),
+  savePatientSiteConfig: (token: string, body: PatientSiteConfigSaveRequest) => post<DataRow>("/admin/patient-site/save", body, token),
+  publishPatientSiteConfig: (token: string, body: PatientSiteConfigPublishRequest) => post<DataRow>("/admin/patient-site/publish", body, token),
+  patientSiteConfigHistory: (token: string, configKey: string) => get<DataRow[]>(`/admin/patient-site/history${query({ configKey })}`, token),
   searchKnowledge: (token: string, q: string, departmentCode = "") => get<DataRow[]>(`/search/knowledge${query({ q, departmentCode })}`, token),
   searchDrugs: (token: string, q: string) => get<DataRow[]>(`/search/drugs${query({ q })}`, token),
   searchPrompts: (token: string, q: string) => get<DataRow[]>(`/admin/search/prompts${query({ q })}`, token),
@@ -233,6 +240,11 @@ export const api = {
   deviceUsageStatistics: adminApi.deviceUsageStatistics, statisticsReport: adminApi.statisticsReport,
   permissions: adminApi.permissions, saveRolePermissions: adminApi.saveRolePermissions,
   myPermissions: adminApi.myPermissions,
+  patientSiteConfig: patientApi.siteConfig,
+  adminPatientSiteConfig: adminApi.patientSiteConfig,
+  savePatientSiteConfig: adminApi.savePatientSiteConfig,
+  publishPatientSiteConfig: adminApi.publishPatientSiteConfig,
+  patientSiteConfigHistory: adminApi.patientSiteConfigHistory,
   searchKnowledge: adminApi.searchKnowledge, searchDrugs: adminApi.searchDrugs, searchPrompts: adminApi.searchPrompts,
 };
 
