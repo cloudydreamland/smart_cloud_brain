@@ -100,44 +100,37 @@ const workloadBars = computed(() => [
         </div>
         <div class="metric-value orange">{{ highRisk }}</div>
       </div>
-      <div class="metric-card">
-        <div class="metric-card-head">
-          <div class="metric-icon" style="background: #fff7ed; color: #ea580c;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" stroke-linecap="round" stroke-linejoin="round"/><path d="M13.73 21a2 2 0 0 1-3.46 0" stroke-linecap="round"/></svg>
-          </div>
-          <span class="metric-label">未读通知</span>
-        </div>
-        <div class="metric-value orange">{{ unread }}</div>
-      </div>
+
     </div>
 
-    <!-- Quick Actions -->
-    <div class="panel">
-      <div class="panel-header"><strong>快捷操作</strong></div>
-      <div class="quick-actions">
-        <RouterLink class="quick-btn" to="/queue">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h10M4 18h14"/></svg>
-          查看队列
-        </RouterLink>
-        <RouterLink class="quick-btn" to="/records">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3h7v7M14 14l7 7M3 10V4a1 1 0 0 1 1-1h6M10 21H4a1 1 0 0 1-1-1v-6"/></svg>
-          新建病历
-        </RouterLink>
-        <RouterLink class="quick-btn" to="/prescriptions">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="5" width="6" height="14" rx="1"/><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/></svg>
-          开具处方
-        </RouterLink>
-        <RouterLink class="quick-btn" to="/notifications">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" stroke-linecap="round" stroke-linejoin="round"/><path d="M13.73 21a2 2 0 0 1-3.46 0" stroke-linecap="round"/></svg>
-          查看通知
-        </RouterLink>
-      </div>
-    </div>
-
-    <!-- Two Column: Queue + Sidebar -->
+    <!-- Two Column: Left (Quick Actions + Queue) | Right (Workload + Notifications) -->
     <div class="content-grid">
-      <!-- Left: Queue Table -->
-      <div class="panel">
+      <!-- Left Column -->
+      <div class="left-col">
+        <div class="panel">
+          <div class="panel-header"><strong>快捷操作</strong></div>
+          <div class="quick-actions">
+            <RouterLink class="quick-btn" to="/queue">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h10M4 18h14"/></svg>
+              查看队列
+            </RouterLink>
+            <RouterLink class="quick-btn" to="/records">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3h7v7M14 14l7 7M3 10V4a1 1 0 0 1 1-1h6M10 21H4a1 1 0 0 1-1-1v-6"/></svg>
+              新建病历
+            </RouterLink>
+            <RouterLink class="quick-btn" to="/prescriptions">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="5" width="6" height="14" rx="1"/><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/></svg>
+              开具处方
+            </RouterLink>
+            <RouterLink class="quick-btn" to="/notifications">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" stroke-linecap="round" stroke-linejoin="round"/><path d="M13.73 21a2 2 0 0 1-3.46 0" stroke-linecap="round"/></svg>
+              查看通知
+            </RouterLink>
+          </div>
+        </div>
+
+        <!-- Queue Table -->
+        <div class="panel">
         <div class="panel-header">
           <strong>今日待办 · 优先接诊队列</strong>
           <RouterLink to="/queue">查看全部 →</RouterLink>
@@ -161,6 +154,7 @@ const workloadBars = computed(() => [
             </tr>
           </tbody>
         </table>
+        </div>
       </div>
 
       <!-- Right: Workload + Notifications -->

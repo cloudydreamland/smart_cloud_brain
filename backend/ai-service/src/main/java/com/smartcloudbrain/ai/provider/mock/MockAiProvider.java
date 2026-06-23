@@ -37,20 +37,20 @@ public class MockAiProvider implements AiProvider {
     boolean cardiology = request.chiefComplaint().contains("胸痛")
         || request.chiefComplaint().toLowerCase().contains("chest");
     if (cardiology) {
-      return new TriageResponse("Cardiology", "CARDIOLOGY", List.of(1L), "Deterministic fallback: complaint suggests cardiology assessment.", true);
+      return new TriageResponse("心内科", "CARDIOLOGY", List.of(1L), "确定性降级：主诉提示心内科评估。", true);
     }
-    return new TriageResponse("General Practice", "GENERAL", List.of(), "Fallback to manual triage.", true);
+    return new TriageResponse("全科", "GENERAL", List.of(), "降级为人工分诊。", true);
   }
 
   @Override
   public MedicalRecordGenerateResponse generateMedicalRecord(MedicalRecordGenerateRequest request, PromptResolveResponse prompt) {
     return new MedicalRecordGenerateResponse(
-        "Chest pain with dyspnea for two days",
-        "Symptoms worsen after activity and are relieved by rest.",
-        "No clear past history was provided.",
-        "Physical examination should be completed by the doctor.",
-        "Chest pain under evaluation.",
-        "Complete ECG and cardiac enzyme checks.",
+        "胸痛伴呼吸困难两天",
+        "活动后加重，休息后缓解。",
+        "未提供明确既往病史。",
+        "体格检查应由医生完成。",
+        "胸痛待查。",
+        "完善心电图和心肌酶检查。",
         true
     );
   }
@@ -61,9 +61,9 @@ public class MockAiProvider implements AiProvider {
         .map(DrugItem::drugName)
         .anyMatch(name -> name.contains("阿司匹林") || name.toLowerCase().contains("aspirin"));
     if (aspirin) {
-      return new PrescriptionCheckResponse("MEDIUM", "Deterministic fallback: review bleeding risk before saving.", List.of("Aspirin may increase bleeding risk."), true);
+      return new PrescriptionCheckResponse("MEDIUM", "确定性降级：保存前请审核出血风险。", List.of("阿司匹林可能增加出血风险。"), true);
     }
-    return new PrescriptionCheckResponse("LOW", "Deterministic fallback found no obvious high-risk interaction.", List.of(), true);
+    return new PrescriptionCheckResponse("LOW", "确定性降级：未发现明显高风险药物相互作用。", List.of(), true);
   }
 
   @Override
