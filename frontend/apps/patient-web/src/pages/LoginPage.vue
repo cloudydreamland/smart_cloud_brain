@@ -22,7 +22,7 @@ async function submit() {
     const session = await api.loginPatient(form.account.trim(), form.password);
     auth.save("patient-session", session, "PATIENT");
     if (!auth.permissionError) {
-      await router.push(String(route.query.redirect || "/portal"));
+      await router.push(String(route.query.redirect || "/patient-services"));
     }
   } catch (err) {
     error.value = formatApiError(err, "登录失败");

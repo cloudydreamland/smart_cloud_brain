@@ -19,7 +19,7 @@ async function refresh() {
   try {
     await workflow.refreshAuthenticated(auth.token());
   } catch (err) {
-    error.value = formatApiError(err, "病历列表加载失败");
+    error.value = formatApiError(err, "病历记录加载失败");
   } finally {
     loading.value = false;
   }
@@ -42,23 +42,30 @@ refresh();
 
 <template>
   <section class="panel">
-    <header class="panel-header"><div class="panel-title"><p class="eyebrow">病历记录</p><h2>病历列表</h2><p>医生保存后同步到患者端。</p></div><button type="button" @click="refresh">刷新</button></header>
+    <header class="panel-header">
+      <div class="panel-title">
+        <p class="eyebrow">我的病历</p>
+        <h2>病历记录</h2>
+        <p>医生保存后同步到患者服务，便于复诊前回看诊断、主诉和医嘱。</p>
+      </div>
+      <button type="button" @click="refresh">刷新</button>
+    </header>
     <div class="panel-body stack">
       <ErrorState v-if="error" :message="error" />
       <LoadingState v-if="loading || detailLoading" />
-      <div v-else-if="records.length" class="table-scroll">
-        <table class="data-table">
-          <thead><tr><th>病历号</th><th>主诉</th><th>诊断</th><th>方式</th><th class="actions-cell">操作</th></tr></thead>
-          <tbody>
-            <tr v-for="item in records" :key="String(item.medicalRecordId)">
-              <td data-label="病历号">#{{ fieldText(item, "medicalRecordId") }}</td>
-              <td data-label="主诉">{{ fieldText(item, "chiefComplaint") }}</td>
-              <td data-label="诊断">{{ fieldText(item, "diagnosis") }}</td>
-              <td data-label="方式">{{ item.aiGenerated ? "智能草稿确认" : "医生录入" }}</td>
-              <td data-label="操作"><button type="button" @click="open(item)">详情</button></td>
-            </tr>
-          </tbody>
-        </table>
+      <div v-else-if="records.length" class="record-list">
+        <article v-for="item in records" :key="String(item.medicalRecordId)" class="record-card">
+          <div>
+            <span class="record-kicker">病历 #{{ fieldText(item, "medicalRecordId") }}</span>
+            <h3>{{ fieldText(item, "diagnosis", "诊断待同步") }}</h3>
+            <p>{{ fieldText(item, "chiefComplaint", "暂无主诉记录") }}</p>
+            <div class="record-meta">
+              <span>{{ item.aiGenerated ? "AI草稿经医生确认" : "医生录入" }}</span>
+              <span>{{ fieldText(item, "createdAt", "时间待同步") }}</span>
+            </div>
+          </div>
+          <button type="button" @click="open(item)">查看详情</button>
+        </article>
       </div>
       <EmptyState v-else title="暂无病历" message="医生保存病历后会显示在这里。" />
     </div>

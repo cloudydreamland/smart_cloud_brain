@@ -3,7 +3,8 @@ import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { useRouter } from "vue-router";
 import { fieldText, formatApiError, useAuthStore, usePatientWorkflowStore } from "@smart-cloud-brain/shared-api";
-import { CollapsibleSidebar } from "@smart-cloud-brain/shared-ui";
+import PatientSiteFooter from "../components/PatientSiteFooter.vue";
+import PatientSiteHeader from "../components/PatientSiteHeader.vue";
 import SessionExpiredModal from "../components/SessionExpiredModal.vue";
 
 const auth = useAuthStore();
@@ -16,34 +17,12 @@ const sessionExpired = ref(false);
 const loadError = ref("");
 let unbind: (() => void) | null = null;
 
-const sidebarGroups = [
-  {
-    items: [
-      { label: "首页", to: "/portal" },
-      { label: "AI 分诊", to: "/portal/triage" },
-      { label: "预约医生", to: "/portal/doctors" },
-      { label: "我的挂号", to: "/portal/appointments" },
-    ],
-  },
-  {
-    items: [
-      { label: "病历", to: "/portal/records" },
-      { label: "处方", to: "/portal/prescriptions" },
-    ],
-  },
-  {
-    label: "账户",
-    items: [
-      { label: "个人资料", to: "/portal/profile" },
-      { label: "就诊人管理", to: "/portal/visitors" },
-    ],
-  },
-];
-
 const activeAppointment = computed(() => registrations.value.find((item) => {
   const status = fieldText(item, "status");
   return !["COMPLETED", "CANCELLED"].includes(status);
 }));
+
+const patientName = computed(() => fieldText(patient.value, "name", session.value?.name || "患者"));
 
 async function refresh() {
   if (!session.value || !auth.requireRole("PATIENT")) return;
@@ -53,7 +32,7 @@ async function refresh() {
     await workflow.refreshPublicData();
     await workflow.refreshAuthenticated(auth.token());
   } catch (err) {
-    loadError.value = formatApiError(err, "患者数据加载失败");
+    loadError.value = formatApiError(err, "患者资料加载失败");
   } finally {
     loading.value = false;
   }
@@ -79,28 +58,21 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="patient-page theme-patient patient-portal-page">
-    <CollapsibleSidebar
-      mark="患"
-      title="患者服务中心"
-      :groups="sidebarGroups"
-      :user-name="session?.name || '患者'"
-      :user-meta="`患者 #${session?.userId || '-'}`"
-      @logout="logout"
-    />
+    <PatientSiteHeader />
 
-    <div class="portal-workspace">
-      <header class="portal-servicebar">
+    <main class="patient-site-main">
+      <section class="portal-servicebar">
         <div>
-          <strong>患者服务中心</strong>
-          <span>{{ fieldText(patient, "name", session?.name || "患者") }} · 普通门诊预约</span>
+          <strong>患者服务</strong>
+          <span>{{ patientName }} · 同一医院官网内的预约、病历、处方与消息服务</span>
         </div>
         <div class="portal-service-actions">
-          <span class="portal-status online">在线</span>
+          <span class="portal-status online">已登录</span>
           <span v-if="activeAppointment" class="portal-status">待就诊</span>
           <button type="button" @click="refresh">刷新</button>
-          <button type="button" @click="logout">退出</button>
+          <button type="button" @click="logout">退出登录</button>
         </div>
-      </header>
+      </section>
 
       <div v-if="permissionError" class="portal-message error">
         <span>{{ permissionError }}</span>
@@ -112,8 +84,9 @@ onBeforeUnmount(() => {
       </div>
 
       <RouterView :boot-loading="loading" @refresh="refresh" />
-    </div>
+    </main>
 
+    <PatientSiteFooter />
     <SessionExpiredModal :open="sessionExpired" @close="logout" />
   </div>
 </template>
