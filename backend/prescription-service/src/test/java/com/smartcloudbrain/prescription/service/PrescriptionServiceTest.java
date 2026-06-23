@@ -20,6 +20,7 @@ import com.smartcloudbrain.prescription.entity.Prescription;
 import com.smartcloudbrain.prescription.entity.PrescriptionCheckRecord;
 import com.smartcloudbrain.prescription.entity.PrescriptionItem;
 import com.smartcloudbrain.prescription.event.OutboxEventPublisher;
+import com.smartcloudbrain.prescription.repository.DrugRepository;
 import com.smartcloudbrain.prescription.repository.MedicalRecordRepository;
 import com.smartcloudbrain.prescription.repository.PatientRepository;
 import com.smartcloudbrain.prescription.repository.PrescriptionCheckRecordRepository;
@@ -43,6 +44,7 @@ class PrescriptionServiceTest {
   @Mock private PrescriptionCheckRecordRepository checkRecordRepository;
   @Mock private MedicalRecordRepository medicalRecordRepository;
   @Mock private PatientRepository patientRepository;
+  @Mock private DrugRepository drugRepository;
   @Mock private OutboxEventPublisher outboxEventPublisher;
   @Mock private CurrentUserService currentUserService;
   @InjectMocks private PrescriptionService service;

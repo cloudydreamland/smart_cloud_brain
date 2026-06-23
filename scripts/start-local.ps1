@@ -18,6 +18,25 @@ if ($LASTEXITCODE -ne 0) {
   throw "Docker daemon is not running. Start Docker Desktop first."
 }
 
+$UseComposePlugin = $true
+& docker compose version *> $null
+if ($LASTEXITCODE -ne 0) {
+  if (-not (Get-Command docker-compose -ErrorAction SilentlyContinue)) {
+    throw "Neither 'docker compose' nor 'docker-compose' is available."
+  }
+  $UseComposePlugin = $false
+  Write-Host "Docker Compose plugin is unavailable; using docker-compose fallback."
+}
+
+function Invoke-Compose {
+  param([string[]]$ComposeArgs)
+  if ($UseComposePlugin) {
+    & docker compose @ComposeArgs
+  } else {
+    & docker-compose @ComposeArgs
+  }
+}
+
 if (-not (Test-Path $EnvFile)) {
   Copy-Item -LiteralPath $EnvExample -Destination $EnvFile
   Write-Host "Created local environment file: $EnvFile"
@@ -58,7 +77,7 @@ if (-not $NoBuild) {
     "nginx"
   )
   foreach ($Service in $BuildServices) {
-    & docker compose @args build $Service
+    Invoke-Compose ($args + @("build", $Service))
     if ($LASTEXITCODE -ne 0) {
       throw "Docker image build failed for '$Service'."
     }
@@ -67,7 +86,7 @@ if (-not $NoBuild) {
 $args += @("up", "-d", "--no-build")
 
 Write-Host "Starting Docker Compose services with environment '$Profile' ..."
-& docker compose @args
+Invoke-Compose $args
 if ($LASTEXITCODE -ne 0) {
   throw "Docker Compose startup failed with exit code $LASTEXITCODE."
 }

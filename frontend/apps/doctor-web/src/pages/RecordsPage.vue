@@ -3,12 +3,12 @@ import { ref } from "vue";
 import { storeToRefs } from "pinia";
 import { fieldText, formatApiError, useAuthStore, useDoctorWorkflowStore, usePagination } from "@smart-cloud-brain/shared-api";
 import { ErrorState, LoadingState, PaginationBar } from "@smart-cloud-brain/shared-ui";
-import { demoRecords, withDemo } from "../doctorPresentation";
+import { liveRows } from "../doctorPresentation";
 
 const auth = useAuthStore();
 const workflow = useDoctorWorkflowStore();
 const { records } = storeToRefs(workflow);
-const displayRecords = withDemo(records, demoRecords);
+const displayRecords = liveRows(records);
 const loading = ref(false);
 const error = ref("");
 const { currentPage, pageSize, total, pageRows } = usePagination(displayRecords, 8);
@@ -19,7 +19,7 @@ async function refresh() {
   try {
     await workflow.refresh(auth.token());
   } catch (err) {
-    error.value = formatApiError(err, "病历列表加载失败，当前展示演示数据。");
+    error.value = formatApiError(err, "病历列表加载失败，请稍后重试。");
   } finally {
     loading.value = false;
   }

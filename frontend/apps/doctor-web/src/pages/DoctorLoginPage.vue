@@ -63,7 +63,7 @@ async function submit() {
         <header>
           <p class="eyebrow">医生登录</p>
           <h2>进入接诊工作台</h2>
-          <p>演示账号已预填，登录后进入完整医生端流程。</p>
+          <p>登录后进入完整医生端流程。</p>
         </header>
         <div class="form-body">
           <ErrorState v-if="error" :message="error" />

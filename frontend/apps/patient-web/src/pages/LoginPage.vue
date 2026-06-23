@@ -60,7 +60,7 @@ async function submit() {
         <input v-model="form.password" type="password" autocomplete="current-password" placeholder="请输入密码">
       </label>
       <button class="patient-primary" type="submit" :disabled="loading">{{ loading ? "登录中" : "登录并继续预约" }}</button>
-      <p>演示环境使用后端真实登录接口；未注册患者请先创建档案。</p>
+      <p>登录会调用后端真实认证接口；未注册患者请先创建档案。</p>
     </form>
   </section>
 </template>

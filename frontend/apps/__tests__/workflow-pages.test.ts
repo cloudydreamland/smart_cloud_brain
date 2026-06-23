@@ -68,7 +68,7 @@ describe("closed-loop page smoke tests", () => {
 
   it("renders administrator patient management", () => {
     const wrapper = shallowMount(PatientsPage);
-    expect(wrapper.text()).toContain("Patient Information Management");
+    expect(wrapper.text()).toContain("Patient Management");
     expect(wrapper.text()).toContain("Search");
   });
 
@@ -80,7 +80,7 @@ describe("closed-loop page smoke tests", () => {
 
   it("renders administrator permissions", () => {
     const wrapper = shallowMount(PermissionsPage);
-    expect(wrapper.text()).toContain("Menu and Operation Permissions");
-    expect(wrapper.text()).toContain("Save role");
+    expect(wrapper.text()).toContain("Role Permissions");
+    expect(wrapper.text()).toContain("Save");
   });
 });

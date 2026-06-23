@@ -3,14 +3,7 @@ import { fieldText, type DataRow } from "@smart-cloud-brain/shared-api";
 
 export type Tone = "success" | "info" | "warning" | "danger";
 
-export const demoRegistrations: DataRow[] = [];
-export const demoTriageRecords: DataRow[] = [];
-export const demoRecords: DataRow[] = [];
-export const demoPrescriptions: DataRow[] = [];
-export const demoNotifications: DataRow[] = [];
-export const demoDrugs: DataRow[] = [];
-
-export function withDemo(source: Ref<DataRow[]>, _demo: DataRow[]) {
+export function liveRows(source: Ref<DataRow[]>) {
   return computed(() => source.value);
 }
 

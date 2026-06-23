@@ -3,24 +3,20 @@ import { computed } from "vue";
 import { storeToRefs } from "pinia";
 import { fieldText, useDoctorWorkflowStore } from "@smart-cloud-brain/shared-api";
 import {
-  demoNotifications,
-  demoPrescriptions,
-  demoRecords,
-  demoRegistrations,
   formatTime,
+  liveRows,
   patientName,
   riskText,
   statusLabel,
   statusTone,
-  withDemo,
 } from "../doctorPresentation";
 
 const workflow = useDoctorWorkflowStore();
 const { registrations, records, prescriptions, notifications } = storeToRefs(workflow);
-const rows = withDemo(registrations, demoRegistrations);
-const displayRecords = withDemo(records, demoRecords);
-const displayPrescriptions = withDemo(prescriptions, demoPrescriptions);
-const displayNotifications = withDemo(notifications, demoNotifications);
+const rows = liveRows(registrations);
+const displayRecords = liveRows(records);
+const displayPrescriptions = liveRows(prescriptions);
+const displayNotifications = liveRows(notifications);
 
 const activeRegistrations = computed(() => rows.value.filter((item) => fieldText(item, "status").toUpperCase() !== "COMPLETED"));
 const completed = computed(() => rows.value.filter((item) => fieldText(item, "status").toUpperCase() === "COMPLETED").length);
