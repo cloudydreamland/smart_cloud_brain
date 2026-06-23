@@ -138,25 +138,18 @@ onBeforeUnmount(() => {
     <div class="doctor-app">
       <header class="doctor-topline">
         <div class="doctor-session">
-          <strong>{{ pageTitle }}</strong>
-          <span>{{ session?.name || "医生" }} · {{ statusLabel(session?.role, "医生") }} #{{ session?.userId || "-" }}</span>
+          <strong>{{ session?.name || "医生" }}</strong>
+          <span>{{ session?.departmentName || "心内科" }} · {{ statusLabel(session?.role, "医生") }} #{{ session?.userId || "-" }}</span>
         </div>
         <div class="doctor-topline-status">
           <span class="status-pill"><i class="dot"></i>{{ socketStatus }}</span>
           <span class="status-pill">队列 {{ activeQueue }}</span>
-          <span class="status-pill">未读 {{ unread }}</span>
-          <button type="button" class="ghost" :disabled="loading" @click="refresh">{{ loading ? "同步中" : "同步" }}</button>
-          <button type="button" @click="logout">退出</button>
+          <button type="button" class="topbar-btn" :disabled="loading" @click="refresh">{{ loading ? "同步中" : "同步" }}</button>
+          <button type="button" class="topbar-btn danger" @click="logout">退出</button>
         </div>
       </header>
 
       <main class="doctor-main">
-        <section class="flow-strip" aria-label="医生端流程">
-          <div v-for="step in flowSteps" :key="step.no" class="flow-step" :class="step.state">
-            <span>{{ step.no }}</span>
-            <strong>{{ step.label }}</strong>
-          </div>
-        </section>
         <div v-if="permissionError" class="clinical-alert danger">{{ permissionError }}</div>
         <RouterView @refresh="refresh" />
       </main>

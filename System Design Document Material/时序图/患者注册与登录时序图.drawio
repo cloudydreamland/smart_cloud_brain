@@ -1,0 +1,2423 @@
+<mxfile host="embed.diagrams.net" agent="Codex" pages="5">
+  <diagram id="patient-auth-sequence" name="患者注册与登录时序图">
+    <mxGraphModel dx="1239" dy="558" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1280" pageHeight="1140" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=18;fontStyle=1;align=center;verticalAlign=middle;fontColor=#000000;" value="患者注册与登录时序图" vertex="1">
+          <mxGeometry height="26" width="460" x="410" as="geometry" />
+        </mxCell>
+        <mxCell id="reg-frame" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=1;" value="" vertex="1">
+          <mxGeometry height="400" width="1235" x="20" y="118" as="geometry" />
+        </mxCell>
+        <mxCell id="login-frame" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=1;" value="" vertex="1">
+          <mxGeometry height="545" width="1235" x="20" y="545" as="geometry" />
+        </mxCell>
+        <mxCell id="reg-label" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=12;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" value="一、患者注册流程" vertex="1">
+          <mxGeometry height="18" width="180" x="30" y="122" as="geometry" />
+        </mxCell>
+        <mxCell id="login-label" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=12;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" value="二、患者登录流程" vertex="1">
+          <mxGeometry height="18" width="180" x="30" y="549" as="geometry" />
+        </mxCell>
+        <mxCell id="reg-alt" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=1;" value="" vertex="1">
+          <mxGeometry height="235" width="1195" x="40" y="265" as="geometry" />
+        </mxCell>
+        <mxCell id="reg-alt-tab" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;fontStyle=1;align=center;verticalAlign=middle;" value="alt" vertex="1">
+          <mxGeometry height="20" width="42" x="40" y="265" as="geometry" />
+        </mxCell>
+        <mxCell id="reg-alt-sep" edge="1" parent="1" style="endArrow=none;startArrow=none;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;dashed=1;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="40" y="340" as="sourcePoint" />
+            <mxPoint x="1235" y="340" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="reg-guard-1" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" value="[手机号已注册]" vertex="1">
+          <mxGeometry height="18" width="130" x="88" y="267" as="geometry" />
+        </mxCell>
+        <mxCell id="reg-guard-2" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" value="[手机号未注册]" vertex="1">
+          <mxGeometry height="18" width="130" x="88" y="342" as="geometry" />
+        </mxCell>
+        <mxCell id="login-alt" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=1;" value="" vertex="1">
+          <mxGeometry height="360" width="1195" x="40" y="710" as="geometry" />
+        </mxCell>
+        <mxCell id="login-alt-tab" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;fontStyle=1;align=center;verticalAlign=middle;" value="alt" vertex="1">
+          <mxGeometry height="20" width="42" x="40" y="710" as="geometry" />
+        </mxCell>
+        <mxCell id="login-alt-sep" edge="1" parent="1" style="endArrow=none;startArrow=none;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;dashed=1;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="40" y="790" as="sourcePoint" />
+            <mxPoint x="1235" y="790" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="login-guard-1" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" value="[账号不存在]" vertex="1">
+          <mxGeometry height="18" width="120" x="88" y="712" as="geometry" />
+        </mxCell>
+        <mxCell id="login-guard-2" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" value="[账号存在]" vertex="1">
+          <mxGeometry height="18" width="120" x="88" y="792" as="geometry" />
+        </mxCell>
+        <mxCell id="pwd-alt" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=1;" value="" vertex="1">
+          <mxGeometry height="195" width="875" x="360" y="855" as="geometry" />
+        </mxCell>
+        <mxCell id="pwd-alt-tab" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;fontStyle=1;align=center;verticalAlign=middle;" value="alt" vertex="1">
+          <mxGeometry height="20" width="42" x="360" y="855" as="geometry" />
+        </mxCell>
+        <mxCell id="pwd-alt-sep" edge="1" parent="1" style="endArrow=none;startArrow=none;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;dashed=1;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="360" y="930" as="sourcePoint" />
+            <mxPoint x="1235" y="930" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="pwd-guard-1" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" value="[密码错误]" vertex="1">
+          <mxGeometry height="18" width="100" x="443" y="857" as="geometry" />
+        </mxCell>
+        <mxCell id="pwd-guard-2" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" value="[密码正确]" vertex="1">
+          <mxGeometry height="18" width="100" x="443" y="932" as="geometry" />
+        </mxCell>
+        <mxCell id="actor-shape" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;strokeColor=#000000;fillColor=#FFFFFF;" value="" vertex="1">
+          <mxGeometry height="60" width="50" x="35" y="25" as="geometry" />
+        </mxCell>
+        <mxCell id="actor-label" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;align=center;verticalAlign=top;fontColor=#000000;" value="&lt;u&gt;patient:Patient&lt;/u&gt;&lt;br&gt;&amp;lt;&amp;lt;actor&amp;gt;&amp;gt;" vertex="1">
+          <mxGeometry height="34" width="90" x="15" y="85" as="geometry" />
+        </mxCell>
+        <mxCell id="p-page" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;" value="&amp;lt;&amp;lt;boundary&amp;gt;&amp;gt;&lt;br&gt;&lt;u&gt;page:RegisterLoginPage&lt;/u&gt;" vertex="1">
+          <mxGeometry height="48" width="140" x="160" y="42" as="geometry" />
+        </mxCell>
+        <mxCell id="p-controller" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;" value="&amp;lt;&amp;lt;control&amp;gt;&amp;gt;&lt;br&gt;&lt;u&gt;authController:AuthController&lt;/u&gt;" vertex="1">
+          <mxGeometry height="48" width="160" x="350" y="42" as="geometry" />
+        </mxCell>
+        <mxCell id="p-service" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;" value="&amp;lt;&amp;lt;service&amp;gt;&amp;gt;&lt;br&gt;&lt;u&gt;authService:AuthService&lt;/u&gt;" vertex="1">
+          <mxGeometry height="48" width="140" x="550" y="42" as="geometry" />
+        </mxCell>
+        <mxCell id="p-repo" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;" value="&amp;lt;&amp;lt;repository&amp;gt;&amp;gt;&lt;br&gt;&lt;u&gt;patientRepo:PatientRepository&lt;/u&gt;" vertex="1">
+          <mxGeometry height="48" width="160" x="740" y="42" as="geometry" />
+        </mxCell>
+        <mxCell id="p-password" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;" value="&amp;lt;&amp;lt;service&amp;gt;&amp;gt;&lt;br&gt;&lt;u&gt;passwordService:PasswordService&lt;/u&gt;" vertex="1">
+          <mxGeometry height="48" width="160" x="930" y="42" as="geometry" />
+        </mxCell>
+        <mxCell id="p-jwt" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;" value="&amp;lt;&amp;lt;security&amp;gt;&amp;gt;&lt;br&gt;&lt;u&gt;jwtService:JwtService&lt;/u&gt;" vertex="1">
+          <mxGeometry height="48" width="110" x="1135" y="42" as="geometry" />
+        </mxCell>
+        <mxCell id="ll-patient" edge="1" parent="1" style="endArrow=none;startArrow=none;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="60" y="132" as="sourcePoint" />
+            <mxPoint x="60" y="1095" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ll-page" edge="1" parent="1" style="endArrow=none;startArrow=none;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="230" y="90" as="sourcePoint" />
+            <mxPoint x="230" y="1095" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ll-controller" edge="1" parent="1" style="endArrow=none;startArrow=none;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="430" y="90" as="sourcePoint" />
+            <mxPoint x="430" y="1095" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ll-service" edge="1" parent="1" style="endArrow=none;startArrow=none;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="620" y="90" as="sourcePoint" />
+            <mxPoint x="620" y="1095" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ll-repo" edge="1" parent="1" style="endArrow=none;startArrow=none;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="820" y="90" as="sourcePoint" />
+            <mxPoint x="820" y="1095" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ll-password" edge="1" parent="1" style="endArrow=none;startArrow=none;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1010" y="90" as="sourcePoint" />
+            <mxPoint x="1010" y="1095" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ll-jwt" edge="1" parent="1" style="endArrow=none;startArrow=none;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1190" y="90" as="sourcePoint" />
+            <mxPoint x="1190" y="1095" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="act-page-reg" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" value="" vertex="1">
+          <mxGeometry height="345" width="8" x="226" y="145" as="geometry" />
+        </mxCell>
+        <mxCell id="act-controller-reg" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" value="" vertex="1">
+          <mxGeometry height="300" width="8" x="426" y="175" as="geometry" />
+        </mxCell>
+        <mxCell id="act-service-reg" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" value="" vertex="1">
+          <mxGeometry height="253" width="8" x="616" y="205" as="geometry" />
+        </mxCell>
+        <mxCell id="act-repo-reg-1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" value="" vertex="1">
+          <mxGeometry height="25" width="8" x="816" y="235" as="geometry" />
+        </mxCell>
+        <mxCell id="act-password-reg" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" value="" vertex="1">
+          <mxGeometry height="25" width="8" x="1006" y="365" as="geometry" />
+        </mxCell>
+        <mxCell id="act-repo-reg-2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" value="" vertex="1">
+          <mxGeometry height="23" width="8" x="816" y="415" as="geometry" />
+        </mxCell>
+        <mxCell id="act-page-login" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" value="" vertex="1">
+          <mxGeometry height="495" width="8" x="226" y="570" as="geometry" />
+        </mxCell>
+        <mxCell id="act-controller-login" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" value="" vertex="1">
+          <mxGeometry height="425" width="8" x="426" y="600" as="geometry" />
+        </mxCell>
+        <mxCell id="act-service-login" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" value="" vertex="1">
+          <mxGeometry height="375" width="8" x="616" y="630" as="geometry" />
+        </mxCell>
+        <mxCell id="act-repo-login" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" value="" vertex="1">
+          <mxGeometry height="25" width="8" x="816" y="660" as="geometry" />
+        </mxCell>
+        <mxCell id="act-password-login" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" value="" vertex="1">
+          <mxGeometry height="25" width="8" x="1006" y="810" as="geometry" />
+        </mxCell>
+        <mxCell id="act-jwt-login" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" value="" vertex="1">
+          <mxGeometry height="25" width="8" x="1186" y="955" as="geometry" />
+        </mxCell>
+        <mxCell id="m1" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" value="填写注册信息并点击注册">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="60" y="145" as="sourcePoint" />
+            <mxPoint x="226" y="145" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m2" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" value="POST /api/patient/register&lt;br&gt;PatientRegisterRequest">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="234" y="175" as="sourcePoint" />
+            <mxPoint x="426" y="175" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m3" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" value="registerPatient(request)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="434" y="205" as="sourcePoint" />
+            <mxPoint x="616" y="205" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m4" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" value="findByPhone(phone)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="624" y="235" as="sourcePoint" />
+            <mxPoint x="816" y="235" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m5" edge="1" parent="1" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" value="Patient / null">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="816" y="260" as="sourcePoint" />
+            <mxPoint x="624" y="260" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m6" edge="1" parent="1" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" value="throw BusinessException">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="616" y="290" as="sourcePoint" />
+            <mxPoint x="434" y="290" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m7" edge="1" parent="1" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" value="错误响应">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="426" y="310" as="sourcePoint" />
+            <mxPoint x="234" y="310" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m8" edge="1" parent="1" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" value="提示手机号已注册">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="226" y="330" as="sourcePoint" />
+            <mxPoint x="60" y="330" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m9" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" value="encode(rawPassword)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="624" y="365" as="sourcePoint" />
+            <mxPoint x="1006" y="365" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m10" edge="1" parent="1" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" value="passwordHash">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1006" y="390" as="sourcePoint" />
+            <mxPoint x="624" y="390" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m11" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" value="save(patient)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="624" y="415" as="sourcePoint" />
+            <mxPoint x="816" y="415" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m12" edge="1" parent="1" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" value="patientId">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="816" y="438" as="sourcePoint" />
+            <mxPoint x="624" y="438" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m13" edge="1" parent="1" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" value="RegisterResult(patientId)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="616" y="458" as="sourcePoint" />
+            <mxPoint x="434" y="458" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m14" edge="1" parent="1" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" value="Result.success(patientId)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="426" y="475" as="sourcePoint" />
+            <mxPoint x="234" y="475" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m15" edge="1" parent="1" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" value="注册成功，跳转登录页">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="226" y="490" as="sourcePoint" />
+            <mxPoint x="60" y="490" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m16" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" value="输入手机号和密码并点击登录">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="60" y="570" as="sourcePoint" />
+            <mxPoint x="226" y="570" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m17" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" value="POST /api/patient/login&lt;br&gt;LoginRequest">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="234" y="600" as="sourcePoint" />
+            <mxPoint x="426" y="600" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m18" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" value="loginPatient(request)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="434" y="630" as="sourcePoint" />
+            <mxPoint x="616" y="630" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m19" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" value="findByPhone(phone)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="624" y="660" as="sourcePoint" />
+            <mxPoint x="816" y="660" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m20" edge="1" parent="1" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" value="Patient / null">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="816" y="685" as="sourcePoint" />
+            <mxPoint x="624" y="685" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m21" edge="1" parent="1" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" value="throw BusinessException">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="616" y="735" as="sourcePoint" />
+            <mxPoint x="434" y="735" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m22" edge="1" parent="1" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" value="错误响应">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="426" y="755" as="sourcePoint" />
+            <mxPoint x="234" y="755" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m23" edge="1" parent="1" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" value="提示账号或密码错误">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="226" y="775" as="sourcePoint" />
+            <mxPoint x="60" y="775" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m24" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" value="matchPassword(rawPassword, passwordHash)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="624" y="810" as="sourcePoint" />
+            <mxPoint x="1006" y="810" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m25" edge="1" parent="1" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" value="matchResult">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1006" y="835" as="sourcePoint" />
+            <mxPoint x="624" y="835" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m26" edge="1" parent="1" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" value="throw BusinessException">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="616" y="880" as="sourcePoint" />
+            <mxPoint x="434" y="880" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m27" edge="1" parent="1" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" value="错误响应">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="426" y="900" as="sourcePoint" />
+            <mxPoint x="234" y="900" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m28" edge="1" parent="1" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" value="提示账号或密码错误">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="226" y="920" as="sourcePoint" />
+            <mxPoint x="60" y="920" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m29" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" value="issue(userId, PATIENT, name)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="624" y="955" as="sourcePoint" />
+            <mxPoint x="1186" y="955" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m30" edge="1" parent="1" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" value="JWT Token">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1186" y="980" as="sourcePoint" />
+            <mxPoint x="624" y="980" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m31" edge="1" parent="1" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" value="LoginResponse(token, userInfo)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="616" y="1005" as="sourcePoint" />
+            <mxPoint x="434" y="1005" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m32" edge="1" parent="1" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" value="Result.success(loginResponse)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="426" y="1025" as="sourcePoint" />
+            <mxPoint x="234" y="1025" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m33" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" value="保存 Token 和用户状态">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="290" y="1045" />
+              <mxPoint x="290" y="1065" />
+            </Array>
+            <mxPoint x="234" y="1045" as="sourcePoint" />
+            <mxPoint x="234" y="1065" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m34" edge="1" parent="1" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" value="跳转患者首页/智能分诊页">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="226" y="1080" as="sourcePoint" />
+            <mxPoint x="60" y="1080" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="triage-sequence" name="智能分诊时序图">
+    <mxGraphModel dx="1700" dy="1300" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1780" pageHeight="1540" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="智能分诊时序图" style="text;html=1;strokeColor=none;fillColor=none;fontSize=18;fontStyle=1;align=center;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="660" y="8" width="460" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="auth-alt" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="30" y="310" width="1710" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="auth-alt-tab" value="alt" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="30" y="310" width="42" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="auth-sep" value="" style="endArrow=none;startArrow=none;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;dashed=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="30" y="410" as="sourcePoint" />
+            <mxPoint x="1740" y="410" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="auth-guard-1" value="[未登录、Token 无效或角色不是 PATIENT]" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="78" y="312" width="260" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="auth-guard-2" value="[校验通过]" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="78" y="412" width="120" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="patient-alt" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="150" y="500" width="640" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="patient-alt-tab" value="alt" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="150" y="500" width="42" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="patient-sep" value="" style="endArrow=none;startArrow=none;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;dashed=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="150" y="560" as="sourcePoint" />
+            <mxPoint x="790" y="560" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="patient-guard-1" value="[patientId 不属于当前用户]" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="198" y="502" width="180" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="patient-guard-2" value="[patientId 合法]" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="198" y="562" width="120" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="ai-alt" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="150" y="785" width="1590" height="350" as="geometry" />
+        </mxCell>
+        <mxCell id="ai-alt-tab" value="alt" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="150" y="785" width="42" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="ai-sep-1" value="" style="endArrow=none;startArrow=none;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;dashed=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="150" y="900" as="sourcePoint" />
+            <mxPoint x="1740" y="900" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ai-sep-2" value="" style="endArrow=none;startArrow=none;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;dashed=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="150" y="1015" as="sourcePoint" />
+            <mxPoint x="1740" y="1015" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ai-guard-1" value="[AI 正常返回]" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="198" y="787" width="130" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="ai-guard-2" value="[AI Provider 失败但有降级结果]" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="198" y="902" width="220" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="ai-guard-3" value="[AI 服务完全不可达]" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="198" y="1017" width="160" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="source-opt" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="30" y="1380" width="350" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="source-opt-tab" value="opt" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="30" y="1380" width="42" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="source-guard" value="[患者查看号源]" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="78" y="1382" width="120" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="actor-shape" value="" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;strokeColor=#000000;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="35" y="36" width="50" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="actor-label" value="&lt;u&gt;patient:Patient&lt;/u&gt;&lt;br&gt;&amp;lt;&amp;lt;actor&amp;gt;&amp;gt;" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;align=center;verticalAlign=top;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="10" y="96" width="100" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="p-page" value="&amp;lt;&amp;lt;boundary&amp;gt;&amp;gt;&lt;br&gt;&lt;u&gt;page:TriagePage&lt;/u&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="170" y="42" width="140" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="p-controller" value="&amp;lt;&amp;lt;control&amp;gt;&amp;gt;&lt;br&gt;&lt;u&gt;triageController:TriageController&lt;/u&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="360" y="42" width="160" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="p-service" value="&amp;lt;&amp;lt;service&amp;gt;&amp;gt;&lt;br&gt;&lt;u&gt;triageService:TriageService&lt;/u&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="580" y="42" width="140" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="p-current" value="&amp;lt;&amp;lt;service&amp;gt;&amp;gt;&lt;br&gt;&lt;u&gt;currentUserService:CurrentUserService&lt;/u&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="780" y="42" width="160" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="p-patient-repo" value="&amp;lt;&amp;lt;repository&amp;gt;&amp;gt;&lt;br&gt;&lt;u&gt;patientRepo:PatientRepository&lt;/u&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="980" y="42" width="160" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="p-gateway" value="&amp;lt;&amp;lt;service&amp;gt;&amp;gt;&lt;br&gt;&lt;u&gt;aiGateway:AiGatewayService&lt;/u&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1180" y="42" width="160" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="p-ai" value="&amp;lt;&amp;lt;external&amp;gt;&amp;gt;&lt;br&gt;&lt;u&gt;aiClient:AiServiceClient&lt;/u&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1385" y="42" width="150" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="p-record-repo" value="&amp;lt;&amp;lt;repository&amp;gt;&amp;gt;&lt;br&gt;&lt;u&gt;triageRecordRepo:TriageRecordRepository&lt;/u&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1575" y="42" width="170" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="ll-patient" value="" style="endArrow=none;startArrow=none;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="60" y="132" as="sourcePoint" />
+            <mxPoint x="60" y="1495" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ll-page" value="" style="endArrow=none;startArrow=none;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="240" y="90" as="sourcePoint" />
+            <mxPoint x="240" y="1495" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ll-controller" value="" style="endArrow=none;startArrow=none;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="440" y="90" as="sourcePoint" />
+            <mxPoint x="440" y="1495" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ll-service" value="" style="endArrow=none;startArrow=none;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="650" y="90" as="sourcePoint" />
+            <mxPoint x="650" y="1495" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ll-current" value="" style="endArrow=none;startArrow=none;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="860" y="90" as="sourcePoint" />
+            <mxPoint x="860" y="1495" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ll-patient-repo" value="" style="endArrow=none;startArrow=none;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1060" y="90" as="sourcePoint" />
+            <mxPoint x="1060" y="1495" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ll-gateway" value="" style="endArrow=none;startArrow=none;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1260" y="90" as="sourcePoint" />
+            <mxPoint x="1260" y="1495" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ll-ai" value="" style="endArrow=none;startArrow=none;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1460" y="90" as="sourcePoint" />
+            <mxPoint x="1460" y="1495" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ll-record-repo" value="" style="endArrow=none;startArrow=none;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1660" y="90" as="sourcePoint" />
+            <mxPoint x="1660" y="1495" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="act-page" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="236" y="150" width="8" height="1325" as="geometry" />
+        </mxCell>
+        <mxCell id="act-controller" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="436" y="220" width="8" height="1110" as="geometry" />
+        </mxCell>
+        <mxCell id="act-service" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="646" y="255" width="8" height="1040" as="geometry" />
+        </mxCell>
+        <mxCell id="act-current" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="856" y="290" width="8" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="act-patient-repo" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1056" y="630" width="8" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="act-gateway" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1256" y="725" width="8" height="390" as="geometry" />
+        </mxCell>
+        <mxCell id="act-ai" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1456" y="760" width="8" height="220" as="geometry" />
+        </mxCell>
+        <mxCell id="act-record" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1656" y="1195" width="8" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="m1" value="填写症状并点击提交分诊" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="60" y="150" as="sourcePoint" />
+            <mxPoint x="236" y="150" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m2" value="校验输入，loading=true" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="244" y="180" as="sourcePoint" />
+            <mxPoint x="244" y="205" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="310" y="180" />
+              <mxPoint x="310" y="205" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m3" value="POST /api/triage/consult&lt;br&gt;TriageRequest + JWT" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="244" y="220" as="sourcePoint" />
+            <mxPoint x="436" y="220" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m4" value="consult(request)" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="444" y="255" as="sourcePoint" />
+            <mxPoint x="646" y="255" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m5" value="require(RoleType.PATIENT)" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="654" y="290" as="sourcePoint" />
+            <mxPoint x="856" y="290" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m6" value="throw BusinessException" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="856" y="335" as="sourcePoint" />
+            <mxPoint x="654" y="335" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m7" value="返回错误" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="646" y="360" as="sourcePoint" />
+            <mxPoint x="444" y="360" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m8" value="Result.error" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="436" y="385" as="sourcePoint" />
+            <mxPoint x="244" y="385" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m9" value="提示请重新登录或无权访问" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="236" y="405" as="sourcePoint" />
+            <mxPoint x="60" y="405" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m10" value="AuthenticatedUser" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="856" y="440" as="sourcePoint" />
+            <mxPoint x="654" y="440" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m11" value="确定 patientId 并校验归属" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="654" y="475" as="sourcePoint" />
+            <mxPoint x="654" y="495" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="735" y="475" />
+              <mxPoint x="735" y="495" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m12" value="throw FORBIDDEN" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="646" y="525" as="sourcePoint" />
+            <mxPoint x="444" y="525" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m13" value="Result.error(403)" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="436" y="545" as="sourcePoint" />
+            <mxPoint x="244" y="545" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m14" value="继续分诊" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="654" y="590" as="sourcePoint" />
+            <mxPoint x="654" y="610" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="735" y="590" />
+              <mxPoint x="735" y="610" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m15" value="findById(patientId)" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="654" y="630" as="sourcePoint" />
+            <mxPoint x="1056" y="630" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m16" value="Patient / empty" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1056" y="665" as="sourcePoint" />
+            <mxPoint x="654" y="665" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m17" value="组装 enrichedRequest" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="654" y="695" as="sourcePoint" />
+            <mxPoint x="654" y="715" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="735" y="695" />
+              <mxPoint x="735" y="715" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m18" value="triage(enrichedRequest)" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="654" y="725" as="sourcePoint" />
+            <mxPoint x="1256" y="725" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m19" value="POST /internal/ai/triage" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1264" y="760" as="sourcePoint" />
+            <mxPoint x="1456" y="760" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m20" value="TriageResponse(degraded=false)" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1456" y="815" as="sourcePoint" />
+            <mxPoint x="1264" y="815" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m21" value="TriageResponse" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1256" y="845" as="sourcePoint" />
+            <mxPoint x="654" y="845" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m22" value="status = AI_RECOMMENDED" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="654" y="875" as="sourcePoint" />
+            <mxPoint x="654" y="895" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="760" y="875" />
+              <mxPoint x="760" y="895" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m23" value="TriageResponse(degraded=true)" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1456" y="930" as="sourcePoint" />
+            <mxPoint x="1264" y="930" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m24" value="TriageResponse" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1256" y="960" as="sourcePoint" />
+            <mxPoint x="654" y="960" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m25" value="status = MANUAL_REQUIRED" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="654" y="990" as="sourcePoint" />
+            <mxPoint x="654" y="1010" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="780" y="990" />
+              <mxPoint x="780" y="1010" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m26" value="throw AI service request failed" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1256" y="1045" as="sourcePoint" />
+            <mxPoint x="654" y="1045" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m27" value="返回错误" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="646" y="1070" as="sourcePoint" />
+            <mxPoint x="444" y="1070" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m28" value="Result.error" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="436" y="1095" as="sourcePoint" />
+            <mxPoint x="244" y="1095" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m29" value="提示分诊服务暂不可用" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="236" y="1120" as="sourcePoint" />
+            <mxPoint x="60" y="1120" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m30" value="创建 TriageRecord" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="654" y="1160" as="sourcePoint" />
+            <mxPoint x="654" y="1180" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="755" y="1160" />
+              <mxPoint x="755" y="1180" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m31" value="save(record)" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="654" y="1195" as="sourcePoint" />
+            <mxPoint x="1656" y="1195" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m32" value="savedRecord" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1656" y="1230" as="sourcePoint" />
+            <mxPoint x="654" y="1230" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m33" value="triageView(record, response)" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="654" y="1260" as="sourcePoint" />
+            <mxPoint x="654" y="1280" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="785" y="1260" />
+              <mxPoint x="785" y="1280" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m34" value="triageView" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="646" y="1295" as="sourcePoint" />
+            <mxPoint x="444" y="1295" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m35" value="Result.success(data)" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="436" y="1325" as="sourcePoint" />
+            <mxPoint x="244" y="1325" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m36" value="展示推荐科室、推荐理由和查看号源按钮" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="236" y="1355" as="sourcePoint" />
+            <mxPoint x="60" y="1355" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m37" value="点击查看号源" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="60" y="1415" as="sourcePoint" />
+            <mxPoint x="236" y="1415" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m38" value="router.push(&#39;/doctors&#39;)" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="244" y="1450" as="sourcePoint" />
+            <mxPoint x="244" y="1470" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="325" y="1450" />
+              <mxPoint x="325" y="1470" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="caption" value="图 5-x 智能分诊时序图" style="text;html=1;strokeColor=none;fillColor=none;fontSize=13;fontStyle=1;align=center;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="740" y="1505" width="300" height="20" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="registration-sequence" name="在线挂号时序图">
+    <mxGraphModel dx="1700" dy="1300" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1640" pageHeight="1490" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="在线挂号时序图" style="text;html=1;strokeColor=none;fillColor=none;fontSize=18;fontStyle=1;align=center;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="590" y="8" width="460" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="query-frame" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="20" y="118" width="1580" height="350" as="geometry" />
+        </mxCell>
+        <mxCell id="create-frame" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="20" y="500" width="1580" height="890" as="geometry" />
+        </mxCell>
+        <mxCell id="query-label" value="一、查询可用号源" style="text;html=1;strokeColor=none;fillColor=none;fontSize=12;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="30" y="122" width="180" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="create-label" value="二、确认并创建挂号" style="text;html=1;strokeColor=none;fillColor=none;fontSize=12;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="30" y="504" width="180" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="auth-alt" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="35" y="650" width="1545" height="175" as="geometry" />
+        </mxCell>
+        <mxCell id="auth-tab" value="alt" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="35" y="650" width="42" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="auth-sep" value="" style="endArrow=none;startArrow=none;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;dashed=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="35" y="740" as="sourcePoint" />
+            <mxPoint x="1580" y="740" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="auth-guard-1" value="[未登录、Token 无效或角色不是 PATIENT]" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="83" y="652" width="260" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="auth-guard-2" value="[身份校验成功]" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="83" y="742" width="140" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="base-alt" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="250" y="850" width="780" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="base-tab" value="alt" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="250" y="850" width="42" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="base-sep" value="" style="endArrow=none;startArrow=none;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;dashed=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="250" y="910" as="sourcePoint" />
+            <mxPoint x="1030" y="910" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="base-guard-1" value="[医生或科室不存在]" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="298" y="852" width="160" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="base-guard-2" value="[医生和科室存在]" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="298" y="912" width="160" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="slot-alt" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="250" y="990" width="1330" height="285" as="geometry" />
+        </mxCell>
+        <mxCell id="slot-tab" value="alt" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="250" y="990" width="42" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="slot-sep" value="" style="endArrow=none;startArrow=none;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;dashed=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="250" y="1095" as="sourcePoint" />
+            <mxPoint x="1580" y="1095" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="slot-guard-1" value="[slotId 为空、号源不存在、重复预约或号源不可用]" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="298" y="992" width="330" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="slot-guard-2" value="[号源可用]" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="298" y="1097" width="120" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="full-opt" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="540" y="1175" width="760" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="full-tab" value="opt" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="540" y="1175" width="42" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="full-guard" value="[扣减后 remainingCapacity &lt;= 0]" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="588" y="1177" width="220" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="refresh-opt" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="35" y="1345" width="470" height="75" as="geometry" />
+        </mxCell>
+        <mxCell id="refresh-tab" value="opt" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="35" y="1345" width="42" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="refresh-guard" value="[挂号成功后刷新我的挂号]" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="83" y="1347" width="180" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="actor-shape" value="" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;strokeColor=#000000;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="35" y="36" width="50" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="actor-label" value="&lt;u&gt;patient:Patient&lt;/u&gt;&lt;br&gt;&amp;lt;&amp;lt;actor&amp;gt;&amp;gt;" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;align=center;verticalAlign=top;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="10" y="96" width="100" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="p-page" value="&amp;lt;&amp;lt;boundary&amp;gt;&amp;gt;&lt;br&gt;&lt;u&gt;page:DoctorSlotsPage&lt;/u&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="165" y="42" width="150" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="p-controller" value="&amp;lt;&amp;lt;control&amp;gt;&amp;gt;&lt;br&gt;&lt;u&gt;registrationController:RegistrationController&lt;/u&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="360" y="42" width="180" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="p-service" value="&amp;lt;&amp;lt;service&amp;gt;&amp;gt;&lt;br&gt;&lt;u&gt;registrationService:RegistrationService&lt;/u&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="590" y="42" width="160" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="p-current" value="&amp;lt;&amp;lt;service&amp;gt;&amp;gt;&lt;br&gt;&lt;u&gt;currentUserService:CurrentUserService&lt;/u&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="805" y="42" width="160" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="p-base" value="&amp;lt;&amp;lt;repository&amp;gt;&amp;gt;&lt;br&gt;&lt;u&gt;baseRepo:Doctor/DepartmentRepository&lt;/u&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1010" y="42" width="180" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="p-slot" value="&amp;lt;&amp;lt;repository&amp;gt;&amp;gt;&lt;br&gt;&lt;u&gt;slotRepo:AppointmentSlotRepository&lt;/u&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1240" y="42" width="180" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="p-reg-repo" value="&amp;lt;&amp;lt;repository&amp;gt;&amp;gt;&lt;br&gt;&lt;u&gt;registrationRepo:RegistrationRepository&lt;/u&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1465" y="42" width="170" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="ll-patient" value="" style="endArrow=none;startArrow=none;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="60" y="132" as="sourcePoint" />
+            <mxPoint x="60" y="1430" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ll-page" value="" style="endArrow=none;startArrow=none;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="240" y="90" as="sourcePoint" />
+            <mxPoint x="240" y="1430" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ll-controller" value="" style="endArrow=none;startArrow=none;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="450" y="90" as="sourcePoint" />
+            <mxPoint x="450" y="1430" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ll-service" value="" style="endArrow=none;startArrow=none;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="670" y="90" as="sourcePoint" />
+            <mxPoint x="670" y="1430" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ll-current" value="" style="endArrow=none;startArrow=none;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="885" y="90" as="sourcePoint" />
+            <mxPoint x="885" y="1430" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ll-base" value="" style="endArrow=none;startArrow=none;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1100" y="90" as="sourcePoint" />
+            <mxPoint x="1100" y="1430" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ll-slot" value="" style="endArrow=none;startArrow=none;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1330" y="90" as="sourcePoint" />
+            <mxPoint x="1330" y="1430" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ll-reg-repo" value="" style="endArrow=none;startArrow=none;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1550" y="90" as="sourcePoint" />
+            <mxPoint x="1550" y="1430" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="act-page" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="236" y="150" width="8" height="1255" as="geometry" />
+        </mxCell>
+        <mxCell id="act-controller-query" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="446" y="180" width="8" height="250" as="geometry" />
+        </mxCell>
+        <mxCell id="act-service-query" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="666" y="210" width="8" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="act-current-query" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="881" y="240" width="8" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="act-slot-query" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1326" y="285" width="8" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="act-base-query" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1096" y="350" width="8" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="act-controller-create" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="446" y="565" width="8" height="780" as="geometry" />
+        </mxCell>
+        <mxCell id="act-service-create" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="666" y="600" width="8" height="715" as="geometry" />
+        </mxCell>
+        <mxCell id="act-current-create" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="881" y="630" width="8" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="act-base-create" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1096" y="820" width="8" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="act-slot-create" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1326" y="970" width="8" height="250" as="geometry" />
+        </mxCell>
+        <mxCell id="act-reg-check" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1546" y="1025" width="8" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="act-reg-save" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1546" y="1245" width="8" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="m1" value="进入挂号页面，查看可预约号源" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="60" y="150" as="sourcePoint" />
+            <mxPoint x="236" y="150" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m2" value="GET /api/registration/slots" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="244" y="180" as="sourcePoint" />
+            <mxPoint x="446" y="180" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m3" value="slots()" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="454" y="210" as="sourcePoint" />
+            <mxPoint x="666" y="210" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m4" value="get()" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="674" y="240" as="sourcePoint" />
+            <mxPoint x="881" y="240" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m5" value="AuthenticatedUser" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="881" y="270" as="sourcePoint" />
+            <mxPoint x="674" y="270" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m6" value="findAvailableSlots(now)" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="674" y="285" as="sourcePoint" />
+            <mxPoint x="1326" y="285" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m7" value="slotList" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1326" y="320" as="sourcePoint" />
+            <mxPoint x="674" y="320" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m8" value="过滤 remainingCapacity &gt; 0" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="674" y="335" as="sourcePoint" />
+            <mxPoint x="674" y="350" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="790" y="335" />
+              <mxPoint x="790" y="350" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m9" value="findDoctor / findDepartment" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="674" y="350" as="sourcePoint" />
+            <mxPoint x="1096" y="350" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m10" value="doctorName, departmentName" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1096" y="380" as="sourcePoint" />
+            <mxPoint x="674" y="380" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m11" value="slotView 列表" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="666" y="400" as="sourcePoint" />
+            <mxPoint x="454" y="400" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m12" value="Result.success(slots)" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="446" y="430" as="sourcePoint" />
+            <mxPoint x="244" y="430" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m13" value="展示医生号源" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="236" y="455" as="sourcePoint" />
+            <mxPoint x="60" y="455" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m14" value="选择号源并确认挂号" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="60" y="535" as="sourcePoint" />
+            <mxPoint x="236" y="535" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m15" value="POST /api/registration/create&lt;br&gt;CreateRegistrationRequest" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="244" y="565" as="sourcePoint" />
+            <mxPoint x="446" y="565" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m16" value="create(request)" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="454" y="600" as="sourcePoint" />
+            <mxPoint x="666" y="600" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m17" value="require(RoleType.PATIENT)" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="674" y="630" as="sourcePoint" />
+            <mxPoint x="881" y="630" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m18" value="throw BusinessException" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="881" y="675" as="sourcePoint" />
+            <mxPoint x="674" y="675" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m19" value="返回错误" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="666" y="700" as="sourcePoint" />
+            <mxPoint x="454" y="700" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m20" value="Result.error" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="446" y="725" as="sourcePoint" />
+            <mxPoint x="244" y="725" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m21" value="提示请登录或无权挂号" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="236" y="735" as="sourcePoint" />
+            <mxPoint x="60" y="735" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m22" value="AuthenticatedUser(patientId)" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="881" y="780" as="sourcePoint" />
+            <mxPoint x="674" y="780" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m23" value="findDoctor / findDepartment" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="674" y="820" as="sourcePoint" />
+            <mxPoint x="1096" y="820" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m24" value="Doctor / Department / empty" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1096" y="850" as="sourcePoint" />
+            <mxPoint x="674" y="850" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m25" value="返回 NOT_FOUND" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="666" y="880" as="sourcePoint" />
+            <mxPoint x="454" y="880" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m26" value="Result.error(NOT_FOUND)" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="446" y="900" as="sourcePoint" />
+            <mxPoint x="244" y="900" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m27" value="继续校验号源" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="674" y="940" as="sourcePoint" />
+            <mxPoint x="674" y="960" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="785" y="940" />
+              <mxPoint x="785" y="960" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m28" value="findByIdForUpdate(slotId)" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="674" y="970" as="sourcePoint" />
+            <mxPoint x="1326" y="970" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m29" value="AppointmentSlot / empty" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1326" y="1000" as="sourcePoint" />
+            <mxPoint x="674" y="1000" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m30" value="existsByPatientIdAndSlotIdAndStatusNot(..., CANCELLED)" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="674" y="1025" as="sourcePoint" />
+            <mxPoint x="1546" y="1025" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m31" value="true / false" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1546" y="1060" as="sourcePoint" />
+            <mxPoint x="674" y="1060" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m32" value="返回 BAD_REQUEST / NOT_FOUND / CONFLICT" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="666" y="1085" as="sourcePoint" />
+            <mxPoint x="454" y="1085" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m33" value="Result.error" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="446" y="1095" as="sourcePoint" />
+            <mxPoint x="244" y="1095" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m34" value="校验状态、余号、医生科室匹配" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="674" y="1130" as="sourcePoint" />
+            <mxPoint x="674" y="1150" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="820" y="1130" />
+              <mxPoint x="820" y="1150" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m35" value="扣减 remainingCapacity" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="674" y="1160" as="sourcePoint" />
+            <mxPoint x="674" y="1175" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="805" y="1160" />
+              <mxPoint x="805" y="1175" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m36" value="slot.status = FULL" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="674" y="1200" as="sourcePoint" />
+            <mxPoint x="674" y="1220" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="785" y="1200" />
+              <mxPoint x="785" y="1220" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m37" value="save(slot)" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="674" y="1230" as="sourcePoint" />
+            <mxPoint x="1326" y="1230" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m38" value="updatedSlot" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1326" y="1255" as="sourcePoint" />
+            <mxPoint x="674" y="1255" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m39" value="save(registration, status=CREATED)" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="674" y="1280" as="sourcePoint" />
+            <mxPoint x="1546" y="1280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m40" value="savedRegistration" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1546" y="1315" as="sourcePoint" />
+            <mxPoint x="674" y="1315" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m41" value="registrationView(savedRegistration)" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="674" y="1335" as="sourcePoint" />
+            <mxPoint x="674" y="1355" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="835" y="1335" />
+              <mxPoint x="835" y="1355" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m42" value="registrationView" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="666" y="1365" as="sourcePoint" />
+            <mxPoint x="454" y="1365" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m43" value="Result.success(data)" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="446" y="1385" as="sourcePoint" />
+            <mxPoint x="244" y="1385" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m44" value="刷新我的挂号列表" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="244" y="1400" as="sourcePoint" />
+            <mxPoint x="244" y="1418" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="335" y="1400" />
+              <mxPoint x="335" y="1418" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m45" value="提示预约已提交，可查看我的挂号" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="236" y="1425" as="sourcePoint" />
+            <mxPoint x="60" y="1425" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="caption" value="图 5-x 在线挂号时序图" style="text;html=1;strokeColor=none;fillColor=none;fontSize=13;fontStyle=1;align=center;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="660" y="1450" width="300" height="20" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="ai-medical-record-sequence" name="AI病历生成与保存时序图">
+    <mxGraphModel dx="1800" dy="1400" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1840" pageHeight="1740" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="AI 病历生成与保存时序图" style="text;html=1;strokeColor=none;fillColor=none;fontSize=18;fontStyle=1;align=center;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="690" y="8" width="460" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="generate-frame" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="20" y="118" width="1800" height="930" as="geometry" />
+        </mxCell>
+        <mxCell id="save-frame" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="20" y="1080" width="1800" height="640" as="geometry" />
+        </mxCell>
+        <mxCell id="generate-label" value="一、AI 生成病历草稿" style="text;html=1;strokeColor=none;fillColor=none;fontSize=12;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="30" y="122" width="200" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="save-label" value="二、医生确认并保存病历" style="text;html=1;strokeColor=none;fillColor=none;fontSize=12;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="30" y="1084" width="220" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="auth-alt" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="35" y="305" width="1765" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="auth-tab" value="alt" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="35" y="305" width="42" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="auth-sep" value="" style="endArrow=none;startArrow=none;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;dashed=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="35" y="395" as="sourcePoint" />
+            <mxPoint x="1800" y="395" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="auth-guard-1" value="[未登录、Token 无效或角色不是 DOCTOR]" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="83" y="307" width="260" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="auth-guard-2" value="[医生身份校验通过]" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="83" y="397" width="160" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="reg-alt" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="250" y="525" width="920" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="reg-tab" value="alt" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="250" y="525" width="42" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="reg-sep" value="" style="endArrow=none;startArrow=none;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;dashed=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="250" y="585" as="sourcePoint" />
+            <mxPoint x="1170" y="585" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="reg-guard-1" value="[挂号不存在或当前医生无权操作]" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="298" y="527" width="230" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="reg-guard-2" value="[挂号归属校验通过]" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="298" y="587" width="160" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="ai-alt" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="250" y="785" width="1550" height="245" as="geometry" />
+        </mxCell>
+        <mxCell id="ai-tab" value="alt" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="250" y="785" width="42" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="ai-sep-1" value="" style="endArrow=none;startArrow=none;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;dashed=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="250" y="865" as="sourcePoint" />
+            <mxPoint x="1800" y="865" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ai-sep-2" value="" style="endArrow=none;startArrow=none;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;dashed=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="250" y="945" as="sourcePoint" />
+            <mxPoint x="1800" y="945" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ai-guard-1" value="[AI 正常生成]" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="298" y="787" width="130" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="ai-guard-2" value="[AI 返回降级草稿]" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="298" y="867" width="160" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="ai-guard-3" value="[AI 服务不可用]" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="298" y="947" width="140" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="upsert-alt" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="520" y="1390" width="1290" height="115" as="geometry" />
+        </mxCell>
+        <mxCell id="upsert-tab" value="alt" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="520" y="1390" width="42" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="upsert-sep" value="" style="endArrow=none;startArrow=none;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;dashed=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="520" y="1450" as="sourcePoint" />
+            <mxPoint x="1810" y="1450" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="upsert-guard-1" value="[已存在该挂号对应病历]" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="568" y="1392" width="180" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="upsert-guard-2" value="[不存在病历]" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="568" y="1452" width="120" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="actor-shape" value="" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;strokeColor=#000000;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="35" y="36" width="50" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="actor-label" value="&lt;u&gt;doctor:Doctor&lt;/u&gt;&lt;br&gt;&amp;lt;&amp;lt;actor&amp;gt;&amp;gt;" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;align=center;verticalAlign=top;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="10" y="96" width="100" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="p-page" value="&amp;lt;&amp;lt;boundary&amp;gt;&amp;gt;&lt;br&gt;&lt;u&gt;page:MedicalRecordPage&lt;/u&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="170" y="42" width="150" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="p-controller" value="&amp;lt;&amp;lt;control&amp;gt;&amp;gt;&lt;br&gt;&lt;u&gt;recordController:MedicalRecordController&lt;/u&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="380" y="42" width="170" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="p-service" value="&amp;lt;&amp;lt;service&amp;gt;&amp;gt;&lt;br&gt;&lt;u&gt;recordService:MedicalRecordService&lt;/u&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="620" y="42" width="160" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="p-current" value="&amp;lt;&amp;lt;service&amp;gt;&amp;gt;&lt;br&gt;&lt;u&gt;currentUserService:CurrentUserService&lt;/u&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="840" y="42" width="160" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="p-reg-repo" value="&amp;lt;&amp;lt;repository&amp;gt;&amp;gt;&lt;br&gt;&lt;u&gt;registrationRepo:RegistrationRepository&lt;/u&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1050" y="42" width="170" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="p-patient-repo" value="&amp;lt;&amp;lt;repository&amp;gt;&amp;gt;&lt;br&gt;&lt;u&gt;patientRepo:PatientRepository&lt;/u&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1270" y="42" width="160" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="p-ai" value="&amp;lt;&amp;lt;service&amp;gt;&amp;gt;&lt;br&gt;&lt;u&gt;aiGateway:AiGatewayService&lt;/u&gt;&lt;br&gt;AI病历生成服务" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1480" y="36" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="p-record-repo" value="&amp;lt;&amp;lt;repository&amp;gt;&amp;gt;&lt;br&gt;&lt;u&gt;medicalRecordRepo:MedicalRecordRepository&lt;/u&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1680" y="42" width="160" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="ll-doctor" value="" style="endArrow=none;startArrow=none;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="60" y="132" as="sourcePoint" />
+            <mxPoint x="60" y="1730" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ll-page" value="" style="endArrow=none;startArrow=none;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="245" y="90" as="sourcePoint" />
+            <mxPoint x="245" y="1730" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ll-controller" value="" style="endArrow=none;startArrow=none;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="465" y="90" as="sourcePoint" />
+            <mxPoint x="465" y="1730" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ll-service" value="" style="endArrow=none;startArrow=none;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="700" y="90" as="sourcePoint" />
+            <mxPoint x="700" y="1730" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ll-current" value="" style="endArrow=none;startArrow=none;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="920" y="90" as="sourcePoint" />
+            <mxPoint x="920" y="1730" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ll-reg-repo" value="" style="endArrow=none;startArrow=none;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1135" y="90" as="sourcePoint" />
+            <mxPoint x="1135" y="1730" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ll-patient-repo" value="" style="endArrow=none;startArrow=none;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1350" y="90" as="sourcePoint" />
+            <mxPoint x="1350" y="1730" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ll-ai" value="" style="endArrow=none;startArrow=none;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1560" y="96" as="sourcePoint" />
+            <mxPoint x="1560" y="1730" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ll-record-repo" value="" style="endArrow=none;startArrow=none;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1760" y="90" as="sourcePoint" />
+            <mxPoint x="1760" y="1730" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="act-page-gen" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="241" y="150" width="8" height="880" as="geometry" />
+        </mxCell>
+        <mxCell id="act-controller-gen" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="461" y="220" width="8" height="780" as="geometry" />
+        </mxCell>
+        <mxCell id="act-service-gen" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="696" y="255" width="8" height="490" as="geometry" />
+        </mxCell>
+        <mxCell id="act-current-gen" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="916" y="290" width="8" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="act-reg-gen" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1131" y="480" width="8" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="act-patient-gen" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1346" y="655" width="8" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="act-ai" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1556" y="765" width="8" height="205" as="geometry" />
+        </mxCell>
+        <mxCell id="act-page-save" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="241" y="1110" width="8" height="600" as="geometry" />
+        </mxCell>
+        <mxCell id="act-controller-save" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="461" y="1145" width="8" height="505" as="geometry" />
+        </mxCell>
+        <mxCell id="act-service-save" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="696" y="1180" width="8" height="440" as="geometry" />
+        </mxCell>
+        <mxCell id="act-current-save" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="916" y="1210" width="8" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="act-reg-save" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1131" y="1260" width="8" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="act-record-find" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1756" y="1350" width="8" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="act-record-save" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1756" y="1535" width="8" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="act-patient-save" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1346" y="1585" width="8" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="m1" value="录入问诊对话并点击 AI 生成病历" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="60" y="150" as="sourcePoint" />
+            <mxPoint x="241" y="150" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m2" value="校验 dialogueText 非空，显示 Loading" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="249" y="180" as="sourcePoint" />
+            <mxPoint x="249" y="205" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="360" y="180" />
+              <mxPoint x="360" y="205" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m3" value="POST /api/medical-record/generate" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="249" y="220" as="sourcePoint" />
+            <mxPoint x="461" y="220" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m4" value="buildGenerateRequest(request)" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="469" y="255" as="sourcePoint" />
+            <mxPoint x="696" y="255" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m5" value="require(RoleType.DOCTOR)" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="704" y="290" as="sourcePoint" />
+            <mxPoint x="916" y="290" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m6" value="throw BusinessException" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="916" y="335" as="sourcePoint" />
+            <mxPoint x="704" y="335" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m7" value="返回错误" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="696" y="360" as="sourcePoint" />
+            <mxPoint x="469" y="360" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m8" value="Result.error" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="461" y="385" as="sourcePoint" />
+            <mxPoint x="249" y="385" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m9" value="提示无权操作" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="241" y="405" as="sourcePoint" />
+            <mxPoint x="60" y="405" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m10" value="AuthenticatedUser(doctorId)" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="916" y="440" as="sourcePoint" />
+            <mxPoint x="704" y="440" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m11" value="findById(registrationId)" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="704" y="480" as="sourcePoint" />
+            <mxPoint x="1131" y="480" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m12" value="Registration / empty" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1131" y="510" as="sourcePoint" />
+            <mxPoint x="704" y="510" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m13" value="返回 NOT_FOUND / FORBIDDEN" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="696" y="550" as="sourcePoint" />
+            <mxPoint x="469" y="550" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m14" value="Result.error" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="461" y="570" as="sourcePoint" />
+            <mxPoint x="249" y="570" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m15" value="校验 registration.doctorId == currentUser.userId" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="704" y="615" as="sourcePoint" />
+            <mxPoint x="704" y="635" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="920" y="615" />
+              <mxPoint x="920" y="635" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m16" value="findById(patientId)" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="704" y="655" as="sourcePoint" />
+            <mxPoint x="1346" y="655" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m17" value="Patient / empty" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1346" y="685" as="sourcePoint" />
+            <mxPoint x="704" y="685" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m18" value="组装 MedicalRecordGenerateRequest" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="704" y="715" as="sourcePoint" />
+            <mxPoint x="704" y="735" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="880" y="715" />
+              <mxPoint x="880" y="735" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m19" value="aiRequest" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="696" y="745" as="sourcePoint" />
+            <mxPoint x="469" y="745" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m20" value="generateMedicalRecord(aiRequest)" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="469" y="765" as="sourcePoint" />
+            <mxPoint x="1556" y="765" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m21" value="MedicalRecordGenerateResponse(degraded=false)" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1556" y="825" as="sourcePoint" />
+            <mxPoint x="469" y="825" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m22" value="Result.success(aiDraft)" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="461" y="850" as="sourcePoint" />
+            <mxPoint x="249" y="850" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m23" value="MedicalRecordGenerateResponse(degraded=true)" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1556" y="905" as="sourcePoint" />
+            <mxPoint x="469" y="905" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m24" value="Result.success(degradedDraft)" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="461" y="930" as="sourcePoint" />
+            <mxPoint x="249" y="930" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m25" value="throw AI service request failed" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1556" y="970" as="sourcePoint" />
+            <mxPoint x="469" y="970" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m26" value="Result.error" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="461" y="995" as="sourcePoint" />
+            <mxPoint x="249" y="995" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m27" value="提示 AI 暂不可用，可手动填写病历" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="241" y="1015" as="sourcePoint" />
+            <mxPoint x="60" y="1015" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m28" value="自动回填结构化病历表单" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="249" y="1030" as="sourcePoint" />
+            <mxPoint x="249" y="1045" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="390" y="1030" />
+              <mxPoint x="390" y="1045" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m29" value="修改草稿并点击保存病历" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="60" y="1110" as="sourcePoint" />
+            <mxPoint x="241" y="1110" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m30" value="POST /api/medical-record/save" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="249" y="1145" as="sourcePoint" />
+            <mxPoint x="461" y="1145" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m31" value="save(request)" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="469" y="1180" as="sourcePoint" />
+            <mxPoint x="696" y="1180" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m32" value="require(RoleType.DOCTOR)" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="704" y="1210" as="sourcePoint" />
+            <mxPoint x="916" y="1210" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m33" value="AuthenticatedUser(doctorId)" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="916" y="1240" as="sourcePoint" />
+            <mxPoint x="704" y="1240" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m34" value="findById(registrationId)" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="704" y="1260" as="sourcePoint" />
+            <mxPoint x="1131" y="1260" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m35" value="Registration" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1131" y="1290" as="sourcePoint" />
+            <mxPoint x="704" y="1290" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m36" value="再次校验挂号归属" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="704" y="1320" as="sourcePoint" />
+            <mxPoint x="704" y="1340" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="835" y="1320" />
+              <mxPoint x="835" y="1340" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m37" value="findByRegistrationId(registrationId)" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="704" y="1350" as="sourcePoint" />
+            <mxPoint x="1756" y="1350" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m38" value="MedicalRecord / empty" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1756" y="1380" as="sourcePoint" />
+            <mxPoint x="704" y="1380" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m39" value="更新原 MedicalRecord" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="704" y="1420" as="sourcePoint" />
+            <mxPoint x="704" y="1440" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="835" y="1420" />
+              <mxPoint x="835" y="1440" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m40" value="创建新的 MedicalRecord" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="704" y="1475" as="sourcePoint" />
+            <mxPoint x="704" y="1495" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="845" y="1475" />
+              <mxPoint x="845" y="1495" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m41" value="设置病历字段与 aiGenerated 标记" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="704" y="1515" as="sourcePoint" />
+            <mxPoint x="704" y="1535" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="880" y="1515" />
+              <mxPoint x="880" y="1535" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m42" value="save(record)" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="704" y="1535" as="sourcePoint" />
+            <mxPoint x="1756" y="1535" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m43" value="savedRecord" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1756" y="1565" as="sourcePoint" />
+            <mxPoint x="704" y="1565" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m44" value="findById(patientId)" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="704" y="1585" as="sourcePoint" />
+            <mxPoint x="1346" y="1585" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m45" value="Patient / empty" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1346" y="1615" as="sourcePoint" />
+            <mxPoint x="704" y="1615" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m46" value="recordView" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="696" y="1620" as="sourcePoint" />
+            <mxPoint x="469" y="1620" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m47" value="Result.success(data)" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="461" y="1650" as="sourcePoint" />
+            <mxPoint x="249" y="1650" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m48" value="提示病历保存成功" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="241" y="1685" as="sourcePoint" />
+            <mxPoint x="60" y="1685" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="caption" value="图 5-x AI 病历生成与保存时序图" style="text;html=1;strokeColor=none;fillColor=none;fontSize=13;fontStyle=1;align=center;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="760" y="1708" width="340" height="20" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="check-order-report-sequence" name="检查检验申请与结果录入时序图">
+    <mxGraphModel dx="1800" dy="1300" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1740" pageHeight="1580" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="检查检验申请与结果录入时序图" style="text;html=1;strokeColor=none;fillColor=none;fontSize=18;fontStyle=1;align=center;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="610" y="8" width="520" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="create-frame" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="20" y="118" width="1685" height="590" as="geometry" />
+        </mxCell>
+        <mxCell id="report-frame" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="20" y="735" width="1685" height="805" as="geometry" />
+        </mxCell>
+        <mxCell id="create-label" value="一、医生创建检查检验申请" style="text;html=1;strokeColor=none;fillColor=none;fontSize=12;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="30" y="122" width="220" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="report-label" value="二、检查人员录入检查检验结果" style="text;html=1;strokeColor=none;fillColor=none;fontSize=12;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="30" y="739" width="240" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="doctor-auth-alt" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="35" y="300" width="1645" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="doctor-auth-tab" value="alt" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="35" y="300" width="42" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="doctor-auth-sep" value="" style="endArrow=none;startArrow=none;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;dashed=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="35" y="390" as="sourcePoint" />
+            <mxPoint x="1680" y="390" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="doctor-auth-guard-1" value="[当前用户不是医生]" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="83" y="302" width="160" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="doctor-auth-guard-2" value="[医生身份校验通过]" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="83" y="392" width="160" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="link-alt" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="270" y="505" width="940" height="135" as="geometry" />
+        </mxCell>
+        <mxCell id="link-tab" value="alt" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="270" y="505" width="42" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="link-sep" value="" style="endArrow=none;startArrow=none;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;dashed=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="270" y="575" as="sourcePoint" />
+            <mxPoint x="1210" y="575" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="link-guard-1" value="[关联挂号/病历不存在或无权操作]" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="318" y="507" width="250" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="link-guard-2" value="[关联记录校验通过]" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="318" y="577" width="160" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="report-status-alt" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="270" y="1115" width="1410" height="210" as="geometry" />
+        </mxCell>
+        <mxCell id="report-status-tab" value="alt" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="270" y="1115" width="42" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="report-status-sep" value="" style="endArrow=none;startArrow=none;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;dashed=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="270" y="1205" as="sourcePoint" />
+            <mxPoint x="1680" y="1205" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="report-status-guard-1" value="[申请不存在、已取消或已完成]" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="318" y="1117" width="220" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="report-status-guard-2" value="[申请可录入结果]" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;fontStyle=1;align=left;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="318" y="1207" width="160" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="doctor-shape" value="" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;strokeColor=#000000;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="35" y="36" width="50" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="doctor-label" value="&lt;u&gt;doctor:Doctor&lt;/u&gt;&lt;br&gt;&amp;lt;&amp;lt;actor&amp;gt;&amp;gt;" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;align=center;verticalAlign=top;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="10" y="96" width="100" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="tech-shape" value="" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;strokeColor=#000000;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="175" y="36" width="50" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="tech-label" value="&lt;u&gt;technician:CheckStaff&lt;/u&gt;&lt;br&gt;&amp;lt;&amp;lt;actor&amp;gt;&amp;gt;" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;align=center;verticalAlign=top;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="145" y="96" width="110" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="p-page" value="&amp;lt;&amp;lt;boundary&amp;gt;&amp;gt;&lt;br&gt;&lt;u&gt;page:CheckOrderPage&lt;/u&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="310" y="42" width="150" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="p-controller" value="&amp;lt;&amp;lt;control&amp;gt;&amp;gt;&lt;br&gt;&lt;u&gt;checkOrderController:CheckOrderController&lt;/u&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="520" y="42" width="180" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="p-service" value="&amp;lt;&amp;lt;service&amp;gt;&amp;gt;&lt;br&gt;&lt;u&gt;checkOrderService:CheckOrderService&lt;/u&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="760" y="42" width="170" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="p-current" value="&amp;lt;&amp;lt;service&amp;gt;&amp;gt;&lt;br&gt;&lt;u&gt;currentUserService:CurrentUserService&lt;/u&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="980" y="42" width="160" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="p-link-repo" value="&amp;lt;&amp;lt;repository&amp;gt;&amp;gt;&lt;br&gt;&lt;u&gt;linkRepo:Registration/MedicalRecordRepository&lt;/u&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1190" y="42" width="190" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="p-order-repo" value="&amp;lt;&amp;lt;repository&amp;gt;&amp;gt;&lt;br&gt;&lt;u&gt;checkOrderRepo:CheckOrderRepository&lt;/u&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1420" y="42" width="170" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="p-report-repo" value="&amp;lt;&amp;lt;repository&amp;gt;&amp;gt;&lt;br&gt;&lt;u&gt;checkReportRepo:CheckReportRepository&lt;/u&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1620" y="42" width="170" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="ll-doctor" value="" style="endArrow=none;startArrow=none;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="60" y="132" as="sourcePoint" />
+            <mxPoint x="60" y="1550" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ll-tech" value="" style="endArrow=none;startArrow=none;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="200" y="132" as="sourcePoint" />
+            <mxPoint x="200" y="1550" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ll-page" value="" style="endArrow=none;startArrow=none;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="385" y="90" as="sourcePoint" />
+            <mxPoint x="385" y="1550" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ll-controller" value="" style="endArrow=none;startArrow=none;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="610" y="90" as="sourcePoint" />
+            <mxPoint x="610" y="1550" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ll-service" value="" style="endArrow=none;startArrow=none;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="845" y="90" as="sourcePoint" />
+            <mxPoint x="845" y="1550" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ll-current" value="" style="endArrow=none;startArrow=none;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1060" y="90" as="sourcePoint" />
+            <mxPoint x="1060" y="1550" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ll-link" value="" style="endArrow=none;startArrow=none;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1285" y="90" as="sourcePoint" />
+            <mxPoint x="1285" y="1550" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ll-order" value="" style="endArrow=none;startArrow=none;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1505" y="90" as="sourcePoint" />
+            <mxPoint x="1505" y="1550" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ll-report" value="" style="endArrow=none;startArrow=none;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1705" y="90" as="sourcePoint" />
+            <mxPoint x="1705" y="1550" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="act-page-create" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="381" y="150" width="8" height="545" as="geometry" />
+        </mxCell>
+        <mxCell id="act-controller-create" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="606" y="220" width="8" height="450" as="geometry" />
+        </mxCell>
+        <mxCell id="act-service-create" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="841" y="255" width="8" height="385" as="geometry" />
+        </mxCell>
+        <mxCell id="act-current-create" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1056" y="290" width="8" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="act-link-create" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1281" y="470" width="8" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="act-order-create" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1501" y="610" width="8" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="act-page-report" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="381" y="765" width="8" height="760" as="geometry" />
+        </mxCell>
+        <mxCell id="act-controller-report" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="606" y="800" width="8" height="695" as="geometry" />
+        </mxCell>
+        <mxCell id="act-service-report" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="841" y="835" width="8" height="625" as="geometry" />
+        </mxCell>
+        <mxCell id="act-current-list" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1056" y="865" width="8" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="act-order-list" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1501" y="910" width="8" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="act-current-report" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1056" y="1060" width="8" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="act-order-find" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1501" y="1100" width="8" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="act-report-save" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1701" y="1280" width="8" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="act-order-update" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1501" y="1335" width="8" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="m1" value="填写检查项目并点击提交申请" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="60" y="150" as="sourcePoint" />
+            <mxPoint x="381" y="150" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m2" value="校验必填项" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="389" y="180" as="sourcePoint" />
+            <mxPoint x="389" y="205" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="480" y="180" />
+              <mxPoint x="480" y="205" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m3" value="POST /api/check-order/create" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="389" y="220" as="sourcePoint" />
+            <mxPoint x="606" y="220" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m4" value="create(request)" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="614" y="255" as="sourcePoint" />
+            <mxPoint x="841" y="255" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m5" value="require(RoleType.DOCTOR)" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="849" y="290" as="sourcePoint" />
+            <mxPoint x="1056" y="290" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m6" value="throw BusinessException" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1056" y="335" as="sourcePoint" />
+            <mxPoint x="849" y="335" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m7" value="返回错误" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="841" y="360" as="sourcePoint" />
+            <mxPoint x="614" y="360" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m8" value="Result.error" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="606" y="385" as="sourcePoint" />
+            <mxPoint x="389" y="385" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m9" value="提示无权创建申请" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="381" y="405" as="sourcePoint" />
+            <mxPoint x="60" y="405" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m10" value="AuthenticatedUser(doctorId)" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1056" y="440" as="sourcePoint" />
+            <mxPoint x="849" y="440" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m11" value="findById(registrationId / medicalRecordId)" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="849" y="470" as="sourcePoint" />
+            <mxPoint x="1281" y="470" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m12" value="关联记录 / empty" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1281" y="505" as="sourcePoint" />
+            <mxPoint x="849" y="505" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m13" value="返回 NOT_FOUND / FORBIDDEN" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="841" y="535" as="sourcePoint" />
+            <mxPoint x="614" y="535" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m14" value="Result.error" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="606" y="555" as="sourcePoint" />
+            <mxPoint x="389" y="555" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m15" value="校验医生是否有权为该患者开申请" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="849" y="595" as="sourcePoint" />
+            <mxPoint x="849" y="610" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="1065" y="595" />
+              <mxPoint x="1065" y="610" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m16" value="创建 CheckOrder，status=CREATED" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="849" y="610" as="sourcePoint" />
+            <mxPoint x="849" y="630" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="1030" y="610" />
+              <mxPoint x="1030" y="630" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m17" value="save(order)" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="849" y="640" as="sourcePoint" />
+            <mxPoint x="1501" y="640" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m18" value="savedOrder" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1501" y="670" as="sourcePoint" />
+            <mxPoint x="849" y="670" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m19" value="orderView" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="841" y="690" as="sourcePoint" />
+            <mxPoint x="614" y="690" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m20" value="Result.success(data)" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="606" y="705" as="sourcePoint" />
+            <mxPoint x="389" y="705" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m21" value="提示申请已创建" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="381" y="720" as="sourcePoint" />
+            <mxPoint x="60" y="720" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m22" value="打开待处理申请列表" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="200" y="765" as="sourcePoint" />
+            <mxPoint x="381" y="765" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m23" value="GET /api/check-order/list?status=CREATED" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="389" y="800" as="sourcePoint" />
+            <mxPoint x="606" y="800" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m24" value="list(patientId, status)" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="614" y="835" as="sourcePoint" />
+            <mxPoint x="841" y="835" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m25" value="get() / require(...)" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="849" y="865" as="sourcePoint" />
+            <mxPoint x="1056" y="865" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m26" value="AuthenticatedUser" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1056" y="895" as="sourcePoint" />
+            <mxPoint x="849" y="895" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m27" value="findByStatus(status)" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="849" y="910" as="sourcePoint" />
+            <mxPoint x="1501" y="910" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m28" value="CheckOrder 列表" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1501" y="945" as="sourcePoint" />
+            <mxPoint x="849" y="945" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m29" value="orderView 列表" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="841" y="975" as="sourcePoint" />
+            <mxPoint x="614" y="975" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m30" value="Result.success(list)" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="606" y="1000" as="sourcePoint" />
+            <mxPoint x="389" y="1000" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m31" value="选择申请并录入报告结果" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="200" y="1030" as="sourcePoint" />
+            <mxPoint x="381" y="1030" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m32" value="POST /api/check-order/report" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="389" y="1045" as="sourcePoint" />
+            <mxPoint x="606" y="1045" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m33" value="report(request)" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="614" y="1075" as="sourcePoint" />
+            <mxPoint x="841" y="1075" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m34" value="校验结果录入权限" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="849" y="1060" as="sourcePoint" />
+            <mxPoint x="1056" y="1060" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m35" value="AuthenticatedUser" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1056" y="1090" as="sourcePoint" />
+            <mxPoint x="849" y="1090" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m36" value="findById(orderId)" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="849" y="1100" as="sourcePoint" />
+            <mxPoint x="1501" y="1100" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m37" value="CheckOrder / empty" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1501" y="1135" as="sourcePoint" />
+            <mxPoint x="849" y="1135" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m38" value="返回 NOT_FOUND / CONFLICT" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="841" y="1165" as="sourcePoint" />
+            <mxPoint x="614" y="1165" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m39" value="Result.error" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="606" y="1190" as="sourcePoint" />
+            <mxPoint x="389" y="1190" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m40" value="校验申请状态允许录入结果" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="849" y="1230" as="sourcePoint" />
+            <mxPoint x="849" y="1250" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="1010" y="1230" />
+              <mxPoint x="1010" y="1250" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m41" value="save(report)" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="849" y="1280" as="sourcePoint" />
+            <mxPoint x="1701" y="1280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m42" value="savedReport" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1701" y="1315" as="sourcePoint" />
+            <mxPoint x="849" y="1315" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m43" value="更新 order.status=REPORTED/COMPLETED" style="endArrow=block;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="849" y="1335" as="sourcePoint" />
+            <mxPoint x="1501" y="1335" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m44" value="updatedOrder" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1501" y="1370" as="sourcePoint" />
+            <mxPoint x="849" y="1370" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m45" value="reportView / orderView" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="841" y="1400" as="sourcePoint" />
+            <mxPoint x="614" y="1400" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m46" value="Result.success(data)" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="606" y="1430" as="sourcePoint" />
+            <mxPoint x="389" y="1430" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m47" value="提示结果录入成功" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#000000;strokeWidth=1;fontSize=10;fontColor=#000000;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="381" y="1460" as="sourcePoint" />
+            <mxPoint x="200" y="1460" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="caption" value="图 5-x 检查检验申请与结果录入时序图" style="text;html=1;strokeColor=none;fillColor=none;fontSize=13;fontStyle=1;align=center;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="690" y="1538" width="380" height="20" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

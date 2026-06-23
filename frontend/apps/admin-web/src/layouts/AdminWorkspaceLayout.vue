@@ -66,14 +66,11 @@ onBeforeUnmount(() => unbind?.());
     />
 
     <div class="admin-app">
-      <TopBar eyebrow="管理端" title="基础数据、号源与智能配置统一维护" description="管理端强调批量浏览、快速编辑、分诊改派和数据发布状态。">
+      <TopBar eyebrow="管理端" title="运营管理工作台" description="基础数据、号源与智能配置统一维护">
         <template #actions>
-          <div class="row-meta">
-            <span class="tag success">已登录</span>
-            <span class="tag warning">{{ highRisk }} 条需关注</span>
-          </div>
-          <button type="button" :disabled="loading" @click="refresh">刷新数据</button>
-          <button type="button" @click="logout">退出登录</button>
+          <span class="topbar-meta">管理员 #{{ session?.userId || '' }}</span>
+          <button type="button" class="topbar-refresh" :disabled="loading" @click="refresh">刷新数据</button>
+          <button type="button" class="topbar-logout" @click="logout">退出登录</button>
         </template>
       </TopBar>
 

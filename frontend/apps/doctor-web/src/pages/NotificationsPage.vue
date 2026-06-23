@@ -67,7 +67,12 @@ refresh();
       <div v-if="notice" class="notice success">{{ notice }}</div>
       <LoadingState v-if="loading" title="正在同步通知" />
       <div class="feed">
-        <article v-for="item in pageRows" :key="String(item.notificationId)" class="feed-row">
+        <article
+          v-for="item in pageRows"
+          :key="String(item.notificationId)"
+          class="feed-row"
+          :class="{ unread: fieldText(item, 'readStatus', 'UNREAD').toUpperCase() !== 'READ' }"
+        >
           <div>
             <strong>{{ fieldText(item, "title") }}</strong>
             <span>{{ fieldText(item, "content") }}</span>

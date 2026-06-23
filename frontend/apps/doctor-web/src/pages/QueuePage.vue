@@ -3,7 +3,7 @@ import { computed, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { fieldText, formatApiError, useAuthStore, useDoctorWorkflowStore, usePagination } from "@smart-cloud-brain/shared-api";
 import { ErrorState, LoadingState, PaginationBar } from "@smart-cloud-brain/shared-ui";
-import { demoRegistrations, patientName, riskText, statusLabel, statusTone, withDemo } from "../doctorPresentation";
+import { demoRegistrations, formatTime, patientName, riskText, statusLabel, statusTone, withDemo } from "../doctorPresentation";
 
 const auth = useAuthStore();
 const workflow = useDoctorWorkflowStore();
@@ -92,7 +92,7 @@ refresh();
                 <td><strong>{{ patientName(item) }}</strong></td>
                 <td>{{ fieldText(item, "patientId") }}</td>
                 <td>{{ fieldText(item, "departmentName") }}</td>
-                <td>{{ fieldText(item, "appointmentTime") }}</td>
+                <td>{{ formatTime(fieldText(item, "appointmentTime")) }}</td>
                 <td>{{ fieldText(item, "chiefComplaint", "待医生问诊补充") }}</td>
                 <td><span class="tag" :class="statusTone(item.riskLevel)">{{ riskText(item) }}</span></td>
                 <td><span class="tag" :class="statusTone(item.status)">{{ statusLabel(item.status) }}</span></td>

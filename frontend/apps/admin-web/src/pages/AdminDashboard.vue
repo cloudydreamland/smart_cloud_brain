@@ -11,46 +11,131 @@ const highRisk = computed(() => triageDesk.value.filter((item) => ["MANUAL_REQUI
 
 <template>
   <section>
-    <div class="metrics">
-      <div class="metric"><span>科室</span><strong>{{ departments.length }}</strong></div>
-      <div class="metric"><span>医生</span><strong>{{ doctors.length }}</strong></div>
-      <div class="metric"><span>药品</span><strong>{{ drugs.length }}</strong></div>
-      <div class="metric"><span>待处理分诊</span><strong>{{ highRisk }}</strong></div>
-    </div>
-    <div class="main-grid admin-grid">
-      <section class="panel">
-        <header class="panel-header"><div class="panel-title"><h2>运营入口</h2><p>按维护对象进入独立页面。</p></div></header>
-        <div class="panel-body toolbar">
-          <RouterLink class="button primary" to="/departments">维护科室</RouterLink>
-          <RouterLink class="button" to="/doctors">维护医生</RouterLink>
-          <RouterLink class="button" to="/drugs">维护药品</RouterLink>
-          <RouterLink class="button" to="/schedule">生成排班</RouterLink>
-          <RouterLink class="button" to="/triage-desk">分诊工作台</RouterLink>
-        </div>
-      </section>
-      <aside class="panel">
-        <header class="panel-header"><div class="panel-title"><h2>最近号源</h2><p>已发布排班概览。</p></div></header>
-        <div class="list">
-          <article v-for="item in schedules.slice(0, 5)" :key="String(item.id)" class="list-row">
-            <div class="row-main"><strong>{{ item.workDate }} {{ item.timeRange }}</strong><p>{{ item.doctorName }} · 容量 {{ item.capacity }}</p></div>
-          </article>
-          <EmptyState v-if="!schedules.length" title="暂无排班" />
-        </div>
-      </aside>
-      <aside class="panel">
-        <header class="panel-header"><div class="panel-title"><h2>AI 日志</h2><p>最近调用的 provider / model。</p></div></header>
-        <div class="list">
-          <article v-for="item in aiLogs.slice(0, 6)" :key="String(item.requestId || item.createdAt)" class="list-row">
-            <div class="row-main">
-              <strong>{{ fieldText(item, "taskType", "UNKNOWN") }}</strong>
-              <p>{{ fieldText(item, "provider", "-") }} / {{ fieldText(item, "model", "-") }} · {{ fieldText(item, "latencyMs", "0") }}ms</p>
-              <span class="tag" :class="aiSourceTone(item.provider)">{{ aiSourceLabel(item.provider) }}</span>
+    <div class="dashboard">
+      <!-- Metric Cards -->
+      <div class="metrics">
+        <div class="metric-card">
+          <div class="metric-card-head">
+            <div class="metric-icon" style="--accent: #3b82f6">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
             </div>
-            <StatusTag :status="fieldText(item, 'status', 'UNKNOWN')" :tone="statusClass(item.status)" />
-          </article>
-          <EmptyState v-if="!aiLogs.length" title="暂无 AI 日志" />
+            <span class="metric-label">科室</span>
+          </div>
+          <div class="metric-value">{{ departments.length }}</div>
         </div>
-      </aside>
+        <div class="metric-card">
+          <div class="metric-card-head">
+            <div class="metric-icon" style="--accent: #8b5cf6">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <span class="metric-label">医生</span>
+          </div>
+          <div class="metric-value blue">{{ doctors.length }}</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-card-head">
+            <div class="metric-icon" style="--accent: #10b981">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+            </div>
+            <span class="metric-label">药品</span>
+          </div>
+          <div class="metric-value">{{ drugs.length }}</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-card-head">
+            <div class="metric-icon" style="--accent: #f59e0b">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </div>
+            <span class="metric-label">待处理分诊</span>
+          </div>
+          <div class="metric-value orange">{{ highRisk }}</div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="panel">
+        <div class="panel-header">
+          <strong>运营入口</strong>
+        </div>
+        <div class="quick-actions">
+          <RouterLink class="quick-btn" to="/departments">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9Z"/></svg>
+            维护科室
+          </RouterLink>
+          <RouterLink class="quick-btn" to="/doctors">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            维护医生
+          </RouterLink>
+          <RouterLink class="quick-btn" to="/drugs">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2Z"/><path d="M9 12h6M12 9v6" stroke-linecap="round"/></svg>
+            维护药品
+          </RouterLink>
+          <RouterLink class="quick-btn" to="/schedule">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+            生成排班
+          </RouterLink>
+          <RouterLink class="quick-btn" to="/triage-desk">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14l2 2 4-4"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
+            分诊工作台
+          </RouterLink>
+        </div>
+      </div>
+
+      <!-- Two column tables -->
+      <div class="content-grid">
+        <div class="panel">
+          <div class="panel-header">
+            <strong>最近号源</strong>
+            <RouterLink to="/schedule">查看全部 →</RouterLink>
+          </div>
+          <table>
+            <thead>
+              <tr><th>科室</th><th>医生</th><th>日期</th><th>时段</th><th>状态</th></tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in schedules.slice(0, 5)" :key="String(item.id)">
+                <td>{{ item.departmentName }}</td>
+                <td>{{ item.doctorName }}</td>
+                <td>{{ item.workDate }}</td>
+                <td>{{ item.timeRange }}</td>
+                <td>
+                  <span class="status-tag active">可预约</span>
+                </td>
+              </tr>
+              <tr v-if="!schedules.length">
+                <td colspan="5" style="text-align:center;color:var(--muted);padding:20px;">暂无排班数据</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <strong>AI 日志</strong>
+            <RouterLink to="/prompts">查看全部 →</RouterLink>
+          </div>
+          <table>
+            <thead>
+              <tr><th>任务类型</th><th>Provider</th><th>耗时</th><th>状态</th></tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in aiLogs.slice(0, 5)" :key="String(item.requestId || item.createdAt)">
+                <td><strong>{{ fieldText(item, "taskType", "UNKNOWN") }}</strong></td>
+                <td>{{ fieldText(item, "provider", "-") }}</td>
+                <td>{{ fieldText(item, "latencyMs", "0") }}ms</td>
+                <td>
+                  <span class="status-tag" :class="statusClass(item.status) === 'success' ? 'done' : statusClass(item.status) === 'danger' ? 'cancelled' : 'pending'">
+                    {{ statusClass(item.status) === "success" ? "成功" : statusClass(item.status) === "danger" ? "失败" : "处理中" }}
+                  </span>
+                </td>
+              </tr>
+              <tr v-if="!aiLogs.length">
+                <td colspan="4" style="text-align:center;color:var(--muted);padding:20px;">暂无 AI 日志</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </section>
 </template>

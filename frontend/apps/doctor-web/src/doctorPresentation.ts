@@ -18,25 +18,25 @@ export function statusLabel(status: unknown, fallback = "-") {
   const raw = String(status ?? "").trim();
   if (!raw) return fallback;
   const labels: Record<string, string> = {
-    CREATED: "Created",
-    CONFIRMED: "Confirmed",
-    COMPLETED: "Completed",
-    CANCELLED: "Cancelled",
-    PENDING: "Pending",
-    DRAFT: "Draft",
-    UNREVIEWED: "Unreviewed",
-    LOW: "Low",
-    MEDIUM: "Medium",
-    HIGH: "High",
-    INFO: "Info",
-    READ: "Read",
-    UNREAD: "Unread",
-    FAILED: "Failed",
-    DRAFT_READY: "Draft ready",
-    GENERATING: "Generating",
-    IDLE: "Idle",
-    DOCTOR: "Doctor",
-    PUBLISHED: "Published",
+    CREATED: "已创建",
+    CONFIRMED: "已确认",
+    COMPLETED: "已完成",
+    CANCELLED: "已取消",
+    PENDING: "待处理",
+    DRAFT: "草稿",
+    UNREVIEWED: "待审核",
+    LOW: "低风险",
+    MEDIUM: "中风险",
+    HIGH: "高风险",
+    INFO: "提示",
+    READ: "已读",
+    UNREAD: "未读",
+    FAILED: "失败",
+    DRAFT_READY: "草稿就绪",
+    GENERATING: "生成中",
+    IDLE: "空闲",
+    DOCTOR: "医生",
+    PUBLISHED: "已发布",
   };
   return labels[raw.toUpperCase()] ?? raw;
 }
@@ -55,6 +55,22 @@ export function patientName(item: DataRow | null | undefined) {
 
 export function riskText(item: DataRow | null | undefined) {
   return statusLabel(fieldText(item, "riskLevel", "LOW"));
+}
+
+export function formatTime(iso: unknown) {
+  const raw = String(iso ?? "").trim();
+  if (!raw) return "-";
+  try {
+    const d = new Date(raw);
+    if (isNaN(d.getTime())) return raw;
+    const m = d.getMonth() + 1;
+    const day = d.getDate();
+    const hh = String(d.getHours()).padStart(2, "0");
+    const mm = String(d.getMinutes()).padStart(2, "0");
+    return `${m}月${day}日 ${hh}:${mm}`;
+  } catch {
+    return raw;
+  }
 }
 
 export function formatAiDraft() {

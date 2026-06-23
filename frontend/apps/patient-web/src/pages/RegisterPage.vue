@@ -2,7 +2,7 @@
 import { reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 import { api, formatApiError } from "@smart-cloud-brain/shared-api";
-import { ErrorState } from "@smart-cloud-brain/shared-ui";
+import { Alert, Badge, Button, Input, Textarea } from "@smart-cloud-brain/shared-ui";
 
 const router = useRouter();
 const loading = ref(false);
@@ -65,25 +65,27 @@ async function submit() {
         <RouterLink :to="{ name: 'patient-login' }">登录</RouterLink>
         <button class="active" type="button">注册</button>
       </div>
-      <ErrorState v-if="error" :message="error" />
-      <div v-if="notice" class="portal-message success">{{ notice }}</div>
+      <Alert v-if="error" variant="danger" :description="error" />
+      <Alert v-if="notice" variant="success" :description="notice" />
       <div class="auth-form-grid">
-        <label><span>姓名</span><input v-model.trim="form.name"></label>
-        <label><span>手机号</span><input v-model.trim="form.phone"></label>
-        <label><span>密码</span><input v-model="form.password" type="password" autocomplete="new-password"></label>
-        <label><span>年龄</span><input v-model.number="form.age" type="number" min="0" max="120"></label>
-        <label>
-          <span>性别</span>
-          <select v-model="form.gender">
+        <Input v-model="form.name" label="姓名" placeholder="请输入姓名" />
+        <Input v-model="form.phone" label="手机号" placeholder="请输入11位手机号" />
+        <Input v-model="form.password" label="密码" type="password" placeholder="至少6位" autocomplete="new-password" />
+        <Input v-model.number="form.age" label="年龄" type="number" />
+        <div class="flex flex-col gap-1.5">
+          <label class="text-sm font-medium text-[var(--ink)]">性别</label>
+          <select v-model="form.gender" class="h-10 rounded-md border border-[var(--line)] bg-white px-3 text-sm focus-visible:outline-none focus-visible:border-[var(--primary)] focus-visible:ring-2 focus-visible:ring-[var(--focus)]">
             <option value="FEMALE">女</option>
             <option value="MALE">男</option>
             <option value="UNKNOWN">未说明</option>
           </select>
-        </label>
-        <label><span>过敏史</span><input v-model.trim="form.allergyHistory" placeholder="如无可留空"></label>
+        </div>
+        <Input v-model="form.allergyHistory" label="过敏史" placeholder="如无可留空" />
       </div>
-      <label><span>既往史</span><textarea v-model.trim="form.pastHistory" rows="3"></textarea></label>
-      <button class="patient-primary" type="submit" :disabled="loading">{{ loading ? "注册中" : "创建档案并继续" }}</button>
+      <Textarea v-model="form.pastHistory" label="既往史" placeholder="请输入既往病史" :rows="3" />
+      <Button type="submit" :loading="loading" class="w-full">
+        {{ loading ? "注册中" : "创建档案并继续" }}
+      </Button>
     </form>
   </section>
 </template>

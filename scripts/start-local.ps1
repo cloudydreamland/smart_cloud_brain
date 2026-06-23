@@ -55,7 +55,7 @@ if (-not $NoBuild) {
     "gateway-service", "auth-service", "patient-service", "doctor-service",
     "registration-service", "triage-service", "medical-record-service",
     "prescription-service", "notification-service", "admin-service", "ai-service",
-    "patient-web", "doctor-web", "admin-web"
+    "nginx"
   )
   foreach ($Service in $BuildServices) {
     & docker compose @args build $Service

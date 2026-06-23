@@ -1,32 +1,60 @@
 <script setup lang="ts">
-import { computed, reactive, ref } from "vue";
-import { api, fieldText, formatApiError, toNumber, useAuthStore, usePagination, type DataRow, type PatientSaveRequest } from "@smart-cloud-brain/shared-api";
-import { EmptyState, ErrorState, FormField, Modal, PaginationBar } from "@smart-cloud-brain/shared-ui";
+import { computed, onMounted, reactive, ref, watch } from "vue";
+import {
+  api,
+  fieldText,
+  formatApiError,
+  toNumber,
+  useAuthStore,
+  usePagination,
+  type DataRow,
+  type PatientSaveRequest,
+} from "@smart-cloud-brain/shared-api";
+import { DataTable, ErrorState, FormField, Modal, PaginationBar, StatusTag } from "@smart-cloud-brain/shared-ui";
 
 const auth = useAuthStore();
 const rows = ref<DataRow[]>([]);
-const selected = ref<DataRow | null>(null);
+const detail = ref<DataRow | null>(null);
+const keyword = ref("");
+const gender = ref("");
+const minAge = ref<number | undefined>();
+const maxAge = ref<number | undefined>();
+const loading = ref(false);
+const saving = ref(false);
+const error = ref("");
+const notice = ref("");
 const editorOpen = ref(false);
 const detailOpen = ref(false);
-const loading = ref(false);
-const error = ref("");
-const filter = reactive({ keyword: "", gender: "", minAge: "", maxAge: "" });
-const form = reactive<PatientSaveRequest>({ id: 0, name: "", gender: "", age: 0, allergyHistory: "", pastHistory: "" });
-const { currentPage, pageSize, total, pageRows } = usePagination(rows, 8);
-const selectedRegistrations = computed(() => (selected.value?.registrations as DataRow[] | undefined) ?? []);
-const selectedTriage = computed(() => (selected.value?.triageRecords as DataRow[] | undefined) ?? []);
-const selectedRecords = computed(() => (selected.value?.medicalRecords as DataRow[] | undefined) ?? []);
-const selectedPrescriptions = computed(() => (selected.value?.prescriptions as DataRow[] | undefined) ?? []);
+
+const form = reactive<PatientSaveRequest>({
+  id: 0,
+  name: "",
+  gender: "",
+  age: 0,
+  allergyHistory: "",
+  pastHistory: "",
+});
+
+const filtered = computed(() => rows.value);
+const { currentPage, pageSize, total, pageRows } = usePagination(filtered, 8);
+
+watch([keyword, gender, minAge, maxAge], () => {
+  currentPage.value = 1;
+});
+
+function asRows(value: unknown): DataRow[] {
+  return Array.isArray(value) ? value.filter((item): item is DataRow => item !== null && typeof item === "object") : [];
+}
 
 async function refresh() {
   loading.value = true;
   error.value = "";
   try {
     rows.value = await api.patients(auth.token(), {
-      keyword: filter.keyword,
-      gender: filter.gender,
-      minAge: filter.minAge ? Number(filter.minAge) : undefined,
-      maxAge: filter.maxAge ? Number(filter.maxAge) : undefined,
+      keyword: keyword.value.trim(),
+      gender: gender.value,
+      minAge: minAge.value,
+      maxAge: maxAge.value,
     });
   } catch (err) {
     error.value = formatApiError(err, "Patient list failed");
@@ -35,11 +63,11 @@ async function refresh() {
   }
 }
 
-async function detail(item: DataRow) {
+async function openDetail(item: DataRow) {
   loading.value = true;
   error.value = "";
   try {
-    selected.value = await api.patientDetail(auth.token(), toNumber(item.id));
+    detail.value = await api.patientDetail(auth.token(), toNumber(item.id));
     detailOpen.value = true;
   } catch (err) {
     error.value = formatApiError(err, "Patient detail failed");
@@ -50,92 +78,143 @@ async function detail(item: DataRow) {
 
 function openEditor(item: DataRow) {
   form.id = toNumber(item.id);
-  form.name = fieldText(item, "name", "");
-  form.gender = fieldText(item, "gender", "");
+  form.name = fieldText(item, "name");
+  form.gender = fieldText(item, "gender");
   form.age = toNumber(item.age, 0);
-  form.allergyHistory = fieldText(item, "allergyHistory", "");
-  form.pastHistory = fieldText(item, "pastHistory", "");
+  form.allergyHistory = fieldText(item, "allergyHistory");
+  form.pastHistory = fieldText(item, "pastHistory");
   editorOpen.value = true;
+  notice.value = "";
 }
 
 async function save() {
-  loading.value = true;
+  if (!form.id || !form.name.trim()) {
+    error.value = "Patient ID and name are required";
+    return;
+  }
+  saving.value = true;
   error.value = "";
+  notice.value = "";
   try {
-    await api.savePatient(auth.token(), { ...form, id: toNumber(form.id) });
+    await api.savePatient(auth.token(), {
+      id: form.id,
+      name: form.name.trim(),
+      gender: form.gender || undefined,
+      age: form.age ? toNumber(form.age) : undefined,
+      allergyHistory: form.allergyHistory || undefined,
+      pastHistory: form.pastHistory || undefined,
+    });
     editorOpen.value = false;
+    notice.value = "Patient profile saved";
     await refresh();
   } catch (err) {
     error.value = formatApiError(err, "Patient save failed");
   } finally {
-    loading.value = false;
+    saving.value = false;
   }
 }
 
-refresh();
+onMounted(refresh);
 </script>
 
 <template>
   <section class="panel">
-    <header class="panel-header"><div class="panel-title"><p class="eyebrow">Patient archive</p><h2>Patient Information Management</h2><p>Search profiles and inspect real triage, registration, record and prescription history.</p></div></header>
+    <header class="panel-header">
+      <div class="panel-title">
+        <p class="eyebrow">Clinical Master Data</p>
+        <h2>Patient Management</h2>
+        <p>Maintain patient profiles and inspect registration, triage, record and prescription history.</p>
+      </div>
+      <div class="toolbar">
+        <button type="button" :disabled="loading" @click="refresh">Refresh</button>
+      </div>
+    </header>
+
     <div class="panel-body stack">
       <ErrorState v-if="error" :message="error" />
+      <div v-if="notice" class="notice success">{{ notice }}</div>
+
       <div class="admin-filter-row">
-        <input v-model.trim="filter.keyword" placeholder="Name or phone" />
-        <select v-model="filter.gender"><option value="">All gender</option><option value="MALE">Male</option><option value="FEMALE">Female</option></select>
-        <input v-model.trim="filter.minAge" type="number" placeholder="Min age" />
-        <input v-model.trim="filter.maxAge" type="number" placeholder="Max age" />
-        <button class="primary" type="button" :disabled="loading" @click="refresh">Search</button>
+        <input v-model.trim="keyword" placeholder="Search name or phone" @keyup.enter="refresh" />
+        <select v-model="gender">
+          <option value="">All genders</option>
+          <option value="MALE">Male</option>
+          <option value="FEMALE">Female</option>
+          <option value="UNKNOWN">Unknown</option>
+        </select>
+        <input v-model.number="minAge" type="number" min="0" placeholder="Min age" />
+        <input v-model.number="maxAge" type="number" min="0" placeholder="Max age" />
+        <button type="button" :disabled="loading" @click="refresh">Search</button>
       </div>
-      <div v-if="rows.length" class="table-scroll">
-        <table class="data-table">
-          <thead><tr><th>ID</th><th>Name</th><th>Phone</th><th>Gender</th><th>Age</th><th>Visits</th><th class="actions-cell">Actions</th></tr></thead>
-          <tbody>
-            <tr v-for="item in pageRows" :key="String(item.id)">
-              <td>#{{ fieldText(item, "id") }}</td>
-              <td>{{ fieldText(item, "name") }}</td>
-              <td>{{ fieldText(item, "phone") }}</td>
-              <td>{{ fieldText(item, "gender") }}</td>
-              <td>{{ fieldText(item, "age") }}</td>
-              <td>{{ fieldText(item, "registrationCount", "0") }}</td>
-              <td class="toolbar"><button type="button" @click="detail(item)">Detail</button><button type="button" @click="openEditor(item)">Edit</button></td>
-            </tr>
-          </tbody>
-        </table>
-        <PaginationBar v-model="currentPage" :total="total" :page-size="pageSize" />
-      </div>
-      <EmptyState v-else title="No patients" />
+
+      <DataTable :rows="filtered" :loading="loading" :error="error" empty-title="No patients">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Phone</th>
+            <th>Gender</th>
+            <th>Age</th>
+            <th>Registrations</th>
+            <th class="actions-cell">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="item in pageRows" :key="String(item.id)">
+            <td>{{ fieldText(item, "id") }}</td>
+            <td>{{ fieldText(item, "name") }}</td>
+            <td>{{ fieldText(item, "phone") }}</td>
+            <td><StatusTag :status="fieldText(item, 'gender', 'UNKNOWN')" /></td>
+            <td>{{ fieldText(item, "age", "-") }}</td>
+            <td>{{ fieldText(item, "registrationCount", "0") }}</td>
+            <td class="toolbar">
+              <button type="button" @click="openDetail(item)">Detail</button>
+              <button type="button" @click="openEditor(item)">Edit</button>
+            </td>
+          </tr>
+        </tbody>
+      </DataTable>
+      <PaginationBar v-model="currentPage" :total="total" :page-size="pageSize" />
     </div>
-    <Modal :open="editorOpen" title="Patient profile" description="Update non-account clinical profile fields." @close="editorOpen = false">
+
+    <Modal :open="editorOpen" title="Patient Profile" description="Update demographic and clinical background fields." @close="editorOpen = false">
       <div class="stack">
         <div class="form-grid">
           <FormField label="Name"><input v-model.trim="form.name" /></FormField>
-          <FormField label="Gender"><select v-model="form.gender"><option value="">Unknown</option><option value="MALE">Male</option><option value="FEMALE">Female</option></select></FormField>
-          <FormField label="Age"><input v-model.number="form.age" type="number" min="0" max="130" /></FormField>
+          <FormField label="Gender">
+            <select v-model="form.gender">
+              <option value="">Unknown</option>
+              <option value="MALE">Male</option>
+              <option value="FEMALE">Female</option>
+            </select>
+          </FormField>
+          <FormField label="Age"><input v-model.number="form.age" type="number" min="0" /></FormField>
         </div>
         <FormField label="Allergy history"><textarea v-model.trim="form.allergyHistory" /></FormField>
         <FormField label="Past history"><textarea v-model.trim="form.pastHistory" /></FormField>
       </div>
-      <template #footer><button type="button" @click="editorOpen = false">Cancel</button><button class="primary" type="button" :disabled="loading" @click="save">Save</button></template>
+      <template #footer>
+        <button type="button" @click="editorOpen = false">Cancel</button>
+        <button type="button" class="primary" :disabled="saving" @click="save">Save</button>
+      </template>
     </Modal>
-    <Modal :open="detailOpen" title="Patient history" description="Real records from triage, registration, medical record and prescription tables." @close="detailOpen = false">
+
+    <Modal :open="detailOpen" title="Patient Detail" description="Recent clinical history grouped by business module." @close="detailOpen = false">
       <div class="stack">
-        <strong>{{ fieldText(selected, "name") }} / {{ fieldText(selected, "phone") }}</strong>
-        <section class="panel">
-          <header class="panel-header"><div class="panel-title"><h3>Registrations</h3></div></header>
-          <div class="list"><article v-for="item in selectedRegistrations.slice(0, 5)" :key="String(item.id)" class="list-row"><div class="row-main"><strong>#{{ fieldText(item, "id") }} {{ fieldText(item, "status") }}</strong><p>{{ fieldText(item, "appointment_time") }}</p></div></article></div>
-        </section>
-        <section class="panel">
-          <header class="panel-header"><div class="panel-title"><h3>Triage</h3></div></header>
-          <div class="list"><article v-for="item in selectedTriage.slice(0, 5)" :key="String(item.id)" class="list-row"><div class="row-main"><strong>{{ fieldText(item, "recommended_department") }}</strong><p>{{ fieldText(item, "chief_complaint") }}</p></div></article></div>
-        </section>
-        <section class="panel">
-          <header class="panel-header"><div class="panel-title"><h3>Medical records / prescriptions</h3></div></header>
-          <div class="summary-strip">
-            <div class="summary-item"><span>Records</span><strong>{{ selectedRecords.length }}</strong></div>
-            <div class="summary-item"><span>Prescriptions</span><strong>{{ selectedPrescriptions.length }}</strong></div>
-          </div>
-        </section>
+        <div class="metrics">
+          <div class="metric"><span>Registrations</span><strong>{{ asRows(detail?.registrations).length }}</strong></div>
+          <div class="metric"><span>Triage</span><strong>{{ asRows(detail?.triageRecords).length }}</strong></div>
+          <div class="metric"><span>Records</span><strong>{{ asRows(detail?.medicalRecords).length }}</strong></div>
+          <div class="metric"><span>Prescriptions</span><strong>{{ asRows(detail?.prescriptions).length }}</strong></div>
+        </div>
+        <div class="list">
+          <article v-for="item in asRows(detail?.registrations).slice(0, 5)" :key="`registration-${String(item.id)}`" class="list-row">
+            <div class="row-main">
+              <strong>Registration #{{ fieldText(item, "id") }} / {{ fieldText(item, "status") }}</strong>
+              <p>{{ fieldText(item, "appointment_time", fieldText(item, "appointmentTime", "")) }}</p>
+            </div>
+          </article>
+        </div>
       </div>
     </Modal>
   </section>
