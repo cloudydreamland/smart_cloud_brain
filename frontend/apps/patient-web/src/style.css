@@ -660,6 +660,226 @@
   cursor: pointer;
 }
 
+.public-info-page {
+  min-height: 100vh;
+  background: #fff;
+  color: var(--hospital-ink);
+}
+
+.public-hero,
+.public-section,
+.public-section-grid {
+  width: min(1180px, calc(100% - 64px));
+  margin: 0 auto;
+}
+
+.public-hero {
+  padding: 34px 0 58px;
+  border-bottom: 1px solid var(--hospital-line);
+}
+
+.public-hero.compact {
+  padding-bottom: 42px;
+}
+
+.public-hero .scb-brand {
+  margin-bottom: 54px;
+}
+
+.public-hero h1 {
+  max-width: 900px;
+  margin: 0 0 22px;
+  font-family: var(--hospital-serif);
+  font-size: clamp(48px, 6vw, 78px);
+  font-weight: 500;
+  line-height: 1;
+}
+
+.public-hero > p:not(.home-eyebrow) {
+  max-width: 790px;
+  margin: 0;
+  color: var(--hospital-muted);
+  font-size: 20px;
+  line-height: 1.75;
+}
+
+.public-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 30px;
+}
+
+.public-section-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 28px;
+  padding: 56px 0 76px;
+}
+
+.public-section-grid article,
+.department-list article,
+.search-results article {
+  border-top: 1px solid var(--hospital-line);
+  background: #fff;
+}
+
+.public-section-grid article {
+  padding-top: 24px;
+}
+
+.public-section-grid h2,
+.public-section-head h2,
+.department-list h3,
+.search-results h3 {
+  margin: 0;
+  color: #173b70;
+  font-family: var(--hospital-serif);
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.public-section-grid h2,
+.public-section-head h2 {
+  font-size: 34px;
+}
+
+.public-section-grid p,
+.public-section-head p,
+.department-list p,
+.search-results p,
+.public-empty {
+  color: var(--hospital-muted);
+  line-height: 1.7;
+}
+
+.public-section-grid p {
+  margin: 16px 0 18px;
+}
+
+.public-section-grid ul {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.public-section-grid li {
+  position: relative;
+  padding-left: 18px;
+  color: #243247;
+}
+
+.public-section-grid li::before {
+  position: absolute;
+  top: .72em;
+  left: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--hospital-blue);
+  content: "";
+}
+
+.public-section {
+  padding: 54px 0 78px;
+}
+
+.public-section-head {
+  max-width: 760px;
+  margin-bottom: 28px;
+}
+
+.public-section-head p {
+  margin: 12px 0 0;
+}
+
+.department-list,
+.search-results {
+  display: grid;
+  gap: 0;
+}
+
+.department-list article,
+.search-results article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 24px;
+  align-items: center;
+  padding: 24px 0;
+}
+
+.department-list h3,
+.search-results h3 {
+  font-size: 25px;
+}
+
+.department-list p,
+.search-results p {
+  margin: 8px 0 0;
+}
+
+.department-list a,
+.search-results a {
+  color: var(--hospital-blue);
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.public-search-form {
+  display: flex;
+  width: min(820px, 100%);
+  min-height: 62px;
+  align-items: center;
+  gap: 14px;
+  margin-top: 34px;
+  padding: 0 10px 0 22px;
+  border: 1.5px solid #1b2432;
+  border-radius: 999px;
+  background: #fff;
+}
+
+.public-search-form input {
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  outline: 0;
+  font-size: 19px;
+}
+
+.public-search-form button {
+  min-height: 44px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--hospital-blue);
+  color: #fff;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.search-results article {
+  grid-template-columns: 96px minmax(0, 1fr) auto;
+}
+
+.search-results article > span {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 30px;
+  align-items: center;
+  padding: 0 11px;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #174d91;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.public-empty {
+  margin: 18px 0 0;
+}
+
 .patient-auth-page {
   display: grid;
   grid-template-columns: minmax(0, .98fr) minmax(0, .82fr);
@@ -1356,10 +1576,34 @@ button.danger-text {
   .home-locations,
   .home-care-grid,
   .home-footer-links,
+  .public-section-grid,
+  .department-list article,
+  .search-results article,
   .portal-metrics,
   .patient-portal-page .patient-card-grid,
   .auth-form-grid {
     grid-template-columns: 1fr;
+  }
+
+  .public-hero,
+  .public-section,
+  .public-section-grid {
+    width: min(100% - 36px, 1180px);
+  }
+
+  .public-hero .scb-brand {
+    margin-bottom: 38px;
+  }
+
+  .public-search-form {
+    align-items: stretch;
+    flex-wrap: wrap;
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  .public-search-form button {
+    width: 100%;
   }
 
   .auth-visual {

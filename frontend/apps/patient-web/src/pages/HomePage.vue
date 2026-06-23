@@ -1,12 +1,16 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
+import { useRouter } from "vue-router";
 import { api, type DataRow } from "@smart-cloud-brain/shared-api";
 
+const router = useRouter();
 const searchOpen = ref(false);
 const mobileNavOpen = ref(false);
 const activeMega = ref<string | null>(null);
 const departments = ref<DataRow[]>([]);
 const doctors = ref<DataRow[]>([]);
+const conditionQuery = ref("");
+const overlayQuery = ref("");
 
 const featuredDepartments = computed(() => departments.value.slice(0, 12));
 
@@ -16,6 +20,13 @@ function toggleMega(menu: string) {
 
 function closeMega() {
   activeMega.value = null;
+}
+
+function goSearch(q = "") {
+  const queryText = q.trim();
+  searchOpen.value = false;
+  closeMega();
+  router.push({ name: "public-search", query: queryText ? { q: queryText } : {} });
 }
 
 onMounted(async () => {
@@ -47,13 +58,13 @@ onMounted(async () => {
             </div>
             <div>
               <RouterLink :to="{ name: 'patient-login' }" @click="closeMega">预约就诊</RouterLink>
-              <a href="#departments" @click="closeMega">查找科室</a>
-              <a href="#locations" @click="closeMega">院区位置</a>
-              <a href="#care" @click="closeMega">重点诊疗</a>
+              <RouterLink :to="{ name: 'public-departments' }" @click="closeMega">查找科室</RouterLink>
+              <RouterLink :to="{ name: 'public-locations' }" @click="closeMega">院区位置</RouterLink>
+              <RouterLink :to="{ name: 'public-guide' }" @click="closeMega">重点诊疗</RouterLink>
             </div>
             <div class="home-mega-card">
               <img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=900&q=80" alt="患者与访客服务">
-              <RouterLink :to="{ name: 'patient-login' }" @click="closeMega">患者服务指南 <span>›</span></RouterLink>
+              <RouterLink :to="{ name: 'public-guide' }" @click="closeMega">患者服务指南 <span>›</span></RouterLink>
             </div>
           </div>
         </div>
@@ -65,13 +76,13 @@ onMounted(async () => {
               <p>从症状、检查、治疗到用药提醒，帮助患者做出更清晰的就诊决策。</p>
             </div>
             <div>
-              <a href="#conditions" @click="closeMega">疾病与病症</a>
-              <a href="#care" @click="closeMega">重点专科</a>
+              <RouterLink :to="{ name: 'public-conditions' }" @click="closeMega">疾病与病症</RouterLink>
+              <RouterLink :to="{ name: 'public-departments' }" @click="closeMega">重点专科</RouterLink>
               <RouterLink :to="{ name: 'patient-triage' }" @click="closeMega">AI 分诊</RouterLink>
             </div>
             <div class="home-mega-card">
               <img src="https://images.unsplash.com/photo-1530026405186-ed1f139313f8?auto=format&fit=crop&w=900&q=80" alt="健康资料服务">
-              <a href="#conditions" @click="closeMega">疾病与症状索引 <span>›</span></a>
+              <RouterLink :to="{ name: 'public-conditions' }" @click="closeMega">疾病与症状索引 <span>›</span></RouterLink>
             </div>
           </div>
         </div>
@@ -83,13 +94,13 @@ onMounted(async () => {
               <p>支持医生转诊、临床资料协同和连续诊疗追踪。</p>
             </div>
             <div>
-              <a href="#research" @click="closeMega">临床试验</a>
-              <a href="#research" @click="closeMega">科研中心</a>
-              <a href="#research" @click="closeMega">继续教育</a>
+              <RouterLink :to="{ name: 'public-research' }" @click="closeMega">临床试验</RouterLink>
+              <RouterLink :to="{ name: 'public-research' }" @click="closeMega">科研中心</RouterLink>
+              <RouterLink :to="{ name: 'public-research' }" @click="closeMega">继续教育</RouterLink>
             </div>
             <div class="home-mega-card">
               <img src="https://images.unsplash.com/photo-1551190822-a9333d879b1f?auto=format&fit=crop&w=900&q=80" alt="医疗专业协作">
-              <a href="#research" @click="closeMega">转诊与协作 <span>›</span></a>
+              <RouterLink :to="{ name: 'public-professionals' }" @click="closeMega">转诊与协作 <span>›</span></RouterLink>
             </div>
           </div>
         </div>
@@ -101,13 +112,13 @@ onMounted(async () => {
               <p>通过实验室、临床试验和医学教育，将前沿发现转化为真实照护能力。</p>
             </div>
             <div>
-              <a href="#research" @click="closeMega">研究团队</a>
-              <a href="#research" @click="closeMega">中心与项目</a>
-              <a href="#research" @click="closeMega">医学教育</a>
+              <RouterLink :to="{ name: 'public-research' }" @click="closeMega">研究团队</RouterLink>
+              <RouterLink :to="{ name: 'public-research' }" @click="closeMega">中心与项目</RouterLink>
+              <RouterLink :to="{ name: 'public-research' }" @click="closeMega">医学教育</RouterLink>
             </div>
             <div class="home-mega-card">
               <img src="https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=900&q=80" alt="医学科研与教育">
-              <a href="#research" @click="closeMega">科研项目 <span>›</span></a>
+              <RouterLink :to="{ name: 'public-research' }" @click="closeMega">科研项目 <span>›</span></RouterLink>
             </div>
           </div>
         </div>
@@ -119,12 +130,12 @@ onMounted(async () => {
               <p>助力患者照护、医学研究和人才培养，让更多生命受益。</p>
             </div>
             <div>
-              <a href="#research" @click="closeMega">立即支持</a>
-              <a href="#research" @click="closeMega">公益合作</a>
+              <RouterLink :to="{ name: 'public-giving' }" @click="closeMega">立即支持</RouterLink>
+              <RouterLink :to="{ name: 'public-giving' }" @click="closeMega">公益合作</RouterLink>
             </div>
             <div class="home-mega-card">
               <img src="https://images.unsplash.com/photo-1559757175-0eb30cd8c063?auto=format&fit=crop&w=900&q=80" alt="支持患者照护">
-              <a href="#research" @click="closeMega">支持患者照护 <span>›</span></a>
+              <RouterLink :to="{ name: 'public-giving' }" @click="closeMega">支持患者照护 <span>›</span></RouterLink>
             </div>
           </div>
         </div>
@@ -139,7 +150,7 @@ onMounted(async () => {
       <div class="home-hero-content">
         <h1>重塑您的医疗照护</h1>
         <div class="home-hero-actions">
-          <a href="#care">了解我们如何推动创新</a>
+          <RouterLink :to="{ name: 'public-research' }">了解我们如何推动创新</RouterLink>
           <RouterLink class="home-pill" :to="{ name: 'patient-login' }">预约就诊</RouterLink>
         </div>
       </div>
@@ -154,15 +165,21 @@ onMounted(async () => {
       <div>
         <p class="home-eyebrow">按首字母查找疾病与病症</p>
         <div class="home-letters" aria-label="疾病索引">
-          <a v-for="letter in ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','R','S','T','U','V','W','X','Y','Z','#']" :key="letter" href="#conditions">{{ letter }}</a>
+          <RouterLink
+            v-for="letter in ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','R','S','T','U','V','W','X','Y','Z','#']"
+            :key="letter"
+            :to="{ name: 'public-conditions', query: { letter } }"
+          >
+            {{ letter }}
+          </RouterLink>
         </div>
       </div>
       <div>
         <label class="condition-label" for="condition-search">搜索疾病与病症</label>
-        <div class="home-searchbox">
+        <form class="home-searchbox" @submit.prevent="goSearch(conditionQuery)">
           <span class="search-symbol" aria-hidden="true"></span>
-          <input id="condition-search" type="search" placeholder="搜索">
-        </div>
+          <input id="condition-search" v-model="conditionQuery" type="search" placeholder="搜索">
+        </form>
       </div>
     </section>
 
@@ -210,11 +227,11 @@ onMounted(async () => {
         <p>优先展示后端真实科室数据；暂无数据时显示核心诊疗方向。</p>
       </div>
       <div class="home-care-grid">
-        <RouterLink v-for="dept in featuredDepartments" :key="String(dept.departmentId || dept.id || dept.name)" :to="{ name: 'patient-login' }">
+        <RouterLink v-for="dept in featuredDepartments" :key="String(dept.departmentId || dept.id || dept.name)" :to="{ name: 'public-search', query: { q: String(dept.name || dept.departmentName || '科室') } }">
           {{ dept.name || dept.departmentName || '科室' }} <span>›</span>
         </RouterLink>
         <template v-if="!featuredDepartments.length">
-          <RouterLink v-for="name in ['神经内科','心血管内科','呼吸内科','消化内科','骨科','妇科','儿科','肿瘤科','康复医学科']" :key="name" :to="{ name: 'patient-login' }">
+          <RouterLink v-for="name in ['神经内科','心血管内科','呼吸内科','消化内科','骨科','妇科','儿科','肿瘤科','康复医学科']" :key="name" :to="{ name: 'public-search', query: { q: name } }">
             {{ name }} <span>›</span>
           </RouterLink>
         </template>
@@ -228,15 +245,15 @@ onMounted(async () => {
       <div>
         <h2>支持突破性的医学研究</h2>
         <p>您的支持将推动未来医学发展，帮助更多患者获得新的希望。</p>
-        <a class="home-pill" href="#research">立即支持</a>
+        <RouterLink class="home-pill" :to="{ name: 'public-giving' }">立即支持</RouterLink>
       </div>
     </section>
 
     <footer class="home-footer">
       <div class="home-footer-links">
-        <RouterLink :to="{ name: 'patient-login' }">查找医生</RouterLink>
-        <a href="#research">探索职业机会</a>
-        <a href="#conditions">订阅健康资讯</a>
+        <RouterLink :to="{ name: 'public-search', query: { q: '医生' } }">查找医生</RouterLink>
+        <RouterLink :to="{ name: 'public-professionals' }">探索职业机会</RouterLink>
+        <RouterLink :to="{ name: 'public-conditions' }">订阅健康资讯</RouterLink>
       </div>
       <p>语言：简体中文 · 使用条款 · 隐私政策 · 数字无障碍声明<br />© 2026 智慧云脑。患者端静态视觉复现，业务数据来自后端接口。</p>
     </footer>
@@ -245,10 +262,10 @@ onMounted(async () => {
       <div class="home-search-panel">
         <button type="button" aria-label="关闭搜索" @click="searchOpen = false">×</button>
         <h2 id="home-search-title">搜索智慧云脑</h2>
-        <div class="home-searchbox">
+        <form class="home-searchbox" @submit.prevent="goSearch(overlayQuery)">
           <span class="search-symbol" aria-hidden="true"></span>
-          <input type="search" placeholder="搜索医生、科室和服务" autofocus>
-        </div>
+          <input v-model="overlayQuery" type="search" placeholder="搜索医生、科室和服务" autofocus>
+        </form>
       </div>
     </div>
   </main>

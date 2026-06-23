@@ -5,6 +5,9 @@ import PatientPortalLayout from "../layouts/PatientPortalLayout.vue";
 import HomePage from "../pages/HomePage.vue";
 import LoginPage from "../pages/LoginPage.vue";
 import RegisterPage from "../pages/RegisterPage.vue";
+import PublicInfoPage from "../pages/PublicInfoPage.vue";
+import DepartmentsPage from "../pages/DepartmentsPage.vue";
+import PublicSearchPage from "../pages/PublicSearchPage.vue";
 import PatientDashboard from "../pages/PatientDashboard.vue";
 import TriagePage from "../pages/TriagePage.vue";
 import DoctorSlotsPage from "../pages/DoctorSlotsPage.vue";
@@ -22,6 +25,14 @@ const router = createRouter({
       component: PatientPublicLayout,
       children: [
         { path: "", name: "patient-home", component: HomePage },
+        { path: "guide", name: "public-guide", component: PublicInfoPage },
+        { path: "conditions", name: "public-conditions", component: PublicInfoPage },
+        { path: "departments", name: "public-departments", component: DepartmentsPage },
+        { path: "locations", name: "public-locations", component: PublicInfoPage },
+        { path: "professionals", name: "public-professionals", component: PublicInfoPage },
+        { path: "research", name: "public-research", component: PublicInfoPage },
+        { path: "giving", name: "public-giving", component: PublicInfoPage },
+        { path: "search", name: "public-search", component: PublicSearchPage },
         { path: "login", name: "patient-login", component: LoginPage },
         { path: "register", name: "patient-register", component: RegisterPage },
       ],
