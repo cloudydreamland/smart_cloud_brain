@@ -120,17 +120,18 @@
   display: flex;
   flex: 1;
   align-items: center;
-  gap: 30px;
+  gap: clamp(16px, 2vw, 30px);
 }
 
 .home-nav-item {
-  position: relative;
-  padding: 28px 0;
+  position: static;
+  padding: 29px 0;
   font-size: 15px;
   line-height: 1.25;
 }
 
 .home-nav-item > button {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -139,6 +140,7 @@
   color: var(--hospital-ink);
   cursor: pointer;
   text-align: left;
+  white-space: nowrap;
 }
 
 .home-nav-item > button span {
@@ -147,24 +149,44 @@
   border-right: 2px solid currentColor;
   border-bottom: 2px solid currentColor;
   transform: rotate(45deg) translateY(-2px);
+  transition: transform .18s ease;
+}
+
+.home-nav-item.is-open > button {
+  color: var(--hospital-blue);
+}
+
+.home-nav-item.is-open > button span {
+  transform: rotate(225deg) translate(-2px, -2px);
+}
+
+.home-nav-item.is-open > button::after {
+  position: absolute;
+  right: 0;
+  bottom: -29px;
+  left: 0;
+  height: 3px;
+  background: var(--hospital-blue);
+  content: "";
 }
 
 .home-mega {
   position: absolute;
-  top: 84px;
-  left: -24px;
+  top: 86px;
+  left: 0;
+  z-index: 35;
   display: none;
-  width: min(760px, calc(100vw - 64px));
-  grid-template-columns: 1.1fr 1fr;
-  gap: 22px;
-  padding: 28px;
-  border: 1px solid var(--hospital-line);
+  width: 100%;
+  grid-template-columns: minmax(220px, .95fr) minmax(220px, .9fr) minmax(300px, 500px);
+  gap: clamp(34px, 5vw, 74px);
+  padding: 42px max(32px, calc((100vw - 1180px) / 2)) 44px;
+  border-top: 1px solid #eceff5;
+  border-bottom: 1px solid #eceff5;
   background: #fff;
-  box-shadow: 0 24px 60px rgba(20, 32, 54, .16);
+  box-shadow: 0 24px 60px rgba(20, 32, 54, .08);
 }
 
-.home-nav-item:hover .home-mega,
-.home-nav-item:focus-within .home-mega {
+.home-nav-item.is-open .home-mega {
   display: grid;
 }
 
@@ -179,13 +201,59 @@
 .home-mega p {
   margin: 0;
   color: var(--hospital-muted);
+  font-size: 17px;
+  line-height: 1.7;
 }
 
 .home-mega a {
   display: block;
-  padding: 8px 0;
-  color: #173b70;
+  padding: 0 0 24px;
+  color: var(--hospital-ink);
+  font-size: 21px;
+  font-weight: 500;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.home-mega-card {
+  position: relative;
+  min-height: 220px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #dcebf7 0%, #8fb0c8 44%, #071528 100%);
+}
+
+.home-mega-card::after {
+  position: absolute;
+  inset: 40% 0 0;
+  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, .74));
+  content: "";
+}
+
+.home-mega-card img {
+  width: 100%;
+  height: 100%;
+  min-height: 220px;
+  object-fit: cover;
+}
+
+.home-mega-card a,
+.home-mega-card a:visited {
+  position: absolute;
+  right: 28px;
+  bottom: 26px;
+  left: 28px;
+  z-index: 1;
+  padding: 0;
+  color: #fff;
+  font-family: var(--hospital-serif);
+  font-size: 25px;
   font-weight: 700;
+  white-space: normal;
+}
+
+.home-mega-card span {
+  margin-left: 6px;
 }
 
 .home-appointment {
@@ -1182,6 +1250,10 @@
   .home-nav-item {
     padding: 15px 0;
     border-bottom: 1px solid #edf1f6;
+  }
+
+  .home-nav-item.is-open > button::after {
+    display: none;
   }
 
   .home-mega {

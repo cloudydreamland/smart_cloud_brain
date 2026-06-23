@@ -4,10 +4,19 @@ import { api, type DataRow } from "@smart-cloud-brain/shared-api";
 
 const searchOpen = ref(false);
 const mobileNavOpen = ref(false);
+const activeMega = ref<string | null>(null);
 const departments = ref<DataRow[]>([]);
 const doctors = ref<DataRow[]>([]);
 
 const featuredDepartments = computed(() => departments.value.slice(0, 12));
+
+function toggleMega(menu: string) {
+  activeMega.value = activeMega.value === menu ? null : menu;
+}
+
+function closeMega() {
+  activeMega.value = null;
+}
 
 onMounted(async () => {
   try {
@@ -29,80 +38,100 @@ onMounted(async () => {
         <i></i><i></i>
       </RouterLink>
       <nav class="home-nav" :class="{ open: mobileNavOpen }" aria-label="主导航">
-        <div class="home-nav-item">
-          <button type="button">智慧云脑<br />医疗服务 <span></span></button>
-          <div class="home-mega">
+        <div class="home-nav-item" :class="{ 'is-open': activeMega === 'care' }">
+          <button type="button" :aria-expanded="activeMega === 'care'" @click="toggleMega('care')">智慧云脑医疗服务 <span></span></button>
+          <div v-show="activeMega === 'care'" class="home-mega">
             <div>
               <h3>以患者为中心的照护</h3>
               <p>多学科专家团队协作，为复杂疾病提供清晰诊断和连续治疗方案。</p>
             </div>
             <div>
-              <RouterLink :to="{ name: 'patient-login' }">预约就诊</RouterLink>
-              <a href="#departments">查找科室</a>
-              <a href="#locations">院区位置</a>
-              <a href="#care">重点诊疗</a>
+              <RouterLink :to="{ name: 'patient-login' }" @click="closeMega">预约就诊</RouterLink>
+              <a href="#departments" @click="closeMega">查找科室</a>
+              <a href="#locations" @click="closeMega">院区位置</a>
+              <a href="#care" @click="closeMega">重点诊疗</a>
+            </div>
+            <div class="home-mega-card">
+              <img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=900&q=80" alt="患者与访客服务">
+              <RouterLink :to="{ name: 'patient-login' }" @click="closeMega">患者服务指南 <span>›</span></RouterLink>
             </div>
           </div>
         </div>
-        <div class="home-nav-item">
-          <button type="button">健康<br />资料库 <span></span></button>
-          <div class="home-mega">
+        <div class="home-nav-item" :class="{ 'is-open': activeMega === 'library' }">
+          <button type="button" :aria-expanded="activeMega === 'library'" @click="toggleMega('library')">健康资料库 <span></span></button>
+          <div v-show="activeMega === 'library'" class="home-mega">
             <div>
               <h3>可靠的健康答案</h3>
               <p>从症状、检查、治疗到用药提醒，帮助患者做出更清晰的就诊决策。</p>
             </div>
             <div>
-              <a href="#conditions">疾病与病症</a>
-              <a href="#care">重点专科</a>
-              <RouterLink :to="{ name: 'patient-triage' }">AI 分诊</RouterLink>
+              <a href="#conditions" @click="closeMega">疾病与病症</a>
+              <a href="#care" @click="closeMega">重点专科</a>
+              <RouterLink :to="{ name: 'patient-triage' }" @click="closeMega">AI 分诊</RouterLink>
+            </div>
+            <div class="home-mega-card">
+              <img src="https://images.unsplash.com/photo-1530026405186-ed1f139313f8?auto=format&fit=crop&w=900&q=80" alt="健康资料服务">
+              <a href="#conditions" @click="closeMega">疾病与症状索引 <span>›</span></a>
             </div>
           </div>
         </div>
-        <div class="home-nav-item">
-          <button type="button">面向医疗<br />专业人士 <span></span></button>
-          <div class="home-mega">
+        <div class="home-nav-item" :class="{ 'is-open': activeMega === 'professionals' }">
+          <button type="button" :aria-expanded="activeMega === 'professionals'" @click="toggleMega('professionals')">面向医疗专业人士 <span></span></button>
+          <div v-show="activeMega === 'professionals'" class="home-mega">
             <div>
               <h3>专业协作</h3>
               <p>支持医生转诊、临床资料协同和连续诊疗追踪。</p>
             </div>
             <div>
-              <a href="#research">临床试验</a>
-              <a href="#research">科研中心</a>
-              <a href="#research">继续教育</a>
+              <a href="#research" @click="closeMega">临床试验</a>
+              <a href="#research" @click="closeMega">科研中心</a>
+              <a href="#research" @click="closeMega">继续教育</a>
+            </div>
+            <div class="home-mega-card">
+              <img src="https://images.unsplash.com/photo-1551190822-a9333d879b1f?auto=format&fit=crop&w=900&q=80" alt="医疗专业协作">
+              <a href="#research" @click="closeMega">转诊与协作 <span>›</span></a>
             </div>
           </div>
         </div>
-        <div class="home-nav-item">
-          <button type="button">智慧云脑<br />科研与教育 <span></span></button>
-          <div class="home-mega">
+        <div class="home-nav-item" :class="{ 'is-open': activeMega === 'research' }">
+          <button type="button" :aria-expanded="activeMega === 'research'" @click="toggleMega('research')">智慧云脑科研与教育 <span></span></button>
+          <div v-show="activeMega === 'research'" class="home-mega">
             <div>
               <h3>科研与人才培养</h3>
               <p>通过实验室、临床试验和医学教育，将前沿发现转化为真实照护能力。</p>
             </div>
             <div>
-              <a href="#research">研究团队</a>
-              <a href="#research">中心与项目</a>
-              <a href="#research">医学教育</a>
+              <a href="#research" @click="closeMega">研究团队</a>
+              <a href="#research" @click="closeMega">中心与项目</a>
+              <a href="#research" @click="closeMega">医学教育</a>
+            </div>
+            <div class="home-mega-card">
+              <img src="https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=900&q=80" alt="医学科研与教育">
+              <a href="#research" @click="closeMega">科研项目 <span>›</span></a>
             </div>
           </div>
         </div>
-        <div class="home-nav-item">
-          <button type="button">支持<br />智慧云脑 <span></span></button>
-          <div class="home-mega">
+        <div class="home-nav-item" :class="{ 'is-open': activeMega === 'giving' }">
+          <button type="button" :aria-expanded="activeMega === 'giving'" @click="toggleMega('giving')">支持智慧云脑 <span></span></button>
+          <div v-show="activeMega === 'giving'" class="home-mega">
             <div>
               <h3>支持未来医学</h3>
               <p>助力患者照护、医学研究和人才培养，让更多生命受益。</p>
             </div>
             <div>
-              <a href="#research">立即支持</a>
-              <a href="#research">公益合作</a>
+              <a href="#research" @click="closeMega">立即支持</a>
+              <a href="#research" @click="closeMega">公益合作</a>
+            </div>
+            <div class="home-mega-card">
+              <img src="https://images.unsplash.com/photo-1559757175-0eb30cd8c063?auto=format&fit=crop&w=900&q=80" alt="支持患者照护">
+              <a href="#research" @click="closeMega">支持患者照护 <span>›</span></a>
             </div>
           </div>
         </div>
       </nav>
       <RouterLink class="home-appointment" :to="{ name: 'patient-login' }">预约就诊</RouterLink>
-      <button class="home-icon-button" type="button" aria-label="打开搜索" @click="searchOpen = true"><span class="search-symbol"></span></button>
-      <button class="home-menu-button" type="button" aria-label="打开菜单" @click="mobileNavOpen = !mobileNavOpen"><span></span></button>
+      <button class="home-icon-button" type="button" aria-label="打开搜索" @click="searchOpen = true; closeMega()"><span class="search-symbol"></span></button>
+      <button class="home-menu-button" type="button" aria-label="打开菜单" @click="mobileNavOpen = !mobileNavOpen; closeMega()"><span></span></button>
     </header>
 
     <section class="home-hero">
