@@ -194,6 +194,16 @@
   line-height: 1.1;
 }
 
+/* ── List row hover transition ── */
+.list-row {
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.list-row:hover {
+  background: #f8fafc;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
 /* ── Table enhancements ── */
 .table-scroll table,
 .catalog-layout table {
