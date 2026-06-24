@@ -444,11 +444,6 @@ refresh();
         <PaginationBar v-model="currentPage" :total="total" :page-size="pageSize" />
       </div>
     </section>
-    <aside class="panel catalog-aside">
-      <div class="panel-body">
-        <div class="notice warning">请确认字段含义后保存。</div>
-      </div>
-    </aside>
     <Modal :open="editorOpen" :title="config.title" @close="editorOpen = false">
       <div class="stack">
         <FormField v-for="[key, label, type] in config.fields" :key="key" :label="label" :hint="fieldHint(key)">

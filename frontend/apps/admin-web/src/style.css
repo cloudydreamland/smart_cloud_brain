@@ -89,6 +89,10 @@
   gap: 16px;
 }
 
+.catalog-layout {
+  grid-template-columns: 1fr;
+}
+
 .admin-filter-row {
   display: flex;
   flex-wrap: wrap;
