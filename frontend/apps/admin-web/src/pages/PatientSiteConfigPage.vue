@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from "vue";
+import { computed, onMounted, reactive, ref } from "vue";
 import {
   api,
   ApiError,
@@ -111,10 +111,8 @@ const auth = useAuthStore();
 const activeKey = ref<ConfigKey>("patient_nav");
 const loading = ref(false);
 const saving = ref(false);
-const publishing = ref(false);
 const status = ref("");
 const error = ref("");
-const publishConfirmOpen = ref(false);
 const editorOpen = ref(false);
 const editingTarget = ref<EditingTarget | null>(null);
 const editingDraft = ref<any>(null);
@@ -179,16 +177,6 @@ const editorDescription = computed(() => {
   return "维护一个 routeName 对应的静态内容页。";
 });
 
-for (const tab of tabs) {
-  watch(
-    () => drafts[tab.key],
-    () => {
-      publishConfirmOpen.value = false;
-    },
-    { deep: true },
-  );
-}
-
 function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
 }
@@ -206,7 +194,7 @@ function loadMessageFrom(err: unknown) {
   if (/internal server error/i.test(message)) {
     return "配置表可能尚未初始化，请执行数据库迁移或重新初始化演示库。";
   }
-  return `${message}。如果是首次运行，请执行数据库迁移或重新初始化演示库。`;
+  return `${message}。请确认患者端配置接口和数据库迁移已正常运行。`;
 }
 
 function setDraft(key: ConfigKey, value: unknown) {
@@ -359,7 +347,17 @@ function configSectionFromPublic(source: unknown, key: ConfigKey) {
 
 async function loadEffectiveSection(key: ConfigKey) {
   const publicConfig = await api.patientSiteConfig();
-  return configSectionFromPublic(publicConfig, key) || templates[key];
+  return configSectionFromPublic(publicConfig, key) || {};
+}
+
+async function loadPublishedRecord(key: ConfigKey) {
+  if (!auth.session) return null;
+  try {
+    const rows = await api.patientSiteConfigHistory(auth.token(), key);
+    return rows.find((row) => row.status === "PUBLISHED") || null;
+  } catch {
+    return null;
+  }
 }
 
 async function loadConfig(key = activeKey.value) {
@@ -368,24 +366,14 @@ async function loadConfig(key = activeKey.value) {
   error.value = "";
   status.value = "";
   validationErrors[key] = [];
-  publishConfirmOpen.value = false;
   try {
-    const row = await api.adminPatientSiteConfig(auth.token(), key);
-    latest[key] = Object.keys(row).length ? row : null;
-    const hasDraft = row.status === "DRAFT" && typeof row.configJson === "string" && row.configJson.trim();
-    const configJson = hasDraft ? JSON.parse(row.configJson) : await loadEffectiveSection(key);
-    setDraft(key, configJson);
-    remarks[key] = typeof row.remark === "string" ? row.remark : "";
-    status.value = hasDraft ? "已加载草稿配置；患者端仍读取已发布版本" : "已加载患者端当前生效配置";
+    setDraft(key, await loadEffectiveSection(key));
+    latest[key] = await loadPublishedRecord(key);
+    remarks[key] = typeof latest[key]?.remark === "string" ? latest[key]?.remark || "" : "";
+    status.value = "已加载患者端当前生效配置";
   } catch (err) {
     latest[key] = null;
-    try {
-      setDraft(key, await loadEffectiveSection(key));
-      status.value = "已加载患者端当前生效配置";
-    } catch {
-      setDraft(key, templates[key]);
-      status.value = "配置接口暂不可用，已显示完整默认配置";
-    }
+    setDraft(key, {});
     remarks[key] = "";
     error.value = loadMessageFrom(err);
   } finally {
@@ -402,17 +390,15 @@ function switchTab(key: ConfigKey) {
   activeKey.value = key;
   error.value = "";
   status.value = "";
-  publishConfirmOpen.value = false;
   if (!latest[key]) void loadConfig(key);
 }
 
 function useTemplate() {
-  if (!window.confirm("这会用完整默认配置覆盖当前编辑草稿，且不会直接发布。是否继续？")) return;
+  if (!window.confirm("这会用完整默认配置覆盖当前编辑内容。是否继续？")) return;
   setDraft(activeKey.value, templates[activeKey.value]);
-  status.value = "已填入默认模板，尚未保存";
+  status.value = "已填入默认模板，保存后会直接生效";
   error.value = "";
   validationErrors[activeKey.value] = [];
-  publishConfirmOpen.value = false;
 }
 
 function openEditor(target: EditingTarget) {
@@ -420,7 +406,6 @@ function openEditor(target: EditingTarget) {
   editingDraft.value = clone(readEditingTarget(target) || {});
   hydrateEditingDraft(target);
   editorOpen.value = true;
-  publishConfirmOpen.value = false;
 }
 
 function closeEditor() {
@@ -432,7 +417,7 @@ function closeEditor() {
 function applyEditor() {
   if (!editingTarget.value) return;
   writeEditingTarget(editingTarget.value, editingDraft.value);
-  status.value = "已更新当前草稿，发布前请保存草稿";
+  status.value = "已更新当前编辑内容，保存后会直接生效";
   error.value = "";
   closeEditor();
 }
@@ -583,9 +568,8 @@ function routeLabel(routeName = "") {
 
 function toggleEnabled(item: { enabled?: boolean }) {
   item.enabled = item.enabled === false;
-  status.value = item.enabled === false ? "已切换为禁用，发布前请保存草稿" : "已切换为启用，发布前请保存草稿";
+  status.value = item.enabled === false ? "已切换为禁用，保存后会直接生效" : "已切换为启用，保存后会直接生效";
   error.value = "";
-  publishConfirmOpen.value = false;
 }
 
 function editingArray(field: string) {
@@ -612,29 +596,6 @@ function addEditingQuickAction() {
 
 function addEditingPoint() {
   editingArray("points").push({ title: "新要点", text: "" });
-}
-
-async function copyPublishedToDraft() {
-  if (!auth.session) return;
-  const key = activeKey.value;
-  saving.value = true;
-  error.value = "";
-  status.value = "";
-  validationErrors[key] = [];
-  publishConfirmOpen.value = false;
-  try {
-    const parsed = await loadEffectiveSection(key);
-    setDraft(key, parsed);
-    remarks[key] = "从患者端当前生效配置复制";
-    const payload = preparePayload(key);
-    if (!payload) return;
-    await saveDraftRecord(payload.configJson);
-    status.value = "已复制患者端当前生效配置为草稿";
-  } catch (err) {
-    error.value = messageFrom(err);
-  } finally {
-    saving.value = false;
-  }
 }
 
 function preparePayload(key = activeKey.value) {
@@ -759,8 +720,8 @@ function collectInvalidRoutes(value: unknown, errors: string[], path = "") {
   });
 }
 
-async function saveDraftRecord(configJson: string) {
-  const row = await api.savePatientSiteConfig(auth.token(), {
+async function savePublishedRecord(configJson: string) {
+  const row = await api.savePublishedPatientSiteConfig(auth.token(), {
     configKey: activeKey.value,
     configJson,
     remark: remarks[activeKey.value],
@@ -772,52 +733,19 @@ async function saveDraftRecord(configJson: string) {
   return row;
 }
 
-async function saveDraft() {
+async function saveAndApply() {
   if (!auth.session) return;
   const payload = preparePayload();
   if (!payload) return;
   saving.value = true;
   status.value = "";
-  publishConfirmOpen.value = false;
   try {
-    await saveDraftRecord(payload.configJson);
-    status.value = "草稿已保存；患者端不会变化，点击发布后才会生效";
+    await savePublishedRecord(payload.configJson);
+    status.value = "配置已保存并生效；患者端刷新后会读取最新内容";
   } catch (err) {
     error.value = messageFrom(err);
   } finally {
     saving.value = false;
-  }
-}
-
-function requestPublish() {
-  if (!auth.session) return;
-  const payload = preparePayload();
-  if (!payload) return;
-  publishConfirmOpen.value = true;
-  status.value = "";
-}
-
-async function confirmPublish() {
-  if (!auth.session) return;
-  const payload = preparePayload();
-  if (!payload) return;
-  publishing.value = true;
-  error.value = "";
-  status.value = "正在保存草稿...";
-  try {
-    await saveDraftRecord(payload.configJson);
-    status.value = "正在发布...";
-    const row = await api.publishPatientSiteConfig(auth.token(), { configKey: activeKey.value });
-    latest[activeKey.value] = row;
-    if (typeof row.configJson === "string") {
-      setDraft(activeKey.value, JSON.parse(row.configJson));
-    }
-    publishConfirmOpen.value = false;
-    status.value = "配置已发布；患者端刷新后会读取 /api/patient-site/config 的最新内容";
-  } catch (err) {
-    error.value = messageFrom(err);
-  } finally {
-    publishing.value = false;
   }
 }
 
@@ -972,22 +900,7 @@ onMounted(loadAll);
           <div class="patient-site-side-actions">
             <button type="button" class="topbar-refresh" :disabled="loading" @click="loadConfig()">重新加载</button>
             <button type="button" class="topbar-refresh" @click="useTemplate">使用模板</button>
-            <button type="button" class="topbar-refresh" :disabled="saving" @click="copyPublishedToDraft">复制发布为草稿</button>
-            <button type="button" class="quick-btn" :disabled="saving" @click="saveDraft">保存草稿</button>
-            <button type="button" class="quick-btn publish" :disabled="publishing" @click="requestPublish">发布</button>
-          </div>
-
-          <div v-if="publishConfirmOpen" class="patient-site-confirm">
-            <strong>确认发布</strong>
-            <p>配置类型：{{ activeTab.label }}</p>
-            <p>当前草稿：{{ activeRecord?.status || "未保存" }} / v{{ activeRecord?.version || "-" }}</p>
-            <p>本次备注：{{ remarks[activeKey] || "无" }}</p>
-            <p class="patient-site-confirm-warning">发布后患者端将读取该配置。</p>
-            <p>公开读取接口：<code>/api/patient-site/config</code></p>
-            <div>
-              <button type="button" class="quick-btn publish" :disabled="publishing" @click="confirmPublish">确认发布</button>
-              <button type="button" class="topbar-refresh" :disabled="publishing" @click="publishConfirmOpen = false">取消</button>
-            </div>
+            <button type="button" class="quick-btn publish" :disabled="saving" @click="saveAndApply">保存并生效</button>
           </div>
 
           <div v-if="status" class="notice success">{{ status }}</div>
@@ -1455,7 +1368,7 @@ onMounted(loadAll);
         </div>
         <div class="patient-config-modal-footer">
           <button type="button" class="topbar-refresh" @click="closeEditor">取消</button>
-          <button type="button" class="quick-btn" @click="applyEditor">保存到草稿</button>
+          <button type="button" class="quick-btn" @click="applyEditor">保存到编辑内容</button>
         </div>
       </section>
     </div>

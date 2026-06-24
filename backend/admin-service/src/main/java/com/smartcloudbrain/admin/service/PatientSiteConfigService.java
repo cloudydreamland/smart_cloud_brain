@@ -80,6 +80,14 @@ public class PatientSiteConfigService {
   }
 
   @Transactional
+  public Map<String, Object> savePublished(PatientSiteConfigSaveRequest request, Long userId) {
+    String key = requireConfigKey(request.configKey());
+    JsonNode root = parseObject(request.configJson());
+    validateStructure(key, root);
+    return createPublished(key, root, request.remark(), userId, userId);
+  }
+
+  @Transactional
   public Map<String, Object> publish(String configKey, Long userId) {
     String key = requireConfigKey(configKey);
     PatientSiteConfig draft = repository.findFirstByConfigKeyAndStatusOrderByVersionDesc(key, STATUS_DRAFT)
@@ -87,24 +95,29 @@ public class PatientSiteConfigService {
     JsonNode root = parseObject(draft.getConfigJson());
     validateStructure(key, root);
 
+    draft.setStatus(STATUS_ARCHIVED);
+    draft.setUpdatedBy(userId);
+    draft.setUpdatedAt(LocalDateTime.now());
+    repository.save(draft);
+
+    return createPublished(key, root, draft.getRemark(), draft.getCreatedBy(), userId);
+  }
+
+  private Map<String, Object> createPublished(String key, JsonNode root, String remark, Long createdBy, Long userId) {
     for (PatientSiteConfig old : repository.findByConfigKeyAndStatusOrderByVersionDesc(key, STATUS_PUBLISHED)) {
       old.setStatus(STATUS_ARCHIVED);
       old.setUpdatedBy(userId);
       old.setUpdatedAt(LocalDateTime.now());
       repository.save(old);
     }
-    draft.setStatus(STATUS_ARCHIVED);
-    draft.setUpdatedBy(userId);
-    draft.setUpdatedAt(LocalDateTime.now());
-    repository.save(draft);
 
     PatientSiteConfig published = new PatientSiteConfig();
     published.setConfigKey(key);
     published.setConfigJson(compact(root));
     published.setStatus(STATUS_PUBLISHED);
     published.setVersion(nextVersion(key));
-    published.setRemark(draft.getRemark());
-    published.setCreatedBy(draft.getCreatedBy());
+    published.setRemark(remark);
+    published.setCreatedBy(createdBy);
     published.setUpdatedBy(userId);
     published.setUpdatedAt(LocalDateTime.now());
     return view(repository.save(published));

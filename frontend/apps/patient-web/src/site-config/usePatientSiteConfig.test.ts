@@ -15,17 +15,13 @@ vi.mock("@smart-cloud-brain/shared-api", async () => {
 });
 
 describe("normalizeConfig", () => {
-  it("falls back to default config for empty payloads", () => {
+  it("keeps empty payloads empty instead of falling back to defaults", () => {
     const config = normalizeConfig({});
-    expect(config.nav.menus.length).toBeGreaterThan(0);
-    expect(config.home.hero.title).toBeTruthy();
-    expect(config.staticPages.pages.length).toBeGreaterThan(0);
-  });
-
-  it("keeps every default nav route that is backed by the router whitelist", () => {
-    const config = normalizeConfig({});
-    const about = config.nav.menus.find((menu) => menu.key === "about");
-    expect(about?.links?.some((link) => link.routeName === "public-research")).toBe(true);
+    expect(config.nav.menus).toEqual([]);
+    expect(config.nav.userLinks).toEqual([]);
+    expect(config.home.hero.enabled).toBe(false);
+    expect(config.home.modules).toEqual([]);
+    expect(config.staticPages.pages).toEqual([]);
   });
 
   it("filters disabled entries and unknown routes", () => {
@@ -55,7 +51,7 @@ describe("normalizeConfig", () => {
     });
 
     expect(config.nav.brand.homeRoute).toBe("patient-home");
-    expect(config.nav.menus.length).toBeGreaterThan(1);
+    expect(config.nav.menus.length).toBe(1);
     const customMenu = config.nav.menus.find((menu) => menu.key === "x");
     expect(customMenu?.links).toHaveLength(1);
     expect(customMenu?.links?.[0].label).toBe("Good");
@@ -90,7 +86,7 @@ describe("normalizeConfig", () => {
     expect(actions.map((item) => item.label)).toEqual(["First", "Second"]);
   });
 
-  it("keeps default sections when published config is only a partial patch", () => {
+  it("does not merge defaults when published config is only a partial patch", () => {
     const config = normalizeConfig({
       nav: {
         menus: [
@@ -109,23 +105,23 @@ describe("normalizeConfig", () => {
       },
     });
 
-    expect(config.nav.menus.length).toBe(patientSiteConfigTemplates.patient_nav.menus.length);
+    expect(config.nav.menus).toHaveLength(1);
     expect(config.nav.menus.find((menu) => menu.key === "home")?.label).toBe("Custom home");
     expect(config.nav.menus.find((menu) => menu.key === "home")?.links?.[0].label).toBe("Only custom link");
-    expect(config.nav.menus.some((menu) => menu.key === "care")).toBe(true);
+    expect(config.nav.menus.some((menu) => menu.key === "care")).toBe(false);
     expect(config.home.modules.find((module) => module.key === "emergency_notice")?.content?.text).toBe("Custom notice");
-    expect(config.home.modules.some((module) => module.key === "quick_actions")).toBe(true);
-    expect(config.staticPages.pages.length).toBe(patientSiteConfigTemplates.patient_static_pages.pages.length);
+    expect(config.home.modules.some((module) => module.key === "quick_actions")).toBe(false);
+    expect(config.staticPages.pages).toHaveLength(1);
     expect(config.staticPages.pages.find((page) => page.routeName === "about-contact")?.title).toBe("Custom contact");
   });
 
-  it("uses enabled false as explicit disable semantics", () => {
+  it("filters disabled entries", () => {
     const rendered = normalizeConfig({
-      nav: { menus: [{ key: "care", enabled: false }] },
+      nav: { menus: [{ key: "care", label: "Care", enabled: false, links: [{ label: "Home", routeName: "patient-home" }] }] },
     });
     const stored = resolvePatientSiteConfigSection(
       "patient_nav",
-      { menus: [{ key: "care", enabled: false }] },
+      { menus: [{ key: "care", label: "Care", enabled: false, links: [{ label: "Home", routeName: "patient-home" }] }] },
       { preserveDisabled: true },
     ) as typeof patientSiteConfigTemplates.patient_nav;
 
@@ -133,7 +129,7 @@ describe("normalizeConfig", () => {
     expect(stored.menus.find((menu) => menu.key === "care")?.enabled).toBe(false);
   });
 
-  it("removes every disabled default nav entry without index drift", () => {
+  it("does not reintroduce disabled or omitted default nav entries", () => {
     const rendered = normalizeConfig({
       nav: {
         menus: [
@@ -156,8 +152,8 @@ describe("normalizeConfig", () => {
 
     expect(rendered.nav.menus.some((menu) => menu.key === "care")).toBe(false);
     expect(rendered.nav.menus.some((menu) => menu.key === "patient")).toBe(false);
-    expect(rendered.nav.menus.some((menu) => menu.key === "doctors")).toBe(true);
-    expect(rendered.nav.menus.find((menu) => menu.key === "home")?.links?.some((link) => link.routeName === "patient-doctors")).toBe(false);
+    expect(rendered.nav.menus.some((menu) => menu.key === "doctors")).toBe(false);
+    expect(rendered.nav.menus.some((menu) => menu.key === "home")).toBe(false);
     expect(rendered.nav.userLinks.some((link) => link.routeName === "patient-dashboard")).toBe(false);
     expect(rendered.nav.userLinks.some((link) => link.routeName === "patient-appointments")).toBe(false);
   });

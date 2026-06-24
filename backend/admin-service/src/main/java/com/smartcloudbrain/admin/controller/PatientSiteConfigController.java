@@ -51,6 +51,12 @@ public class PatientSiteConfigController {
     return Result.success(patientSiteConfigService.saveDraft(request, user.userId()));
   }
 
+  @PostMapping("/api/admin/patient-site/save-published")
+  public Result<?> savePublished(@Valid @RequestBody PatientSiteConfigSaveRequest request) {
+    AuthenticatedUser user = requireManagePermission();
+    return Result.success(patientSiteConfigService.savePublished(request, user.userId()));
+  }
+
   @PostMapping("/api/admin/patient-site/publish")
   public Result<?> publish(@Valid @RequestBody PatientSiteConfigPublishRequest request) {
     AuthenticatedUser user = requireManagePermission();
