@@ -22,6 +22,7 @@ COPY frontend/apps/patient-mobile/package.json ./frontend/apps/patient-mobile/
 COPY frontend/packages/shared-ui/package.json ./frontend/packages/shared-ui/
 COPY frontend/packages/shared-api/package.json ./frontend/packages/shared-api/
 COPY frontend/packages/shared-types/package.json ./frontend/packages/shared-types/
+COPY frontend/packages/shared-utils/package.json ./frontend/packages/shared-utils/
 
 # ── Step 2: 安装依赖（这一层在 package.json 不变时永远命中缓存）────────
 RUN cd frontend \
