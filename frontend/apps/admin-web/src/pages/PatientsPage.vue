@@ -4,6 +4,7 @@ import {
   api,
   displayText,
   formatApiError,
+  formatDateTime,
   toNumber,
   useAuthStore,
   usePagination,
@@ -59,7 +60,7 @@ async function refresh() {
       maxAge: maxAge.value,
     }) as Patient[];
   } catch (err) {
-    error.value = formatApiError(err, "Patient list failed");
+    error.value = formatApiError(err, "加载患者列表失败");
   } finally {
     loading.value = false;
   }
@@ -72,7 +73,7 @@ async function openDetail(item: Patient) {
     detail.value = await api.patientDetail(auth.token(), toNumber(item.id)) as PatientDetail;
     detailOpen.value = true;
   } catch (err) {
-    error.value = formatApiError(err, "Patient detail failed");
+    error.value = formatApiError(err, "加载患者详情失败");
   } finally {
     loading.value = false;
   }
@@ -91,7 +92,7 @@ function openEditor(item: Patient) {
 
 async function save() {
   if (!form.id || !form.name.trim()) {
-    error.value = "Patient ID and name are required";
+    error.value = "患者 ID 和姓名不能为空";
     return;
   }
   saving.value = true;
@@ -107,10 +108,10 @@ async function save() {
       pastHistory: form.pastHistory || undefined,
     });
     editorOpen.value = false;
-    notice.value = "Patient profile saved";
+    notice.value = "患者档案已保存";
     await refresh();
   } catch (err) {
-    error.value = formatApiError(err, "Patient save failed");
+    error.value = formatApiError(err, "保存患者档案失败");
   } finally {
     saving.value = false;
   }
@@ -135,28 +136,28 @@ onMounted(refresh);
       <div v-if="notice" class="notice success">{{ notice }}</div>
 
       <div class="admin-filter-row">
-        <input v-model.trim="keyword" placeholder="Search name or phone" @keyup.enter="refresh" />
+        <input v-model.trim="keyword" placeholder="搜索姓名或手机号" @keyup.enter="refresh" />
         <select v-model="gender">
           <option value="">全部性别</option>
           <option value="MALE">男</option>
           <option value="FEMALE">女</option>
           <option value="UNKNOWN">未知</option>
         </select>
-        <input v-model.number="minAge" type="number" min="0" placeholder="Min age" />
-        <input v-model.number="maxAge" type="number" min="0" placeholder="Max age" />
+        <input v-model.number="minAge" type="number" min="0" placeholder="最小年龄" />
+        <input v-model.number="maxAge" type="number" min="0" placeholder="最大年龄" />
         <button type="button" :disabled="loading" @click="refresh">搜索</button>
       </div>
 
-      <DataTable :rows="filtered" :loading="loading" :error="error" :breakout="true" empty-title="No patients">
+      <DataTable :rows="filtered" :loading="loading" :error="error" :breakout="true" empty-title="暂无患者">
         <thead>
           <tr>
             <th>ID</th>
-            <th>Name</th>
-            <th>Phone</th>
-            <th>Gender</th>
-            <th>Age</th>
-            <th>Registrations</th>
-            <th class="actions-cell">Actions</th>
+            <th>姓名</th>
+            <th>手机号</th>
+            <th>性别</th>
+            <th>年龄</th>
+            <th>就诊次数</th>
+            <th class="actions-cell">操作</th>
           </tr>
         </thead>
         <tbody>
@@ -177,21 +178,21 @@ onMounted(refresh);
       <PaginationBar v-model="currentPage" :total="total" :page-size="pageSize" />
     </div>
 
-    <Modal :open="editorOpen" title="Patient Profile" description="Update demographic and clinical background fields." @close="editorOpen = false">
+    <Modal :open="editorOpen" title="患者档案" description="维护人口统计和临床背景信息。" @close="editorOpen = false">
       <div class="stack">
         <div class="form-grid">
-          <FormField label="Name"><input v-model.trim="form.name" /></FormField>
-          <FormField label="Gender">
+          <FormField label="姓名"><input v-model.trim="form.name" /></FormField>
+          <FormField label="性别">
             <select v-model="form.gender">
               <option value="">未知</option>
               <option value="MALE">男</option>
               <option value="FEMALE">女</option>
             </select>
           </FormField>
-          <FormField label="Age"><input v-model.number="form.age" type="number" min="0" /></FormField>
+          <FormField label="年龄"><input v-model.number="form.age" type="number" min="0" /></FormField>
         </div>
-        <FormField label="Allergy history"><textarea v-model.trim="form.allergyHistory" /></FormField>
-        <FormField label="Past history"><textarea v-model.trim="form.pastHistory" /></FormField>
+        <FormField label="过敏史"><textarea v-model.trim="form.allergyHistory" /></FormField>
+        <FormField label="既往史"><textarea v-model.trim="form.pastHistory" /></FormField>
       </div>
       <template #footer>
         <button type="button" @click="editorOpen = false">取消</button>
@@ -199,19 +200,19 @@ onMounted(refresh);
       </template>
     </Modal>
 
-    <Modal :open="detailOpen" title="Patient Detail" description="Recent clinical history grouped by business module." @close="detailOpen = false">
+    <Modal :open="detailOpen" title="患者详情" description="按业务模块分组的近期临床记录。" @close="detailOpen = false">
       <div class="stack">
         <div class="metrics">
-          <div class="metric"><span>Registrations</span><strong>{{ asRows(detail?.registrations).length }}</strong></div>
-          <div class="metric"><span>Triage</span><strong>{{ asRows(detail?.triageRecords).length }}</strong></div>
-          <div class="metric"><span>Records</span><strong>{{ asRows(detail?.medicalRecords).length }}</strong></div>
-          <div class="metric"><span>Prescriptions</span><strong>{{ asRows(detail?.prescriptions).length }}</strong></div>
+          <div class="metric"><span>就诊记录</span><strong>{{ asRows(detail?.registrations).length }}</strong></div>
+          <div class="metric"><span>分诊记录</span><strong>{{ asRows(detail?.triageRecords).length }}</strong></div>
+          <div class="metric"><span>病历</span><strong>{{ asRows(detail?.medicalRecords).length }}</strong></div>
+          <div class="metric"><span>处方</span><strong>{{ asRows(detail?.prescriptions).length }}</strong></div>
         </div>
         <div class="list">
           <article v-for="item in asRows(detail?.registrations).slice(0, 5)" :key="`registration-${String(item.id)}`" class="list-row">
             <div class="row-main">
-              <strong>Registration #{{ displayText(item.id) }} / {{ displayText(item.status) }}</strong>
-              <p>{{ displayText(item.appointment_time, displayText(item.appointmentTime, "")) }}</p>
+              <strong>就诊 #{{ displayText(item.id) }} / {{ displayText(item.status) }}</strong>
+              <p>{{ formatDateTime(item.appointment_time || item.appointmentTime) }}</p>
             </div>
           </article>
         </div>

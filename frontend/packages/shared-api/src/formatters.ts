@@ -53,7 +53,7 @@ export function statusText(status: unknown, fallback = "-") {
     ADMIN: "管理员", MALE: "男", FEMALE: "女", UNKNOWN: "未说明",
     /* 医生端 workflow 状态 */
     INFO: "提示", DRAFT_READY: "草稿就绪", GENERATING: "生成中",
-    IDLE: "空闲", OPEN: "进行中",
+    IDLE: "空闲", OPEN: "进行中", ACTIVE: "生效",
   };
   return labels[raw.toUpperCase()] ?? raw;
 }

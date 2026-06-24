@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { storeToRefs } from "pinia";
-import { displayText, formatApiError, useAuthStore, useDoctorWorkflowStore, usePagination, type Prescription } from "@smart-cloud-brain/shared-api";
+import { displayText, formatApiError, formatDateTime, useAuthStore, useDoctorWorkflowStore, usePagination, type Prescription } from "@smart-cloud-brain/shared-api";
 import { ErrorState, LoadingState, PaginationBar } from "@smart-cloud-brain/shared-ui";
 import PrescriptionRiskModal from "../components/PrescriptionRiskModal.vue";
 import { liveRows, statusLabel, statusTone } from "../doctorPresentation";
@@ -59,7 +59,7 @@ refresh();
             <tr v-for="item in pageRows" :key="String(item.prescriptionId)">
               <td>#RX{{ displayText(item.prescriptionId) }}</td>
               <td>{{ displayText(item.patientName, displayText(item.patientId)) }}</td>
-              <td>{{ displayText(item.createdAt) }}</td>
+              <td>{{ formatDateTime(item.createdAt) }}</td>
               <td>{{ displayText(item.drugCount ?? item.items?.length, "2") }}</td>
               <td><span class="tag" :class="statusTone(item.status)">{{ statusLabel(item.status) }}</span></td>
               <td><span class="tag" :class="statusTone(item.riskLevel)">{{ statusLabel(item.riskLevel, "未审核") }}</span></td>

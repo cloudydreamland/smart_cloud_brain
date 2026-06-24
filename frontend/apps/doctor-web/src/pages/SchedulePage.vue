@@ -18,7 +18,7 @@ async function refresh() {
   try {
     rows.value = await api.doctorSchedules(auth.token(), { startDate: startDate.value, endDate: endDate.value, status: status.value }) as Schedule[];
   } catch (err) {
-    error.value = formatApiError(err, "Doctor schedule failed");
+    error.value = formatApiError(err, "加载排班失败");
   } finally {
     loading.value = false;
   }
@@ -31,15 +31,15 @@ refresh();
   <section class="clinical-page">
     <section class="panel">
       <header>
-        <div class="panel-title"><p class="eyebrow">Schedule</p><h2>My Published Schedules</h2></div>
-        <div class="toolbar"><input v-model="startDate" type="date" /><input v-model="endDate" type="date" /><select v-model="status"><option value="">All</option><option value="PUBLISHED">Published</option><option value="CANCELLED">Cancelled</option></select><button type="button" @click="refresh">Refresh</button></div>
+        <div class="panel-title"><p class="eyebrow">排班管理</p><h2>我的排班</h2></div>
+        <div class="toolbar"><input v-model="startDate" type="date" /><input v-model="endDate" type="date" /><select v-model="status"><option value="">全部</option><option value="PUBLISHED">已发布</option><option value="CANCELLED">已取消</option></select><button type="button" @click="refresh">刷新</button></div>
       </header>
       <div class="panel-body stack">
         <ErrorState v-if="error" :message="error" />
         <LoadingState v-if="loading" />
         <div v-if="rows.length" class="table-wrap table-breakout">
           <table class="data-table">
-            <thead><tr><th>Date</th><th>Time</th><th>Department</th><th>Capacity</th><th>Booked</th><th>Remaining</th><th>Status</th></tr></thead>
+            <thead><tr><th>日期</th><th>时间</th><th>科室</th><th>容量</th><th>已预约</th><th>剩余</th><th>状态</th></tr></thead>
             <tbody>
               <tr v-for="item in pageRows" :key="String(item.id)">
                 <td>{{ displayText(item.workDate) }}</td>
@@ -54,7 +54,7 @@ refresh();
           </table>
           <PaginationBar v-model="currentPage" :total="total" :page-size="pageSize" />
         </div>
-        <EmptyState v-else title="No schedules" />
+        <EmptyState v-else title="暂无排班" />
       </div>
     </section>
   </section>

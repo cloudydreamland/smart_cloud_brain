@@ -57,6 +57,15 @@ async function refresh() {
   }
 }
 
+/** 将 ISO 日期字符串格式化为 MM/DD 格式 */
+function formatDay(iso: unknown): string {
+  const s = displayText(iso);
+  if (!s) return "-";
+  const d = new Date(s);
+  if (isNaN(d.getTime())) return s;
+  return `${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`;
+}
+
 function renderCharts() {
   charts.forEach((chart) => chart.dispose());
   charts = [];
@@ -64,7 +73,7 @@ function renderCharts() {
     const chart = echarts.init(trendEl.value);
     chart.setOption({
       tooltip: {},
-      xAxis: { type: "category", data: trend.value.map((item) => displayText(item.day)) },
+      xAxis: { type: "category", data: trend.value.map((item) => formatDay(item.day)), axisLabel: { rotate: 30 } },
       yAxis: { type: "value" },
       series: [{ type: "line", smooth: true, data: trend.value.map((item) => Number(item.registrations || 0)) }],
     });
@@ -93,8 +102,8 @@ function renderCharts() {
       xAxis: { type: "category", data: deviceUsage.value.slice(0, 10).map((item) => displayText(item.name)) },
       yAxis: { type: "value" },
       series: [
-        { name: "Usage", type: "bar", data: deviceUsage.value.slice(0, 10).map((item) => Number(item.usage_count || 0)) },
-        { name: "Abnormal", type: "bar", data: deviceUsage.value.slice(0, 10).map((item) => Number(item.abnormal_count || 0)) },
+        { name: "使用量", type: "bar", data: deviceUsage.value.slice(0, 10).map((item) => Number(item.usage_count || 0)) },
+        { name: "异常数", type: "bar", data: deviceUsage.value.slice(0, 10).map((item) => Number(item.abnormal_count || 0)) },
       ],
     });
     charts.push(chart);
@@ -120,18 +129,18 @@ refresh();
   <section class="panel">
     <header class="panel-header">
       <div class="panel-title"><h2>数据统计</h2></div>
-      <div class="toolbar"><input v-model="startDate" type="date" /><input v-model="endDate" type="date" /><button type="button" :disabled="loading" @click="refresh">Refresh</button><button class="primary" type="button" @click="exportCsv">CSV</button></div>
+      <div class="toolbar"><input v-model="startDate" type="date" /><input v-model="endDate" type="date" /><button type="button" :disabled="loading" @click="refresh">刷新</button><button class="primary" type="button" @click="exportCsv">导出 CSV</button></div>
     </header>
     <div class="panel-body stack">
       <ErrorState v-if="error" :message="error" />
       <LoadingState v-if="loading" />
       <div class="metrics">
-        <div class="metric"><span>Registrations</span><strong>{{ displayText(overview.registrations, "0") }}</strong></div>
-        <div class="metric"><span>Completed</span><strong>{{ displayText(overview.completedRegistrations, "0") }}</strong></div>
-        <div class="metric"><span>Patients</span><strong>{{ displayText(overview.patients, "0") }}</strong></div>
-        <div class="metric"><span>Doctors</span><strong>{{ displayText(overview.doctors, "0") }}</strong></div>
-        <div class="metric"><span>Devices</span><strong>{{ displayText(overview.devices, "0") }}</strong></div>
-        <div class="metric"><span>Device warnings</span><strong>{{ displayText(overview.deviceWarnings, "0") }}</strong></div>
+        <div class="metric"><span>就诊总数</span><strong>{{ displayText(overview.registrations, "0") }}</strong></div>
+        <div class="metric"><span>已完成</span><strong>{{ displayText(overview.completedRegistrations, "0") }}</strong></div>
+        <div class="metric"><span>患者数</span><strong>{{ displayText(overview.patients, "0") }}</strong></div>
+        <div class="metric"><span>医生数</span><strong>{{ displayText(overview.doctors, "0") }}</strong></div>
+        <div class="metric"><span>设备数</span><strong>{{ displayText(overview.devices, "0") }}</strong></div>
+        <div class="metric"><span>设备预警</span><strong>{{ displayText(overview.deviceWarnings, "0") }}</strong></div>
       </div>
       <div class="main-grid admin-grid">
         <section class="panel"><header class="panel-header"><div class="panel-title"><h3>就诊趋势</h3></div></header><div ref="trendEl" class="chart-box"></div></section>

@@ -120,12 +120,12 @@ refresh();
       <ErrorState v-if="error" :message="error" />
       <div v-if="notice" class="notice success">{{ notice }}</div>
       <div class="admin-filter-row">
-        <input v-model.trim="keyword" placeholder="Search code, name, category, location" />
+        <input v-model.trim="keyword" placeholder="搜索编号、名称、类别、位置" />
         <select v-model="status"><option value="">All status</option><option value="AVAILABLE">Available</option><option value="IN_USE">In use</option><option value="MAINTENANCE">Maintenance</option><option value="RETIRED">Retired</option></select>
       </div>
       <div v-if="filtered.length" class="table-scroll table-breakout">
         <table class="data-table">
-          <thead><tr><th>Code</th><th>Name</th><th>Category</th><th>Department</th><th>Status</th><th>Usage</th><th class="actions-cell">Actions</th></tr></thead>
+          <thead><tr><th>编号</th><th>名称</th><th>类别</th><th>科室</th><th>状态</th><th>使用量</th><th class="actions-cell">操作</th></tr></thead>
           <tbody>
             <tr v-for="item in pageRows" :key="String(item.id)">
               <td>{{ displayText(item.deviceCode) }}</td>
@@ -145,7 +145,7 @@ refresh();
         </table>
         <PaginationBar v-model="currentPage" :total="total" :page-size="pageSize" />
       </div>
-      <EmptyState v-else title="No devices" />
+      <EmptyState v-else title="暂无设备" />
     </div>
     <Modal :open="editorOpen" title="Device" description="Save a real device record." @close="editorOpen = false">
       <div class="stack">

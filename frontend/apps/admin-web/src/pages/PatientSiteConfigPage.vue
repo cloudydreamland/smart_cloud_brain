@@ -3,6 +3,7 @@ import { computed, onMounted, reactive, ref } from "vue";
 import {
   api,
   ApiError,
+  formatDateTime,
   patientSiteConfigTemplates,
   resolvePatientSiteConfigSection,
   type DataRow,
@@ -880,9 +881,7 @@ onMounted(loadAll);
 
       <div class="patient-site-editor">
         <aside>
-          <p class="eyebrow">{{ activeKey }}</p>
           <h2>{{ activeTab.label }}</h2>
-          <p>{{ activeTab.description }}</p>
 
           <dl>
             <div>
@@ -895,7 +894,7 @@ onMounted(loadAll);
             </div>
             <div>
               <dt>更新时间</dt>
-              <dd>{{ activeRecord?.updatedAt || "-" }}</dd>
+              <dd>{{ formatDateTime(activeRecord?.updatedAt) || "-" }}</dd>
             </div>
           </dl>
 

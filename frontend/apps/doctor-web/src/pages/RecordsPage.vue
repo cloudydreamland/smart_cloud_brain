@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { storeToRefs } from "pinia";
-import { displayText, formatApiError, useAuthStore, useDoctorWorkflowStore, usePagination, type MedicalRecord } from "@smart-cloud-brain/shared-api";
+import { displayText, formatApiError, formatDateTime, useAuthStore, useDoctorWorkflowStore, usePagination, type MedicalRecord } from "@smart-cloud-brain/shared-api";
 import { ErrorState, LoadingState, Modal, PaginationBar } from "@smart-cloud-brain/shared-ui";
 import { liveRows } from "../doctorPresentation";
 
@@ -69,7 +69,7 @@ refresh();
             <strong>#MR{{ displayText(item.medicalRecordId) }} · {{ displayText(item.patientName, displayText(item.patientId)) }}</strong>
             <p>主诉：{{ displayText(item.chiefComplaint) }}</p>
             <p>诊断：{{ displayText(item.diagnosis) }}</p>
-            <p>时间：{{ displayText(item.createdAt, "2026-06-22 09:34") }}</p>
+            <p>时间：{{ formatDateTime(item.createdAt) }}</p>
             <button class="detail-btn" type="button" @click="selectedRecord = item">查看详情</button>
           </template>
           <template v-else>
@@ -78,7 +78,7 @@ refresh();
                 <span class="tag" :class="item.aiGenerated ? 'success' : 'info'">{{ item.aiGenerated ? "AI 草稿确认" : "医生录入" }}</span>
                 <strong>#MR{{ displayText(item.medicalRecordId) }} · {{ displayText(item.patientName, displayText(item.patientId)) }}</strong>
               </div>
-              <p>主诉：{{ displayText(item.chiefComplaint) }}　诊断：{{ displayText(item.diagnosis) }}　时间：{{ displayText(item.createdAt, "2026-06-22 09:34") }}</p>
+              <p>主诉：{{ displayText(item.chiefComplaint) }}　诊断：{{ displayText(item.diagnosis) }}　时间：{{ formatDateTime(item.createdAt) }}</p>
             </div>
             <div class="list-detail">
               <button class="detail-btn" type="button" @click="selectedRecord = item">查看详情</button>
@@ -95,7 +95,7 @@ refresh();
         <div><strong>类型：</strong>{{ selectedRecord.aiGenerated ? "AI 草稿确认" : "医生录入" }}</div>
         <div><strong>主诉：</strong>{{ displayText(selectedRecord.chiefComplaint) }}</div>
         <div><strong>诊断：</strong>{{ displayText(selectedRecord.diagnosis) }}</div>
-        <div><strong>时间：</strong>{{ displayText(selectedRecord.createdAt) }}</div>
+        <div><strong>时间：</strong>{{ formatDateTime(selectedRecord.createdAt) }}</div>
       </div>
       <template #footer>
         <button class="btn" @click="selectedRecord = null">关闭</button>

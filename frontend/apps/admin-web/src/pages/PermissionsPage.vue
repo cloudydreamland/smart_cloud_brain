@@ -104,13 +104,13 @@ onMounted(refresh);
         </div>
       </div>
 
-      <DataTable :rows="catalog" :loading="loading" :error="error" :breakout="true" empty-title="No permissions">
+      <DataTable :rows="catalog" :loading="loading" :error="error" :breakout="true" empty-title="暂无权限数据">
         <thead>
           <tr>
-            <th>Enabled</th>
-            <th>Permission</th>
-            <th>Description</th>
-            <th>Status</th>
+            <th>启用</th>
+            <th>权限</th>
+            <th>描述</th>
+            <th>状态</th>
           </tr>
         </thead>
         <tbody>
