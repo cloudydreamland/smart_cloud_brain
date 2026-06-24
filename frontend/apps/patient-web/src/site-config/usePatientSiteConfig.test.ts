@@ -15,13 +15,26 @@ vi.mock("@smart-cloud-brain/shared-api", async () => {
 });
 
 describe("normalizeConfig", () => {
-  it("keeps empty payloads empty instead of falling back to defaults", () => {
+  it("uses the full default config when the published payload is empty", () => {
     const config = normalizeConfig({});
-    expect(config.nav.menus).toEqual([]);
-    expect(config.nav.userLinks).toEqual([]);
-    expect(config.home.hero.enabled).toBe(false);
-    expect(config.home.modules).toEqual([]);
-    expect(config.staticPages.pages).toEqual([]);
+    expect(config.nav.menus.length).toBeGreaterThan(0);
+    expect(config.nav.userLinks.length).toBeGreaterThan(0);
+    expect(config.home.hero.title).toBeTruthy();
+    expect(config.home.modules.length).toBeGreaterThan(0);
+    expect(config.staticPages.pages.length).toBeGreaterThan(0);
+  });
+
+  it("uses default sections only when a whole section is missing", () => {
+    const config = normalizeConfig({
+      nav: {
+        menus: [{ key: "custom", label: "Custom", links: [{ label: "Home", routeName: "patient-home" }] }],
+      },
+    });
+
+    expect(config.nav.menus).toHaveLength(1);
+    expect(config.nav.menus[0].key).toBe("custom");
+    expect(config.home.modules.length).toBeGreaterThan(0);
+    expect(config.staticPages.pages.length).toBeGreaterThan(0);
   });
 
   it("filters disabled entries and unknown routes", () => {

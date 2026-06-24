@@ -347,7 +347,8 @@ function configSectionFromPublic(source: unknown, key: ConfigKey) {
 
 async function loadEffectiveSection(key: ConfigKey) {
   const publicConfig = await api.patientSiteConfig();
-  return configSectionFromPublic(publicConfig, key) || {};
+  const section = configSectionFromPublic(publicConfig, key);
+  return isRecord(section) && Object.keys(section).length ? section : templates[key];
 }
 
 async function loadPublishedRecord(key: ConfigKey) {

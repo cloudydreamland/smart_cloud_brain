@@ -1,3 +1,4 @@
+import { defaultPatientSiteConfig } from "./patientSiteDefaults";
 import { isAllowedPatientRoute } from "./patientSiteRoutes";
 import type {
   PatientHomeConfig,
@@ -20,31 +21,35 @@ type ResolveOptions = {
 const allowedHomeModules = new Set(["notice", "quick_actions", "intro", "locations", "featured_departments", "static_content"]);
 
 export function resolvePatientSiteConfig(
-  _fallback?: PatientSiteConfig,
+  fallback: PatientSiteConfig = defaultPatientSiteConfig,
   source: unknown = {},
   options: ResolveOptions = {},
 ): PatientSiteConfig {
   const row = isRecord(source) ? source : {};
   return {
-    nav: resolvePatientSiteConfigSection("patient_nav", row.nav, options) as PatientNavConfig,
-    home: resolvePatientSiteConfigSection("patient_home", row.home, options) as PatientHomeConfig,
-    staticPages: resolvePatientSiteConfigSection("patient_static_pages", row.staticPages, options) as PatientStaticPagesConfig,
+    nav: resolvePatientSiteConfigSection("patient_nav", row.nav, options, fallback) as PatientNavConfig,
+    home: resolvePatientSiteConfigSection("patient_home", row.home, options, fallback) as PatientHomeConfig,
+    staticPages: resolvePatientSiteConfigSection("patient_static_pages", row.staticPages, options, fallback) as PatientStaticPagesConfig,
   };
 }
 
 export function normalizePatientSiteConfig(source: unknown = {}, options: ResolveOptions = {}): PatientSiteConfig {
-  return resolvePatientSiteConfig(undefined, source, options);
+  return resolvePatientSiteConfig(defaultPatientSiteConfig, source, options);
 }
 
 export function resolvePatientSiteConfigSection(
   key: PatientSiteConfigKey,
   source: unknown,
   options: ResolveOptions = {},
-  _fallbackConfig?: PatientSiteConfig,
+  fallbackConfig: PatientSiteConfig = defaultPatientSiteConfig,
 ) {
-  if (key === "patient_nav") return normalizeNav(source, options);
-  if (key === "patient_home") return normalizeHome(source, options);
-  return normalizeStaticPages(source, options);
+  if (key === "patient_nav") return normalizeNav(sectionOrFallback(source, fallbackConfig.nav), options);
+  if (key === "patient_home") return normalizeHome(sectionOrFallback(source, fallbackConfig.home), options);
+  return normalizeStaticPages(sectionOrFallback(source, fallbackConfig.staticPages), options);
+}
+
+function sectionOrFallback<T>(source: unknown, fallback: T): unknown {
+  return isRecord(source) && Object.keys(source).length ? source : fallback;
 }
 
 function normalizeNav(source: unknown, options: ResolveOptions): PatientNavConfig {
