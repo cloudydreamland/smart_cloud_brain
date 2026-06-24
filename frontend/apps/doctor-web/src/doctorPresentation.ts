@@ -1,5 +1,5 @@
 import { computed, type Ref } from "vue";
-import { fieldText, type DataRow } from "@smart-cloud-brain/shared-api";
+import { fieldText, statusText, type DataRow } from "@smart-cloud-brain/shared-api";
 
 export type Tone = "success" | "info" | "warning" | "danger" | "low" | "pending" | "active";
 
@@ -7,34 +7,8 @@ export function liveRows(source: Ref<DataRow[]>) {
   return computed(() => source.value);
 }
 
-export function statusLabel(status: unknown, fallback = "-") {
-  const raw = String(status ?? "").trim();
-  if (!raw) return fallback;
-  const labels: Record<string, string> = {
-    CREATED: "已创建",
-    CONFIRMED: "已确认",
-    COMPLETED: "已完成",
-    CANCELLED: "已取消",
-    PENDING: "待处理",
-    DRAFT: "草稿",
-    UNREVIEWED: "待审核",
-    LOW: "低风险",
-    MEDIUM: "中风险",
-    HIGH: "高风险",
-    INFO: "提示",
-    READ: "已读",
-    UNREAD: "未读",
-    FAILED: "失败",
-    DRAFT_READY: "草稿就绪",
-    GENERATING: "生成中",
-    IDLE: "空闲",
-    DOCTOR: "医生",
-    PUBLISHED: "已发布",
-    CLOSED: "已关闭",
-    OPEN: "进行中",
-  };
-  return labels[raw.toUpperCase()] ?? raw;
-}
+/** 复用 shared-api 的 statusText，保留 statusLabel 别名以兼容现有 import */
+export const statusLabel = statusText;
 
 export function statusTone(status: unknown): Tone {
   const value = String(status || "").toUpperCase();

@@ -46,6 +46,9 @@ export function statusText(status: unknown, fallback = "-") {
     UNPUBLISHED: "未发布", UNREVIEWED: "未审核", MEDIUM: "中风险",
     MANUAL_REQUIRED: "待人工处理", UNREAD: "未读", PATIENT: "患者", DOCTOR: "医生",
     ADMIN: "管理员", MALE: "男", FEMALE: "女", UNKNOWN: "未说明",
+    /* 医生端 workflow 状态 */
+    INFO: "提示", DRAFT_READY: "草稿就绪", GENERATING: "生成中",
+    IDLE: "空闲", OPEN: "进行中",
   };
   return labels[raw.toUpperCase()] ?? raw;
 }

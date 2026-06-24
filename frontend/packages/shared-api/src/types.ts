@@ -91,3 +91,202 @@ export class ApiError extends Error {
     this.name = "ApiError";
   }
 }
+
+/* ======================================================================
+ * 实体接口（基于后端 API 返回字段定义，供后续逐步迁移使用）
+ * 当前代码仍用 DataRow + fieldText，定义这些接口是为了：
+ *   1. 文档化每个实体有哪些字段
+ *   2. 后续迁移时有具体类型可替换 DataRow
+ * ====================================================================== */
+
+export interface Department {
+  id: number;
+  code: string;
+  name: string;
+  description?: string;
+}
+
+export interface Doctor {
+  id: number;
+  name: string;
+  phone: string;
+  departmentId: number;
+  departmentName?: string;
+  title?: string;
+  specialty?: string;
+  status?: string;
+}
+
+export interface Drug {
+  id: number;
+  name: string;
+  specification?: string;
+  contraindication?: string;
+  interactionRule?: string;
+  status?: string;
+}
+
+export interface KnowledgeEntry {
+  id: number;
+  title: string;
+  symptoms: string;
+  riskSignals?: string;
+  advice: string;
+  departmentCode?: string;
+  status?: string;
+}
+
+export interface PromptTemplate {
+  id: number;
+  taskType: string;
+  departmentCode?: string;
+  templateName: string;
+  templateContent: string;
+  outputSchema?: string;
+  version?: string;
+  enabled?: boolean;
+}
+
+export interface SystemDict {
+  id: number;
+  dictType: string;
+  dictKey: string;
+  dictValue: string;
+  sort?: number;
+  status?: string;
+}
+
+export interface Patient {
+  id: number;
+  name: string;
+  gender?: string;
+  age?: number;
+  phone?: string;
+  allergyHistory?: string;
+  pastHistory?: string;
+  address?: string;
+  emergencyContact?: string;
+  emergencyPhone?: string;
+  bloodType?: string;
+  heightCm?: number;
+  weightKg?: number;
+}
+
+export interface Registration {
+  registrationId: number;
+  patientId: number;
+  patientName?: string;
+  doctorId?: number;
+  doctorName?: string;
+  departmentId?: number;
+  departmentName?: string;
+  appointmentTime?: string;
+  status?: string;
+  riskLevel?: string;
+  triageRecordId?: number;
+  slotId?: number;
+}
+
+export interface TriageRecord {
+  triageRecordId: number;
+  patientId: number;
+  patientName?: string;
+  chiefComplaint?: string;
+  departmentCode?: string;
+  recommendedDepartment?: string;
+  urgencyLevel?: string;
+  riskLevel?: string;
+  status?: string;
+}
+
+export interface MedicalRecord {
+  medicalRecordId: number;
+  registrationId: number;
+  patientId?: number;
+  chiefComplaint: string;
+  presentIllness?: string;
+  pastHistory?: string;
+  physicalExam?: string;
+  diagnosis: string;
+  treatmentAdvice?: string;
+  aiGenerated?: boolean;
+  provider?: string;
+  model?: string;
+}
+
+export interface Prescription {
+  prescriptionId: number;
+  registrationId?: number;
+  patientId?: number;
+  medicalRecordId?: number;
+  riskLevel?: string;
+  riskDescription?: string;
+  drugs?: DrugItem[];
+  drugCount?: number;
+  status?: string;
+}
+
+export interface Account {
+  id: number;
+  role: Role;
+  account: string;
+  name: string;
+  departmentId?: number;
+  departmentName?: string;
+  title?: string;
+  specialty?: string;
+  status?: string;
+  permissions?: string;
+}
+
+export interface RoleInfo {
+  role: Role;
+  label: string;
+  permissions?: string;
+}
+
+export interface Schedule {
+  id: number;
+  doctorId: number;
+  doctorName?: string;
+  departmentId: number;
+  departmentName?: string;
+  workDate: string;
+  timeRange: string;
+  capacity: number;
+  status?: string;
+}
+
+export interface Device {
+  id: number;
+  deviceCode: string;
+  name: string;
+  category?: string;
+  departmentId?: number;
+  departmentName?: string;
+  location?: string;
+  status?: string;
+  purchaseDate?: string;
+  remark?: string;
+}
+
+export interface DeviceUsage {
+  id: number;
+  deviceId: number;
+  usageType: string;
+  usedBy?: string;
+  patientId?: number;
+  startedAt?: string;
+  endedAt?: string;
+  resultStatus?: string;
+  remark?: string;
+}
+
+export interface Notification {
+  notificationId: number;
+  title?: string;
+  content?: string;
+  riskLevel?: string;
+  readStatus?: string;
+  createdAt?: string;
+}

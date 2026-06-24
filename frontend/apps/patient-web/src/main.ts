@@ -1,5 +1,6 @@
 import { createApp } from "vue";
 import { createPinia } from "pinia";
+import { setTokenProvider, useAuthStore } from "@smart-cloud-brain/shared-api";
 import App from "./App.vue";
 import router from "./router";
 import "./style.css";
@@ -11,4 +12,9 @@ app.config.errorHandler = (err, instance, info) => {
   console.error("[Global Error]", err, info);
 };
 
-app.use(createPinia()).use(router).mount("#app");
+app.use(createPinia()).use(router);
+
+/* 将 auth store 的 token 注入为 API 层默认 token 来源，各 API 函数无需再手动传 token */
+setTokenProvider(() => useAuthStore().token());
+
+app.mount("#app");

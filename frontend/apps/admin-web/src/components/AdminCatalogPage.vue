@@ -161,6 +161,16 @@ const configs: Record<Entity, {
 };
 
 const config = computed(() => configs[props.entity]);
+
+/* ---------- 实体保存策略（替代散落的 if 链） ---------- */
+const saveHandlers: Record<Entity, () => Promise<void>> = {
+  department: () => api.saveDepartment(auth.token(), form as never),
+  doctor:     () => api.saveDoctor(auth.token(), form as never),
+  drug:       () => api.saveDrug(auth.token(), form as never),
+  knowledge:  () => api.saveKnowledgeEntry(auth.token(), form as never),
+  prompt:     () => api.savePrompt(auth.token(), promptSaveBody()),
+  dict:       () => api.saveDict(auth.token(), form as never),
+};
 const rows = computed(() => {
   const q = keyword.value.trim().toLowerCase();
   const source = config.value.rows();
@@ -239,20 +249,31 @@ function openEditor(item?: DataRow) {
     config.value.fields.forEach(([key, , type]) => {
       form[key] = type === "checkbox" ? true : ["number", "department-select"].includes(type) ? 0 : "";
     });
-    if (props.entity === "doctor") form.departmentId = toNumber(departments.value[0]?.id);
-    if ("status" in form) form.status = firstDictValue("SYSTEM_STATUS", "ENABLED");
-    if (props.entity === "dict") form.dictType = firstDictValue("DICT_TYPE", "SYSTEM_STATUS");
-    if (props.entity === "knowledge" || props.entity === "prompt") form.departmentCode = departmentCodeOptions()[0]?.value ?? "GENERAL";
-    if (props.entity === "prompt") {
-      form.taskType = firstDictValue("PROMPT_TASK_TYPE", "MEDICAL_RECORD");
-      form.outputSchema = defaultPromptSchema(String(form.taskType));
-      form.version = "v1";
-      form.sampleInput = promptTaskConfig(String(form.taskType)).sample;
-    }
+    initEntityDefaults();
   }
-  if (props.entity === "prompt" && !form.sampleInput) form.sampleInput = promptTaskConfig(String(form.taskType)).sample;
-  if (props.entity === "prompt" && !form.outputSchema) form.outputSchema = defaultPromptSchema(String(form.taskType));
+  ensurePromptFields();
   editorOpen.value = true;
+}
+
+/** 各实体新增时的默认值填充 */
+function initEntityDefaults() {
+  if (props.entity === "doctor") form.departmentId = toNumber(departments.value[0]?.id);
+  if ("status" in form) form.status = firstDictValue("SYSTEM_STATUS", "ENABLED");
+  if (props.entity === "dict") form.dictType = firstDictValue("DICT_TYPE", "SYSTEM_STATUS");
+  if (props.entity === "knowledge" || props.entity === "prompt") form.departmentCode = departmentCodeOptions()[0]?.value ?? "GENERAL";
+  if (props.entity === "prompt") {
+    form.taskType = firstDictValue("PROMPT_TASK_TYPE", "MEDICAL_RECORD");
+    form.outputSchema = defaultPromptSchema(String(form.taskType));
+    form.version = "v1";
+    form.sampleInput = promptTaskConfig(String(form.taskType)).sample;
+  }
+}
+
+/** prompt 实体编辑器打开后，确保 sampleInput / outputSchema 有值 */
+function ensurePromptFields() {
+  if (props.entity !== "prompt") return;
+  if (!form.sampleInput) form.sampleInput = promptTaskConfig(String(form.taskType)).sample;
+  if (!form.outputSchema) form.outputSchema = defaultPromptSchema(String(form.taskType));
 }
 
 function requireFields() {
@@ -296,12 +317,7 @@ async function save() {
   error.value = "";
   notice.value = "";
   try {
-    if (props.entity === "department") await api.saveDepartment(auth.token(), form as never);
-    if (props.entity === "doctor") await api.saveDoctor(auth.token(), form as never);
-    if (props.entity === "drug") await api.saveDrug(auth.token(), form as never);
-    if (props.entity === "knowledge") await api.saveKnowledgeEntry(auth.token(), form as never);
-    if (props.entity === "prompt") await api.savePrompt(auth.token(), promptSaveBody());
-    if (props.entity === "dict") await api.saveDict(auth.token(), form as never);
+    await saveHandlers[props.entity]();
     editorOpen.value = false;
     notice.value = `${config.value.title}已保存。`;
     emit("refresh");

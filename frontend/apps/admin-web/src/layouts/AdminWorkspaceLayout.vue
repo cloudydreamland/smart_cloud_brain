@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, inject, onBeforeUnmount, onMounted, provide, ref } from "vue";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { statusText, useAdminWorkflowStore, useAuthStore } from "@smart-cloud-brain/shared-api";
 import { useRoute } from "vue-router";
-import { CollapsibleSidebar, TopBar } from "@smart-cloud-brain/shared-ui";
+import { CollapsibleSidebar, Toast, TopBar } from "@smart-cloud-brain/shared-ui";
 
 const route = useRoute();
 const auth = useAuthStore();
@@ -14,6 +14,9 @@ const { session, permissionError } = storeToRefs(auth);
 const { departments, doctors, triageDesk } = storeToRefs(workflow);
 const loading = ref(false);
 let unbind: (() => void) | null = null;
+
+const toastRef = ref<InstanceType<typeof Toast> | null>(null);
+provide("toast", toastRef);
 
 const highRisk = computed(() => triageDesk.value.filter((item) => ["MANUAL_REQUIRED", "HIGH"].includes(String(item.status))).length);
 const navGroups = computed(() => [
@@ -40,11 +43,13 @@ async function refresh() {
   loading.value = true;
   try {
     await workflow.refresh(auth.token());
+    toastRef.value?.success("数据已刷新", "所有模块数据已同步最新状态。");
+  } catch {
+    toastRef.value?.error("刷新失败", "请检查网络后重试。");
   } finally {
     loading.value = false;
   }
 }
-
 function logout() {
   auth.logout();
   router.push({ name: "admin-login" });
@@ -82,5 +87,6 @@ onBeforeUnmount(() => unbind?.());
       <div class="admin-notices"><div v-if="permissionError" class="notice error">{{ permissionError }}</div></div>
       <RouterView @refresh="refresh" />
     </div>
+    <Toast ref="toastRef" />
   </div>
 </template>

@@ -159,6 +159,54 @@ docker exec scb-auth-service env | grep JWT_SECRET
 
 **排查方法**：检查服务启动顺序和健康状态，`docker compose ps` 查看各服务状态。
 
+## 前端代码规范（Agent 必读）
+
+以下规则基于历史屎山代码审查总结，**违反任何一条都会被驳回**。
+
+### 组件体积
+
+- **单文件上限 400 行**（`<script>` + `<template>` + `<style>` 合计）。超过必须拆分。
+- 拆分方向：按功能拆子组件（`XxxEditor.vue`、`XxxList.vue`），或按逻辑抽 composable（`useXxx.ts`）。
+- 反面教材：`PatientSiteConfigPage.vue` 1705 行 / 75KB，一个文件塞了 3 种配置的全部 CRUD + 校验 + 6 种编辑弹窗。
+
+### 类型安全
+
+- **禁止用 `Record<string, unknown>` 做业务数据类型**。`DataRow` 仅用于后端返回值的临时兼容层。
+- 新增/修改 API 返回值时，优先使用 `types.ts` 里已定义的具体接口（`Department`、`Doctor`、`Registration` 等）。
+- 模板中访问字段：用 `item.fieldName` 而不是 `fieldText(item, "fieldName")`（后者仅在类型不确定时使用）。
+
+### API 层
+
+- **不要手动传 token**。`request()` 已通过 `setTokenProvider` 自动注入 token，新 API 函数签名不需要 `token` 参数。
+- 新增 API 函数放在对应的 namespace（`adminApi` / `doctorApi` / `patientApi`），不要堆到末尾的扁平 `api` re-export 对象里。
+
+### 状态映射
+
+- **状态码→中文标签**：使用 `shared-api/formatters.ts` 的 `statusText()`，不要在组件里重新维护映射表。
+- **状态码→CSS class**：管理端用 `statusClass()`，医生端用 `doctorPresentation.ts` 的 `statusTone()`（它返回细粒度的 `low`/`pending`/`active` 等 class）。
+- 新增状态值时，**同时更新** `statusText` 和对应的 tone 函数。
+
+### 控制流
+
+- **禁止散落的 `if (entity === "X")` 链**处理多实体逻辑。用 `Record<Entity, Handler>` map 查表。
+- 反面教材：`AdminCatalogPage` 原来 6 个 if 分支做 save，现在用 `saveHandlers[entity]()` 一行搞定。
+
+### CSS
+
+- **禁止内联 `style=""`**。所有样式写在 `<style>` 块或 CSS 文件里。
+- 颜色用 CSS 变量（`var(--primary)` 等），不要硬编码 hex 值。
+- 组件 scoped 样式的类名用 BEM 或语义前缀（`.consult-layout`、`.metric-card`），避免 `.title` `.content` 这种泛化命名。
+
+### 模板
+
+- 模板里的复杂逻辑（条件判断、数据转换、格式化）抽到 `<script setup>` 的 computed 或函数里，不要内联在 HTML 中。
+- `v-if` / `v-else-if` 链超过 3 个分支时，考虑拆成子组件或用 `<component :is>` 动态渲染。
+
+### Store
+
+- Pinia store 只管状态和数据获取，不管 UI 逻辑（格式化、DOM 操作）。
+- `refresh()` 方法里多个并行请求用 `Promise.all`，单个失败用 `.catch(fallback)` 隔离，不要让一个接口挂掉拖垮全部数据。
+
 ## AI 助手注意事项
 
 - shared-ui 组件依赖 Tailwind 类名，新增/修改组件时确保 Tailwind 可用

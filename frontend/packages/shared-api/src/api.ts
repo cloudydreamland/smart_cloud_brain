@@ -38,6 +38,14 @@ import {
 const API_BASE = normalizeBase(import.meta.env?.VITE_API_BASE ?? "/api");
 export const SESSION_EVENT = "smart-cloud-brain:unauthorized";
 
+/* ---------- Token Provider（自动注入，避免每个 API 函数手动传 token） ---------- */
+let _tokenProvider: () => string = () => "";
+
+/** 在应用入口调用一次，将 authStore.token() 注入为默认 token 来源 */
+export function setTokenProvider(provider: () => string) {
+  _tokenProvider = provider;
+}
+
 function normalizeBase(base: string) {
   const value = base.trim() || "/api";
   return value.endsWith("/") ? value.slice(0, -1) : value;
@@ -74,9 +82,10 @@ async function parsePayload<T>(response: Response): Promise<ApiResult<T>> {
 }
 
 export async function request<T>(path: string, options: RequestInit = {}, token = ""): Promise<T> {
+  const resolvedToken = token || _tokenProvider();
   const headers = new Headers(options.headers ?? {});
   if (!headers.has("Content-Type") && options.body !== undefined) headers.set("Content-Type", "application/json");
-  if (token) headers.set("Authorization", `Bearer ${token}`);
+  if (resolvedToken) headers.set("Authorization", `Bearer ${resolvedToken}`);
 
   let response: Response;
   try {

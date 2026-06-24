@@ -518,6 +518,141 @@
   border-top: 1px solid var(--line);
 }
 
+/* ===== Modal (plain CSS, no Tailwind) ===== */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 101;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.modal-backdrop-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.modal-dialog {
+  position: relative;
+  width: 100%;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: #fff;
+  box-shadow: 0 24px 70px rgba(15, 35, 42, 0.18);
+}
+
+.modal-dialog-sm { max-width: 400px; }
+.modal-dialog-md { max-width: 520px; }
+.modal-dialog-lg { max-width: 680px; }
+
+.modal-close-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.modal-close-btn:hover {
+  background: var(--surface-alt);
+  color: var(--ink);
+}
+
+.modal-close-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.modal-header {
+  padding: 24px 24px 16px;
+  border-bottom: 1px solid rgba(203, 217, 222, 0.7);
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.modal-description {
+  margin: 4px 0 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.modal-body {
+  padding: 20px 24px;
+}
+
+.modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid rgba(203, 217, 222, 0.7);
+  background: rgba(248, 250, 251, 0.4);
+}
+
+/* ===== Modal Transition Classes ===== */
+.modal-enter-active {
+  transition: opacity 0.2s ease-out;
+}
+.modal-enter-from {
+  opacity: 0;
+}
+.modal-enter-to {
+  opacity: 1;
+}
+.modal-leave-active {
+  transition: opacity 0.15s ease-in;
+}
+.modal-leave-from {
+  opacity: 1;
+}
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-dialog-enter-active {
+  transition: all 0.2s ease-out;
+}
+.modal-dialog-enter-from {
+  opacity: 0;
+  transform: scale(0.98) translateY(12px);
+}
+.modal-dialog-enter-to {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+.modal-dialog-leave-active {
+  transition: all 0.15s ease-in;
+}
+.modal-dialog-leave-from {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+.modal-dialog-leave-to {
+  opacity: 0;
+  transform: scale(0.98) translateY(12px);
+}
+
 /* ===== Metrics ===== */
 .metrics {
   display: grid;
