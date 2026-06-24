@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from "vue";
-import { Modal } from "@smart-cloud-brain/shared-ui";
 import {
   api,
   ApiError,
@@ -475,6 +474,8 @@ function closeEditor() {
 function applyEditor() {
   if (!editingTarget.value) return;
   writeEditingTarget(editingTarget.value, editingDraft.value);
+  status.value = "已更新当前草稿，发布前请保存草稿";
+  error.value = "";
   closeEditor();
 }
 
@@ -549,6 +550,8 @@ function routeLabel(routeName = "") {
 
 function toggleEnabled(item: { enabled?: boolean }) {
   item.enabled = item.enabled === false;
+  status.value = item.enabled === false ? "已切换为禁用，发布前请保存草稿" : "已切换为启用，发布前请保存草稿";
+  error.value = "";
   publishConfirmOpen.value = false;
 }
 
@@ -1433,8 +1436,15 @@ onMounted(loadAll);
       </div>
     </div>
 
-    <Modal :open="editorOpen" :title="editorTitle" :description="editorDescription" size="lg" @close="closeEditor">
-      <div v-if="editingTarget && editingDraft" class="patient-config-modal">
+    <div v-if="editorOpen" class="patient-config-modal-backdrop" @click.self="closeEditor">
+      <section class="patient-config-modal-card" role="dialog" aria-modal="true" :aria-label="editorTitle">
+        <button type="button" class="patient-config-modal-close" aria-label="关闭" @click="closeEditor">×</button>
+        <header class="patient-config-modal-head">
+          <h2>{{ editorTitle }}</h2>
+          <p>{{ editorDescription }}</p>
+        </header>
+
+        <div v-if="editingTarget && editingDraft" class="patient-config-modal">
         <template v-if="editingTarget.type === 'brand'">
           <div class="config-grid two">
             <label><span>brand.name</span><input v-model.trim="editingDraft.name" type="text"></label>
@@ -1616,14 +1626,12 @@ onMounted(loadAll);
             </div>
           </div>
         </template>
-      </div>
-
-      <template #footer>
+        </div>
         <div class="patient-config-modal-footer">
           <button type="button" class="topbar-refresh" @click="closeEditor">取消</button>
           <button type="button" class="quick-btn" @click="applyEditor">保存到草稿</button>
         </div>
-      </template>
-    </Modal>
+      </section>
+    </div>
   </section>
 </template>

@@ -522,6 +522,61 @@ button.status-pill:hover {
   gap: 14px;
 }
 
+.patient-config-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.52);
+}
+
+.patient-config-modal-card {
+  position: relative;
+  display: grid;
+  gap: 14px;
+  width: min(860px, 100%);
+  max-height: calc(100dvh - 48px);
+  overflow: auto;
+  padding: 22px;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.24);
+}
+
+.patient-config-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--muted);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.patient-config-modal-head {
+  padding-right: 36px;
+}
+
+.patient-config-modal-head h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 18px;
+}
+
+.patient-config-modal-head p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .patient-config-modal label {
   display: grid;
   gap: 6px;
