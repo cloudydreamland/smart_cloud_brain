@@ -1,10 +1,10 @@
 <template>
   <Teleport to="body">
     <Transition
-      enter-active-class="transition-opacity duration-200"
+      enter-active-class="transition-opacity duration-200 ease-out"
       enter-from-class="opacity-0"
       enter-to-class="opacity-100"
-      leave-active-class="transition-opacity duration-150"
+      leave-active-class="transition-opacity duration-150 ease-in"
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
@@ -14,24 +14,24 @@
       >
         <!-- Backdrop -->
         <div
-          class="absolute inset-0 bg-black/60 backdrop-blur-sm"
+          class="absolute inset-0 bg-slate-950/55 backdrop-blur-md"
           @click="close"
         />
 
         <!-- Dialog -->
         <Transition
           enter-active-class="transition-all duration-200 ease-out"
-          enter-from-class="opacity-0 scale-95 translate-y-2"
+          enter-from-class="opacity-0 scale-[0.98] translate-y-3"
           enter-to-class="opacity-100 scale-100 translate-y-0"
           leave-active-class="transition-all duration-150 ease-in"
           leave-from-class="opacity-100 scale-100 translate-y-0"
-          leave-to-class="opacity-0 scale-95 translate-y-2"
+          leave-to-class="opacity-0 scale-[0.98] translate-y-3"
           appear
         >
           <div
             v-if="open"
             :class="[
-              'relative w-full bg-white rounded-2xl shadow-xl',
+              'relative w-full overflow-hidden rounded-[22px] border border-white/60 bg-white shadow-[0_24px_70px_rgba(15,35,42,0.18)]',
               'max-h-[calc(100vh-2rem)] overflow-y-auto',
               sizeClasses,
             ]"
@@ -41,7 +41,7 @@
           >
             <!-- Close button -->
             <button
-              class="absolute top-3 right-3 flex items-center justify-center h-7 w-7 rounded-lg text-[var(--muted)] hover:bg-[var(--surface-alt)] transition-colors z-10"
+              class="absolute top-3 right-3 z-10 flex h-7 w-7 items-center justify-center rounded-lg text-[var(--muted)] transition-colors hover:bg-[var(--surface-alt)] hover:text-[var(--ink)]"
               @click="close"
             >
               <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -50,7 +50,7 @@
             </button>
 
             <!-- Header -->
-            <div v-if="title || $slots.header" class="px-6 pt-6 pb-4">
+            <div v-if="title || $slots.header" class="border-b border-[var(--line)]/70 px-6 pb-4 pt-6">
               <slot name="header">
                 <h2 id="modal-title" class="text-lg font-semibold text-[var(--ink)]">{{ title }}</h2>
                 <p v-if="description" class="text-sm text-[var(--muted)] mt-1">{{ description }}</p>
@@ -58,12 +58,12 @@
             </div>
 
             <!-- Body -->
-            <div class="px-6 pb-4">
+            <div class="px-6 py-5">
               <slot />
             </div>
 
             <!-- Footer -->
-            <div v-if="$slots.footer" class="px-6 pb-6 pt-2">
+            <div v-if="$slots.footer" class="border-t border-[var(--line)]/70 bg-[var(--surface-alt)]/40 px-6 py-4">
               <slot name="footer" />
             </div>
           </div>

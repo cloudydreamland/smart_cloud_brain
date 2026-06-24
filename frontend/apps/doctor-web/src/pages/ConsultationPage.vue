@@ -13,6 +13,7 @@ import {
   type DataRow,
   type DrugItem,
 } from "@smart-cloud-brain/shared-api";
+import { Toast } from "@smart-cloud-brain/shared-ui";
 import PatientContextDrawer from "../components/PatientContextDrawer.vue";
 import AiRecordPreviewModal from "../components/AiRecordPreviewModal.vue";
 import SaveRecordConfirmModal from "../components/SaveRecordConfirmModal.vue";
@@ -26,6 +27,12 @@ import {
   statusLabel,
   statusTone,
 } from "../doctorPresentation";
+
+type ToastHandle = {
+  success: (title: string, message?: string) => number;
+  error: (title: string, message?: string) => number;
+  info: (title: string, message?: string) => number;
+};
 
 const props = defineProps<{ registrationId: string }>();
 const emit = defineEmits<{ refresh: [] }>();
@@ -45,6 +52,7 @@ const saveConfirmOpen = ref(false);
 const riskOpen = ref(false);
 const highRiskOpen = ref(false);
 const completeOpen = ref(false);
+const toastRef = ref<ToastHandle | null>(null);
 const dialogueText = ref("患者诉咳嗽、咽痛、发热 3 天，最高体温 38.4°C。夜间咳嗽加重，少量黄痰。既往青霉素过敏。查体咽部充血，双肺呼吸音粗，未闻及明显湿啰音。");
 const checkResult = ref<DataRow | null>(null);
 const recordAiProvider = ref("Dify");
@@ -53,6 +61,7 @@ let recordStream: AbortController | null = null;
 
 const registration = computed(() => displayRegistrations.value.find((item) => toNumber(item.registrationId) === toNumber(props.registrationId)) ?? displayRegistrations.value[0] ?? null);
 const triage = computed(() => displayTriage.value.find((item) => toNumber(item.triageRecordId) === toNumber(registration.value?.triageRecordId)) ?? displayTriage.value[0] ?? null);
+const triageRisk = computed(() => fieldText(triage.value, "riskLevel", fieldText(registration.value, "riskLevel", "MEDIUM")));
 const isCompleted = computed(() => fieldText(registration.value, "status", "").toUpperCase() === "COMPLETED");
 const medicalForm = reactive({
   registrationId: toNumber(props.registrationId),
@@ -84,11 +93,17 @@ function applyRegistration() {
 function setError(message: string) {
   error.value = message;
   notice.value = "";
+  toastRef.value?.error("操作失败", message);
 }
 
-function setNotice(message: string) {
+function setNotice(message: string, variant: "success" | "info" = "success") {
   notice.value = message;
   error.value = "";
+  if (variant === "info") {
+    toastRef.value?.info("提示", message);
+  } else {
+    toastRef.value?.success("操作完成", message);
+  }
 }
 
 function applyDraft(draft: DataRow) {
@@ -178,7 +193,7 @@ async function generateRecord() {
     streamText.value = formatAiDraft();
     streamStatus.value = "DRAFT_READY";
     previewOpen.value = true;
-    setNotice(`${formatApiError(err, "病历生成服务不可用")}；已保留本地空白草稿，请确认后再保存。`);
+    setNotice(`${formatApiError(err, "病历生成服务不可用")}；已保留本地空白草稿，请确认后再保存。`, "info");
   } finally {
     loading.record = false;
     recordStream = null;
@@ -285,8 +300,18 @@ watch(() => props.registrationId, applyRegistration, { immediate: true });
   <section class="clinical-page consultation-workbench">
     <header class="patient-context">
       <div class="patient-main">
-        <span>当前患者</span>
-        <strong>{{ registration ? patientName(registration) : "未选择" }}</strong>
+        <span class="eyebrow">当前患者</span>
+        <div class="patient-title">
+          <strong>{{ registration ? patientName(registration) : "未选择" }}</strong>
+          <span class="tag" :class="statusTone(registration?.status)">{{ statusLabel(registration?.status, "接诊中") }}</span>
+          <span class="tag" :class="statusTone(triageRisk)">{{ statusLabel(triageRisk, "中风险") }}</span>
+        </div>
+        <p>
+          患者 ID #{{ fieldText(registration, "patientId") || "-" }} ·
+          挂号 #{{ fieldText(registration, "registrationId", registrationId) }} ·
+          {{ fieldText(registration, "departmentName", "未分配科室") }} ·
+          {{ fieldText(registration, "appointmentTime", "待确认预约") }}
+        </p>
       </div>
       <div class="patient-grid">
         <div><b>患者 ID</b><span>{{ fieldText(registration, "patientId") }}</span></div>
@@ -301,35 +326,59 @@ watch(() => props.registrationId, applyRegistration, { immediate: true });
       </div>
     </header>
 
-    <div v-if="error" class="notice danger">{{ error }}</div>
-    <div v-if="notice" class="notice success">{{ notice }}</div>
+    <div v-if="error" class="notice-stack danger">
+      <div><strong>操作失败：</strong>{{ error }}</div>
+      <span>请根据提示复核后重试</span>
+    </div>
+    <div v-else-if="notice" class="notice-stack success">
+      <div><strong>状态更新：</strong>{{ notice }}</div>
+      <span>{{ statusLabel(streamStatus) }} · {{ recordAiProvider }} · {{ recordAiModel }}</span>
+    </div>
 
     <div class="consult-layout">
       <!-- Left: Triage + Prescription -->
       <div class="left-column">
-        <aside class="panel">
-          <header>
-            <div class="panel-title"><h3>患者分诊</h3></div>
+        <aside class="panel triage-card">
+          <header class="panel-header">
+            <div class="panel-title">
+              <h3>患者分诊</h3>
+              <p>接诊侧栏摘要，详情仍由患者上下文抽屉承载。</p>
+            </div>
             <button type="button" @click="contextOpen = true">详情</button>
           </header>
-          <div class="dl-grid">
-            <div><b>年龄</b><span>37 岁</span></div>
-            <div><b>性别</b><span>女</span></div>
-            <div><b>体温</b><span>38.1°C</span></div>
-            <div><b>分诊等级</b><span><span class="tag" :class="statusTone(triage?.status)">{{ statusLabel(triage?.status, "中风险") }}</span></span></div>
-            <div class="span"><b>主诉</b><span>{{ fieldText(triage, "chiefComplaint", medicalForm.chiefComplaint) }}</span></div>
-            <div class="span"><b>既往史</b><span>{{ fieldText(triage, "pastHistory", medicalForm.pastHistory) }}</span></div>
+          <div class="panel-body">
+            <div class="triage-level">
+              <div>
+                <strong>AI 分诊建议：{{ statusLabel(triageRisk, "中风险") }}</strong>
+                <span>{{ fieldText(triage, "reason", "发热 3 天伴咽痛、黄痰，需复核过敏史并避免青霉素类用药。") }}</span>
+              </div>
+              <span class="tag" :class="statusTone(triageRisk)">需复核</span>
+            </div>
+            <div class="vitals">
+              <div class="vital"><b>年龄</b><strong>37 岁</strong></div>
+              <div class="vital"><b>性别</b><strong>女</strong></div>
+              <div class="vital"><b>体温</b><strong>38.1°C</strong></div>
+            </div>
+            <div class="dl-grid">
+              <div><b>分诊等级</b><span><span class="tag" :class="statusTone(triageRisk)">{{ statusLabel(triageRisk, "中风险") }}</span></span></div>
+              <div><b>到诊状态</b><span><span class="tag" :class="statusTone(registration?.status)">{{ statusLabel(registration?.status, "接诊中") }}</span></span></div>
+              <div class="span"><b>主诉</b><span>{{ fieldText(triage, "chiefComplaint", medicalForm.chiefComplaint) }}</span></div>
+              <div class="span"><b>既往史</b><span>{{ fieldText(triage, "pastHistory", medicalForm.pastHistory) }}</span></div>
+            </div>
           </div>
         </aside>
 
         <aside class="panel">
-          <header>
-            <div class="panel-title"><h3>处方与风险</h3></div>
+          <header class="panel-header">
+            <div class="panel-title">
+              <h3>处方与风险</h3>
+              <p>结合过敏史、诊断、剂量和相互作用进行风险提示。</p>
+            </div>
             <span class="tag" :class="statusTone(prescription.riskLevel)">{{ statusLabel(prescription.riskLevel) }}</span>
           </header>
           <div class="table-wrap">
             <table class="order-table">
-              <thead><tr><th>药品</th><th>剂量</th><th>频次</th><th>用法</th><th></th></tr></thead>
+              <thead><tr><th class="drug-name">药品</th><th>剂量</th><th>频次</th><th>用法</th><th></th></tr></thead>
               <tbody>
                 <tr v-for="(drug, index) in prescription.drugs" :key="index">
                   <td><input v-model.trim="drug.drugName" list="drug-options" /></td>
@@ -345,7 +394,8 @@ watch(() => props.registrationId, applyRegistration, { immediate: true });
             <option v-for="drug in displayDrugs" :key="String(drug.id)" :value="String(drug.name)" />
           </datalist>
           <div class="risk-note">
-            {{ checkResult ? fieldText(checkResult, "suggestions", "请医生复核用药风险。") : "待审方：系统将结合过敏史、诊断、剂量和相互作用进行风险提示。" }}
+            <strong>{{ checkResult ? "风险审核结果" : "待审方" }}</strong>
+            <span>{{ checkResult ? fieldText(checkResult, "suggestions", "请医生复核用药风险。") : "系统将结合过敏史、诊断、剂量和相互作用进行风险提示。" }}</span>
           </div>
           <footer class="footer-actions">
             <button type="button" @click="addDrug">新增药品</button>
@@ -356,19 +406,37 @@ watch(() => props.registrationId, applyRegistration, { immediate: true });
       </div>
 
       <!-- Right: Medical Record Editor -->
-      <main class="panel">
-        <header>
-          <div class="panel-title"><h3>病历工作区</h3></div>
-          <span class="tag info">{{ statusLabel(streamStatus) }} · {{ recordAiProvider }} · {{ recordAiModel }}</span>
+      <main class="panel record-panel">
+        <header class="panel-header">
+          <div class="panel-title">
+            <h3>病历工作区</h3>
+            <p>问诊文本、AI 草稿和结构化病历在同一工作区内闭环。</p>
+          </div>
+          <div class="record-status">
+            <span class="tag info">{{ statusLabel(streamStatus) }}</span>
+            <span>{{ recordAiProvider }} · {{ recordAiModel }}</span>
+          </div>
         </header>
         <div class="editor-grid">
           <label class="field full">
-            <span>问诊文本</span>
-            <textarea v-model.trim="dialogueText" class="consultation-textarea" rows="4" />
+            <span>问诊文本 <small>AI 生成病历前的核心输入</small></span>
+            <div class="prompt-box">
+              <textarea v-model.trim="dialogueText" class="consultation-textarea" rows="4" />
+              <div class="prompt-actions">
+                <span class="prompt-chip">青霉素过敏</span>
+                <span class="prompt-chip">发热</span>
+                <span class="prompt-chip">黄痰</span>
+                <span class="spacer"></span>
+                <button class="primary" type="button" :disabled="loading.record" @click="generateRecord">{{ loading.record ? "生成中" : "生成病历" }}</button>
+              </div>
+            </div>
           </label>
           <div class="ai-pane full">
             <div class="inline-toolbar">
               <strong>智能病历草稿</strong>
+              <span class="tag info">SOAP</span>
+              <span v-if="streamText" class="tag success">可保存</span>
+              <span class="spacer"></span>
               <button type="button" :disabled="!streamText" @click="previewOpen = true">预览</button>
             </div>
             <pre class="ai-draft">{{ streamText || "尚未生成。点击\"生成病历\"后展示结构化 SOAP 草稿。" }}</pre>
@@ -393,5 +461,6 @@ watch(() => props.registrationId, applyRegistration, { immediate: true });
     <PrescriptionRiskModal :open="riskOpen" :result="checkResult" @close="riskOpen = false" @confirm="createPrescription" />
     <HighRiskConfirmModal :open="highRiskOpen" :busy="loading.prescription" @close="highRiskOpen = false" @confirm="createPrescription" />
     <CompleteRegistrationConfirmModal :open="completeOpen" :busy="loading.complete" @close="completeOpen = false" @confirm="completeRegistration" />
+    <Toast ref="toastRef" />
   </section>
 </template>

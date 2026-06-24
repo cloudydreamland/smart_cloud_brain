@@ -33,36 +33,8 @@ const workloadBars = computed(() => [
 
 <template>
   <section class="dashboard-v2">
-    <!-- Flow Steps -->
-    <div class="flow-strip">
-      <div class="flow-step done">
-        <div class="step-num">01</div>
-        <div class="step-label">登录</div>
-      </div>
-      <div class="flow-step done">
-        <div class="step-num">02</div>
-        <div class="step-label">查看首页</div>
-      </div>
-      <div class="flow-step active">
-        <div class="step-num">03</div>
-        <div class="step-label">筛选队列</div>
-      </div>
-      <div class="flow-step">
-        <div class="step-num">04</div>
-        <div class="step-label">接诊病历</div>
-      </div>
-      <div class="flow-step">
-        <div class="step-num">05</div>
-        <div class="step-label">处方审核</div>
-      </div>
-      <div class="flow-step">
-        <div class="step-num">06</div>
-        <div class="step-label">通知闭环</div>
-      </div>
-    </div>
-
-    <!-- Metrics -->
     <div class="metrics">
+
       <div class="metric-card">
         <div class="metric-card-head">
           <div class="metric-icon" style="background: #e0f2f1; color: #0b5f78;">
@@ -72,6 +44,7 @@ const workloadBars = computed(() => [
         </div>
         <div class="metric-value teal">{{ activeRegistrations.length }}</div>
       </div>
+
       <div class="metric-card">
         <div class="metric-card-head">
           <div class="metric-icon" style="background: #ecfdf5; color: #16a34a;">
@@ -82,6 +55,7 @@ const workloadBars = computed(() => [
         <div class="metric-value green">{{ completed }} / {{ queueTotal }}</div>
         <div class="metric-sub">完成率 {{ completionRate }}%</div>
       </div>
+
       <div class="metric-card">
         <div class="metric-card-head">
           <div class="metric-icon" style="background: #eff6ff; color: #2563eb;">
@@ -91,6 +65,7 @@ const workloadBars = computed(() => [
         </div>
         <div class="metric-value blue">{{ displayRecords.filter((item) => item.aiGenerated).length }}</div>
       </div>
+
       <div class="metric-card">
         <div class="metric-card-head">
           <div class="metric-icon" style="background: #fef2f2; color: #dc2626;">

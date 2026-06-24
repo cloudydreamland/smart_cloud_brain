@@ -99,7 +99,10 @@ function isActive(to: string) {
       <div class="c-sidebar-footer">
         <div class="c-ghost-btn">
           <span class="c-avatar">{{ userName?.charAt(0) || '?' }}</span>
-          <span class="c-label">{{ userName }}</span>
+          <span class="c-user-copy">
+            <span class="c-label">{{ userName }}</span>
+            <span class="c-user-meta">{{ userMeta }}</span>
+          </span>
           <span class="c-chevron">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="m7 9 5-5 5 5M7 15l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </span>
@@ -115,15 +118,17 @@ function isActive(to: string) {
   inset: 0 auto 0 0;
   z-index: 100;
   width: 56px;
-  background: var(--surface, #fff);
-  border-right: 1px solid var(--line, #e5e7eb);
-  box-shadow: 1px 0 8px rgba(15, 23, 42, 0.04);
-  transition: width 220ms ease;
+  background: rgba(255, 255, 255, 0.88);
+  border-right: 1px solid color-mix(in srgb, var(--line, #e5e7eb) 86%, transparent);
+  box-shadow: 1px 0 16px rgba(15, 35, 42, 0.05);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  transition: width 220ms cubic-bezier(.2, .8, .2, 1);
   overflow: hidden;
 }
 
 .c-sidebar.open {
-  width: 220px;
+  width: 236px;
 }
 
 .c-sidebar-inner {
@@ -131,15 +136,16 @@ function isActive(to: string) {
   display: flex;
   flex-direction: column;
   color: var(--muted, #71717a);
+  padding: 10px 8px;
 }
 
 /* ── Org bar ── */
 .c-org-bar {
-  height: 54px;
+  min-height: 40px;
   display: flex;
   align-items: center;
-  border-bottom: 1px solid var(--line, #e5e7eb);
-  padding: 8px;
+  padding: 0;
+  margin-bottom: 12px;
   flex-shrink: 0;
 }
 
@@ -147,36 +153,38 @@ function isActive(to: string) {
 .c-ghost-btn {
   position: relative;
   width: 100%;
-  height: 36px;
+  min-height: 40px;
   border: 0;
-  border-radius: 8px;
+  border-radius: 14px;
   background: transparent;
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 0 8px;
+  padding: 0 9px;
   cursor: pointer;
   text-align: left;
-  transition: background 160ms ease, color 160ms ease;
+  transition: background 160ms ease, color 160ms ease, transform 160ms ease;
 }
 
 .c-ghost-btn:hover {
   background: var(--surface-2, #f3f5f8);
   color: var(--ink, #171717);
+  transform: translateX(1px);
 }
 
 /* ── Mark (icon circle) ── */
 .c-mark {
-  width: 20px;
-  height: 20px;
-  border-radius: 6px;
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
   display: grid;
   place-items: center;
-  flex: 0 0 20px;
-  font-size: 11px;
-  font-weight: 800;
-  background: var(--primary, #007a7a);
+  flex: 0 0 24px;
+  font-size: 12px;
+  font-weight: 900;
+  background: linear-gradient(145deg, var(--primary, #007a7a), color-mix(in srgb, var(--primary, #007a7a) 78%, white));
   color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 8px 18px color-mix(in srgb, var(--primary, #007a7a) 22%, transparent);
 }
 
 /* ── Label (hidden when collapsed) ── */
@@ -210,14 +218,14 @@ function isActive(to: string) {
 .c-nav-wrap {
   flex: 1;
   overflow: auto;
-  padding: 8px;
+  padding: 0;
 }
 
 .c-nav-group {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 4px 0;
+  gap: 4px;
+  padding: 6px 0;
 }
 
 .c-group-label {
@@ -240,16 +248,16 @@ function isActive(to: string) {
 
 .c-divider {
   height: 1px;
-  background: var(--line, #e5e7eb);
+  background: color-mix(in srgb, var(--line, #e5e7eb) 75%, transparent);
   margin: 6px 0;
 }
 
 /* ── Nav item ── */
 .c-nav-item {
   width: 100%;
-  height: 36px;
-  border-radius: 8px;
-  padding: 0 8px;
+  height: 38px;
+  border-radius: 12px;
+  padding: 0 9px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -281,20 +289,21 @@ function isActive(to: string) {
 }
 
 .c-nav-item.active {
-  background: var(--primary-soft, #eff6ff);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primary, #2563eb) 12%, transparent), color-mix(in srgb, var(--primary, #2563eb) 6%, transparent));
   color: var(--primary, #2563eb);
-  font-weight: 600;
+  font-weight: 800;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary, #2563eb) 12%, transparent);
 }
 
 /* ── Badge ── */
 .c-badge {
   margin-left: auto;
-  padding: 1px 6px;
+  padding: 2px 7px;
   border-radius: 999px;
   background: var(--primary-soft, #dbeafe);
   color: var(--primary, #2563eb);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 900;
   opacity: 0;
   transition: opacity 160ms ease;
 }
@@ -306,23 +315,44 @@ function isActive(to: string) {
 /* ── Footer ── */
 .c-sidebar-footer {
   flex-shrink: 0;
-  padding: 8px;
-  border-top: 1px solid var(--line, #e5e7eb);
+  padding-top: 10px;
+  border-top: 1px solid color-mix(in srgb, var(--line, #e5e7eb) 75%, transparent);
   display: grid;
   gap: 2px;
-  background: rgba(255, 255, 255, 0.92);
+  background: transparent;
 }
 
 .c-avatar {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   display: grid;
   place-items: center;
-  flex: 0 0 20px;
-  font-size: 10px;
-  font-weight: 800;
+  flex: 0 0 24px;
+  font-size: 12px;
+  font-weight: 900;
   background: var(--surface-2, #f3f5f8);
-  color: #334155;
+  color: var(--primary, #334155);
+}
+
+.c-user-copy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.c-user-meta {
+  opacity: 0;
+  transform: translateX(-8px);
+  color: var(--muted, #71717a);
+  font-size: 11px;
+  line-height: 1.1;
+  white-space: nowrap;
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.c-sidebar.open .c-user-meta {
+  opacity: 1;
+  transform: translateX(0);
 }
 </style>

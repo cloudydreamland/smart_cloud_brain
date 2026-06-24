@@ -1,10 +1,13 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import { Drawer } from "@smart-cloud-brain/shared-ui";
 import { fieldText, type DataRow } from "@smart-cloud-brain/shared-api";
 import { patientName, statusLabel, statusTone } from "../doctorPresentation";
 
-defineProps<{ open: boolean; registration: DataRow | null; triage: DataRow | null }>();
+const props = defineProps<{ open: boolean; registration: DataRow | null; triage: DataRow | null }>();
 defineEmits<{ close: [] }>();
+
+const triageRisk = computed(() => fieldText(props.triage, "riskLevel", fieldText(props.registration, "riskLevel", "MEDIUM")));
 </script>
 
 <template>
@@ -27,7 +30,7 @@ defineEmits<{ close: [] }>();
       <section class="panel">
         <header>
           <div class="panel-title"><h3>分诊记录</h3></div>
-          <span class="tag" :class="statusTone(triage?.status)">{{ statusLabel(triage?.status, "中风险") }}</span>
+          <span class="tag" :class="statusTone(triageRisk)">{{ statusLabel(triageRisk, "中风险") }}</span>
         </header>
         <div class="panel-body stack">
           <div class="notice">
