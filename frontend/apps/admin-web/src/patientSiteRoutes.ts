@@ -1,3 +1,5 @@
+export { isAllowedPatientRoute, patientRouteWhitelist } from "@smart-cloud-brain/shared-api";
+
 export const patientRouteOptions = [
   { name: "patient-home", label: "患者端首页" },
   { name: "patient-dashboard", label: "患者服务首页" },
@@ -38,9 +40,3 @@ export const patientRouteOptions = [
   { name: "about-careers", label: "招聘信息" },
   { name: "about-contact", label: "联系我们" },
 ] as const;
-
-export const patientRouteWhitelist = new Set(patientRouteOptions.map((route) => route.name));
-
-export function isAllowedPatientRoute(routeName = "") {
-  return patientRouteWhitelist.has(routeName);
-}
