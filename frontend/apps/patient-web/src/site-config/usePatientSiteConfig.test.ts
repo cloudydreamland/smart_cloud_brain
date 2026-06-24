@@ -133,6 +133,35 @@ describe("normalizeConfig", () => {
     expect(stored.menus.find((menu) => menu.key === "care")?.enabled).toBe(false);
   });
 
+  it("removes every disabled default nav entry without index drift", () => {
+    const rendered = normalizeConfig({
+      nav: {
+        menus: [
+          { key: "care", enabled: false },
+          { key: "patient", enabled: false },
+          {
+            key: "home",
+            links: [
+              { label: "Online booking", routeName: "patient-doctors", enabled: false },
+              { label: "Find doctors", routeName: "public-search", query: { q: "医生" }, enabled: false },
+            ],
+          },
+        ],
+        userLinks: [
+          { label: "Dashboard", routeName: "patient-dashboard", enabled: false },
+          { label: "Appointments", routeName: "patient-appointments", enabled: false },
+        ],
+      },
+    });
+
+    expect(rendered.nav.menus.some((menu) => menu.key === "care")).toBe(false);
+    expect(rendered.nav.menus.some((menu) => menu.key === "patient")).toBe(false);
+    expect(rendered.nav.menus.some((menu) => menu.key === "doctors")).toBe(true);
+    expect(rendered.nav.menus.find((menu) => menu.key === "home")?.links?.some((link) => link.routeName === "patient-doctors")).toBe(false);
+    expect(rendered.nav.userLinks.some((link) => link.routeName === "patient-dashboard")).toBe(false);
+    expect(rendered.nav.userLinks.some((link) => link.routeName === "patient-appointments")).toBe(false);
+  });
+
   it("uses the same full templates as the patient default pages", () => {
     expect(patientSiteConfigTemplates.patient_nav.menus).toEqual(defaultPatientSiteConfig.nav.menus);
     expect(patientSiteConfigTemplates.patient_home.modules).toEqual(defaultPatientSiteConfig.home.modules);

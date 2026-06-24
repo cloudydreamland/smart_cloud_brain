@@ -3,7 +3,7 @@ import { computed, onMounted, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "@smart-cloud-brain/shared-api";
-import { usePatientSiteConfig } from "../site-config/usePatientSiteConfig";
+import { startPatientSiteConfigAutoRefresh, usePatientSiteConfig } from "../site-config/usePatientSiteConfig";
 import type { PatientNavMenu, RouteTargetConfig } from "../site-config/types";
 
 const auth = useAuthStore();
@@ -16,17 +16,37 @@ const userOpen = ref(false);
 const { config, load } = usePatientSiteConfig();
 
 auth.load("patient-session", "PATIENT");
-onMounted(load);
+onMounted(() => {
+  void load();
+  startPatientSiteConfigAutoRefresh();
+});
 
 const isSignedIn = computed(() => Boolean(session.value && !auth.permissionError));
 const userName = computed(() => session.value?.name || "患者");
 const nav = computed(() => config.value.nav);
-const navMenus = computed(() => nav.value.menus);
-const userLinks = computed(() => nav.value.userLinks);
+const navMenus = computed<PatientNavMenu[]>(() =>
+  nav.value.menus
+    .filter((menu) => menu.enabled !== false)
+    .map((menu) => {
+      const links = visibleLinks(menu.links);
+      const feature = isVisibleLink(menu.feature) ? menu.feature : undefined;
+      return { ...menu, links, feature };
+    })
+    .filter((menu) => Boolean(menu.label && ((menu.links || []).length || menu.feature))),
+);
+const userLinks = computed(() => visibleLinks(nav.value.userLinks));
 const brandRoute = computed(() => ({ name: nav.value.brand.homeRoute || "patient-home" }));
 
 function toRoute(link: RouteTargetConfig) {
   return link.query ? { name: link.routeName, query: link.query } : { name: link.routeName };
+}
+
+function isVisibleLink(link: RouteTargetConfig | undefined): link is RouteTargetConfig {
+  return Boolean(link && link.enabled !== false && link.label && link.routeName);
+}
+
+function visibleLinks(links: RouteTargetConfig[] | undefined) {
+  return (links || []).filter(isVisibleLink);
 }
 
 function showMenu(key: string) {
@@ -104,7 +124,6 @@ async function logout() {
       </nav>
 
       <div class="site-actions">
-        <RouterLink class="site-appointment-link" :to="{ name: 'patient-doctors' }" @click="closeMenus">预约就诊</RouterLink>
         <template v-if="!isSignedIn">
           <RouterLink class="site-login-link" :to="{ name: 'patient-login' }" @click="closeMenus">登录/注册</RouterLink>
         </template>

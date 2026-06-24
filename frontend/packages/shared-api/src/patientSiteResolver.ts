@@ -227,12 +227,13 @@ function mergeArray<T>(
       const key = identity(item);
       const match = key ? byKey.get(key) : undefined;
       const normalized = normalize(item, match?.item, match?.index ?? fallbackItems.length + sourceIndex);
+      const currentIndex = key ? merged.findIndex((entry) => identity(entry) === key) : -1;
       if (!normalized) {
-        if (match) merged.splice(match.index, 1, normalized as never);
+        if (currentIndex >= 0) merged.splice(currentIndex, 1);
         return;
       }
-      if (match) {
-        merged[match.index] = normalized;
+      if (currentIndex >= 0) {
+        merged[currentIndex] = normalized;
       } else {
         merged.push(normalized);
       }
