@@ -104,7 +104,7 @@ refresh();
               </tr>
             </tbody>
           </table>
-          <PaginationBar v-model="currentPage" :total="total" :page-size="pageSize" />
+          <PaginationBar v-model="currentPage" :total="total" :page-size="pageSize" centered />
         </div>
       </div>
     </section>
