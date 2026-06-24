@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { reactive, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { aiSourceLabel, aiSourceTone, api, fieldText, formatApiError, toNumber, useAdminWorkflowStore, useAuthStore, usePagination, type DataRow, type ScheduleSaveRequest } from "@smart-cloud-brain/shared-api";
+import { aiSourceLabel, aiSourceTone, api, displayText, formatApiError, toNumber, useAdminWorkflowStore, useAuthStore, usePagination, type Schedule, type ScheduleSaveRequest } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, FormField, LoadingState, Modal, PaginationBar, StatusTag } from "@smart-cloud-brain/shared-ui";
 
 const emit = defineEmits<{ refresh: [] }>();
@@ -28,7 +28,7 @@ async function loadSchedules() {
       departmentId: filter.departmentId || undefined,
       doctorId: filter.doctorId || undefined,
       status: filter.status,
-    });
+    }) as Schedule[];
   } catch (err) {
     error.value = formatApiError(err, "Schedule list failed");
   } finally {
@@ -41,7 +41,7 @@ async function generate() {
   error.value = "";
   notice.value = "";
   try {
-    suggestions.value = await api.generateSchedule(auth.token(), { ...generateForm });
+    suggestions.value = await api.generateSchedule(auth.token(), { ...generateForm }) as typeof suggestions.value;
     notice.value = `Generated ${suggestions.value.length} AI suggestions`;
   } catch (err) {
     error.value = formatApiError(err, "Schedule generation failed");
@@ -67,14 +67,14 @@ async function publish() {
   }
 }
 
-function openEditor(item?: DataRow) {
+function openEditor(item?: Schedule) {
   form.id = item ? toNumber(item.id, undefined) : undefined;
   form.doctorId = toNumber(item?.doctorId, toNumber(doctors.value[0]?.id));
   form.departmentId = toNumber(item?.departmentId, toNumber(doctors.value.find((doctor) => toNumber(doctor.id) === form.doctorId)?.departmentId, toNumber(departments.value[0]?.id)));
-  form.workDate = fieldText(item, "workDate", new Date(Date.now() + 86400000).toISOString().slice(0, 10));
-  form.timeRange = fieldText(item, "timeRange", "09:00-12:00");
+  form.workDate = displayText(item?.workDate, new Date(Date.now() + 86400000).toISOString().slice(0, 10));
+  form.timeRange = displayText(item?.timeRange, "09:00-12:00");
   form.capacity = toNumber(item?.capacity, 20);
-  form.status = fieldText(item, "status", "PUBLISHED");
+  form.status = displayText(item?.status, "PUBLISHED");
   editorOpen.value = true;
 }
 
@@ -98,7 +98,7 @@ async function saveSchedule() {
   }
 }
 
-async function cancelSchedule(item: DataRow) {
+async function cancelSchedule(item: Schedule) {
   loading.value = true;
   error.value = "";
   try {
@@ -128,8 +128,8 @@ loadSchedules();
         <div class="admin-filter-row">
           <input v-model="filter.startDate" type="date" />
           <input v-model="filter.endDate" type="date" />
-          <select v-model.number="filter.departmentId"><option :value="0">全部科室</option><option v-for="department in departments" :key="String(department.id)" :value="toNumber(department.id)">{{ fieldText(department, "name") }}</option></select>
-          <select v-model.number="filter.doctorId"><option :value="0">全部医生</option><option v-for="doctor in doctors" :key="String(doctor.id)" :value="toNumber(doctor.id)">{{ fieldText(doctor, "name") }}</option></select>
+          <select v-model.number="filter.departmentId"><option :value="0">全部科室</option><option v-for="department in departments" :key="String(department.id)" :value="toNumber(department.id)">{{ displayText(department.name) }}</option></select>
+          <select v-model.number="filter.doctorId"><option :value="0">全部医生</option><option v-for="doctor in doctors" :key="String(doctor.id)" :value="toNumber(doctor.id)">{{ displayText(doctor.name) }}</option></select>
           <select v-model="filter.status"><option value="">全部状态</option><option value="PUBLISHED">Published</option><option value="CANCELLED">Cancelled</option></select>
           <button type="button" :disabled="loading" @click="loadSchedules">搜索</button>
         </div>
@@ -139,14 +139,14 @@ loadSchedules();
             <thead><tr><th>Date</th><th>Time</th><th>Doctor</th><th>Department</th><th>Capacity</th><th>Booked</th><th>Status</th><th class="actions-cell">Actions</th></tr></thead>
             <tbody>
               <tr v-for="item in pagedSchedules" :key="String(item.id)">
-                <td>{{ fieldText(item, "workDate") }}</td>
-                <td>{{ fieldText(item, "timeRange") }}</td>
-                <td>{{ fieldText(item, "doctorName") }}</td>
-                <td>{{ fieldText(item, "departmentName") }}</td>
-                <td>{{ fieldText(item, "capacity") }}</td>
-                <td>{{ fieldText(item, "booked", "0") }}</td>
-                <td><StatusTag :status="fieldText(item, 'status')" /></td>
-                <td class="toolbar"><button type="button" @click="openEditor(item)">编辑</button><button class="danger" type="button" :disabled="fieldText(item, 'status') === 'CANCELLED'" @click="cancelSchedule(item)">取消排班</button></td>
+                <td>{{ displayText(item.workDate) }}</td>
+                <td>{{ displayText(item.timeRange) }}</td>
+                <td>{{ displayText(item.doctorName) }}</td>
+                <td>{{ displayText(item.departmentName) }}</td>
+                <td>{{ displayText(item.capacity) }}</td>
+                <td>{{ displayText(item.booked, "0") }}</td>
+                <td><StatusTag :status="displayText(item.status)" /></td>
+                <td class="toolbar"><button type="button" @click="openEditor(item)">编辑</button><button class="danger" type="button" :disabled="displayText(item.status) === 'CANCELLED'" @click="cancelSchedule(item)">取消排班</button></td>
               </tr>
             </tbody>
           </table>
@@ -164,7 +164,7 @@ loadSchedules();
         </div>
         <div class="toolbar"><button type="button" :disabled="loading" @click="generate">生成建议</button><button class="primary" type="button" :disabled="loading || !suggestions.length" @click="publish">发布</button></div>
         <article v-for="item in pagedSuggestions" :key="String(item.id)" class="list-row">
-          <div class="row-main"><strong>{{ fieldText(item, "workDate") }} {{ fieldText(item, "timeRange") }}</strong><p>{{ fieldText(item, "doctorName") }} / capacity {{ fieldText(item, "capacity") }}</p><span class="tag" :class="aiSourceTone(item.source)">{{ aiSourceLabel(item.source) }}</span></div>
+          <div class="row-main"><strong>{{ displayText(item.workDate) }} {{ displayText(item.timeRange) }}</strong><p>{{ displayText(item.doctorName) }} / capacity {{ displayText(item.capacity) }}</p><span class="tag" :class="aiSourceTone(item.source)">{{ aiSourceLabel(item.source) }}</span></div>
         </article>
         <PaginationBar v-model="suggestionPage" :total="suggestionTotal" :page-size="suggestionPageSize" />
         <EmptyState v-if="!suggestions.length" title="No AI suggestions" />
@@ -173,8 +173,8 @@ loadSchedules();
     <Modal :open="editorOpen" title="Schedule" description="Create or update a real doctor schedule and its appointment slot." @close="editorOpen = false">
       <div class="stack">
         <div class="form-grid">
-          <FormField label="Doctor"><select v-model.number="form.doctorId" @change="syncDoctorDepartment"><option v-for="doctor in doctors" :key="String(doctor.id)" :value="toNumber(doctor.id)">{{ fieldText(doctor, "name") }} / {{ fieldText(doctor, "departmentName") }}</option></select></FormField>
-          <FormField label="Department"><select v-model.number="form.departmentId" disabled><option v-for="department in departments" :key="String(department.id)" :value="toNumber(department.id)">{{ fieldText(department, "name") }}</option></select></FormField>
+          <FormField label="Doctor"><select v-model.number="form.doctorId" @change="syncDoctorDepartment"><option v-for="doctor in doctors" :key="String(doctor.id)" :value="toNumber(doctor.id)">{{ displayText(doctor.name) }} / {{ displayText(doctor.departmentName) }}</option></select></FormField>
+          <FormField label="Department"><select v-model.number="form.departmentId" disabled><option v-for="department in departments" :key="String(department.id)" :value="toNumber(department.id)">{{ displayText(department.name) }}</option></select></FormField>
           <FormField label="Date"><input v-model="form.workDate" type="date" /></FormField>
           <FormField label="Time range"><input v-model.trim="form.timeRange" placeholder="09:00-12:00" /></FormField>
           <FormField label="Capacity"><input v-model.number="form.capacity" type="number" min="1" max="100" /></FormField>

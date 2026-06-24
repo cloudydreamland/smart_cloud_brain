@@ -11,6 +11,7 @@ function localizeApiMessage(message: string) {
   const text = message.trim();
   if (!text) return "请求失败";
   const lower = text.toLowerCase();
+  if (lower.includes("unauthorized")) return "用户名或密码错误";
   if (lower.includes("triage-service unavailable")) return "分诊服务暂不可用，其他管理功能可继续使用。";
   if (lower.includes("doctor-service unavailable")) return "医生与号源服务暂不可用，请稍后重试。";
   if (lower.includes("ai service unavailable")) return "智能服务暂不可用，请稍后重试。";
@@ -24,6 +25,10 @@ export function toNumber(value: unknown, fallback = 0) {
 
 export function fieldText(item: DataRow | null | undefined, key: string, fallback = "-") {
   const value = item?.[key];
+  return value === undefined || value === null || value === "" ? fallback : String(value);
+}
+
+export function displayText(value: unknown, fallback = "-") {
   return value === undefined || value === null || value === "" ? fallback : String(value);
 }
 

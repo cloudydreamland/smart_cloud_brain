@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { reactive, ref } from "vue";
-import { api, fieldText, formatApiError, useAuthStore, usePagination, type DataRow } from "@smart-cloud-brain/shared-api";
+import { api, displayText, formatApiError, useAuthStore, usePagination, type Drug, type KnowledgeEntry, type PromptTemplate } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, FormField, LoadingState, PaginationBar } from "@smart-cloud-brain/shared-ui";
 
 const auth = useAuthStore();
 const loading = ref(false);
 const error = ref("");
 const form = reactive({ q: "", departmentCode: "" });
-const results = reactive({ knowledge: [] as DataRow[], drugs: [] as DataRow[], prompts: [] as DataRow[] });
+const results = reactive({ knowledge: [] as KnowledgeEntry[], drugs: [] as Drug[], prompts: [] as PromptTemplate[] });
 const {
   currentPage: knowledgePage,
   pageSize: knowledgePageSize,
@@ -40,9 +40,9 @@ async function search() {
       api.searchDrugs(auth.token(), form.q.trim()),
       api.searchPrompts(auth.token(), form.q.trim()),
     ]);
-    results.knowledge = knowledge;
-    results.drugs = drugs;
-    results.prompts = prompts;
+    results.knowledge = knowledge as KnowledgeEntry[];
+    results.drugs = drugs as Drug[];
+    results.prompts = prompts as PromptTemplate[];
   } catch (err) {
     error.value = formatApiError(err, "检索失败");
   } finally {
@@ -66,7 +66,7 @@ async function search() {
         <section class="panel">
           <header class="panel-header"><div class="panel-title"><h3>知识库</h3><p>{{ results.knowledge.length }} 条</p></div></header>
           <div class="list">
-            <article v-for="item in pagedKnowledge" :key="String(item.id)" class="list-row"><div class="row-main"><strong>{{ fieldText(item, "title") }}</strong><p>{{ fieldText(item, "advice") }}</p></div></article>
+            <article v-for="item in pagedKnowledge" :key="String(item.id)" class="list-row"><div class="row-main"><strong>{{ displayText(item.title) }}</strong><p>{{ displayText(item.advice) }}</p></div></article>
             <PaginationBar v-model="knowledgePage" :total="knowledgeTotal" :page-size="knowledgePageSize" />
             <EmptyState v-if="!results.knowledge.length" title="暂无知识结果" />
           </div>
@@ -74,7 +74,7 @@ async function search() {
         <section class="panel">
           <header class="panel-header"><div class="panel-title"><h3>药品</h3><p>{{ results.drugs.length }} 条</p></div></header>
           <div class="list">
-            <article v-for="item in pagedDrugs" :key="String(item.id)" class="list-row"><div class="row-main"><strong>{{ fieldText(item, "name") }}</strong><p>{{ fieldText(item, "specification") }}</p></div></article>
+            <article v-for="item in pagedDrugs" :key="String(item.id)" class="list-row"><div class="row-main"><strong>{{ displayText(item.name) }}</strong><p>{{ displayText(item.specification) }}</p></div></article>
             <PaginationBar v-model="drugPage" :total="drugTotal" :page-size="drugPageSize" />
             <EmptyState v-if="!results.drugs.length" title="暂无药品结果" />
           </div>
@@ -82,7 +82,7 @@ async function search() {
         <section class="panel">
           <header class="panel-header"><div class="panel-title"><h3>提示词</h3><p>{{ results.prompts.length }} 条</p></div></header>
           <div class="list">
-            <article v-for="item in pagedPrompts" :key="String(item.id)" class="list-row"><div class="row-main"><strong>{{ fieldText(item, "templateName") }}</strong><p>{{ fieldText(item, "taskType") }}</p></div></article>
+            <article v-for="item in pagedPrompts" :key="String(item.id)" class="list-row"><div class="row-main"><strong>{{ displayText(item.templateName) }}</strong><p>{{ displayText(item.taskType) }}</p></div></article>
             <PaginationBar v-model="promptPage" :total="promptTotal" :page-size="promptPageSize" />
             <EmptyState v-if="!results.prompts.length" title="暂无提示词结果" />
           </div>

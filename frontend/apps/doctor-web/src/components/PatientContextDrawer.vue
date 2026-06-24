@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { Drawer } from "@smart-cloud-brain/shared-ui";
-import { fieldText, formatDateTime, type DataRow } from "@smart-cloud-brain/shared-api";
+import { displayText, formatDateTime, type Registration, type TriageRecord } from "@smart-cloud-brain/shared-api";
 import { patientName, statusLabel, statusTone } from "../doctorPresentation";
 
-const props = defineProps<{ open: boolean; registration: DataRow | null; triage: DataRow | null }>();
+const props = defineProps<{ open: boolean; registration: Registration | null; triage: TriageRecord | null }>();
 defineEmits<{ close: [] }>();
 
-const triageRisk = computed(() => fieldText(props.triage, "riskLevel", fieldText(props.registration, "riskLevel", "MEDIUM")));
+const triageRisk = computed(() => displayText(props.triage?.riskLevel, displayText(props.registration?.riskLevel, "MEDIUM")));
 </script>
 
 <template>
@@ -19,10 +19,10 @@ const triageRisk = computed(() => fieldText(props.triage, "riskLevel", fieldText
         </header>
         <div class="dl-grid">
           <div><b>姓名</b><span>{{ patientName(registration) }}</span></div>
-          <div><b>患者 ID</b><span>{{ fieldText(registration, "patientId") }}</span></div>
-          <div><b>挂号 ID</b><span>#{{ fieldText(registration, "registrationId") }}</span></div>
+          <div><b>患者 ID</b><span>{{ displayText(registration.patientId) }}</span></div>
+          <div><b>挂号 ID</b><span>#{{ displayText(registration.registrationId) }}</span></div>
           <div><b>医保类型</b><span>职工医保</span></div>
-          <div><b>科室</b><span>{{ fieldText(registration, "departmentName") }}</span></div>
+          <div><b>科室</b><span>{{ displayText(registration.departmentName) }}</span></div>
           <div><b>预约</b><span>{{ formatDateTime(registration?.appointmentTime) }}</span></div>
         </div>
       </section>
@@ -34,13 +34,13 @@ const triageRisk = computed(() => fieldText(props.triage, "riskLevel", fieldText
         </header>
         <div class="panel-body stack">
           <div class="notice">
-            <strong>主诉：</strong>{{ fieldText(triage, "chiefComplaint", fieldText(registration, "chiefComplaint", "待补充分诊主诉")) }}
+            <strong>主诉：</strong>{{ displayText(triage?.chiefComplaint, displayText(registration.chiefComplaint, "待补充分诊主诉")) }}
           </div>
           <div class="notice">
-            <strong>既往史：</strong>{{ fieldText(triage, "pastHistory", "青霉素过敏；无糖尿病、高血压病史。") }}
+            <strong>既往史：</strong>{{ displayText(triage?.pastHistory, "青霉素过敏；无糖尿病、高血压病史。") }}
           </div>
           <div class="notice warning">
-            <strong>系统建议：</strong>{{ fieldText(triage, "reason", "存在发热和黄痰，建议呼吸内科优先接诊并完成感染指标检查。") }}
+            <strong>系统建议：</strong>{{ displayText(triage?.reason, "存在发热和黄痰，建议呼吸内科优先接诊并完成感染指标检查。") }}
           </div>
         </div>
       </section>

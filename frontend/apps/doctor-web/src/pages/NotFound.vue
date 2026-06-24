@@ -1,11 +1,50 @@
 <template>
-  <div style="display:grid;place-items:center;min-height:100vh;font-family:system-ui,sans-serif;color:#6b7280;">
-    <div style="text-align:center;">
-      <h1 style="font-size:72px;font-weight:800;color:#111827;margin:0;">404</h1>
-      <p style="font-size:18px;margin:12px 0 24px;">页面不存在</p>
-      <a href="/" style="display:inline-flex;align-items:center;gap:6px;padding:10px 24px;border:1px solid #d1d5db;border-radius:8px;color:#374151;text-decoration:none;font-size:14px;transition:background .15s;">
+  <div class="doctor-not-found-page">
+    <div class="doctor-not-found-card">
+      <h1 class="doctor-not-found-title">404</h1>
+      <p class="doctor-not-found-message">页面不存在</p>
+      <a class="doctor-not-found-link" href="/">
         返回首页
       </a>
     </div>
   </div>
 </template>
+
+<style scoped>
+.doctor-not-found-page {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  font-family: system-ui, sans-serif;
+  color: var(--color-gray-600);
+}
+
+.doctor-not-found-card {
+  text-align: center;
+}
+
+.doctor-not-found-title {
+  margin: 0;
+  color: var(--color-gray-900);
+  font-size: var(--font-size-404);
+  font-weight: 800;
+}
+
+.doctor-not-found-message {
+  margin: var(--space-4) 0 var(--space-9);
+  font-size: var(--font-size-lg);
+}
+
+.doctor-not-found-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: var(--space-3) var(--space-9);
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius-md);
+  color: var(--color-gray-700);
+  font-size: var(--font-size-base);
+  text-decoration: none;
+  transition: background 0.15s;
+}
+</style>

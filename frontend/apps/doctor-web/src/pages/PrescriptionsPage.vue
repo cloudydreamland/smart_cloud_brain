@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { storeToRefs } from "pinia";
-import { fieldText, formatApiError, useAuthStore, useDoctorWorkflowStore, usePagination, type DataRow } from "@smart-cloud-brain/shared-api";
+import { displayText, formatApiError, useAuthStore, useDoctorWorkflowStore, usePagination, type Prescription } from "@smart-cloud-brain/shared-api";
 import { ErrorState, LoadingState, PaginationBar } from "@smart-cloud-brain/shared-ui";
 import PrescriptionRiskModal from "../components/PrescriptionRiskModal.vue";
 import { liveRows, statusLabel, statusTone } from "../doctorPresentation";
@@ -12,7 +12,7 @@ const { prescriptions } = storeToRefs(workflow);
 const displayPrescriptions = liveRows(prescriptions);
 const loading = ref(false);
 const error = ref("");
-const selected = ref<DataRow | null>(null);
+const selected = ref<Prescription | null>(null);
 const { currentPage, pageSize, total, pageRows } = usePagination(displayPrescriptions, 8);
 
 async function refresh() {
@@ -57,13 +57,13 @@ refresh();
           </thead>
           <tbody>
             <tr v-for="item in pageRows" :key="String(item.prescriptionId)">
-              <td>#RX{{ fieldText(item, "prescriptionId") }}</td>
-              <td>{{ fieldText(item, "patientName", fieldText(item, "patientId")) }}</td>
-              <td>{{ fieldText(item, "createdAt") }}</td>
-              <td>{{ fieldText(item, "drugCount", "2") }}</td>
+              <td>#RX{{ displayText(item.prescriptionId) }}</td>
+              <td>{{ displayText(item.patientName, displayText(item.patientId)) }}</td>
+              <td>{{ displayText(item.createdAt) }}</td>
+              <td>{{ displayText(item.drugCount ?? item.items?.length, "2") }}</td>
               <td><span class="tag" :class="statusTone(item.status)">{{ statusLabel(item.status) }}</span></td>
               <td><span class="tag" :class="statusTone(item.riskLevel)">{{ statusLabel(item.riskLevel, "未审核") }}</span></td>
-              <td style="text-align:right"><button :class="fieldText(item, 'riskLevel').toUpperCase() === 'HIGH' ? 'action-btn danger' : 'action-btn'" type="button" @click="selected = item">{{ fieldText(item, "riskLevel").toUpperCase() === "HIGH" ? "复核" : "详情" }}</button></td>
+              <td class="doctor-prescription-actions"><button :class="displayText(item.riskLevel).toUpperCase() === 'HIGH' ? 'action-btn danger' : 'action-btn'" type="button" @click="selected = item">{{ displayText(item.riskLevel).toUpperCase() === "HIGH" ? "复核" : "详情" }}</button></td>
             </tr>
           </tbody>
         </table>
@@ -73,3 +73,9 @@ refresh();
     <PrescriptionRiskModal :open="Boolean(selected)" :result="selected" @close="selected = null" @confirm="selected = null" />
   </section>
 </template>
+
+<style scoped>
+.doctor-prescription-actions {
+  text-align: right;
+}
+</style>

@@ -2,19 +2,21 @@
 import { computed, onMounted, reactive, ref, watch } from "vue";
 import {
   api,
-  fieldText,
+  displayText,
   formatApiError,
   toNumber,
   useAuthStore,
   usePagination,
-  type DataRow,
+  type Patient,
+  type PatientDetail,
   type PatientSaveRequest,
 } from "@smart-cloud-brain/shared-api";
 import { DataTable, ErrorState, FormField, Modal, PaginationBar, StatusTag } from "@smart-cloud-brain/shared-ui";
 
 const auth = useAuthStore();
-const rows = ref<DataRow[]>([]);
-const detail = ref<DataRow | null>(null);
+type PatientDetailRow = Record<string, unknown>;
+const rows = ref<Patient[]>([]);
+const detail = ref<PatientDetail | null>(null);
 const keyword = ref("");
 const gender = ref("");
 const minAge = ref<number | undefined>();
@@ -42,8 +44,8 @@ watch([keyword, gender, minAge, maxAge], () => {
   currentPage.value = 1;
 });
 
-function asRows(value: unknown): DataRow[] {
-  return Array.isArray(value) ? value.filter((item): item is DataRow => item !== null && typeof item === "object") : [];
+function asRows(value: unknown): PatientDetailRow[] {
+  return Array.isArray(value) ? value.filter((item): item is PatientDetailRow => item !== null && typeof item === "object") : [];
 }
 
 async function refresh() {
@@ -55,7 +57,7 @@ async function refresh() {
       gender: gender.value,
       minAge: minAge.value,
       maxAge: maxAge.value,
-    });
+    }) as Patient[];
   } catch (err) {
     error.value = formatApiError(err, "Patient list failed");
   } finally {
@@ -63,11 +65,11 @@ async function refresh() {
   }
 }
 
-async function openDetail(item: DataRow) {
+async function openDetail(item: Patient) {
   loading.value = true;
   error.value = "";
   try {
-    detail.value = await api.patientDetail(auth.token(), toNumber(item.id));
+    detail.value = await api.patientDetail(auth.token(), toNumber(item.id)) as PatientDetail;
     detailOpen.value = true;
   } catch (err) {
     error.value = formatApiError(err, "Patient detail failed");
@@ -76,13 +78,13 @@ async function openDetail(item: DataRow) {
   }
 }
 
-function openEditor(item: DataRow) {
+function openEditor(item: Patient) {
   form.id = toNumber(item.id);
-  form.name = fieldText(item, "name");
-  form.gender = fieldText(item, "gender");
+  form.name = displayText(item.name);
+  form.gender = displayText(item.gender);
   form.age = toNumber(item.age, 0);
-  form.allergyHistory = fieldText(item, "allergyHistory");
-  form.pastHistory = fieldText(item, "pastHistory");
+  form.allergyHistory = displayText(item.allergyHistory);
+  form.pastHistory = displayText(item.pastHistory);
   editorOpen.value = true;
   notice.value = "";
 }
@@ -159,12 +161,12 @@ onMounted(refresh);
         </thead>
         <tbody>
           <tr v-for="item in pageRows" :key="String(item.id)">
-            <td>{{ fieldText(item, "id") }}</td>
-            <td>{{ fieldText(item, "name") }}</td>
-            <td>{{ fieldText(item, "phone") }}</td>
-            <td><StatusTag :status="fieldText(item, 'gender', 'UNKNOWN')" /></td>
-            <td>{{ fieldText(item, "age", "-") }}</td>
-            <td>{{ fieldText(item, "registrationCount", "0") }}</td>
+            <td>{{ displayText(item.id) }}</td>
+            <td>{{ displayText(item.name) }}</td>
+            <td>{{ displayText(item.phone) }}</td>
+            <td><StatusTag :status="displayText(item.gender, 'UNKNOWN')" /></td>
+            <td>{{ displayText(item.age) }}</td>
+            <td>{{ displayText(item.registrationCount, "0") }}</td>
             <td class="toolbar">
               <button type="button" @click="openDetail(item)">详情</button>
               <button type="button" @click="openEditor(item)">编辑</button>
@@ -208,8 +210,8 @@ onMounted(refresh);
         <div class="list">
           <article v-for="item in asRows(detail?.registrations).slice(0, 5)" :key="`registration-${String(item.id)}`" class="list-row">
             <div class="row-main">
-              <strong>Registration #{{ fieldText(item, "id") }} / {{ fieldText(item, "status") }}</strong>
-              <p>{{ fieldText(item, "appointment_time", fieldText(item, "appointmentTime", "")) }}</p>
+              <strong>Registration #{{ displayText(item.id) }} / {{ displayText(item.status) }}</strong>
+              <p>{{ displayText(item.appointment_time, displayText(item.appointmentTime, "")) }}</p>
             </div>
           </article>
         </div>

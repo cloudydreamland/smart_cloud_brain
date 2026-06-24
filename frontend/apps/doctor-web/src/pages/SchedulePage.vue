@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { api, fieldText, formatApiError, useAuthStore, usePagination, type DataRow } from "@smart-cloud-brain/shared-api";
+import { api, displayText, formatApiError, useAuthStore, usePagination, type Schedule } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, LoadingState, PaginationBar, StatusTag } from "@smart-cloud-brain/shared-ui";
 
 const auth = useAuthStore();
-const rows = ref<DataRow[]>([]);
+const rows = ref<Schedule[]>([]);
 const loading = ref(false);
 const error = ref("");
 const startDate = ref(new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10));
@@ -16,7 +16,7 @@ async function refresh() {
   loading.value = true;
   error.value = "";
   try {
-    rows.value = await api.doctorSchedules(auth.token(), { startDate: startDate.value, endDate: endDate.value, status: status.value });
+    rows.value = await api.doctorSchedules(auth.token(), { startDate: startDate.value, endDate: endDate.value, status: status.value }) as Schedule[];
   } catch (err) {
     error.value = formatApiError(err, "Doctor schedule failed");
   } finally {
@@ -42,13 +42,13 @@ refresh();
             <thead><tr><th>Date</th><th>Time</th><th>Department</th><th>Capacity</th><th>Booked</th><th>Remaining</th><th>Status</th></tr></thead>
             <tbody>
               <tr v-for="item in pageRows" :key="String(item.id)">
-                <td>{{ fieldText(item, "workDate") }}</td>
-                <td>{{ fieldText(item, "timeRange") }}</td>
-                <td>{{ fieldText(item, "departmentName") }}</td>
-                <td>{{ fieldText(item, "capacity") }}</td>
-                <td>{{ fieldText(item, "booked", "0") }}</td>
-                <td>{{ fieldText(item, "remainingCapacity", "0") }}</td>
-                <td><StatusTag :status="fieldText(item, 'status')" /></td>
+                <td>{{ displayText(item.workDate) }}</td>
+                <td>{{ displayText(item.timeRange) }}</td>
+                <td>{{ displayText(item.departmentName) }}</td>
+                <td>{{ displayText(item.capacity) }}</td>
+                <td>{{ displayText(item.booked, "0") }}</td>
+                <td>{{ displayText(item.remainingCapacity, "0") }}</td>
+                <td><StatusTag :status="displayText(item.status)" /></td>
               </tr>
             </tbody>
           </table>

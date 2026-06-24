@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { storeToRefs } from "pinia";
-import { aiSourceLabel, aiSourceTone, fieldText, statusClass, useAdminWorkflowStore } from "@smart-cloud-brain/shared-api";
-import { EmptyState, StatusTag } from "@smart-cloud-brain/shared-ui";
+import { displayText, statusClass, useAdminWorkflowStore } from "@smart-cloud-brain/shared-api";
 
 const workflow = useAdminWorkflowStore();
 const { departments, doctors, drugs, schedules, triageDesk, aiLogs } = storeToRefs(workflow);
@@ -120,9 +119,9 @@ const highRisk = computed(() => triageDesk.value.filter((item) => ["MANUAL_REQUI
             </thead>
             <tbody>
               <tr v-for="item in aiLogs.slice(0, 5)" :key="String(item.requestId || item.createdAt)">
-                <td><strong>{{ fieldText(item, "taskType", "UNKNOWN") }}</strong></td>
-                <td>{{ fieldText(item, "provider", "-") }}</td>
-                <td>{{ fieldText(item, "latencyMs", "0") }}ms</td>
+                <td><strong>{{ displayText(item.taskType, "UNKNOWN") }}</strong></td>
+                <td>{{ displayText(item.provider) }}</td>
+                <td>{{ displayText(item.latencyMs, "0") }}ms</td>
                 <td>
                   <span class="status-tag" :class="statusClass(item.status) === 'success' ? 'done' : statusClass(item.status) === 'danger' ? 'cancelled' : 'pending'">
                     {{ statusClass(item.status) === "success" ? "成功" : statusClass(item.status) === "danger" ? "失败" : "处理中" }}

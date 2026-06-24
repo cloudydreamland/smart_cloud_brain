@@ -53,8 +53,8 @@ const navItems = computed(() => [
 ]);
 
 const sidebarGroups = computed(() => [
-  { items: navItems.value.slice(0, 4) },
-  { items: navItems.value.slice(4) },
+  { items: navItems.value.slice(0, 5) },
+  { items: navItems.value.slice(5) },
 ]);
 
 async function refresh() {

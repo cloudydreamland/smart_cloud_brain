@@ -3,7 +3,7 @@ import { computed, onMounted, reactive, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 import {
   api,
-  fieldText,
+  displayText,
   formatApiError,
   statusClass,
   toNumber,
@@ -11,16 +11,17 @@ import {
   useAuthStore,
   usePagination,
   type AccountSaveRequest,
-  type DataRow,
+  type Account,
   type Role,
+  type RoleInfo,
 } from "@smart-cloud-brain/shared-api";
 import { DataTable, ErrorState, FormField, Modal, PaginationBar, SegmentedControl, StatusTag } from "@smart-cloud-brain/shared-ui";
 
 const auth = useAuthStore();
 const workflow = useAdminWorkflowStore();
 const { departments } = storeToRefs(workflow);
-const accounts = ref<DataRow[]>([]);
-const roles = ref<DataRow[]>([]);
+const accounts = ref<Account[]>([]);
+const roles = ref<RoleInfo[]>([]);
 const activeRole = ref("ADMIN");
 const keyword = ref("");
 const error = ref("");
@@ -58,10 +59,10 @@ const roleOptions = computed(() => {
   const seen = new Set<string>();
   const options = [...roles.value, ...accounts.value]
     .map((item) => {
-      const value = fieldText(item, "role", "");
+      const value = displayText(item.role, "");
       if (!value || seen.has(value)) return null;
       seen.add(value);
-      return { value, label: fieldText(item, "label", roleLabel(value)) };
+      return { value, label: displayText(item.label, roleLabel(value)) };
     })
     .filter((item): item is { value: string; label: string } => Boolean(item));
   const source = options.length ? options : fallbackRoleOptions;
@@ -72,17 +73,17 @@ const roleOptions = computed(() => {
 });
 
 const currentRoleLabel = computed(() => roleLabel(activeRole.value));
-const currentRoleTemplate = computed(() => roles.value.find((item) => fieldText(item, "role") === activeRole.value));
+const currentRoleTemplate = computed(() => roles.value.find((item) => item.role === activeRole.value));
 const currentRoleTotal = computed(() => accountsByRole(activeRole.value).length);
-const currentRoleEnabled = computed(() => accountsByRole(activeRole.value).filter((item) => fieldText(item, "status", "ENABLED") !== "DISABLED").length);
+const currentRoleEnabled = computed(() => accountsByRole(activeRole.value).filter((item) => displayText(item.status, "ENABLED") !== "DISABLED").length);
 
 const currentRoleAccounts = computed(() => {
   const q = keyword.value.trim().toLowerCase();
   const source = accountsByRole(activeRole.value);
   if (!q) return source;
   return source.filter((item) => [
-    "roleLabel", "role", "account", "name", "departmentName", "title", "status", "permissions",
-  ].some((key) => fieldText(item, key, "").toLowerCase().includes(q)));
+    item.roleLabel, item.role, item.account, item.name, item.departmentName, item.title, item.status, item.permissions,
+  ].some((value) => displayText(value, "").toLowerCase().includes(q)));
 });
 const { currentPage, pageSize, total, pageRows } = usePagination(currentRoleAccounts, 8);
 
@@ -97,17 +98,17 @@ watch(roleOptions, (options) => {
 }, { immediate: true });
 
 function accountsByRole(role: string) {
-  return accounts.value.filter((item) => fieldText(item, "role") === role);
+  return accounts.value.filter((item) => item.role === role);
 }
 
 function roleLabel(role: unknown) {
   const raw = String(role || "");
-  return fieldText(roles.value.find((item) => fieldText(item, "role") === raw), "label", fallbackRoleOptions.find((item) => item.value === raw)?.label ?? raw);
+  return displayText(roles.value.find((item) => item.role === raw)?.label, fallbackRoleOptions.find((item) => item.value === raw)?.label ?? raw);
 }
 
 function rolePermissionText(role: unknown) {
   const raw = String(role || "");
-  return fieldText(roles.value.find((item) => fieldText(item, "role") === raw), "permissions", "");
+  return displayText(roles.value.find((item) => item.role === raw)?.permissions, "");
 }
 
 function defaultDepartmentId() {
@@ -126,8 +127,8 @@ async function refresh() {
       api.accounts(auth.token()),
       api.roles(auth.token()),
     ]);
-    accounts.value = accountList;
-    roles.value = roleList;
+    accounts.value = accountList as Account[];
+    roles.value = roleList as RoleInfo[];
     if (!departments.value.length) {
       await workflow.refresh(auth.token());
     }
@@ -138,18 +139,18 @@ async function refresh() {
   }
 }
 
-function openEditor(item?: DataRow) {
+function openEditor(item?: Account) {
   error.value = "";
   notice.value = "";
   form.id = item ? toNumber(item.id, undefined) : undefined;
-  form.role = item ? ((fieldText(item, "role", "ADMIN") as Role) || "ADMIN") : defaultCreateRole();
-  form.account = fieldText(item, "account");
-  form.name = fieldText(item, "name");
+  form.role = item ? ((displayText(item.role, "ADMIN") as Role) || "ADMIN") : defaultCreateRole();
+  form.account = displayText(item?.account);
+  form.name = displayText(item?.name);
   form.password = "";
   form.departmentId = toNumber(item?.departmentId, form.role === "DOCTOR" ? defaultDepartmentId() : 0);
-  form.title = fieldText(item, "title");
-  form.specialty = fieldText(item, "specialty");
-  form.status = fieldText(item, "status", "ENABLED");
+  form.title = displayText(item?.title);
+  form.specialty = displayText(item?.specialty);
+  form.status = displayText(item?.status, "ENABLED");
   if (!item && form.role === "DOCTOR" && !form.departmentId) {
     form.departmentId = defaultDepartmentId();
   }
@@ -257,12 +258,12 @@ onMounted(refresh);
             </tr>
           </thead>
           <tbody>
-            <tr v-for="item in pageRows" :key="`${fieldText(item, 'role')}-${fieldText(item, 'id')}`">
-              <td>{{ fieldText(item, "account") }}</td>
-              <td>{{ fieldText(item, "name") }}</td>
-              <td>{{ fieldText(item, "departmentName", "-") }}</td>
-              <td><StatusTag :status="fieldText(item, 'status')" :tone="statusClass(item.status)" /></td>
-              <td class="permission-cell">{{ fieldText(item, "permissions") }}</td>
+            <tr v-for="item in pageRows" :key="`${displayText(item.role)}-${displayText(item.id)}`">
+              <td>{{ displayText(item.account) }}</td>
+              <td>{{ displayText(item.name) }}</td>
+              <td>{{ displayText(item.departmentName) }}</td>
+              <td><StatusTag :status="displayText(item.status)" :tone="statusClass(item.status)" /></td>
+              <td class="permission-cell">{{ displayText(item.permissions) }}</td>
               <td><button type="button" @click="openEditor(item)">编辑</button></td>
             </tr>
           </tbody>
@@ -281,7 +282,7 @@ onMounted(refresh);
         <article class="role-template role-template-active">
           <strong>{{ currentRoleLabel }}</strong>
           <span class="tag">{{ activeRole }}</span>
-          <p>{{ fieldText(currentRoleTemplate, "permissions", "暂无权限说明") }}</p>
+          <p>{{ displayText(currentRoleTemplate?.permissions, "暂无权限说明") }}</p>
         </article>
         <div class="role-switch-list">
           <button
@@ -320,7 +321,7 @@ onMounted(refresh);
           <select v-model.number="form.departmentId">
             <option :value="0" disabled>请选择科室</option>
             <option v-for="department in departments" :key="String(department.id)" :value="toNumber(department.id)">
-              {{ fieldText(department, "name") }}
+              {{ displayText(department.name) }}
             </option>
           </select>
         </FormField>

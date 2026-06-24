@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { storeToRefs } from "pinia";
-import { fieldText, useDoctorWorkflowStore } from "@smart-cloud-brain/shared-api";
+import { displayText, useDoctorWorkflowStore } from "@smart-cloud-brain/shared-api";
 import {
   formatTime,
   liveRows,
@@ -18,10 +18,10 @@ const displayRecords = liveRows(records);
 const displayPrescriptions = liveRows(prescriptions);
 const displayNotifications = liveRows(notifications);
 
-const activeRegistrations = computed(() => rows.value.filter((item) => fieldText(item, "status").toUpperCase() !== "COMPLETED"));
-const completed = computed(() => rows.value.filter((item) => fieldText(item, "status").toUpperCase() === "COMPLETED").length);
-const unread = computed(() => displayNotifications.value.filter((item) => fieldText(item, "readStatus").toUpperCase() !== "READ").length);
-const highRisk = computed(() => displayPrescriptions.value.filter((item) => fieldText(item, "riskLevel").toUpperCase() === "HIGH").length);
+const activeRegistrations = computed(() => rows.value.filter((item) => displayText(item.status).toUpperCase() !== "COMPLETED"));
+const completed = computed(() => rows.value.filter((item) => displayText(item.status).toUpperCase() === "COMPLETED").length);
+const unread = computed(() => displayNotifications.value.filter((item) => displayText(item.readStatus).toUpperCase() !== "READ").length);
+const highRisk = computed(() => displayPrescriptions.value.filter((item) => displayText(item.riskLevel).toUpperCase() === "HIGH").length);
 const queueTotal = computed(() => Math.max(rows.value.length, 1));
 const completionRate = computed(() => Math.round((completed.value / queueTotal.value) * 100));
 const workloadBars = computed(() => [
@@ -37,7 +37,7 @@ const workloadBars = computed(() => [
 
       <div class="metric-card">
         <div class="metric-card-head">
-          <div class="metric-icon" style="background: #e0f2f1; color: #0b5f78;">
+          <div class="metric-icon doctor-metric-icon-teal">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h10M4 18h14" stroke-linecap="round"/></svg>
           </div>
           <span class="metric-label">待接诊</span>
@@ -47,7 +47,7 @@ const workloadBars = computed(() => [
 
       <div class="metric-card">
         <div class="metric-card-head">
-          <div class="metric-icon" style="background: #ecfdf5; color: #16a34a;">
+          <div class="metric-icon doctor-metric-icon-green">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22,4 12,14.01 9,11.01"/></svg>
           </div>
           <span class="metric-label">完成率</span>
@@ -58,7 +58,7 @@ const workloadBars = computed(() => [
 
       <div class="metric-card">
         <div class="metric-card-head">
-          <div class="metric-icon" style="background: #eff6ff; color: #2563eb;">
+          <div class="metric-icon doctor-metric-icon-blue">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3h7v7M14 14l7 7M3 10V4a1 1 0 0 1 1-1h6M10 21H4a1 1 0 0 1-1-1v-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
           <span class="metric-label">AI 草稿</span>
@@ -68,7 +68,7 @@ const workloadBars = computed(() => [
 
       <div class="metric-card">
         <div class="metric-card-head">
-          <div class="metric-icon" style="background: #fef2f2; color: #dc2626;">
+          <div class="metric-icon doctor-metric-icon-red">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           </div>
           <span class="metric-label">高风险处方</span>
@@ -117,15 +117,15 @@ const workloadBars = computed(() => [
           <tbody>
             <tr v-for="item in activeRegistrations.slice(0, 8)" :key="String(item.registrationId)">
               <td><strong>{{ patientName(item) }}</strong></td>
-              <td>#{{ fieldText(item, "registrationId") }}</td>
-              <td>{{ fieldText(item, "departmentName") }}</td>
-              <td>{{ formatTime(fieldText(item, "appointmentTime")) }}</td>
+              <td>#{{ displayText(item.registrationId) }}</td>
+              <td>{{ displayText(item.departmentName) }}</td>
+              <td>{{ formatTime(displayText(item.appointmentTime)) }}</td>
               <td><span class="status-tag" :class="statusTone(item.riskLevel)">{{ riskText(item) }}</span></td>
               <td><span class="status-tag" :class="statusTone(item.status)">{{ statusLabel(item.status) }}</span></td>
               <td><RouterLink class="action-link" :to="`/consult/${item.registrationId}`">接诊</RouterLink></td>
             </tr>
             <tr v-if="!activeRegistrations.length">
-              <td colspan="7" style="text-align:center;color:#71717a;padding:24px;">暂无待接诊患者</td>
+              <td class="doctor-empty-table-cell" colspan="7">暂无待接诊患者</td>
             </tr>
           </tbody>
         </table>
@@ -135,7 +135,7 @@ const workloadBars = computed(() => [
       <!-- Right: Workload + Notifications -->
       <div class="side-panel">
         <div class="panel workload-card">
-          <div class="panel-header" style="border:0; padding:0 0 4px;">
+          <div class="panel-header doctor-compact-panel-header">
             <strong>工作负荷</strong>
           </div>
           <div class="workload-rows">
@@ -148,18 +148,18 @@ const workloadBars = computed(() => [
         </div>
 
         <div class="panel notification-card">
-          <div class="panel-header" style="border:0; padding:0 0 4px;">
+          <div class="panel-header doctor-compact-panel-header">
             <strong>风险与未读</strong>
             <RouterLink to="/notifications">全部 →</RouterLink>
           </div>
-          <div v-for="item in displayNotifications.slice(0, 4)" :key="String(item.notificationId)" class="notif-item" :class="{ unread: fieldText(item, 'readStatus', 'UNREAD').toUpperCase() !== 'READ' }">
+          <div v-for="item in displayNotifications.slice(0, 4)" :key="String(item.notificationId)" class="notif-item" :class="{ unread: displayText(item.readStatus, 'UNREAD').toUpperCase() !== 'READ' }">
             <div>
-              <strong>{{ fieldText(item, "title") }}</strong>
-              <span>{{ fieldText(item, "content") }}</span>
+              <strong>{{ displayText(item.title) }}</strong>
+              <span>{{ displayText(item.content) }}</span>
             </div>
-            <span class="notif-tag" :class="statusTone(item.riskLevel)">{{ statusLabel(fieldText(item, "riskLevel", "INFO")) }}</span>
+            <span class="notif-tag" :class="statusTone(item.riskLevel)">{{ statusLabel(displayText(item.riskLevel, "INFO")) }}</span>
           </div>
-          <div v-if="!displayNotifications.length" style="text-align:center;color:#71717a;padding:20px;font-size:13px;">暂无通知</div>
+          <div v-if="!displayNotifications.length" class="doctor-empty-notification">暂无通知</div>
         </div>
       </div>
     </div>

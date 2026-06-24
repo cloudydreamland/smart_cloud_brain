@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { api, fieldText, formatApiError, statusClass, toNumber, useAdminWorkflowStore, useAuthStore, usePagination, type DataRow } from "@smart-cloud-brain/shared-api";
+import { api, displayText, formatApiError, statusClass, toNumber, useAdminWorkflowStore, useAuthStore, usePagination, type TriageRecord } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, FormField, PaginationBar, StatusTag } from "@smart-cloud-brain/shared-ui";
 import TriageDetailModal from "../components/TriageDetailModal.vue";
 import AssignDoctorModal from "../components/AssignDoctorModal.vue";
@@ -13,8 +13,8 @@ const workflow = useAdminWorkflowStore();
 const { triageDesk, doctors, refreshErrors } = storeToRefs(workflow);
 const filter = reactive({ keyword: "", department: "", status: "" });
 const assignForm = reactive({ triageRecordId: 0, doctorId: 0 });
-const selected = ref<DataRow | null>(null);
-const closeTarget = ref<DataRow | null>(null);
+const selected = ref<TriageRecord | null>(null);
+const closeTarget = ref<TriageRecord | null>(null);
 const assignOpen = ref(false);
 const loading = ref(false);
 const error = ref("");
@@ -22,18 +22,18 @@ const notice = ref("");
 
 const rows = computed(() => triageDesk.value.filter((item) => {
   const keyword = filter.keyword.trim().toLowerCase();
-  const haystack = `${fieldText(item, "chiefComplaint", "")} ${fieldText(item, "reason", "")}`.toLowerCase();
+  const haystack = `${displayText(item.chiefComplaint, "")} ${displayText(item.reason, "")}`.toLowerCase();
   return (!keyword || haystack.includes(keyword))
-    && (!filter.department || fieldText(item, "recommendedDepartment", "").includes(filter.department))
-    && (!filter.status || fieldText(item, "status") === filter.status);
+    && (!filter.department || displayText(item.recommendedDepartment, "").includes(filter.department))
+    && (!filter.status || displayText(item.status) === filter.status);
 }));
 const { currentPage, pageSize, total, pageRows } = usePagination(rows, 8);
 
-async function detail(item: DataRow) {
+async function detail(item: TriageRecord) {
   loading.value = true;
   error.value = "";
   try {
-    selected.value = await api.triageDetail(auth.token(), toNumber(item.triageRecordId));
+    selected.value = await api.triageDetail(auth.token(), toNumber(item.triageRecordId)) as TriageRecord;
   } catch (err) {
     error.value = formatApiError(err, "分诊详情加载失败");
   } finally {
@@ -41,7 +41,7 @@ async function detail(item: DataRow) {
   }
 }
 
-function openAssign(item: DataRow) {
+function openAssign(item: TriageRecord) {
   assignForm.triageRecordId = toNumber(item.triageRecordId);
   assignForm.doctorId = toNumber(item.assignedDoctorId, toNumber(doctors.value[0]?.id));
   assignOpen.value = true;
@@ -102,11 +102,11 @@ async function closeTriage() {
             <thead><tr><th>记录</th><th>主诉</th><th>推荐科室</th><th>医生</th><th>状态</th><th class="actions-cell">操作</th></tr></thead>
             <tbody>
               <tr v-for="item in pageRows" :key="String(item.triageRecordId)">
-                <td>#{{ fieldText(item, "triageRecordId") }}</td>
-                <td>{{ fieldText(item, "chiefComplaint") }}</td>
-                <td>{{ fieldText(item, "recommendedDepartment") }}</td>
-                <td>{{ fieldText(item, "assignedDoctorName", "未分配") }}</td>
-                <td><StatusTag :status="fieldText(item, 'status')" :tone="statusClass(item.status)" /></td>
+                <td>#{{ displayText(item.triageRecordId) }}</td>
+                <td>{{ displayText(item.chiefComplaint) }}</td>
+                <td>{{ displayText(item.recommendedDepartment) }}</td>
+                <td>{{ displayText(item.assignedDoctorName, "未分配") }}</td>
+                <td><StatusTag :status="displayText(item.status)" :tone="statusClass(item.status)" /></td>
                 <td class="toolbar"><button type="button" @click="detail(item)">详情</button><button type="button" @click="openAssign(item)">分配</button><button class="danger" type="button" @click="closeTarget = item">关闭</button></td>
               </tr>
             </tbody>

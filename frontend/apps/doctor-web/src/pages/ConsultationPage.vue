@@ -4,14 +4,15 @@ import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import {
   api,
-  fieldText,
+  displayText,
   formatApiError,
   medicalRecordStreamUrl,
   toNumber,
   useAuthStore,
   useDoctorWorkflowStore,
-  type DataRow,
   type DrugItem,
+  type MedicalRecordDraft,
+  type PrescriptionCheckResult,
 } from "@smart-cloud-brain/shared-api";
 import { Toast } from "@smart-cloud-brain/shared-ui";
 import PatientContextDrawer from "../components/PatientContextDrawer.vue";
@@ -34,6 +35,12 @@ type ToastHandle = {
   error: (title: string, message?: string) => number;
   info: (title: string, message?: string) => number;
 };
+type StreamPayload = MedicalRecordDraft & {
+  data?: unknown;
+  message?: string;
+  soapContent?: string;
+  text?: string;
+};
 
 const props = defineProps<{ registrationId: string }>();
 const emit = defineEmits<{ refresh: [] }>();
@@ -55,15 +62,15 @@ const highRiskOpen = ref(false);
 const completeOpen = ref(false);
 const toastRef = ref<ToastHandle | null>(null);
 const dialogueText = ref("患者诉咳嗽、咽痛、发热 3 天，最高体温 38.4°C。夜间咳嗽加重，少量黄痰。既往青霉素过敏。查体咽部充血，双肺呼吸音粗，未闻及明显湿啰音。");
-const checkResult = ref<DataRow | null>(null);
+const checkResult = ref<PrescriptionCheckResult | null>(null);
 const recordAiProvider = ref("Dify");
 const recordAiModel = ref("medical-record-v2");
 let recordStream: AbortController | null = null;
 
 const registration = computed(() => displayRegistrations.value.find((item) => toNumber(item.registrationId) === toNumber(props.registrationId)) ?? displayRegistrations.value[0] ?? null);
 const triage = computed(() => displayTriage.value.find((item) => toNumber(item.triageRecordId) === toNumber(registration.value?.triageRecordId)) ?? displayTriage.value[0] ?? null);
-const triageRisk = computed(() => fieldText(triage.value, "riskLevel", fieldText(registration.value, "riskLevel", "MEDIUM")));
-const isCompleted = computed(() => fieldText(registration.value, "status", "").toUpperCase() === "COMPLETED");
+const triageRisk = computed(() => displayText(triage.value?.riskLevel, displayText(registration.value?.riskLevel, "MEDIUM")));
+const isCompleted = computed(() => displayText(registration.value?.status, "").toUpperCase() === "COMPLETED");
 const medicalForm = reactive({
   registrationId: toNumber(props.registrationId),
   chiefComplaint: "咳嗽、咽痛、发热 3 天",
@@ -88,7 +95,7 @@ const canCreate = computed(() => prescription.medicalRecordId > 0 && canCheck.va
 
 function applyRegistration() {
   medicalForm.registrationId = toNumber(props.registrationId, toNumber(registration.value?.registrationId));
-  medicalForm.chiefComplaint = fieldText(triage.value, "chiefComplaint", medicalForm.chiefComplaint);
+  medicalForm.chiefComplaint = displayText(triage.value?.chiefComplaint, medicalForm.chiefComplaint);
 }
 
 function setError(message: string) {
@@ -107,38 +114,38 @@ function setNotice(message: string, variant: "success" | "info" = "success") {
   }
 }
 
-function applyDraft(draft: DataRow) {
-  medicalForm.chiefComplaint = fieldText(draft, "chiefComplaint", medicalForm.chiefComplaint);
-  medicalForm.presentIllness = fieldText(draft, "presentIllness", medicalForm.presentIllness);
-  medicalForm.pastHistory = fieldText(draft, "pastHistory", medicalForm.pastHistory);
-  medicalForm.physicalExam = fieldText(draft, "physicalExam", medicalForm.physicalExam);
-  medicalForm.diagnosis = fieldText(draft, "diagnosis", medicalForm.diagnosis);
-  medicalForm.treatmentAdvice = fieldText(draft, "treatmentAdvice", medicalForm.treatmentAdvice);
+function applyDraft(draft: StreamPayload) {
+  medicalForm.chiefComplaint = displayText(draft.chiefComplaint, medicalForm.chiefComplaint);
+  medicalForm.presentIllness = displayText(draft.presentIllness, medicalForm.presentIllness);
+  medicalForm.pastHistory = displayText(draft.pastHistory, medicalForm.pastHistory);
+  medicalForm.physicalExam = displayText(draft.physicalExam, medicalForm.physicalExam);
+  medicalForm.diagnosis = displayText(draft.diagnosis, medicalForm.diagnosis);
+  medicalForm.treatmentAdvice = displayText(draft.treatmentAdvice, medicalForm.treatmentAdvice);
 }
 
-function normalizeDraft(payload: DataRow) {
+function normalizeDraft(payload: StreamPayload) {
   const nested = payload.data;
-  return nested && typeof nested === "object" && !Array.isArray(nested) ? nested as DataRow : payload;
+  return nested && typeof nested === "object" && !Array.isArray(nested) ? nested as StreamPayload : payload;
 }
 
-function formatDraft(draft: DataRow) {
+function formatDraft(draft: StreamPayload) {
   const sections = [
-    ["主诉", fieldText(draft, "chiefComplaint", "")],
-    ["现病史", fieldText(draft, "presentIllness", "")],
-    ["既往史", fieldText(draft, "pastHistory", "")],
-    ["体格检查", fieldText(draft, "physicalExam", "")],
-    ["诊断", fieldText(draft, "diagnosis", "")],
-    ["处理建议", fieldText(draft, "treatmentAdvice", "")],
+    ["主诉", displayText(draft.chiefComplaint, "")],
+    ["现病史", displayText(draft.presentIllness, "")],
+    ["既往史", displayText(draft.pastHistory, "")],
+    ["体格检查", displayText(draft.physicalExam, "")],
+    ["诊断", displayText(draft.diagnosis, "")],
+    ["处理建议", displayText(draft.treatmentAdvice, "")],
   ];
   const text = sections
     .filter(([, value]) => value)
     .map(([label, value]) => `${label}：${value}`)
     .join("\n");
-  return text || fieldText(draft, "soapContent", formatAiDraft());
+  return text || displayText(draft.soapContent, formatAiDraft());
 }
 
 function parseEventData(raw: string) {
-  try { return JSON.parse(raw) as DataRow; } catch { return { text: raw }; }
+  try { return JSON.parse(raw) as StreamPayload; } catch { return { text: raw }; }
 }
 
 function handleStreamBlock(block: string) {
@@ -148,16 +155,16 @@ function handleStreamBlock(block: string) {
   if (!dataText) return;
   if (eventName === "delta") {
     const data = parseEventData(dataText);
-    streamText.value += `${fieldText(data, "text", dataText)}\n`;
+    streamText.value += `${displayText(data.text, dataText)}\n`;
   } else if (eventName === "structured") {
     const draft = normalizeDraft(parseEventData(dataText));
     applyDraft(draft);
-    recordAiProvider.value = fieldText(draft, "provider", "Dify");
-    recordAiModel.value = fieldText(draft, "model", "medical-record-v2");
+    recordAiProvider.value = displayText(draft.provider, "Dify");
+    recordAiModel.value = displayText(draft.model, "medical-record-v2");
     streamText.value = formatDraft(draft);
     streamStatus.value = "DRAFT_READY";
   } else if (eventName === "error") {
-    throw new Error(fieldText(parseEventData(dataText), "message", "智能病历生成失败"));
+    throw new Error(displayText(parseEventData(dataText).message, "智能病历生成失败"));
   }
 }
 
@@ -170,7 +177,7 @@ async function generateRecord() {
   try {
     recordStream?.abort();
     recordStream = new AbortController();
-    const response = await fetch(medicalRecordStreamUrl(medicalForm.registrationId, dialogueText.value, fieldText(triage.value, "departmentCode", "")), {
+    const response = await fetch(medicalRecordStreamUrl(medicalForm.registrationId, dialogueText.value, displayText(triage.value?.departmentCode, "")), {
       headers: { Authorization: `Bearer ${auth.token()}` },
       signal: recordStream.signal,
     });
@@ -241,8 +248,8 @@ async function checkPrescription() {
       diagnosis: medicalForm.diagnosis,
       pastHistory: medicalForm.pastHistory,
       drugs: prescription.drugs,
-    });
-    prescription.riskLevel = fieldText(checkResult.value, "riskLevel", "UNREVIEWED");
+    }) as PrescriptionCheckResult;
+    prescription.riskLevel = displayText(checkResult.value.riskLevel, "UNREVIEWED");
   } catch (err) {
     checkResult.value = null;
     prescription.riskLevel = "UNREVIEWED";
@@ -309,10 +316,10 @@ watch(() => props.registrationId, applyRegistration, { immediate: true });
         </div>
       </div>
       <div class="patient-grid">
-        <div><b>患者 ID</b><span>{{ fieldText(registration, "patientId") }}</span></div>
-        <div><b>挂号 ID</b><span>#{{ fieldText(registration, "registrationId", registrationId) }}</span></div>
-        <div><b>科室</b><span>{{ fieldText(registration, "departmentName") }}</span></div>
-        <div><b>预约</b><span>{{ formatTime(fieldText(registration, "appointmentTime")) }}</span></div>
+        <div><b>患者 ID</b><span>{{ displayText(registration?.patientId) }}</span></div>
+        <div><b>挂号 ID</b><span>#{{ displayText(registration?.registrationId, registrationId) }}</span></div>
+        <div><b>科室</b><span>{{ displayText(registration?.departmentName) }}</span></div>
+        <div><b>预约</b><span>{{ formatTime(displayText(registration?.appointmentTime)) }}</span></div>
         <div><b>状态</b><span><span class="tag" :class="statusTone(registration?.status)">{{ statusLabel(registration?.status, "接诊中") }}</span></span></div>
       </div>
       <div class="context-actions">
@@ -344,7 +351,7 @@ watch(() => props.registrationId, applyRegistration, { immediate: true });
             <div class="triage-level">
               <div>
                 <strong>AI 分诊建议：{{ statusLabel(triageRisk, "中风险") }}</strong>
-                <span>{{ fieldText(triage, "reason", "发热 3 天伴咽痛、黄痰，需复核过敏史并避免青霉素类用药。") }}</span>
+                <span>{{ displayText(triage?.reason, "发热 3 天伴咽痛、黄痰，需复核过敏史并避免青霉素类用药。") }}</span>
               </div>
               <span class="tag" :class="statusTone(triageRisk)">需复核</span>
             </div>
@@ -356,8 +363,8 @@ watch(() => props.registrationId, applyRegistration, { immediate: true });
             <div class="dl-grid">
               <div><b>分诊等级</b><span><span class="tag" :class="statusTone(triageRisk)">{{ statusLabel(triageRisk, "中风险") }}</span></span></div>
               <div><b>到诊状态</b><span><span class="tag" :class="statusTone(registration?.status)">{{ statusLabel(registration?.status, "接诊中") }}</span></span></div>
-              <div class="span"><b>主诉</b><span>{{ fieldText(triage, "chiefComplaint", medicalForm.chiefComplaint) }}</span></div>
-              <div class="span"><b>既往史</b><span>{{ fieldText(triage, "pastHistory", medicalForm.pastHistory) }}</span></div>
+              <div class="span"><b>主诉</b><span>{{ displayText(triage?.chiefComplaint, medicalForm.chiefComplaint) }}</span></div>
+              <div class="span"><b>既往史</b><span>{{ displayText(triage?.pastHistory, medicalForm.pastHistory) }}</span></div>
             </div>
           </div>
         </aside>
@@ -388,7 +395,7 @@ watch(() => props.registrationId, applyRegistration, { immediate: true });
           </datalist>
           <div class="risk-note">
             <strong>{{ checkResult ? "风险审核结果" : "待审方" }}</strong>
-            <span>{{ checkResult ? fieldText(checkResult, "suggestions", "请医生复核用药风险。") : "系统将结合过敏史、诊断、剂量和相互作用进行风险提示。" }}</span>
+            <span>{{ checkResult ? displayText(checkResult.suggestions, "请医生复核用药风险。") : "系统将结合过敏史、诊断、剂量和相互作用进行风险提示。" }}</span>
           </div>
           <footer class="footer-actions">
             <button type="button" @click="addDrug">新增药品</button>

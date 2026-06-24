@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { storeToRefs } from "pinia";
-import { fieldText, formatApiError, useAuthStore, useDoctorWorkflowStore, usePagination } from "@smart-cloud-brain/shared-api";
+import { displayText, formatApiError, useAuthStore, useDoctorWorkflowStore, usePagination, type MedicalRecord } from "@smart-cloud-brain/shared-api";
 import { ErrorState, LoadingState, Modal, PaginationBar } from "@smart-cloud-brain/shared-ui";
 import { liveRows } from "../doctorPresentation";
 
@@ -12,7 +12,7 @@ const displayRecords = liveRows(records);
 const loading = ref(false);
 const error = ref("");
 const viewMode = ref<"grid" | "list">("grid");
-const selectedRecord = ref<any>(null);
+const selectedRecord = ref<MedicalRecord | null>(null);
 const { currentPage, pageSize, total, pageRows } = usePagination(displayRecords, 8);
 
 async function refresh() {
@@ -37,7 +37,7 @@ refresh();
         <p class="eyebrow">病历记录</p>
         <h2>已保存病历</h2>
       </div>
-      <div style="display:flex;gap:8px;align-items:center;">
+      <div class="doctor-records-toolbar">
         <div class="view-segmented" role="tablist">
           <button
             class="seg-btn"
@@ -66,19 +66,19 @@ refresh();
         <article v-for="item in pageRows" :key="String(item.medicalRecordId)" class="record-card">
           <template v-if="viewMode === 'grid'">
             <span class="tag" :class="item.aiGenerated ? 'success' : 'info'">{{ item.aiGenerated ? "AI 草稿确认" : "医生录入" }}</span>
-            <strong>#MR{{ fieldText(item, "medicalRecordId") }} · {{ fieldText(item, "patientName", fieldText(item, "patientId")) }}</strong>
-            <p>主诉：{{ fieldText(item, "chiefComplaint") }}</p>
-            <p>诊断：{{ fieldText(item, "diagnosis") }}</p>
-            <p>时间：{{ fieldText(item, "createdAt", "2026-06-22 09:34") }}</p>
+            <strong>#MR{{ displayText(item.medicalRecordId) }} · {{ displayText(item.patientName, displayText(item.patientId)) }}</strong>
+            <p>主诉：{{ displayText(item.chiefComplaint) }}</p>
+            <p>诊断：{{ displayText(item.diagnosis) }}</p>
+            <p>时间：{{ displayText(item.createdAt, "2026-06-22 09:34") }}</p>
             <button class="detail-btn" type="button" @click="selectedRecord = item">查看详情</button>
           </template>
           <template v-else>
             <div class="list-left">
               <div class="list-title-row">
                 <span class="tag" :class="item.aiGenerated ? 'success' : 'info'">{{ item.aiGenerated ? "AI 草稿确认" : "医生录入" }}</span>
-                <strong>#MR{{ fieldText(item, "medicalRecordId") }} · {{ fieldText(item, "patientName", fieldText(item, "patientId")) }}</strong>
+                <strong>#MR{{ displayText(item.medicalRecordId) }} · {{ displayText(item.patientName, displayText(item.patientId)) }}</strong>
               </div>
-              <p>主诉：{{ fieldText(item, "chiefComplaint") }}　诊断：{{ fieldText(item, "diagnosis") }}　时间：{{ fieldText(item, "createdAt", "2026-06-22 09:34") }}</p>
+              <p>主诉：{{ displayText(item.chiefComplaint) }}　诊断：{{ displayText(item.diagnosis) }}　时间：{{ displayText(item.createdAt, "2026-06-22 09:34") }}</p>
             </div>
             <div class="list-detail">
               <button class="detail-btn" type="button" @click="selectedRecord = item">查看详情</button>
@@ -89,13 +89,13 @@ refresh();
       <PaginationBar v-model="currentPage" :total="total" :page-size="pageSize" />
     </div>
     <Modal :open="Boolean(selectedRecord)" title="病历详情" @close="selectedRecord = null">
-      <div v-if="selectedRecord" style="display:grid;gap:8px;">
-        <div><strong>病历号：</strong>#MR{{ fieldText(selectedRecord, "medicalRecordId") }}</div>
-        <div><strong>患者：</strong>{{ fieldText(selectedRecord, "patientName", fieldText(selectedRecord, "patientId")) }}</div>
+      <div v-if="selectedRecord" class="doctor-record-detail-stack">
+        <div><strong>病历号：</strong>#MR{{ displayText(selectedRecord.medicalRecordId) }}</div>
+        <div><strong>患者：</strong>{{ displayText(selectedRecord.patientName, displayText(selectedRecord.patientId)) }}</div>
         <div><strong>类型：</strong>{{ selectedRecord.aiGenerated ? "AI 草稿确认" : "医生录入" }}</div>
-        <div><strong>主诉：</strong>{{ fieldText(selectedRecord, "chiefComplaint") }}</div>
-        <div><strong>诊断：</strong>{{ fieldText(selectedRecord, "diagnosis") }}</div>
-        <div><strong>时间：</strong>{{ fieldText(selectedRecord, "createdAt") }}</div>
+        <div><strong>主诉：</strong>{{ displayText(selectedRecord.chiefComplaint) }}</div>
+        <div><strong>诊断：</strong>{{ displayText(selectedRecord.diagnosis) }}</div>
+        <div><strong>时间：</strong>{{ displayText(selectedRecord.createdAt) }}</div>
       </div>
       <template #footer>
         <button class="btn" @click="selectedRecord = null">关闭</button>
@@ -103,3 +103,16 @@ refresh();
     </Modal>
   </section>
 </template>
+
+<style scoped>
+.doctor-records-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.doctor-record-detail-stack {
+  display: grid;
+  gap: var(--space-2);
+}
+</style>

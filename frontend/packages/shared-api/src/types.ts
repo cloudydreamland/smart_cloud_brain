@@ -94,9 +94,9 @@ export class ApiError extends Error {
 
 /* ======================================================================
  * 实体接口（基于后端 API 返回字段定义，供后续逐步迁移使用）
- * 当前代码仍用 DataRow + fieldText，定义这些接口是为了：
+ * DataRow 仍作为后端兼容层保留，定义这些接口是为了：
  *   1. 文档化每个实体有哪些字段
- *   2. 后续迁移时有具体类型可替换 DataRow
+ *   2. 让 store、页面和组件层优先使用具体类型
  * ====================================================================== */
 
 export interface Department {
@@ -111,6 +111,7 @@ export interface Doctor {
   name: string;
   phone: string;
   departmentId: number;
+  departmentCode?: string;
   departmentName?: string;
   title?: string;
   specialty?: string;
@@ -170,6 +171,7 @@ export interface Patient {
   bloodType?: string;
   heightCm?: number;
   weightKg?: number;
+  registrationCount?: number;
 }
 
 export interface Registration {
@@ -181,8 +183,10 @@ export interface Registration {
   departmentId?: number;
   departmentName?: string;
   appointmentTime?: string;
+  createdAt?: string;
   status?: string;
   riskLevel?: string;
+  chiefComplaint?: string;
   triageRecordId?: number;
   slotId?: number;
 }
@@ -194,8 +198,18 @@ export interface TriageRecord {
   chiefComplaint?: string;
   departmentCode?: string;
   recommendedDepartment?: string;
+  recommendedDoctorDirection?: string;
+  recommendedDoctorIds?: number[] | string;
+  assignedDoctorId?: number;
+  assignedDoctorName?: string;
   urgencyLevel?: string;
+  confidence?: number | string;
   riskLevel?: string;
+  reason?: string;
+  pastHistory?: string;
+  degraded?: boolean;
+  provider?: string;
+  model?: string;
   status?: string;
 }
 
@@ -203,6 +217,8 @@ export interface MedicalRecord {
   medicalRecordId: number;
   registrationId: number;
   patientId?: number;
+  patientName?: string;
+  doctorId?: number;
   chiefComplaint: string;
   presentIllness?: string;
   pastHistory?: string;
@@ -212,23 +228,32 @@ export interface MedicalRecord {
   aiGenerated?: boolean;
   provider?: string;
   model?: string;
+  createdAt?: string;
 }
 
 export interface Prescription {
   prescriptionId: number;
   registrationId?: number;
   patientId?: number;
+  patientName?: string;
+  doctorId?: number;
   medicalRecordId?: number;
   riskLevel?: string;
   riskDescription?: string;
+  items?: DrugItem[];
   drugs?: DrugItem[];
   drugCount?: number;
+  suggestions?: string[] | string;
+  provider?: string;
+  model?: string;
   status?: string;
+  createdAt?: string;
 }
 
 export interface Account {
   id: number;
   role: Role;
+  roleLabel?: string;
   account: string;
   name: string;
   departmentId?: number;
@@ -254,6 +279,9 @@ export interface Schedule {
   workDate: string;
   timeRange: string;
   capacity: number;
+  booked?: number;
+  remainingCapacity?: number;
+  slotId?: number;
   status?: string;
 }
 
@@ -267,7 +295,10 @@ export interface Device {
   location?: string;
   status?: string;
   purchaseDate?: string;
+  lastMaintenanceAt?: string;
   remark?: string;
+  usageCount?: number;
+  abnormalCount?: number;
 }
 
 export interface DeviceUsage {
@@ -284,9 +315,119 @@ export interface DeviceUsage {
 
 export interface Notification {
   notificationId: number;
+  doctorId?: number;
+  patientId?: number;
+  prescriptionId?: number;
+  type?: string;
   title?: string;
   content?: string;
   riskLevel?: string;
   readStatus?: string;
   createdAt?: string;
+}
+
+export interface ScheduleSuggestion extends Schedule {
+  reason?: string;
+  source?: string;
+  degraded?: boolean;
+}
+
+export interface AiLog {
+  id?: number;
+  taskType?: string;
+  provider?: string;
+  model?: string;
+  latencyMs?: number;
+  status?: string;
+  createdAt?: string;
+  requestId?: string;
+  errorMessage?: string;
+}
+
+export interface PermissionCatalogItem {
+  key: string;
+  label: string;
+  description?: string;
+}
+
+export interface PermissionGrant {
+  role: Role;
+  permissionKey: string;
+  enabled?: boolean;
+}
+
+export interface PermissionPayload {
+  catalog: PermissionCatalogItem[];
+  roles: Role[];
+  grants: PermissionGrant[];
+}
+
+export interface StatisticsOverview {
+  registrations?: number;
+  completedRegistrations?: number;
+  patients?: number;
+  doctors?: number;
+  devices?: number;
+  deviceWarnings?: number;
+}
+
+export interface StatisticsTrendRow {
+  day?: string;
+  registrations?: number;
+}
+
+export interface DoctorWorkloadRow {
+  doctor_id?: number;
+  doctor_name?: string;
+  department_name?: string;
+  registrations?: number;
+  completed?: number;
+}
+
+export interface DistributionItem {
+  name?: string;
+  value?: number;
+}
+
+export interface PatientDistribution {
+  gender?: DistributionItem[];
+  age?: DistributionItem[];
+}
+
+export interface DeviceUsageStatsRow {
+  device_id?: number;
+  name?: string;
+  device_code?: string;
+  category?: string;
+  status?: string;
+  usage_count?: number;
+  abnormal_count?: number;
+}
+
+export interface PatientDetail extends Patient {
+  registrations?: Record<string, unknown>[];
+  triageRecords?: Record<string, unknown>[];
+  medicalRecords?: Record<string, unknown>[];
+  prescriptions?: Record<string, unknown>[];
+}
+
+export interface PrescriptionCheckResult {
+  riskLevel?: string;
+  riskDescription?: string;
+  suggestions?: string[];
+  provider?: string;
+  model?: string;
+  degraded?: boolean;
+}
+
+export interface MedicalRecordDraft {
+  chiefComplaint?: string;
+  presentIllness?: string;
+  pastHistory?: string;
+  physicalExam?: string;
+  diagnosis?: string;
+  treatmentAdvice?: string;
+  provider?: string;
+  model?: string;
+  degraded?: boolean;
 }

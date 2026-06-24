@@ -2,21 +2,32 @@ import { defineStore } from "pinia";
 import { ref } from "vue";
 import { adminApi } from "../api";
 import { formatApiError } from "../formatters";
-import type { DataRow } from "../types";
+import type {
+  AiLog,
+  Department,
+  Doctor,
+  Drug,
+  KnowledgeEntry,
+  PromptTemplate,
+  Schedule,
+  ScheduleSuggestion,
+  SystemDict,
+  TriageRecord,
+} from "../types";
 
 export const useAdminWorkflowStore = defineStore("adminWorkflow", () => {
-  const departments = ref<DataRow[]>([]);
-  const doctors = ref<DataRow[]>([]);
-  const drugs = ref<DataRow[]>([]);
-  const prompts = ref<DataRow[]>([]);
-  const knowledge = ref<DataRow[]>([]);
-  const dicts = ref<DataRow[]>([]);
-  const suggestions = ref<DataRow[]>([]);
-  const schedules = ref<DataRow[]>([]);
-  const triageDesk = ref<DataRow[]>([]);
-  const aiLogs = ref<DataRow[]>([]);
-  const selectedScheduleSuggestion = ref<DataRow | null>(null);
-  const selectedTriage = ref<DataRow | null>(null);
+  const departments = ref<Department[]>([]);
+  const doctors = ref<Doctor[]>([]);
+  const drugs = ref<Drug[]>([]);
+  const prompts = ref<PromptTemplate[]>([]);
+  const knowledge = ref<KnowledgeEntry[]>([]);
+  const dicts = ref<SystemDict[]>([]);
+  const suggestions = ref<ScheduleSuggestion[]>([]);
+  const schedules = ref<Schedule[]>([]);
+  const triageDesk = ref<TriageRecord[]>([]);
+  const aiLogs = ref<AiLog[]>([]);
+  const selectedScheduleSuggestion = ref<ScheduleSuggestion | null>(null);
+  const selectedTriage = ref<TriageRecord | null>(null);
   const refreshErrors = ref<Record<string, string>>({});
 
   async function refresh(token: string) {
@@ -33,18 +44,18 @@ export const useAdminWorkflowStore = defineStore("adminWorkflow", () => {
       adminApi.knowledgeEntries(token).catch(keepCurrent("knowledge", "知识库加载失败", knowledge.value)),
       adminApi.dicts(token).catch(keepCurrent("dicts", "字典加载失败", dicts.value)),
       adminApi.schedules(token).catch(keepCurrent("schedules", "排班列表加载失败", schedules.value)),
-      adminApi.triageDesk(token).catch(keepCurrent("triageDesk", "分诊台加载失败", [] as DataRow[])),
+      adminApi.triageDesk(token).catch(keepCurrent("triageDesk", "分诊台加载失败", [] as TriageRecord[])),
       adminApi.aiLogs(token).catch(keepCurrent("aiLogs", "AI 日志加载失败", aiLogs.value)),
     ]);
-    departments.value = departmentList;
-    doctors.value = doctorList;
-    drugs.value = drugList;
-    prompts.value = promptList;
-    knowledge.value = knowledgeList;
-    dicts.value = dictList;
-    schedules.value = scheduleList;
-    triageDesk.value = triageList;
-    aiLogs.value = aiLogList;
+    departments.value = departmentList as Department[];
+    doctors.value = doctorList as Doctor[];
+    drugs.value = drugList as Drug[];
+    prompts.value = promptList as PromptTemplate[];
+    knowledge.value = knowledgeList as KnowledgeEntry[];
+    dicts.value = dictList as SystemDict[];
+    schedules.value = scheduleList as Schedule[];
+    triageDesk.value = triageList as TriageRecord[];
+    aiLogs.value = aiLogList as AiLog[];
     refreshErrors.value = nextErrors;
   }
 

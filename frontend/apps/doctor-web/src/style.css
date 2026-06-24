@@ -1,3 +1,4 @@
+@import "../../../packages/shared-ui/src/styles/tokens.css";
 @import "../../../packages/shared-ui/src/styles/index.css";
 
 :root {
@@ -43,7 +44,7 @@ select {
   padding: 0 10px;
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-xs);
-  background: #fff;
+  background: var(--color-white);
   color: var(--ink);
   font-size: 13px;
   font-weight: 700;
@@ -62,12 +63,12 @@ select {
 .doctor-app .button.primary {
   border-color: var(--primary);
   background: var(--primary);
-  color: #fff;
+  color: var(--color-white);
 }
 
 .doctor-app button.danger,
 .doctor-app .button.danger {
-  border-color: #ce9a94;
+  border-color: var(--color-red-border-soft);
   background: var(--danger-soft);
   color: var(--danger);
 }
@@ -77,7 +78,7 @@ textarea,
 select {
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-xs);
-  background: #fff;
+  background: var(--color-white);
   color: var(--ink);
   font-size: 13px;
 }
@@ -113,7 +114,7 @@ textarea {
 .tag.warning { background: var(--warning-soft); color: var(--warning); }
 .tag.danger { background: var(--danger-soft); color: var(--danger); }
 .tag.info { background: var(--info-soft); color: var(--info); }
-.tag.low { background: var(--teal-soft, #e0f2f1); color: var(--teal, #0b5f78); }
+.tag.low { background: var(--teal-soft, var(--color-teal-100)); color: var(--teal, var(--color-cyan-900)); }
 .tag.cancelled { background: var(--danger-soft); color: var(--danger); }
 .tag.pending { background: var(--warning-soft); color: var(--warning); }
 .tag.active { background: var(--info-soft); color: var(--info); }
@@ -143,20 +144,20 @@ textarea {
 .notice {
   padding: 9px 12px;
   border: 1px solid var(--line-strong);
-  background: #fff;
+  background: var(--color-white);
   font-size: 13px;
 }
 
 .clinical-alert.success,
 .notice.success {
-  border-color: #9fcab2;
+  border-color: var(--color-green-border);
   background: var(--success-soft);
   color: var(--success);
 }
 
 .clinical-alert.danger,
 .notice.error {
-  border-color: #d7a09a;
+  border-color: var(--color-red-border);
   background: var(--danger-soft);
   color: var(--danger);
 }
@@ -255,7 +256,7 @@ textarea {
   transition: all 160ms ease;
 }
 .btn:hover { background: var(--surface-2, var(--surface-alt)); }
-.btn.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+.btn.primary { background: var(--primary); color: var(--color-white); border-color: var(--primary); }
 .btn.primary:hover { background: var(--primary-strong); }
 
 /* ── Modal (Tailwind fallback) ── */
@@ -366,7 +367,7 @@ textarea {
   white-space: nowrap;
 }
 .action-btn:hover { background: var(--surface-2, var(--surface-alt)); }
-.action-btn.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+.action-btn.primary { background: var(--primary); color: var(--color-white); border-color: var(--primary); }
 .action-btn.primary:hover { background: var(--primary-strong); border-color: var(--primary-strong); }
 .action-btn.danger { color: var(--danger); border-color: var(--danger-soft); background: var(--surface); }
 .action-btn.danger:hover { background: var(--danger-soft); }
@@ -377,7 +378,7 @@ textarea {
   border-radius: 8px;
   border: 0;
   background: var(--primary);
-  color: #fff;
+  color: var(--color-white);
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -444,12 +445,12 @@ textarea {
 }
 
 .flow-step.done {
-  border-color: #b8dcc6;
+  border-color: var(--color-green-border-soft);
   background: var(--success-soft);
 }
 
 .flow-step.now {
-  border-color: #9bcac7;
+  border-color: var(--color-green-border-muted);
   background: var(--primary-soft);
   box-shadow: 0 6px 18px rgba(16, 36, 52, 0.08);
 }
@@ -471,7 +472,7 @@ textarea {
 .patient-context-bar {
   min-width: 0;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--color-white);
 }
 
 .section-toolbar {
@@ -481,7 +482,7 @@ textarea {
   min-height: 40px;
   padding: 7px 10px;
   border-bottom: 1px solid var(--line);
-  background: #f8fafb;
+  background: var(--color-gray-50-cool);
 }
 
 .section-toolbar h2 {
@@ -507,7 +508,7 @@ textarea {
   min-width: 0;
   padding: 8px 10px;
   border-right: 1px solid var(--line);
-  background: #fff;
+  background: var(--color-white);
 }
 
 .status-cell span {
@@ -595,12 +596,12 @@ textarea {
 }
 
 /* 设计稿 tag 色值覆盖（仅 queue-table 范围） */
-.queue-table .tag.pending { background: #fff7ed; color: #ea580c; }
-.queue-table .tag.low { background: #e0f2f1; color: #0b5f78; }
-.queue-table .tag.cancelled { background: #fef2f2; color: #dc2626; }
-.queue-table .tag.active { background: #eff6ff; color: #2563eb; }
-.queue-table .tag.success { background: #ecfdf5; color: #16a34a; }
-.queue-table .tag.info { background: #eff6ff; color: #2563eb; }
+.queue-table .tag.pending { background: var(--color-orange-50); color: var(--color-orange-600); }
+.queue-table .tag.low { background: var(--color-teal-100); color: var(--color-cyan-900); }
+.queue-table .tag.cancelled { background: var(--color-red-50); color: var(--color-red-600); }
+.queue-table .tag.active { background: var(--color-blue-50); color: var(--color-blue-600); }
+.queue-table .tag.success { background: var(--color-emerald-50); color: var(--color-emerald-600); }
+.queue-table .tag.info { background: var(--color-blue-50); color: var(--color-blue-600); }
 
 .queue-table tbody tr:hover td {
   background: var(--surface-alt);
@@ -618,7 +619,7 @@ textarea {
 .consult-grid > .panel {
   border: 1px solid var(--line);
   border-radius: 10px;
-  background: #fff;
+  background: var(--color-white);
   overflow: hidden;
 }
 
@@ -724,7 +725,7 @@ textarea {
   cursor: pointer;
 }
 .segmented button:hover { background: var(--surface-2, var(--surface-alt)); color: var(--ink); }
-.segmented button.active { background: var(--primary); color: #fff; }
+.segmented button.active { background: var(--primary); color: var(--color-white); }
 
 .workload-row {
   display: grid;
@@ -743,7 +744,7 @@ textarea {
 .bar-track {
   height: 8px;
   border: 1px solid var(--line);
-  background: #eef3f5;
+  background: var(--color-cyan-100);
 }
 
 .bar-track i {
@@ -790,7 +791,7 @@ textarea {
   min-width: 0;
   padding: 8px 10px;
   border-right: 1px solid var(--line);
-  background: #f8fafb;
+  background: var(--color-gray-50-cool);
 }
 
 .patient-name-block span,
@@ -914,8 +915,8 @@ textarea {
   overflow: auto;
   padding: 8px;
   border: 1px solid var(--line);
-  background: #f8fafb;
-  color: #314150;
+  background: var(--color-gray-50-cool);
+  color: var(--color-ink-muted);
   font-size: 12px;
   line-height: 1.55;
   white-space: pre-wrap;
@@ -925,7 +926,7 @@ textarea {
   justify-content: flex-end;
   padding: 8px 10px;
   border-top: 1px solid var(--line);
-  background: #f8fafb;
+  background: var(--color-gray-50-cool);
 }
 
 .prescription-scroll {
@@ -1009,7 +1010,7 @@ textarea {
 /* ── Notification read/unread ── */
 .feed-row.unread {
   border-left: 3px solid var(--primary);
-  background: #f0f7ff;
+  background: var(--color-blue-100);
   padding-left: 12px;
 }
 
@@ -1044,7 +1045,7 @@ textarea {
 .flow-step .step-num {
   font-size: 11px;
   font-weight: 700;
-  color: #a1a1aa;
+  color: var(--weak);
   letter-spacing: 0.04em;
 }
 
@@ -1103,6 +1104,26 @@ textarea {
   display: grid;
   place-items: center;
   flex-shrink: 0;
+}
+
+.doctor-metric-icon-teal {
+  background: var(--teal-soft);
+  color: var(--teal);
+}
+
+.doctor-metric-icon-green {
+  background: var(--color-emerald-50);
+  color: var(--color-emerald-600);
+}
+
+.doctor-metric-icon-blue {
+  background: var(--color-blue-50);
+  color: var(--color-blue-600);
+}
+
+.doctor-metric-icon-red {
+  background: var(--color-red-50);
+  color: var(--color-red-600);
 }
 
 .metric-label {
@@ -1209,10 +1230,21 @@ textarea {
 }
 .content-grid td {
   padding: 11px 14px;
-  border-bottom: 1px solid #f0f1f3;
+  border-bottom: 1px solid var(--color-gray-200);
   transition: background 0.15s ease;
 }
 .content-grid tr:hover td { background: var(--surface-alt); }
+
+.doctor-empty-table-cell {
+  padding: 24px;
+  color: var(--color-gray-500);
+  text-align: center;
+}
+
+.doctor-compact-panel-header {
+  padding: 0 0 4px;
+  border: 0;
+}
 
 .action-link {
   color: var(--primary);
@@ -1269,6 +1301,13 @@ textarea {
 
 /* Notification Card */
 .notification-card { padding: 14px 18px; }
+
+.doctor-empty-notification {
+  padding: 20px;
+  color: var(--color-gray-500);
+  font-size: 13px;
+  text-align: center;
+}
 
 .notif-item {
   padding: 10px 12px;
@@ -1700,7 +1739,7 @@ textarea {
   padding: 0 8px;
   border: 1px solid var(--line);
   border-radius: 9px;
-  background: #fff;
+  background: var(--color-white);
   color: var(--ink);
   font-size: 12px;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -1725,8 +1764,8 @@ textarea {
 /* Record table (prescriptions page) */
 .record-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .record-table th { text-align: left; color: var(--muted); font-weight: 600; padding: 10px 14px; border-bottom: 1px solid var(--line); background: var(--surface-2, var(--surface-alt)); font-size: 12px; }
-.record-table td { padding: 11px 14px; border-bottom: 1px solid #f0f1f3; transition: background 0.15s ease; }
-.record-table tbody tr:hover td { background: #fafbfc; }
+.record-table td { padding: 11px 14px; border-bottom: 1px solid var(--color-gray-200); transition: background 0.15s ease; }
+.record-table tbody tr:hover td { background: var(--color-gray-50); }
 
 .consultation-workbench .risk-note {
   display: grid;
@@ -1736,7 +1775,7 @@ textarea {
   border: 1px solid rgba(180, 35, 24, 0.18);
   border-radius: 14px;
   background: linear-gradient(135deg, rgba(255, 240, 237, 0.92), rgba(255, 255, 255, 0.78));
-  color: #8a1f16;
+  color: var(--color-red-900);
   font-size: 12px;
   line-height: 1.55;
 }
@@ -1816,7 +1855,7 @@ textarea {
 .consultation-workbench .field input:focus,
 .consultation-workbench .field textarea:focus {
   border-color: var(--primary);
-  background: #fff;
+  background: var(--color-white);
   outline: none;
   box-shadow: 0 0 0 3px rgba(11, 95, 120, 0.1);
 }
@@ -1827,7 +1866,7 @@ textarea {
   border-radius: 22px;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 250, 251, 0.88)),
-    #fff;
+    var(--color-white);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 12px 26px rgba(15, 35, 42, 0.06);
 }
 
@@ -2072,7 +2111,7 @@ textarea {
   border-radius: 10px;
   transition: background 0.15s ease, border-color 0.15s ease;
 }
-.feed-row:hover { border-color: #d1d5db; }
+.feed-row:hover { border-color: var(--color-gray-300); }
 .feed-row.unread {
   border-left: 3px solid var(--primary);
   background: var(--primary-soft);
@@ -2092,7 +2131,7 @@ textarea {
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 .topbar-btn:hover { background: var(--surface-alt); border-color: var(--primary); }
-.topbar-btn.danger { color: var(--red); border-color: #fecaca; }
+.topbar-btn.danger { color: var(--red); border-color: var(--color-red-200); }
 .topbar-btn.danger:hover { background: var(--red-soft); }
 
 @media (max-width: 560px) {
@@ -2133,7 +2172,7 @@ textarea {
   display: flex;
   gap: 24px;
   padding: 14px 18px;
-  background: var(--surface-2, #f3f5f8);
+  background: var(--surface-2, var(--color-gray-100));
   border-radius: 10px;
   margin-bottom: 18px;
   flex-wrap: wrap;
@@ -2149,7 +2188,7 @@ textarea {
 .summary-item span {
   display: block;
   font-size: 11px;
-  color: var(--weak, #a1a1aa);
+  color: var(--weak, var(--weak));
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -2256,7 +2295,7 @@ textarea {
 }
 .choicebox-item:hover {
   border-color: var(--line-strong);
-  background: var(--surface-alt, #f6f8f9);
+  background: var(--surface-alt, var(--surface-alt));
 }
 .choicebox-item.selected {
   border-color: var(--primary);
@@ -2332,7 +2371,7 @@ textarea {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--color-white);
   box-shadow: 0 1px 3px rgba(0,0,0,0.15);
   transition: transform 0.2s ease;
 }
@@ -2367,11 +2406,11 @@ textarea {
   border-left: 1px solid var(--line);
 }
 .segmented-control button:hover {
-  background: var(--surface-alt, #f6f8f9);
+  background: var(--surface-alt, var(--surface-alt));
 }
 .segmented-control button.active {
   background: var(--primary);
-  color: #fff;
+  color: var(--color-white);
 }
 
 /* ===== Login Page ===== */
@@ -2382,12 +2421,12 @@ textarea {
 }
 .login-visual {
   flex: 1.2;
-  background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 40%, #0b5f78 100%);
+  background: linear-gradient(135deg, var(--color-slate-900) 0%, var(--color-sky-900) 40%, var(--color-cyan-900) 100%);
   display: flex;
   flex-direction: column;
   justify-content: center;
   padding: 48px 56px;
-  color: #fff;
+  color: var(--color-white);
   position: relative;
   overflow: hidden;
 }
@@ -2418,7 +2457,7 @@ textarea {
   font-size: 16px;
   font-weight: 800;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #fff;
+  color: var(--color-white);
 }
 .brand-line span {
   font-size: 13px;
@@ -2434,7 +2473,7 @@ textarea {
   position: relative;
   z-index: 1;
   letter-spacing: -0.02em;
-  color: #fff;
+  color: var(--color-white);
 }
 .login-visual > p {
   font-size: 14px;
@@ -2443,7 +2482,7 @@ textarea {
   max-width: 460px;
   position: relative;
   z-index: 1;
-  color: #fff;
+  color: var(--color-white);
 }
 .signal-panel {
   display: flex;
@@ -2465,13 +2504,13 @@ textarea {
 .signal-card span {
   font-size: 12px;
   opacity: 0.7;
-  color: #fff;
+  color: var(--color-white);
 }
 .signal-card strong {
   font-size: 28px;
   font-weight: 800;
   letter-spacing: -0.04em;
-  color: #fff;
+  color: var(--color-white);
 }
 .pulse-line {
   height: 3px;

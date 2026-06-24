@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { storeToRefs } from "pinia";
-import { api, fieldText, formatApiError, toNumber, useAuthStore, useDoctorWorkflowStore, usePagination, type DataRow } from "@smart-cloud-brain/shared-api";
+import { api, displayText, formatApiError, toNumber, useAuthStore, useDoctorWorkflowStore, usePagination, type Notification } from "@smart-cloud-brain/shared-api";
 import { ErrorState, LoadingState, PaginationBar } from "@smart-cloud-brain/shared-ui";
 import NotificationDetailModal from "../components/NotificationDetailModal.vue";
 import { liveRows, statusLabel, statusTone } from "../doctorPresentation";
@@ -11,7 +11,7 @@ const auth = useAuthStore();
 const workflow = useDoctorWorkflowStore();
 const { notifications } = storeToRefs(workflow);
 const displayNotifications = liveRows(notifications);
-const selected = ref<DataRow | null>(null);
+const selected = ref<Notification | null>(null);
 const error = ref("");
 const notice = ref("");
 const loading = ref(false);
@@ -70,15 +70,15 @@ refresh();
           v-for="item in pageRows"
           :key="String(item.notificationId)"
           class="feed-row"
-          :class="{ unread: fieldText(item, 'readStatus', 'UNREAD').toUpperCase() !== 'READ' }"
+          :class="{ unread: displayText(item.readStatus, 'UNREAD').toUpperCase() !== 'READ' }"
         >
           <div class="feed-content">
-            <strong>{{ fieldText(item, "title") }}</strong>
-            <span>{{ fieldText(item, "content") }}</span>
+            <strong>{{ displayText(item.title) }}</strong>
+            <span>{{ displayText(item.content) }}</span>
           </div>
           <div class="feed-actions">
-            <span class="tag" :class="statusTone(fieldText(item, 'riskLevel', 'INFO'))">{{ statusLabel(fieldText(item, "riskLevel", "INFO")) }}</span>
-            <span class="status-dot" :class="fieldText(item, 'readStatus', 'UNREAD').toUpperCase() !== 'READ' ? 'unread' : 'read'" :title="fieldText(item, 'readStatus', 'UNREAD').toUpperCase() !== 'READ' ? '未读' : '已读'"></span>
+            <span class="tag" :class="statusTone(displayText(item.riskLevel, 'INFO'))">{{ statusLabel(displayText(item.riskLevel, "INFO")) }}</span>
+            <span class="status-dot" :class="displayText(item.readStatus, 'UNREAD').toUpperCase() !== 'READ' ? 'unread' : 'read'" :title="displayText(item.readStatus, 'UNREAD').toUpperCase() !== 'READ' ? '未读' : '已读'"></span>
             <button type="button" class="btn" @click="selected = item">详情</button>
           </div>
         </article>

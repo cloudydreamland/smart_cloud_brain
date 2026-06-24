@@ -1,7 +1,18 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, ref } from "vue";
 import echarts from "../echarts";
-import { api, fieldText, formatApiError, useAuthStore, type DataRow } from "@smart-cloud-brain/shared-api";
+import {
+  api,
+  displayText,
+  formatApiError,
+  useAuthStore,
+  type DeviceUsageStatsRow,
+  type DoctorWorkloadRow,
+  type PatientDistribution,
+  type StatisticsOverview,
+  type StatisticsReportRow,
+  type StatisticsTrendRow,
+} from "@smart-cloud-brain/shared-api";
 import { ErrorState, LoadingState } from "@smart-cloud-brain/shared-ui";
 
 const auth = useAuthStore();
@@ -9,11 +20,11 @@ const loading = ref(false);
 const error = ref("");
 const startDate = ref(new Date(Date.now() - 14 * 86400000).toISOString().slice(0, 10));
 const endDate = ref(new Date().toISOString().slice(0, 10));
-const overview = ref<DataRow>({});
-const trend = ref<DataRow[]>([]);
-const workload = ref<DataRow[]>([]);
-const distribution = ref<DataRow>({});
-const deviceUsage = ref<DataRow[]>([]);
+const overview = ref<StatisticsOverview>({});
+const trend = ref<StatisticsTrendRow[]>([]);
+const workload = ref<DoctorWorkloadRow[]>([]);
+const distribution = ref<PatientDistribution>({});
+const deviceUsage = ref<DeviceUsageStatsRow[]>([]);
 const trendEl = ref<HTMLDivElement | null>(null);
 const workloadEl = ref<HTMLDivElement | null>(null);
 const patientEl = ref<HTMLDivElement | null>(null);
@@ -32,11 +43,11 @@ async function refresh() {
       api.patientDistribution(auth.token()),
       api.deviceUsageStatistics(auth.token()),
     ]);
-    overview.value = nextOverview;
-    trend.value = nextTrend;
-    workload.value = nextWorkload;
-    distribution.value = nextDistribution;
-    deviceUsage.value = nextDeviceUsage;
+    overview.value = nextOverview as StatisticsOverview;
+    trend.value = nextTrend as StatisticsTrendRow[];
+    workload.value = nextWorkload as DoctorWorkloadRow[];
+    distribution.value = nextDistribution as PatientDistribution;
+    deviceUsage.value = nextDeviceUsage as DeviceUsageStatsRow[];
     await nextTick();
     renderCharts();
   } catch (err) {
@@ -53,7 +64,7 @@ function renderCharts() {
     const chart = echarts.init(trendEl.value);
     chart.setOption({
       tooltip: {},
-      xAxis: { type: "category", data: trend.value.map((item) => fieldText(item, "day")) },
+      xAxis: { type: "category", data: trend.value.map((item) => displayText(item.day)) },
       yAxis: { type: "value" },
       series: [{ type: "line", smooth: true, data: trend.value.map((item) => Number(item.registrations || 0)) }],
     });
@@ -63,7 +74,7 @@ function renderCharts() {
     const chart = echarts.init(workloadEl.value);
     chart.setOption({
       tooltip: {},
-      xAxis: { type: "category", data: workload.value.slice(0, 10).map((item) => fieldText(item, "doctor_name")) },
+      xAxis: { type: "category", data: workload.value.slice(0, 10).map((item) => displayText(item.doctor_name)) },
       yAxis: { type: "value" },
       series: [{ type: "bar", data: workload.value.slice(0, 10).map((item) => Number(item.registrations || 0)) }],
     });
@@ -71,7 +82,7 @@ function renderCharts() {
   }
   if (patientEl.value) {
     const chart = echarts.init(patientEl.value);
-    const gender = (distribution.value.gender as DataRow[] | undefined) ?? [];
+    const gender = distribution.value.gender ?? [];
     chart.setOption({ tooltip: {}, series: [{ type: "pie", radius: "65%", data: gender }] });
     charts.push(chart);
   }
@@ -79,7 +90,7 @@ function renderCharts() {
     const chart = echarts.init(deviceEl.value);
     chart.setOption({
       tooltip: {},
-      xAxis: { type: "category", data: deviceUsage.value.slice(0, 10).map((item) => fieldText(item, "name")) },
+      xAxis: { type: "category", data: deviceUsage.value.slice(0, 10).map((item) => displayText(item.name)) },
       yAxis: { type: "value" },
       series: [
         { name: "Usage", type: "bar", data: deviceUsage.value.slice(0, 10).map((item) => Number(item.usage_count || 0)) },
@@ -92,7 +103,7 @@ function renderCharts() {
 
 async function exportCsv() {
   const rows = await api.statisticsReport(auth.token(), { startDate: startDate.value, endDate: endDate.value });
-  const csv = ["metric,value", ...rows.map((row) => `${fieldText(row, "metric", "")},${fieldText(row, "value", "0")}`)].join("\n");
+  const csv = ["metric,value", ...(rows as StatisticsReportRow[]).map((row) => `${displayText(row.metric, "")},${displayText(row.value, "0")}`)].join("\n");
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
@@ -115,12 +126,12 @@ refresh();
       <ErrorState v-if="error" :message="error" />
       <LoadingState v-if="loading" />
       <div class="metrics">
-        <div class="metric"><span>Registrations</span><strong>{{ fieldText(overview, "registrations", "0") }}</strong></div>
-        <div class="metric"><span>Completed</span><strong>{{ fieldText(overview, "completedRegistrations", "0") }}</strong></div>
-        <div class="metric"><span>Patients</span><strong>{{ fieldText(overview, "patients", "0") }}</strong></div>
-        <div class="metric"><span>Doctors</span><strong>{{ fieldText(overview, "doctors", "0") }}</strong></div>
-        <div class="metric"><span>Devices</span><strong>{{ fieldText(overview, "devices", "0") }}</strong></div>
-        <div class="metric"><span>Device warnings</span><strong>{{ fieldText(overview, "deviceWarnings", "0") }}</strong></div>
+        <div class="metric"><span>Registrations</span><strong>{{ displayText(overview.registrations, "0") }}</strong></div>
+        <div class="metric"><span>Completed</span><strong>{{ displayText(overview.completedRegistrations, "0") }}</strong></div>
+        <div class="metric"><span>Patients</span><strong>{{ displayText(overview.patients, "0") }}</strong></div>
+        <div class="metric"><span>Doctors</span><strong>{{ displayText(overview.doctors, "0") }}</strong></div>
+        <div class="metric"><span>Devices</span><strong>{{ displayText(overview.devices, "0") }}</strong></div>
+        <div class="metric"><span>Device warnings</span><strong>{{ displayText(overview.deviceWarnings, "0") }}</strong></div>
       </div>
       <div class="main-grid admin-grid">
         <section class="panel"><header class="panel-header"><div class="panel-title"><h3>就诊趋势</h3></div></header><div ref="trendEl" class="chart-box"></div></section>

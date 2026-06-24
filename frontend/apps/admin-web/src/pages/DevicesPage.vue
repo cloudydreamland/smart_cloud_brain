@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { api, fieldText, formatApiError, toNumber, useAdminWorkflowStore, useAuthStore, usePagination, type DataRow, type DeviceSaveRequest, type DeviceUsageSaveRequest } from "@smart-cloud-brain/shared-api";
+import { api, displayText, formatApiError, toNumber, useAdminWorkflowStore, useAuthStore, usePagination, type Device, type DeviceSaveRequest, type DeviceUsage, type DeviceUsageSaveRequest } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, FormField, Modal, PaginationBar, StatusTag } from "@smart-cloud-brain/shared-ui";
 
 const auth = useAuthStore();
 const workflow = useAdminWorkflowStore();
 const { departments } = storeToRefs(workflow);
-const rows = ref<DataRow[]>([]);
-const usages = ref<DataRow[]>([]);
+const rows = ref<Device[]>([]);
+const usages = ref<DeviceUsage[]>([]);
 const keyword = ref("");
 const status = ref("");
 const loading = ref(false);
@@ -16,13 +16,13 @@ const error = ref("");
 const notice = ref("");
 const editorOpen = ref(false);
 const usageOpen = ref(false);
-const selectedDevice = ref<DataRow | null>(null);
+const selectedDevice = ref<Device | null>(null);
 const form = reactive<DeviceSaveRequest>({ deviceCode: "", name: "", category: "", departmentId: 0, location: "", status: "AVAILABLE", purchaseDate: "", remark: "" });
 const usageForm = reactive<DeviceUsageSaveRequest>({ deviceId: 0, usageType: "USE", usedBy: "", patientId: 0, resultStatus: "NORMAL", remark: "" });
 const filtered = computed(() => rows.value.filter((item) => {
   const q = keyword.value.toLowerCase();
-  const haystack = `${fieldText(item, "deviceCode", "")} ${fieldText(item, "name", "")} ${fieldText(item, "category", "")} ${fieldText(item, "location", "")}`.toLowerCase();
-  return (!q || haystack.includes(q)) && (!status.value || fieldText(item, "status") === status.value);
+  const haystack = `${displayText(item.deviceCode, "")} ${displayText(item.name, "")} ${displayText(item.category, "")} ${displayText(item.location, "")}`.toLowerCase();
+  return (!q || haystack.includes(q)) && (!status.value || displayText(item.status) === status.value);
 }));
 const { currentPage, pageSize, total, pageRows } = usePagination(filtered, 8);
 
@@ -30,7 +30,7 @@ async function refresh() {
   loading.value = true;
   error.value = "";
   try {
-    rows.value = await api.devices(auth.token());
+    rows.value = await api.devices(auth.token()) as Device[];
   } catch (err) {
     error.value = formatApiError(err, "Device list failed");
   } finally {
@@ -38,17 +38,17 @@ async function refresh() {
   }
 }
 
-function openEditor(item?: DataRow) {
+function openEditor(item?: Device) {
   selectedDevice.value = item ?? null;
   form.id = item ? toNumber(item.id, undefined) : undefined;
-  form.deviceCode = fieldText(item, "deviceCode", "");
-  form.name = fieldText(item, "name", "");
-  form.category = fieldText(item, "category", "");
+  form.deviceCode = displayText(item?.deviceCode, "");
+  form.name = displayText(item?.name, "");
+  form.category = displayText(item?.category, "");
   form.departmentId = toNumber(item?.departmentId, toNumber(departments.value[0]?.id, 0));
-  form.location = fieldText(item, "location", "");
-  form.status = fieldText(item, "status", "AVAILABLE");
-  form.purchaseDate = fieldText(item, "purchaseDate", "");
-  form.remark = fieldText(item, "remark", "");
+  form.location = displayText(item?.location, "");
+  form.status = displayText(item?.status, "AVAILABLE");
+  form.purchaseDate = displayText(item?.purchaseDate, "");
+  form.remark = displayText(item?.remark, "");
   editorOpen.value = true;
 }
 
@@ -68,7 +68,7 @@ async function save() {
   }
 }
 
-async function changeStatus(item: DataRow, nextStatus: string) {
+async function changeStatus(item: Device, nextStatus: string) {
   loading.value = true;
   error.value = "";
   try {
@@ -81,7 +81,7 @@ async function changeStatus(item: DataRow, nextStatus: string) {
   }
 }
 
-async function openUsage(item: DataRow) {
+async function openUsage(item: Device) {
   selectedDevice.value = item;
   usageForm.deviceId = toNumber(item.id);
   usageForm.usageType = "USE";
@@ -89,7 +89,7 @@ async function openUsage(item: DataRow) {
   usageForm.patientId = 0;
   usageForm.resultStatus = "NORMAL";
   usageForm.remark = "";
-  usages.value = await api.deviceUsages(auth.token(), usageForm.deviceId);
+  usages.value = await api.deviceUsages(auth.token(), usageForm.deviceId) as DeviceUsage[];
   usageOpen.value = true;
 }
 
@@ -98,7 +98,7 @@ async function saveUsage() {
   error.value = "";
   try {
     await api.saveDeviceUsage(auth.token(), { ...usageForm, patientId: usageForm.patientId ? toNumber(usageForm.patientId) : undefined });
-    usages.value = await api.deviceUsages(auth.token(), usageForm.deviceId);
+    usages.value = await api.deviceUsages(auth.token(), usageForm.deviceId) as DeviceUsage[];
     await refresh();
   } catch (err) {
     error.value = formatApiError(err, "Usage save failed");
@@ -128,12 +128,12 @@ refresh();
           <thead><tr><th>Code</th><th>Name</th><th>Category</th><th>Department</th><th>Status</th><th>Usage</th><th class="actions-cell">Actions</th></tr></thead>
           <tbody>
             <tr v-for="item in pageRows" :key="String(item.id)">
-              <td>{{ fieldText(item, "deviceCode") }}</td>
-              <td>{{ fieldText(item, "name") }}</td>
-              <td>{{ fieldText(item, "category") }}</td>
-              <td>{{ fieldText(item, "departmentName") }}</td>
-              <td><StatusTag :status="fieldText(item, 'status')" /></td>
-              <td>{{ fieldText(item, "usageCount", "0") }} / abnormal {{ fieldText(item, "abnormalCount", "0") }}</td>
+              <td>{{ displayText(item.deviceCode) }}</td>
+              <td>{{ displayText(item.name) }}</td>
+              <td>{{ displayText(item.category) }}</td>
+              <td>{{ displayText(item.departmentName) }}</td>
+              <td><StatusTag :status="displayText(item.status)" /></td>
+              <td>{{ displayText(item.usageCount, "0") }} / abnormal {{ displayText(item.abnormalCount, "0") }}</td>
               <td class="toolbar">
                 <button type="button" @click="openEditor(item)">编辑</button>
                 <button type="button" @click="openUsage(item)">使用记录</button>
@@ -153,7 +153,7 @@ refresh();
           <FormField label="Code"><input v-model.trim="form.deviceCode" /></FormField>
           <FormField label="Name"><input v-model.trim="form.name" /></FormField>
           <FormField label="Category"><input v-model.trim="form.category" /></FormField>
-          <FormField label="Department"><select v-model.number="form.departmentId"><option :value="0">None</option><option v-for="department in departments" :key="String(department.id)" :value="toNumber(department.id)">{{ fieldText(department, "name") }}</option></select></FormField>
+          <FormField label="Department"><select v-model.number="form.departmentId"><option :value="0">None</option><option v-for="department in departments" :key="String(department.id)" :value="toNumber(department.id)">{{ displayText(department.name) }}</option></select></FormField>
           <FormField label="Location"><input v-model.trim="form.location" /></FormField>
           <FormField label="Status"><select v-model="form.status"><option value="AVAILABLE">Available</option><option value="IN_USE">In use</option><option value="MAINTENANCE">Maintenance</option><option value="RETIRED">Retired</option></select></FormField>
           <FormField label="Purchase date"><input v-model="form.purchaseDate" type="date" /></FormField>
@@ -164,7 +164,7 @@ refresh();
     </Modal>
     <Modal :open="usageOpen" title="Device Usage" description="Record use, maintenance and abnormal result." @close="usageOpen = false">
       <div class="stack">
-        <strong>{{ fieldText(selectedDevice, "name") }}</strong>
+        <strong>{{ displayText(selectedDevice?.name) }}</strong>
         <div class="form-grid">
           <FormField label="Type"><select v-model="usageForm.usageType"><option value="USE">Use</option><option value="MAINTENANCE">Maintenance</option><option value="REPAIR">Repair</option></select></FormField>
           <FormField label="Operator"><input v-model.trim="usageForm.usedBy" /></FormField>
@@ -175,7 +175,7 @@ refresh();
         <button class="primary" type="button" :disabled="loading" @click="saveUsage">保存使用记录</button>
         <div class="list">
           <article v-for="item in usages.slice(0, 8)" :key="String(item.id)" class="list-row">
-            <div class="row-main"><strong>{{ fieldText(item, "usageType") }} / {{ fieldText(item, "resultStatus") }}</strong><p>{{ fieldText(item, "startedAt") }} - {{ fieldText(item, "remark", "") }}</p></div>
+            <div class="row-main"><strong>{{ displayText(item.usageType) }} / {{ displayText(item.resultStatus) }}</strong><p>{{ displayText(item.startedAt) }} - {{ displayText(item.remark, "") }}</p></div>
           </article>
         </div>
       </div>

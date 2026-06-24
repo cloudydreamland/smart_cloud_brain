@@ -1,9 +1,9 @@
 import { computed, type Ref } from "vue";
-import { fieldText, statusText, type DataRow } from "@smart-cloud-brain/shared-api";
+import { displayText, statusText, type MedicalRecord, type Registration } from "@smart-cloud-brain/shared-api";
 
 export type Tone = "success" | "info" | "warning" | "danger" | "low" | "pending" | "active";
 
-export function liveRows(source: Ref<DataRow[]>) {
+export function liveRows<T>(source: Ref<T[]>) {
   return computed(() => source.value);
 }
 
@@ -21,12 +21,12 @@ export function statusTone(status: unknown): Tone {
   return "info";
 }
 
-export function patientName(item: DataRow | null | undefined) {
-  return fieldText(item, "patientName", `Patient ${fieldText(item, "patientId", "-")}`);
+export function patientName(item: (Registration | MedicalRecord) | null | undefined) {
+  return displayText(item?.patientName, `Patient ${displayText(item?.patientId)}`);
 }
 
-export function riskText(item: DataRow | null | undefined) {
-  return statusLabel(fieldText(item, "riskLevel", "LOW"));
+export function riskText(item: { riskLevel?: string } | null | undefined) {
+  return statusLabel(displayText(item?.riskLevel, "LOW"));
 }
 
 export function formatTime(iso: unknown) {

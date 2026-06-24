@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { fieldText, formatApiError, useAuthStore, useDoctorWorkflowStore, usePagination } from "@smart-cloud-brain/shared-api";
+import { displayText, formatApiError, useAuthStore, useDoctorWorkflowStore, usePagination } from "@smart-cloud-brain/shared-api";
 import { ErrorState, LoadingState, PaginationBar } from "@smart-cloud-brain/shared-ui";
 import { formatTime, liveRows, patientName, riskText, statusLabel, statusTone } from "../doctorPresentation";
 
@@ -21,8 +21,8 @@ const options = [
 ];
 
 const rows = computed(() => sourceRows.value.filter((item) => {
-  const haystack = `${patientName(item)} ${fieldText(item, "patientId", "")} ${fieldText(item, "departmentName", "")} ${fieldText(item, "chiefComplaint", "")}`.toLowerCase();
-  return (!filter.value || fieldText(item, "status") === filter.value) && (!keyword.value || haystack.includes(keyword.value.toLowerCase()));
+  const haystack = `${patientName(item)} ${displayText(item.patientId, "")} ${displayText(item.departmentName, "")} ${displayText(item.chiefComplaint, "")}`.toLowerCase();
+  return (!filter.value || displayText(item.status) === filter.value) && (!keyword.value || haystack.includes(keyword.value.toLowerCase()));
 }));
 const { currentPage, pageSize, total, pageRows } = usePagination(rows, 10);
 
@@ -89,15 +89,15 @@ refresh();
               <tr v-for="(item, index) in pageRows" :key="String(item.registrationId)">
                 <td>{{ (currentPage - 1) * pageSize + index + 1 }}</td>
                 <td><strong>{{ patientName(item) }}</strong></td>
-                <td>{{ fieldText(item, "patientId") }}</td>
-                <td>{{ fieldText(item, "departmentName") }}</td>
-                <td>{{ formatTime(fieldText(item, "appointmentTime")) }}</td>
-                <td>{{ fieldText(item, "chiefComplaint", "待医生问诊补充") }}</td>
+                <td>{{ displayText(item.patientId) }}</td>
+                <td>{{ displayText(item.departmentName) }}</td>
+                <td>{{ formatTime(displayText(item.appointmentTime)) }}</td>
+                <td>{{ displayText(item.chiefComplaint, "待医生问诊补充") }}</td>
                 <td><span class="tag" :class="statusTone(item.riskLevel)">{{ riskText(item) }}</span></td>
                 <td><span class="tag" :class="statusTone(item.status)">{{ statusLabel(item.status) }}</span></td>
                 <td class="actions-cell">
                   <RouterLink class="action-btn primary" :to="`/consult/${item.registrationId}`">
-                    {{ fieldText(item, "status").toUpperCase() === "COMPLETED" ? "查看" : "接诊" }}
+                    {{ displayText(item.status).toUpperCase() === "COMPLETED" ? "查看" : "接诊" }}
                   </RouterLink>
                 </td>
               </tr>

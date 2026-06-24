@@ -1,16 +1,10 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
-import { api, fieldText, formatApiError, useAuthStore, type DataRow, type Role } from "@smart-cloud-brain/shared-api";
+import { api, displayText, formatApiError, useAuthStore, type PermissionCatalogItem, type PermissionPayload, type Role } from "@smart-cloud-brain/shared-api";
 import { DataTable, ErrorState, SegmentedControl, StatusTag } from "@smart-cloud-brain/shared-ui";
 
-type PermissionItem = {
-  key: string;
-  label: string;
-  description: string;
-};
-
 const auth = useAuthStore();
-const payload = ref<DataRow | null>(null);
+const payload = ref<PermissionPayload | null>(null);
 const activeRole = ref<Role>("ADMIN");
 const selectedKeys = ref<string[]>([]);
 const loading = ref(false);
@@ -18,15 +12,14 @@ const saving = ref(false);
 const error = ref("");
 const notice = ref("");
 
-const catalog = computed<PermissionItem[]>(() => asRows(payload.value?.catalog).map((item) => ({
-  key: fieldText(item, "key"),
-  label: fieldText(item, "label"),
-  description: fieldText(item, "description"),
+const catalog = computed<PermissionCatalogItem[]>(() => (payload.value?.catalog ?? []).map((item) => ({
+  key: displayText(item.key),
+  label: displayText(item.label),
+  description: displayText(item.description),
 })).filter((item) => item.key));
 
 const roles = computed(() => {
-  const source = payload.value?.roles;
-  const values = Array.isArray(source) ? source.map(String) : ["ADMIN", "DOCTOR", "PATIENT"];
+  const values = payload.value?.roles ?? ["ADMIN", "DOCTOR", "PATIENT"];
   return values.map((role) => ({ value: role, label: role }));
 });
 
@@ -34,14 +27,10 @@ const enabledCount = computed(() => selectedKeys.value.length);
 
 watch([activeRole, catalog, payload], syncSelectedKeys);
 
-function asRows(value: unknown): DataRow[] {
-  return Array.isArray(value) ? value.filter((item): item is DataRow => item !== null && typeof item === "object") : [];
-}
-
 function grantEnabled(role: string, key: string) {
-  return asRows(payload.value?.grants).some((item) => (
-    fieldText(item, "role") === role
-    && fieldText(item, "permissionKey") === key
+  return (payload.value?.grants ?? []).some((item) => (
+    item.role === role
+    && item.permissionKey === key
     && Boolean(item.enabled)
   ));
 }
@@ -61,7 +50,7 @@ async function refresh() {
   loading.value = true;
   error.value = "";
   try {
-    payload.value = await api.permissions(auth.token());
+    payload.value = await api.permissions(auth.token()) as PermissionPayload;
     syncSelectedKeys();
   } catch (err) {
     error.value = formatApiError(err, "Permission list failed");
@@ -78,7 +67,7 @@ async function save() {
     payload.value = await api.saveRolePermissions(auth.token(), {
       role: activeRole.value,
       permissionKeys: selectedKeys.value,
-    });
+    }) as PermissionPayload;
     notice.value = "Role permissions saved";
     syncSelectedKeys();
   } catch (err) {
