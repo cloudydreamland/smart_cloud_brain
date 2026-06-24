@@ -88,7 +88,7 @@ async function closeTriage() {
 <template>
   <section class="triage-layout">
     <section class="panel">
-      <header class="panel-header"><div class="panel-title"><p class="eyebrow">分诊台</p><h2>分诊工作台</h2><p>查看分诊详情、人工改派医生、关闭异常记录。</p></div></header>
+      <header class="panel-header"><div class="panel-title"><h2>分诊工作台</h2></div></header>
       <div class="panel-body stack">
         <ErrorState v-if="error || refreshErrors.triageDesk" :message="error || refreshErrors.triageDesk" />
         <div v-if="notice" class="notice success">{{ notice }}</div>
@@ -117,7 +117,7 @@ async function closeTriage() {
       </div>
     </section>
     <aside class="panel">
-      <header class="panel-header"><div class="panel-title"><h2>分配信息</h2><p>选择记录后分配给合适医生。</p></div></header>
+      <header class="panel-header"><div class="panel-title"><h2>分配信息</h2></div></header>
       <div class="panel-body">
         <div class="summary-strip">
           <div class="summary-item"><span>医生数量</span><strong>{{ doctors.length }}</strong></div>

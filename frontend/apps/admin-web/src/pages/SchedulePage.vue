@@ -119,8 +119,8 @@ loadSchedules();
   <section class="schedule-layout">
     <section class="panel">
       <header class="panel-header">
-        <div class="panel-title"><p class="eyebrow">Schedule CRUD</p><h2>Doctor Schedule Management</h2><p>Manual schedules create real appointment slots; cancellation is blocked when active registrations exist.</p></div>
-        <button class="primary" type="button" @click="openEditor()">New Schedule</button>
+        <div class="panel-title"><h2>排班管理</h2></div>
+        <button class="primary" type="button" @click="openEditor()">新增排班</button>
       </header>
       <div class="panel-body stack">
         <ErrorState v-if="error" :message="error" />
@@ -128,10 +128,10 @@ loadSchedules();
         <div class="admin-filter-row">
           <input v-model="filter.startDate" type="date" />
           <input v-model="filter.endDate" type="date" />
-          <select v-model.number="filter.departmentId"><option :value="0">All departments</option><option v-for="department in departments" :key="String(department.id)" :value="toNumber(department.id)">{{ fieldText(department, "name") }}</option></select>
-          <select v-model.number="filter.doctorId"><option :value="0">All doctors</option><option v-for="doctor in doctors" :key="String(doctor.id)" :value="toNumber(doctor.id)">{{ fieldText(doctor, "name") }}</option></select>
-          <select v-model="filter.status"><option value="">All status</option><option value="PUBLISHED">Published</option><option value="CANCELLED">Cancelled</option></select>
-          <button type="button" :disabled="loading" @click="loadSchedules">Search</button>
+          <select v-model.number="filter.departmentId"><option :value="0">全部科室</option><option v-for="department in departments" :key="String(department.id)" :value="toNumber(department.id)">{{ fieldText(department, "name") }}</option></select>
+          <select v-model.number="filter.doctorId"><option :value="0">全部医生</option><option v-for="doctor in doctors" :key="String(doctor.id)" :value="toNumber(doctor.id)">{{ fieldText(doctor, "name") }}</option></select>
+          <select v-model="filter.status"><option value="">全部状态</option><option value="PUBLISHED">Published</option><option value="CANCELLED">Cancelled</option></select>
+          <button type="button" :disabled="loading" @click="loadSchedules">搜索</button>
         </div>
         <LoadingState v-if="loading" />
         <div v-if="schedules.length" class="table-scroll">
@@ -146,7 +146,7 @@ loadSchedules();
                 <td>{{ fieldText(item, "capacity") }}</td>
                 <td>{{ fieldText(item, "booked", "0") }}</td>
                 <td><StatusTag :status="fieldText(item, 'status')" /></td>
-                <td class="toolbar"><button type="button" @click="openEditor(item)">Edit</button><button class="danger" type="button" :disabled="fieldText(item, 'status') === 'CANCELLED'" @click="cancelSchedule(item)">Cancel</button></td>
+                <td class="toolbar"><button type="button" @click="openEditor(item)">编辑</button><button class="danger" type="button" :disabled="fieldText(item, 'status') === 'CANCELLED'" @click="cancelSchedule(item)">取消排班</button></td>
               </tr>
             </tbody>
           </table>
@@ -156,13 +156,13 @@ loadSchedules();
       </div>
     </section>
     <aside class="panel">
-      <header class="panel-header"><div class="panel-title"><h2>AI Schedule Suggestions</h2><p>Generate suggestions, inspect source, then publish to real slots.</p></div></header>
+      <header class="panel-header"><div class="panel-title"><h2>AI 排班建议</h2></div></header>
       <div class="panel-body stack">
         <div class="form-grid">
           <FormField label="Start date"><input v-model="generateForm.startDate" type="date" /></FormField>
           <FormField label="Days"><input v-model.number="generateForm.days" type="number" min="1" max="14" /></FormField>
         </div>
-        <div class="toolbar"><button type="button" :disabled="loading" @click="generate">Generate</button><button class="primary" type="button" :disabled="loading || !suggestions.length" @click="publish">Publish</button></div>
+        <div class="toolbar"><button type="button" :disabled="loading" @click="generate">生成建议</button><button class="primary" type="button" :disabled="loading || !suggestions.length" @click="publish">发布</button></div>
         <article v-for="item in pagedSuggestions" :key="String(item.id)" class="list-row">
           <div class="row-main"><strong>{{ fieldText(item, "workDate") }} {{ fieldText(item, "timeRange") }}</strong><p>{{ fieldText(item, "doctorName") }} / capacity {{ fieldText(item, "capacity") }}</p><span class="tag" :class="aiSourceTone(item.source)">{{ aiSourceLabel(item.source) }}</span></div>
         </article>
@@ -181,7 +181,7 @@ loadSchedules();
           <FormField label="Status"><select v-model="form.status"><option value="PUBLISHED">Published</option><option value="CANCELLED">Cancelled</option></select></FormField>
         </div>
       </div>
-      <template #footer><button type="button" @click="editorOpen = false">Cancel</button><button class="primary" type="button" :disabled="loading" @click="saveSchedule">Save</button></template>
+      <template #footer><button type="button" @click="editorOpen = false">取消</button><button class="primary" type="button" :disabled="loading" @click="saveSchedule">保存</button></template>
     </Modal>
   </section>
 </template>

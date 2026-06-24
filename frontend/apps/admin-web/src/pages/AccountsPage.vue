@@ -224,9 +224,7 @@ onMounted(refresh);
     <section class="panel">
       <header class="panel-header">
         <div class="panel-title">
-          <p class="eyebrow">访问控制</p>
           <h2>账户与权限管理</h2>
-          <p>统一维护管理员和医生账号，按角色分配系统访问范围。</p>
         </div>
         <div class="toolbar">
           <button type="button" :disabled="loading" @click="refresh">刷新</button>
@@ -277,7 +275,6 @@ onMounted(refresh);
       <header class="panel-header">
         <div class="panel-title">
           <h2>当前角色权限</h2>
-          <p>系统访问控制由登录角色决定，保存账号后立即按角色生效。</p>
         </div>
       </header>
       <div class="panel-body role-template-list">

@@ -1,3 +1,4 @@
+@import "../../../packages/shared-ui/src/styles/tokens.css";
 @import "../../../packages/shared-ui/src/styles/index.css";
 
 .admin-shell {
@@ -73,8 +74,8 @@
   padding: 12px;
   border: 1px solid var(--border);
   border-radius: 8px;
-  background: #f8fafc;
-  color: #243044;
+  background: var(--color-slate-50);
+  color: var(--color-ink-blue);
   font-size: 12px;
   line-height: 1.55;
   white-space: pre-wrap;
@@ -103,9 +104,9 @@
 }
 
 .patient-site-page .publish {
-  background: #0f766e;
-  border-color: #0f766e;
-  color: #fff;
+  background: var(--color-teal-800);
+  border-color: var(--color-teal-800);
+  color: var(--color-white);
 }
 
 .patient-site-tabs {
@@ -118,16 +119,16 @@
   padding: 0 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fff;
+  background: var(--color-white);
   color: var(--ink);
   font-size: 13px;
   font-weight: 700;
 }
 
 .patient-site-tabs button.active {
-  border-color: #2563eb;
-  background: #eff6ff;
-  color: #1d4ed8;
+  border-color: var(--color-blue-600);
+  background: var(--color-blue-50);
+  color: var(--color-blue-700);
 }
 
 .patient-site-editor {
@@ -161,7 +162,7 @@
   padding: 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #f8fafc;
+  background: var(--color-slate-50);
 }
 
 .patient-site-editor dl div {
@@ -196,7 +197,7 @@
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fff;
+  background: var(--color-white);
   color: var(--ink);
 }
 
@@ -235,20 +236,20 @@
   display: grid;
   gap: 8px;
   padding: 12px;
-  border: 1px solid #99f6e4;
+  border: 1px solid var(--color-teal-200);
   border-radius: 8px;
-  background: #f0fdfa;
+  background: var(--color-teal-50);
   font-size: 12px;
   line-height: 1.5;
 }
 
 .patient-site-confirm p {
   margin: 0;
-  color: #115e59;
+  color: var(--color-teal-800);
 }
 
 .patient-site-confirm strong {
-  color: #134e4a;
+  color: var(--color-teal-900);
 }
 
 .patient-site-confirm > div {
@@ -272,7 +273,7 @@
   padding: 14px;
   border: 1px solid var(--line);
   border-radius: 10px;
-  background: #fff;
+  background: var(--color-white);
 }
 
 .config-section-head,
@@ -313,9 +314,9 @@
 
 .config-card {
   padding: 12px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--color-slate-200);
   border-radius: 8px;
-  background: #f8fafc;
+  background: var(--color-slate-50);
 }
 
 .config-card-grid,
@@ -389,15 +390,15 @@ button.status-pill:hover {
 }
 
 .status-pill.enabled {
-  background: #dcfce7;
-  border-color: #bbf7d0;
-  color: #166534;
+  background: var(--color-emerald-100);
+  border-color: var(--color-emerald-200);
+  color: var(--color-emerald-800);
 }
 
 .status-pill.disabled {
-  background: #fee2e2;
-  border-color: #fecaca;
-  color: #991b1b;
+  background: var(--color-red-100);
+  border-color: var(--color-red-200);
+  color: var(--color-red-800);
 }
 
 .config-card-head strong,
@@ -453,9 +454,9 @@ button.status-pill:hover {
 
 .nested-list {
   padding: 10px;
-  border: 1px dashed #cbd5e1;
+  border: 1px dashed var(--color-slate-300);
   border-radius: 8px;
-  background: #fff;
+  background: var(--color-white);
 }
 
 .config-row-card {
@@ -464,22 +465,22 @@ button.status-pill:hover {
   padding: 10px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fff;
+  background: var(--color-white);
 }
 
 .danger-link {
   height: 32px;
   padding: 0 10px;
-  border: 1px solid #fecaca;
+  border: 1px solid var(--color-red-200);
   border-radius: 8px;
-  background: #fff;
-  color: #dc2626;
+  background: var(--color-white);
+  color: var(--color-red-600);
   font-size: 12px;
   font-weight: 700;
 }
 
 .danger-link:hover {
-  background: #fef2f2;
+  background: var(--color-red-50);
 }
 
 .patient-config-modal {
@@ -507,7 +508,7 @@ button.status-pill:hover {
   overflow: auto;
   padding: 22px;
   border-radius: 10px;
-  background: #fff;
+  background: var(--color-white);
   box-shadow: 0 24px 60px rgba(15, 23, 42, 0.24);
 }
 
@@ -519,7 +520,7 @@ button.status-pill:hover {
   height: 30px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fff;
+  background: var(--color-white);
   color: var(--muted);
   font-size: 20px;
   line-height: 1;
@@ -557,7 +558,7 @@ button.status-pill:hover {
   padding: 0 10px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fff;
+  background: var(--color-white);
   color: var(--ink);
 }
 
@@ -584,12 +585,12 @@ button.status-pill:hover {
   padding: 12px;
   border: 1px solid var(--border);
   border-radius: 8px;
-  background: #f8fafc;
+  background: var(--color-slate-50);
 }
 
 .role-template-active {
   border-color: var(--line-strong);
-  background: #fff;
+  background: var(--color-white);
 }
 
 .role-switch-list {
@@ -606,7 +607,7 @@ button.status-pill:hover {
   padding: 10px 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fff;
+  background: var(--color-white);
   color: var(--ink);
   text-align: left;
 }
@@ -649,7 +650,7 @@ button.status-pill:hover {
   padding: 16px;
   border: 1px solid var(--line);
   border-radius: 12px;
-  background: #fff;
+  background: var(--color-white);
   transition: box-shadow 0.15s;
 }
 
@@ -694,7 +695,7 @@ button.status-pill:hover {
 }
 
 .list-row:hover {
-  background: #f8fafc;
+  background: var(--color-slate-50);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 
@@ -714,12 +715,12 @@ button.status-pill:hover {
 .topbar-refresh:hover { background: var(--surface-alt); }
 
 .topbar-logout {
-  height: 32px; padding: 0 12px; border: 1px solid #fecaca; border-radius: 8px;
-  background: var(--surface); font-size: 12px; font-weight: 600; color: #dc2626;
+  height: 32px; padding: 0 12px; border: 1px solid var(--color-red-200); border-radius: 8px;
+  background: var(--surface); font-size: 12px; font-weight: 600; color: var(--color-red-600);
   transition: background 0.15s;
 }
 
-.topbar-logout:hover { background: #fef2f2; }
+.topbar-logout:hover { background: var(--color-red-50); }
 
 /* ── Dashboard layout ── */
 .dashboard {
@@ -783,13 +784,18 @@ button.status-pill:hover {
   flex-shrink: 0;
 }
 
+.admin-metric-icon-indigo { --accent: var(--color-indigo-500); }
+.admin-metric-icon-violet { --accent: var(--color-violet-500); }
+.admin-metric-icon-emerald { --accent: var(--color-emerald-500); }
+.admin-metric-icon-amber { --accent: var(--color-amber-500); }
+
 .metric-label {
   color: var(--muted);
   font-size: 12px;
 }
 
-.metric-value.blue { color: #2563eb; }
-.metric-value.orange { color: #ea580c; }
+.metric-value.blue { color: var(--color-blue-600); }
+.metric-value.orange { color: var(--color-orange-600); }
 
 /* ── Panel ── */
 .panel {
@@ -808,7 +814,7 @@ button.status-pill:hover {
 }
 
 .panel-header strong { font-size: 14px; }
-.panel-header a { font-size: 12px; color: #2563eb; font-weight: 600; }
+.panel-header a { font-size: 12px; color: var(--color-blue-600); font-weight: 600; }
 .panel-header a:hover { text-decoration: underline; }
 
 /* ── Quick Actions ── */
@@ -836,9 +842,9 @@ button.status-pill:hover {
 }
 
 .quick-btn:hover {
-  background: #eff6ff;
-  color: #2563eb;
-  border-color: #2563eb;
+  background: var(--color-blue-50);
+  color: var(--color-blue-600);
+  border-color: var(--color-blue-600);
 }
 
 /* ── Content Grid ── */
@@ -861,16 +867,22 @@ button.status-pill:hover {
   font-weight: 600;
   padding: 10px 14px;
   border-bottom: 1px solid var(--line);
-  background: #f3f5f8;
+  background: var(--color-gray-100);
   font-size: 12px;
 }
 
 .content-grid td {
   padding: 11px 14px;
-  border-bottom: 1px solid #f0f1f3;
+  border-bottom: 1px solid var(--color-gray-200);
 }
 
-.content-grid tr:hover td { background: #fafbfc; }
+.content-grid tr:hover td { background: var(--color-gray-50); }
+
+.admin-empty-table-cell {
+  padding: 20px;
+  color: var(--muted);
+  text-align: center;
+}
 
 /* ── Status Tags ── */
 .status-tag {
@@ -881,10 +893,10 @@ button.status-pill:hover {
   font-weight: 700;
 }
 
-.status-tag.done { background: #ecfdf5; color: #16a34a; }
-.status-tag.cancelled { background: #fef2f2; color: #dc2626; }
-.status-tag.pending { background: #fff7ed; color: #ea580c; }
-.status-tag.active { background: #eff6ff; color: #2563eb; }
+.status-tag.done { background: var(--color-emerald-50); color: var(--color-emerald-600); }
+.status-tag.cancelled { background: var(--color-red-50); color: var(--color-red-600); }
+.status-tag.pending { background: var(--color-orange-50); color: var(--color-orange-600); }
+.status-tag.active { background: var(--color-blue-50); color: var(--color-blue-600); }
 
 /* ── Table enhancements ── */
 .table-scroll table,
@@ -898,8 +910,8 @@ button.status-pill:hover {
 .catalog-layout th {
   padding: 8px 10px;
   border-bottom: 2px solid var(--line);
-  background: #f1f5f9;
-  color: #475569;
+  background: var(--color-slate-100);
+  color: var(--color-slate-600);
   font-size: 12px;
   font-weight: 700;
   text-align: left;
@@ -910,17 +922,17 @@ button.status-pill:hover {
 .catalog-layout td {
   padding: 8px 10px;
   border-bottom: 1px solid var(--line);
-  background: #fff;
+  background: var(--color-white);
 }
 
 .table-scroll tbody tr:nth-child(even) td,
 .catalog-layout tbody tr:nth-child(even) td {
-  background: #f8fafc;
+  background: var(--color-slate-50);
 }
 
 .table-scroll tbody tr:hover td,
 .catalog-layout tbody tr:hover td {
-  background: #eef4f8;
+  background: var(--color-cyan-50);
 }
 
 @media (max-width: 980px) {

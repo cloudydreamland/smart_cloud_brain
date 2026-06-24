@@ -11,14 +11,47 @@ onErrorCaptured((err) => {
 </script>
 
 <template>
-  <div v-if="error" style="display:grid;place-items:center;min-height:100vh;font-family:system-ui,sans-serif;">
-    <div style="text-align:center;padding:32px;">
-      <h2 style="color:#dc2626;margin:0 0 12px;">页面出错了</h2>
-      <p style="color:#6b7280;margin:0 0 24px;">{{ error }}</p>
-      <button @click="error = null; $router.go(0)" style="padding:10px 24px;border:1px solid #d1d5db;border-radius:8px;background:#fff;cursor:pointer;font-size:14px;">
+  <div v-if="error" class="admin-error-screen">
+    <div class="admin-error-card">
+      <h2 class="admin-error-title">页面出错了</h2>
+      <p class="admin-error-message">{{ error }}</p>
+      <button class="admin-error-action" @click="error = null; $router.go(0)">
         刷新页面
       </button>
     </div>
   </div>
   <RouterView v-else />
 </template>
+
+<style scoped>
+.admin-error-screen {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  font-family: system-ui, sans-serif;
+}
+
+.admin-error-card {
+  padding: var(--space-10);
+  text-align: center;
+}
+
+.admin-error-title {
+  margin: 0 0 var(--space-4);
+  color: var(--color-red-600);
+}
+
+.admin-error-message {
+  margin: 0 0 var(--space-9);
+  color: var(--color-gray-600);
+}
+
+.admin-error-action {
+  padding: var(--space-3) var(--space-9);
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius-md);
+  background: var(--color-white);
+  cursor: pointer;
+  font-size: var(--font-size-base);
+}
+</style>

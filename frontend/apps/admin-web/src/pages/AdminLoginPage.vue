@@ -32,8 +32,8 @@ async function submit() {
 
 <template>
   <main class="workspace">
-    <form class="panel" style="max-width: 520px; margin: 12vh auto 0" @submit.prevent="submit">
-      <header class="panel-header"><div class="panel-title"><p class="eyebrow">管理员登录</p><h2>进入管理端</h2><p>登录后可维护基础数据、号源、分诊和知识配置。</p></div></header>
+    <form class="panel admin-login-panel" @submit.prevent="submit">
+      <header class="panel-header"><div class="panel-title"><h2>管理员登录</h2></div></header>
       <div class="panel-body stack">
         <ErrorState v-if="error" :message="error" />
         <FormField label="账号"><input v-model.trim="form.account" autocomplete="username" /></FormField>
@@ -43,3 +43,10 @@ async function submit() {
     </form>
   </main>
 </template>
+
+<style scoped>
+.admin-login-panel {
+  max-width: 520px;
+  margin: 12vh auto 0;
+}
+</style>

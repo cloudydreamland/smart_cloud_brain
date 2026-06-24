@@ -53,7 +53,7 @@ async function search() {
 
 <template>
   <section class="panel">
-    <header class="panel-header"><div class="panel-title"><p class="eyebrow">综合检索</p><h2>知识、药品和提示词检索</h2><p>统一调用后端检索接口核对配置内容。</p></div></header>
+    <header class="panel-header"><div class="panel-title"><h2>综合检索</h2></div></header>
     <div class="panel-body stack">
       <ErrorState v-if="error" :message="error" />
       <div class="form-grid">

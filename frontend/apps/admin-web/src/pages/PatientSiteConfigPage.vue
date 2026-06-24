@@ -862,7 +862,7 @@ onMounted(loadAll);
       <div class="panel-header patient-site-header">
         <div>
           <strong>患者端站点配置</strong>
-          <p>维护患者端导航、首页模块和静态内容页配置。</p>
+          
         </div>
       </div>
 
@@ -926,7 +926,7 @@ onMounted(loadAll);
                 <div class="config-section-head">
                   <div>
                     <h3>品牌信息</h3>
-                    <p>患者端页头品牌和首页路由。</p>
+                    
                   </div>
                   <button type="button" class="topbar-refresh" @click="openEditor({ type: 'brand' })">编辑</button>
                 </div>
@@ -991,7 +991,7 @@ onMounted(loadAll);
               <section class="config-section">
                 <div class="config-section-head">
                   <div>
-                    <h3>Hero</h3>
+                    <h3>首屏横幅</h3>
                     <p>首页首屏标题、按钮和启用状态。</p>
                   </div>
                   <button type="button" class="topbar-refresh" @click="openEditor({ type: 'home-hero' })">编辑</button>

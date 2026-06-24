@@ -121,12 +121,10 @@ onMounted(refresh);
   <section class="panel">
     <header class="panel-header">
       <div class="panel-title">
-        <p class="eyebrow">Clinical Master Data</p>
-        <h2>Patient Management</h2>
-        <p>Maintain patient profiles and inspect registration, triage, record and prescription history.</p>
+        <h2>患者管理</h2>
       </div>
       <div class="toolbar">
-        <button type="button" :disabled="loading" @click="refresh">Refresh</button>
+        <button type="button" :disabled="loading" @click="refresh">刷新</button>
       </div>
     </header>
 
@@ -137,14 +135,14 @@ onMounted(refresh);
       <div class="admin-filter-row">
         <input v-model.trim="keyword" placeholder="Search name or phone" @keyup.enter="refresh" />
         <select v-model="gender">
-          <option value="">All genders</option>
-          <option value="MALE">Male</option>
-          <option value="FEMALE">Female</option>
-          <option value="UNKNOWN">Unknown</option>
+          <option value="">全部性别</option>
+          <option value="MALE">男</option>
+          <option value="FEMALE">女</option>
+          <option value="UNKNOWN">未知</option>
         </select>
         <input v-model.number="minAge" type="number" min="0" placeholder="Min age" />
         <input v-model.number="maxAge" type="number" min="0" placeholder="Max age" />
-        <button type="button" :disabled="loading" @click="refresh">Search</button>
+        <button type="button" :disabled="loading" @click="refresh">搜索</button>
       </div>
 
       <DataTable :rows="filtered" :loading="loading" :error="error" empty-title="No patients">
@@ -168,8 +166,8 @@ onMounted(refresh);
             <td>{{ fieldText(item, "age", "-") }}</td>
             <td>{{ fieldText(item, "registrationCount", "0") }}</td>
             <td class="toolbar">
-              <button type="button" @click="openDetail(item)">Detail</button>
-              <button type="button" @click="openEditor(item)">Edit</button>
+              <button type="button" @click="openDetail(item)">详情</button>
+              <button type="button" @click="openEditor(item)">编辑</button>
             </td>
           </tr>
         </tbody>
@@ -183,9 +181,9 @@ onMounted(refresh);
           <FormField label="Name"><input v-model.trim="form.name" /></FormField>
           <FormField label="Gender">
             <select v-model="form.gender">
-              <option value="">Unknown</option>
-              <option value="MALE">Male</option>
-              <option value="FEMALE">Female</option>
+              <option value="">未知</option>
+              <option value="MALE">男</option>
+              <option value="FEMALE">女</option>
             </select>
           </FormField>
           <FormField label="Age"><input v-model.number="form.age" type="number" min="0" /></FormField>
@@ -194,8 +192,8 @@ onMounted(refresh);
         <FormField label="Past history"><textarea v-model.trim="form.pastHistory" /></FormField>
       </div>
       <template #footer>
-        <button type="button" @click="editorOpen = false">Cancel</button>
-        <button type="button" class="primary" :disabled="saving" @click="save">Save</button>
+        <button type="button" @click="editorOpen = false">取消</button>
+        <button type="button" class="primary" :disabled="saving" @click="save">保存</button>
       </template>
     </Modal>
 

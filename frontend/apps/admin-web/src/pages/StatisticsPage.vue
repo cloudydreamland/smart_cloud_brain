@@ -108,7 +108,7 @@ refresh();
 <template>
   <section class="panel">
     <header class="panel-header">
-      <div class="panel-title"><p class="eyebrow">Analytics</p><h2>Diagnosis Data Statistics</h2><p>Statistics come from registration, patient, doctor and device tables.</p></div>
+      <div class="panel-title"><h2>数据统计</h2></div>
       <div class="toolbar"><input v-model="startDate" type="date" /><input v-model="endDate" type="date" /><button type="button" :disabled="loading" @click="refresh">Refresh</button><button class="primary" type="button" @click="exportCsv">CSV</button></div>
     </header>
     <div class="panel-body stack">
@@ -123,10 +123,10 @@ refresh();
         <div class="metric"><span>Device warnings</span><strong>{{ fieldText(overview, "deviceWarnings", "0") }}</strong></div>
       </div>
       <div class="main-grid admin-grid">
-        <section class="panel"><header class="panel-header"><div class="panel-title"><h3>Visit Trend</h3></div></header><div ref="trendEl" class="chart-box"></div></section>
-        <section class="panel"><header class="panel-header"><div class="panel-title"><h3>Doctor Workload</h3></div></header><div ref="workloadEl" class="chart-box"></div></section>
-        <section class="panel"><header class="panel-header"><div class="panel-title"><h3>Patient Distribution</h3></div></header><div ref="patientEl" class="chart-box"></div></section>
-        <section class="panel"><header class="panel-header"><div class="panel-title"><h3>Device Usage</h3></div></header><div ref="deviceEl" class="chart-box"></div></section>
+        <section class="panel"><header class="panel-header"><div class="panel-title"><h3>就诊趋势</h3></div></header><div ref="trendEl" class="chart-box"></div></section>
+        <section class="panel"><header class="panel-header"><div class="panel-title"><h3>医生工作量</h3></div></header><div ref="workloadEl" class="chart-box"></div></section>
+        <section class="panel"><header class="panel-header"><div class="panel-title"><h3>患者分布</h3></div></header><div ref="patientEl" class="chart-box"></div></section>
+        <section class="panel"><header class="panel-header"><div class="panel-title"><h3>设备使用</h3></div></header><div ref="deviceEl" class="chart-box"></div></section>
       </div>
     </div>
   </section>

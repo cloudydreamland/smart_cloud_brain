@@ -113,8 +113,8 @@ refresh();
 <template>
   <section class="panel">
     <header class="panel-header">
-      <div class="panel-title"><p class="eyebrow">Operations</p><h2>Medical Device Management</h2><p>Real device catalog, status, maintenance and usage records.</p></div>
-      <button class="primary" type="button" @click="openEditor()">New Device</button>
+      <div class="panel-title"><h2>设备管理</h2></div>
+      <button class="primary" type="button" @click="openEditor()">新增设备</button>
     </header>
     <div class="panel-body stack">
       <ErrorState v-if="error" :message="error" />
@@ -135,10 +135,10 @@ refresh();
               <td><StatusTag :status="fieldText(item, 'status')" /></td>
               <td>{{ fieldText(item, "usageCount", "0") }} / abnormal {{ fieldText(item, "abnormalCount", "0") }}</td>
               <td class="toolbar">
-                <button type="button" @click="openEditor(item)">Edit</button>
-                <button type="button" @click="openUsage(item)">Usage</button>
-                <button type="button" @click="changeStatus(item, 'MAINTENANCE')">Maintain</button>
-                <button class="danger" type="button" @click="changeStatus(item, 'RETIRED')">Retire</button>
+                <button type="button" @click="openEditor(item)">编辑</button>
+                <button type="button" @click="openUsage(item)">使用记录</button>
+                <button type="button" @click="changeStatus(item, 'MAINTENANCE')">维护</button>
+                <button class="danger" type="button" @click="changeStatus(item, 'RETIRED')">停用</button>
               </td>
             </tr>
           </tbody>
@@ -160,7 +160,7 @@ refresh();
         </div>
         <FormField label="Remark"><textarea v-model.trim="form.remark" /></FormField>
       </div>
-      <template #footer><button type="button" @click="editorOpen = false">Cancel</button><button class="primary" type="button" :disabled="loading" @click="save">Save</button></template>
+      <template #footer><button type="button" @click="editorOpen = false">取消</button><button class="primary" type="button" :disabled="loading" @click="save">保存</button></template>
     </Modal>
     <Modal :open="usageOpen" title="Device Usage" description="Record use, maintenance and abnormal result." @close="usageOpen = false">
       <div class="stack">
@@ -172,7 +172,7 @@ refresh();
           <FormField label="Result"><select v-model="usageForm.resultStatus"><option value="NORMAL">Normal</option><option value="ABNORMAL">Abnormal</option><option value="FAILED">Failed</option></select></FormField>
         </div>
         <FormField label="Remark"><textarea v-model.trim="usageForm.remark" /></FormField>
-        <button class="primary" type="button" :disabled="loading" @click="saveUsage">Save usage</button>
+        <button class="primary" type="button" :disabled="loading" @click="saveUsage">保存使用记录</button>
         <div class="list">
           <article v-for="item in usages.slice(0, 8)" :key="String(item.id)" class="list-row">
             <div class="row-main"><strong>{{ fieldText(item, "usageType") }} / {{ fieldText(item, "resultStatus") }}</strong><p>{{ fieldText(item, "startedAt") }} - {{ fieldText(item, "remark", "") }}</p></div>

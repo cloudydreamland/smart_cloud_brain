@@ -95,13 +95,11 @@ onMounted(refresh);
   <section class="panel">
     <header class="panel-header">
       <div class="panel-title">
-        <p class="eyebrow">Access Control</p>
-        <h2>Role Permissions</h2>
-        <p>Configure module-level permissions for each role.</p>
+        <h2>角色权限</h2>
       </div>
       <div class="toolbar">
-        <button type="button" :disabled="loading" @click="refresh">Refresh</button>
-        <button type="button" class="primary" :disabled="saving || loading" @click="save">Save</button>
+        <button type="button" :disabled="loading" @click="refresh">刷新</button>
+        <button type="button" class="primary" :disabled="saving || loading" @click="save">保存</button>
       </div>
     </header>
 
