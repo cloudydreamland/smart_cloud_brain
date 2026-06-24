@@ -31,9 +31,6 @@ const navGroups = computed(() => [
     { label: "统计分析", to: "/statistics" },
   ] },
   { label: "配置", items: [
-    { label: "知识库", to: "/knowledge" },
-    { label: "提示词", to: "/prompts" },
-    { label: "字典", to: "/dicts" },
     { label: "患者端配置", to: "/patient-site" },
     { label: "搜索", to: "/search" },
   ] },
@@ -83,6 +80,7 @@ onBeforeUnmount(() => unbind?.());
           <span>管理员 #{{ session?.userId || '-' }}</span>
         </div>
         <div class="admin-topline-actions">
+          <a href="http://localhost" target="_blank" rel="noopener" type="button" class="topbar-btn">Dify 管理</a>
           <button type="button" class="topbar-btn" :disabled="loading" @click="refresh">刷新</button>
           <button type="button" class="topbar-btn danger" @click="logout">退出</button>
         </div>

@@ -97,7 +97,7 @@ async function closeTriage() {
           <input v-model.trim="filter.department" placeholder="推荐科室" />
           <select v-model="filter.status"><option value="">全部状态</option><option value="MANUAL_REQUIRED">待人工处理</option><option value="AI_RECOMMENDED">智能推荐</option><option value="CLOSED">已关闭</option></select>
         </div>
-        <div v-if="rows.length" class="table-scroll">
+        <div v-if="rows.length" class="table-scroll table-breakout">
           <table class="data-table">
             <thead><tr><th>记录</th><th>主诉</th><th>推荐科室</th><th>医生</th><th>状态</th><th class="actions-cell">操作</th></tr></thead>
             <tbody>
@@ -107,7 +107,7 @@ async function closeTriage() {
                 <td>{{ displayText(item.recommendedDepartment) }}</td>
                 <td>{{ displayText(item.assignedDoctorName, "未分配") }}</td>
                 <td><StatusTag :status="displayText(item.status)" :tone="statusClass(item.status)" /></td>
-                <td class="toolbar"><button type="button" @click="detail(item)">详情</button><button type="button" @click="openAssign(item)">分配</button><button class="danger" type="button" @click="closeTarget = item">关闭</button></td>
+                <td class="toolbar"><button type="button" class="action-btn" @click="detail(item)">详情</button><button type="button" class="action-btn primary" @click="openAssign(item)">分配</button><button type="button" class="action-btn danger" @click="closeTarget = item">关闭</button></td>
               </tr>
             </tbody>
           </table>

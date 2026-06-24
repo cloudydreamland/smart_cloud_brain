@@ -356,7 +356,7 @@ textarea {
 .action-btn {
   height: 30px;
   padding: 0 12px;
-  border-radius: 8px;
+  border-radius: 999px;
   border: 1px solid var(--line);
   background: var(--surface);
   font-size: 12px;
@@ -544,6 +544,14 @@ textarea {
   overflow: auto;
 }
 
+/* 通栏模式 */
+.table-scroll.table-breakout,
+.table-wrap.table-breakout {
+  margin-left: -24px;
+  margin-right: -24px;
+  width: calc(100% + 48px);
+}
+
 .clinical-table {
   width: 100%;
   border-collapse: collapse;
@@ -581,32 +589,6 @@ textarea {
   white-space: nowrap;
   text-align: right;
 }
-
-.queue-table {
-  min-width: 820px;
-}
-
-.queue-table th {
-  padding: 10px 14px;
-  font-weight: 600;
-}
-
-.queue-table td {
-  padding: 11px 14px;
-}
-
-/* 设计稿 tag 色值覆盖（仅 queue-table 范围） */
-.queue-table .tag.pending { background: var(--color-orange-50); color: var(--color-orange-600); }
-.queue-table .tag.low { background: var(--color-teal-100); color: var(--color-cyan-900); }
-.queue-table .tag.cancelled { background: var(--color-red-50); color: var(--color-red-600); }
-.queue-table .tag.active { background: var(--color-blue-50); color: var(--color-blue-600); }
-.queue-table .tag.success { background: var(--color-emerald-50); color: var(--color-emerald-600); }
-.queue-table .tag.info { background: var(--color-blue-50); color: var(--color-blue-600); }
-
-.queue-table tbody tr:hover td {
-  background: var(--surface-alt);
-}
-
 
 /* ── Consultation grid layout ── */
 .consult-grid {
@@ -931,14 +913,6 @@ textarea {
 
 .prescription-scroll {
   max-height: calc(100vh - var(--prescription-scroll-offset));
-}
-
-.order-table {
-  min-width: 620px;
-}
-
-.order-table input {
-  min-width: 92px;
 }
 
 .risk-result {
@@ -1676,7 +1650,7 @@ textarea {
   background: rgba(100, 116, 139, 0.34);
 }
 
-.consultation-workbench .order-table {
+.consultation-workbench .data-table {
   min-width: 468px;
   width: 100%;
   border-collapse: collapse;
@@ -1684,32 +1658,32 @@ textarea {
   table-layout: fixed;
 }
 
-.consultation-workbench .order-table th:nth-child(1),
-.consultation-workbench .order-table td:nth-child(1) {
+.consultation-workbench .data-table th:nth-child(1),
+.consultation-workbench .data-table td:nth-child(1) {
   width: 150px;
 }
 
-.consultation-workbench .order-table th:nth-child(2),
-.consultation-workbench .order-table td:nth-child(2) {
+.consultation-workbench .data-table th:nth-child(2),
+.consultation-workbench .data-table td:nth-child(2) {
   width: 86px;
 }
 
-.consultation-workbench .order-table th:nth-child(3),
-.consultation-workbench .order-table td:nth-child(3) {
+.consultation-workbench .data-table th:nth-child(3),
+.consultation-workbench .data-table td:nth-child(3) {
   width: 76px;
 }
 
-.consultation-workbench .order-table th:nth-child(4),
-.consultation-workbench .order-table td:nth-child(4) {
+.consultation-workbench .data-table th:nth-child(4),
+.consultation-workbench .data-table td:nth-child(4) {
   width: 80px;
 }
 
-.consultation-workbench .order-table th:nth-child(5),
-.consultation-workbench .order-table td:nth-child(5) {
+.consultation-workbench .data-table th:nth-child(5),
+.consultation-workbench .data-table td:nth-child(5) {
   width: 68px;
 }
 
-.consultation-workbench .order-table th {
+.consultation-workbench .data-table th {
   position: sticky;
   top: 0;
   z-index: 1;
@@ -1722,18 +1696,18 @@ textarea {
   text-align: left;
 }
 
-.consultation-workbench .order-table td {
+.consultation-workbench .data-table td {
   padding: 8px 9px;
   border-bottom: 1px solid rgba(223, 231, 234, 0.7);
   transition: background 0.15s ease;
   vertical-align: middle;
 }
 
-.consultation-workbench .order-table tbody tr:hover td {
+.consultation-workbench .data-table tbody tr:hover td {
   background: rgba(224, 242, 241, 0.26);
 }
 
-.consultation-workbench .order-table input {
+.consultation-workbench .data-table input {
   width: 100%;
   height: 30px;
   padding: 0 8px;
@@ -1745,27 +1719,21 @@ textarea {
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.consultation-workbench .order-table button {
+.consultation-workbench .data-table button {
   min-height: 28px;
   padding: 0 8px;
   font-size: 12px;
 }
 
-.consultation-workbench .order-table input:focus {
+.consultation-workbench .data-table input:focus {
   border-color: var(--primary);
   outline: none;
   box-shadow: 0 0 0 3px rgba(11, 95, 120, 0.1);
 }
 
-.consultation-workbench .order-table .drug-name {
+.consultation-workbench .data-table .drug-name {
   min-width: 118px;
 }
-
-/* Record table (prescriptions page) */
-.record-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.record-table th { text-align: left; color: var(--muted); font-weight: 600; padding: 10px 14px; border-bottom: 1px solid var(--line); background: var(--surface-2, var(--surface-alt)); font-size: 12px; }
-.record-table td { padding: 11px 14px; border-bottom: 1px solid var(--color-gray-200); transition: background 0.15s ease; }
-.record-table tbody tr:hover td { background: var(--color-gray-50); }
 
 .consultation-workbench .risk-note {
   display: grid;

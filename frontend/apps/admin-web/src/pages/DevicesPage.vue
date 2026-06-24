@@ -123,7 +123,7 @@ refresh();
         <input v-model.trim="keyword" placeholder="Search code, name, category, location" />
         <select v-model="status"><option value="">All status</option><option value="AVAILABLE">Available</option><option value="IN_USE">In use</option><option value="MAINTENANCE">Maintenance</option><option value="RETIRED">Retired</option></select>
       </div>
-      <div v-if="filtered.length" class="table-scroll">
+      <div v-if="filtered.length" class="table-scroll table-breakout">
         <table class="data-table">
           <thead><tr><th>Code</th><th>Name</th><th>Category</th><th>Department</th><th>Status</th><th>Usage</th><th class="actions-cell">Actions</th></tr></thead>
           <tbody>
@@ -135,10 +135,10 @@ refresh();
               <td><StatusTag :status="displayText(item.status)" /></td>
               <td>{{ displayText(item.usageCount, "0") }} / abnormal {{ displayText(item.abnormalCount, "0") }}</td>
               <td class="toolbar">
-                <button type="button" @click="openEditor(item)">编辑</button>
-                <button type="button" @click="openUsage(item)">使用记录</button>
-                <button type="button" @click="changeStatus(item, 'MAINTENANCE')">维护</button>
-                <button class="danger" type="button" @click="changeStatus(item, 'RETIRED')">停用</button>
+                <button type="button" class="action-btn" @click="openEditor(item)">编辑</button>
+                <button type="button" class="action-btn" @click="openUsage(item)">使用记录</button>
+                <button type="button" class="action-btn" @click="changeStatus(item, 'MAINTENANCE')">维护</button>
+                <button class="action-btn danger" type="button" @click="changeStatus(item, 'RETIRED')">停用</button>
               </td>
             </tr>
           </tbody>

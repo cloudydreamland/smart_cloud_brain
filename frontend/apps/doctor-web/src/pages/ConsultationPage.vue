@@ -323,8 +323,8 @@ watch(() => props.registrationId, applyRegistration, { immediate: true });
         <div><b>状态</b><span><span class="tag" :class="statusTone(registration?.status)">{{ statusLabel(registration?.status, "接诊中") }}</span></span></div>
       </div>
       <div class="context-actions">
-        <button type="button" @click="contextOpen = true">上下文</button>
-        <button v-if="!isCompleted" type="button" class="primary" :disabled="loading.complete" @click="completeOpen = true">完成接诊</button>
+        <button type="button" class="action-btn" @click="contextOpen = true">上下文</button>
+        <button v-if="!isCompleted" type="button" class="action-btn primary" :disabled="loading.complete" @click="completeOpen = true">完成接诊</button>
       </div>
     </header>
 
@@ -345,7 +345,7 @@ watch(() => props.registrationId, applyRegistration, { immediate: true });
             <div class="panel-title">
               <h3>患者分诊</h3>
             </div>
-            <button type="button" @click="contextOpen = true">详情</button>
+            <button type="button" class="action-btn" @click="contextOpen = true">详情</button>
           </header>
           <div class="panel-body">
             <div class="triage-level">
@@ -376,8 +376,8 @@ watch(() => props.registrationId, applyRegistration, { immediate: true });
             </div>
             <span class="tag" :class="statusTone(prescription.riskLevel)">{{ statusLabel(prescription.riskLevel) }}</span>
           </header>
-          <div class="table-wrap">
-            <table class="order-table">
+          <div class="table-wrap table-breakout">
+            <table class="data-table">
               <thead><tr><th class="drug-name">药品</th><th>剂量</th><th>频次</th><th>用法</th><th></th></tr></thead>
               <tbody>
                 <tr v-for="(drug, index) in prescription.drugs" :key="index">
@@ -385,7 +385,7 @@ watch(() => props.registrationId, applyRegistration, { immediate: true });
                   <td><input v-model.trim="drug.dosage" /></td>
                   <td><input v-model.trim="drug.frequency" /></td>
                   <td><input v-model.trim="drug.usageMethod" /></td>
-                  <td><button class="danger" type="button" @click="removeDrug(index)">删除</button></td>
+                  <td><button class="action-btn danger" type="button" @click="removeDrug(index)">删除</button></td>
                 </tr>
               </tbody>
             </table>
@@ -398,9 +398,9 @@ watch(() => props.registrationId, applyRegistration, { immediate: true });
             <span>{{ checkResult ? displayText(checkResult.suggestions, "请医生复核用药风险。") : "系统将结合过敏史、诊断、剂量和相互作用进行风险提示。" }}</span>
           </div>
           <footer class="footer-actions">
-            <button type="button" @click="addDrug">新增药品</button>
-            <button class="primary" type="button" :disabled="loading.prescription || !canCheck" @click="checkPrescription">{{ loading.prescription ? "审核中" : "风险审核" }}</button>
-            <button type="button" :disabled="loading.prescription || !canCreate" @click="createPrescription">创建处方</button>
+            <button type="button" class="action-btn" @click="addDrug">新增药品</button>
+            <button type="button" class="action-btn primary" :disabled="loading.prescription || !canCheck" @click="checkPrescription">{{ loading.prescription ? "审核中" : "风险审核" }}</button>
+            <button type="button" class="action-btn" :disabled="loading.prescription || !canCreate" @click="createPrescription">创建处方</button>
           </footer>
         </aside>
       </div>
@@ -426,7 +426,7 @@ watch(() => props.registrationId, applyRegistration, { immediate: true });
                 <span class="prompt-chip">发热</span>
                 <span class="prompt-chip">黄痰</span>
                 <span class="spacer"></span>
-                <button class="primary" type="button" :disabled="loading.record" @click="generateRecord">{{ loading.record ? "生成中" : "生成病历" }}</button>
+                <button class="action-btn primary" type="button" :disabled="loading.record" @click="generateRecord">{{ loading.record ? "生成中" : "生成病历" }}</button>
               </div>
             </div>
           </label>
@@ -436,7 +436,7 @@ watch(() => props.registrationId, applyRegistration, { immediate: true });
               <span class="tag info">SOAP</span>
               <span v-if="streamText" class="tag success">可保存</span>
               <span class="spacer"></span>
-              <button type="button" :disabled="!streamText" @click="previewOpen = true">预览</button>
+              <button type="button" class="action-btn" :disabled="!streamText" @click="previewOpen = true">预览</button>
             </div>
             <pre class="ai-draft">{{ streamText || "尚未生成。点击\"生成病历\"后展示结构化 SOAP 草稿。" }}</pre>
           </div>
@@ -448,8 +448,8 @@ watch(() => props.registrationId, applyRegistration, { immediate: true });
           <label class="field full"><span>处理建议</span><textarea v-model.trim="medicalForm.treatmentAdvice" rows="2" /></label>
         </div>
         <footer class="footer-actions">
-          <button class="primary" type="button" :disabled="loading.record" @click="generateRecord">{{ loading.record ? "生成中" : "生成病历" }}</button>
-          <button type="button" :disabled="!canSaveRecord || loading.record" @click="saveConfirmOpen = true">保存病历</button>
+          <button class="action-btn primary" type="button" :disabled="loading.record" @click="generateRecord">{{ loading.record ? "生成中" : "生成病历" }}</button>
+          <button type="button" class="action-btn" :disabled="!canSaveRecord || loading.record" @click="saveConfirmOpen = true">保存病历</button>
         </footer>
       </main>
     </div>

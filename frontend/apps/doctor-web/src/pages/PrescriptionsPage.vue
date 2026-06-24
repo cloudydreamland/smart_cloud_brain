@@ -42,8 +42,8 @@ refresh();
     <div class="panel-body stack">
       <ErrorState v-if="error" :message="error" />
       <LoadingState v-if="loading" title="正在同步处方" />
-      <div class="table-wrap">
-        <table class="record-table">
+      <div class="table-wrap table-breakout">
+        <table class="data-table">
           <thead>
             <tr>
               <th>处方号</th>

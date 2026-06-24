@@ -428,7 +428,7 @@ refresh();
         <ErrorState v-if="error" :message="error" />
         <div v-if="notice" class="notice success">{{ notice }}</div>
         <div class="admin-filter-row"><input v-model.trim="keyword" placeholder="搜索当前表" /></div>
-        <DataTable :rows="rows" :loading="loading" :error="error" empty-title="暂无数据" empty-message="当前筛选条件下没有记录。">
+        <DataTable :rows="rows" :loading="loading" :error="error" :breakout="true" empty-title="暂无数据" empty-message="当前筛选条件下没有记录。">
           <thead><tr><th v-for="column in config.columns" :key="column">{{ column }}</th><th class="actions-cell">操作</th></tr></thead>
           <tbody>
             <tr v-for="item in pageRows" :key="String(item.id)">
@@ -437,7 +437,7 @@ refresh();
                 <StatusTag v-else-if="column === 'enabled'" :status="displayText(getCatalogValue(item, column))" :tone="statusClass(getCatalogValue(item, column))" />
                 <span v-else>{{ displayCell(column, getCatalogValue(item, column)) }}</span>
               </td>
-              <td><button type="button" @click="openEditor(item)">编辑</button></td>
+              <td><button type="button" class="action-btn" @click="openEditor(item)">编辑</button></td>
             </tr>
           </tbody>
         </DataTable>

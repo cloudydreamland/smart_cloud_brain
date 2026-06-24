@@ -246,7 +246,7 @@ onMounted(refresh);
         <div class="admin-filter-row">
           <input v-model.trim="keyword" :placeholder="`搜索${currentRoleLabel}账号、姓名或权限`" />
         </div>
-        <DataTable :rows="currentRoleAccounts" :loading="loading" :error="error" :empty-title="`${currentRoleLabel}暂无账户`" empty-message="当前角色下还没有可管理账户。">
+        <DataTable :rows="currentRoleAccounts" :loading="loading" :error="error" :breakout="true" :empty-title="`${currentRoleLabel}暂无账户`" empty-message="当前角色下还没有可管理账户。">
           <thead>
             <tr>
               <th>账号</th>
@@ -264,7 +264,7 @@ onMounted(refresh);
               <td>{{ displayText(item.departmentName) }}</td>
               <td><StatusTag :status="displayText(item.status)" :tone="statusClass(item.status)" /></td>
               <td class="permission-cell">{{ displayText(item.permissions) }}</td>
-              <td><button type="button" @click="openEditor(item)">编辑</button></td>
+              <td><button type="button" class="action-btn" @click="openEditor(item)">编辑</button></td>
             </tr>
           </tbody>
         </DataTable>

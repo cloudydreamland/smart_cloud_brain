@@ -104,7 +104,7 @@ onMounted(refresh);
         </div>
       </div>
 
-      <DataTable :rows="catalog" :loading="loading" :error="error" empty-title="No permissions">
+      <DataTable :rows="catalog" :loading="loading" :error="error" :breakout="true" empty-title="No permissions">
         <thead>
           <tr>
             <th>Enabled</th>

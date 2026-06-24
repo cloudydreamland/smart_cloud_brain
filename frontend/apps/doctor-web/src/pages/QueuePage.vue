@@ -70,8 +70,8 @@ refresh();
       <div class="panel-body stack">
         <ErrorState v-if="error" :message="error" />
         <LoadingState v-if="loading" title="正在同步队列" />
-        <div v-else class="table-wrap">
-          <table class="queue-table">
+        <div v-else class="table-wrap table-breakout">
+          <table class="data-table">
             <thead>
               <tr>
                 <th>序号</th>

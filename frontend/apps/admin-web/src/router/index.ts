@@ -8,9 +8,6 @@ const AdminDashboard = () => import("../pages/AdminDashboard.vue");
 const DepartmentsPage = () => import("../pages/DepartmentsPage.vue");
 const DoctorsPage = () => import("../pages/DoctorsPage.vue");
 const DrugsPage = () => import("../pages/DrugsPage.vue");
-const KnowledgePage = () => import("../pages/KnowledgePage.vue");
-const PromptsPage = () => import("../pages/PromptsPage.vue");
-const DictsPage = () => import("../pages/DictsPage.vue");
 const SchedulePage = () => import("../pages/SchedulePage.vue");
 const TriageDeskPage = () => import("../pages/TriageDeskPage.vue");
 const SearchPage = () => import("../pages/SearchPage.vue");
@@ -35,9 +32,6 @@ const router = createRouter({
         { path: "departments", name: "admin-departments", component: DepartmentsPage },
         { path: "doctors", name: "admin-doctors", component: DoctorsPage },
         { path: "drugs", name: "admin-drugs", component: DrugsPage },
-        { path: "knowledge", name: "admin-knowledge", component: KnowledgePage },
-        { path: "prompts", name: "admin-prompts", component: PromptsPage },
-        { path: "dicts", name: "admin-dicts", component: DictsPage },
         { path: "schedule", name: "admin-schedule", component: SchedulePage },
         { path: "triage-desk", name: "admin-triage", component: TriageDeskPage },
         { path: "devices", name: "admin-devices", component: DevicesPage },

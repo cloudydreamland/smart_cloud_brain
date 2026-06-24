@@ -207,10 +207,16 @@
   overflow-x: auto;
 }
 
+/* 通栏模式：突破父容器 padding，横线接到左右边缘 */
+.table-scroll.table-breakout {
+  margin-left: -24px;
+  margin-right: -24px;
+  width: calc(100% + 48px);
+}
+
 .data-table {
   width: 100%;
   border-collapse: collapse;
-  table-layout: fixed;
   font-size: 14px;
 }
 
@@ -224,13 +230,14 @@
 }
 
 .data-table th {
-  background: rgba(210, 224, 235, 0.3);
+  background: var(--color-slate-100, rgba(210, 224, 235, 0.3));
   color: var(--muted);
   font-size: 13px;
-  font-weight: 500;
-  height: 48px;
+  font-weight: 600;
+  height: 44px;
   white-space: nowrap;
   user-select: none;
+  border-bottom: 2px solid var(--line);
 }
 
 .data-table th.sortable {
@@ -239,6 +246,10 @@
 
 .data-table th.sortable:hover {
   color: var(--ink);
+}
+
+.data-table td {
+  font-size: 13px;
 }
 
 .data-table tr:hover td {

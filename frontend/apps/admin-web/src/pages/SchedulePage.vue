@@ -134,7 +134,7 @@ loadSchedules();
           <button type="button" :disabled="loading" @click="loadSchedules">搜索</button>
         </div>
         <LoadingState v-if="loading" />
-        <div v-if="schedules.length" class="table-scroll">
+        <div v-if="schedules.length" class="table-scroll table-breakout">
           <table class="data-table">
             <thead><tr><th>Date</th><th>Time</th><th>Doctor</th><th>Department</th><th>Capacity</th><th>Booked</th><th>Status</th><th class="actions-cell">Actions</th></tr></thead>
             <tbody>
@@ -146,7 +146,7 @@ loadSchedules();
                 <td>{{ displayText(item.capacity) }}</td>
                 <td>{{ displayText(item.booked, "0") }}</td>
                 <td><StatusTag :status="displayText(item.status)" /></td>
-                <td class="toolbar"><button type="button" @click="openEditor(item)">编辑</button><button class="danger" type="button" :disabled="displayText(item.status) === 'CANCELLED'" @click="cancelSchedule(item)">取消排班</button></td>
+                <td class="toolbar"><button type="button" class="action-btn" @click="openEditor(item)">编辑</button><button class="action-btn danger" type="button" :disabled="displayText(item.status) === 'CANCELLED'" @click="cancelSchedule(item)">取消排班</button></td>
               </tr>
             </tbody>
           </table>

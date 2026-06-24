@@ -466,6 +466,41 @@ button.status-pill:hover {
   color: var(--color-red-800);
 }
 
+/* ── Action pill buttons (table rows) ── */
+.action-btn {
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line, #e5e7eb);
+  background: var(--surface, #fff);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink, #171717);
+  cursor: pointer;
+  transition: all 160ms ease;
+  white-space: nowrap;
+}
+.action-btn:hover {
+  background: var(--surface-2, #f3f5f8);
+}
+.action-btn.primary {
+  background: var(--primary, #0b5f78);
+  color: #fff;
+  border-color: var(--primary, #0b5f78);
+}
+.action-btn.primary:hover {
+  background: var(--primary-strong, #094d62);
+  border-color: var(--primary-strong, #094d62);
+}
+.action-btn.danger {
+  color: var(--danger, #dc2626);
+  border-color: var(--danger-soft, #fecaca);
+  background: var(--surface, #fff);
+}
+.action-btn.danger:hover {
+  background: var(--danger-soft, #fef2f2);
+}
+
 .config-card-head strong,
 .nested-list-head strong {
   font-size: 13px;
@@ -962,43 +997,6 @@ button.status-pill:hover {
 .status-tag.cancelled { background: var(--color-red-50); color: var(--color-red-600); }
 .status-tag.pending { background: var(--color-orange-50); color: var(--color-orange-600); }
 .status-tag.active { background: var(--color-blue-50); color: var(--color-blue-600); }
-
-/* ── Table enhancements ── */
-.table-scroll table,
-.catalog-layout table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-
-.table-scroll th,
-.catalog-layout th {
-  padding: 8px 10px;
-  border-bottom: 2px solid var(--line);
-  background: var(--color-slate-100);
-  color: var(--color-slate-600);
-  font-size: 12px;
-  font-weight: 700;
-  text-align: left;
-  white-space: nowrap;
-}
-
-.table-scroll td,
-.catalog-layout td {
-  padding: 8px 10px;
-  border-bottom: 1px solid var(--line);
-  background: var(--color-white);
-}
-
-.table-scroll tbody tr:nth-child(even) td,
-.catalog-layout tbody tr:nth-child(even) td {
-  background: var(--color-slate-50);
-}
-
-.table-scroll tbody tr:hover td,
-.catalog-layout tbody tr:hover td {
-  background: var(--color-cyan-50);
-}
 
 @media (max-width: 980px) {
   .catalog-layout,

@@ -147,7 +147,7 @@ onMounted(refresh);
         <button type="button" :disabled="loading" @click="refresh">搜索</button>
       </div>
 
-      <DataTable :rows="filtered" :loading="loading" :error="error" empty-title="No patients">
+      <DataTable :rows="filtered" :loading="loading" :error="error" :breakout="true" empty-title="No patients">
         <thead>
           <tr>
             <th>ID</th>
@@ -168,8 +168,8 @@ onMounted(refresh);
             <td>{{ displayText(item.age) }}</td>
             <td>{{ displayText(item.registrationCount, "0") }}</td>
             <td class="toolbar">
-              <button type="button" @click="openDetail(item)">详情</button>
-              <button type="button" @click="openEditor(item)">编辑</button>
+              <button type="button" class="action-btn" @click="openDetail(item)">详情</button>
+              <button type="button" class="action-btn" @click="openEditor(item)">编辑</button>
             </td>
           </tr>
         </tbody>

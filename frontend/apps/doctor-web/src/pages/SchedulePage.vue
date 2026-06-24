@@ -37,8 +37,8 @@ refresh();
       <div class="panel-body stack">
         <ErrorState v-if="error" :message="error" />
         <LoadingState v-if="loading" />
-        <div v-if="rows.length" class="table-wrap">
-          <table class="queue-table">
+        <div v-if="rows.length" class="table-wrap table-breakout">
+          <table class="data-table">
             <thead><tr><th>Date</th><th>Time</th><th>Department</th><th>Capacity</th><th>Booked</th><th>Remaining</th><th>Status</th></tr></thead>
             <tbody>
               <tr v-for="item in pageRows" :key="String(item.id)">
