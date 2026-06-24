@@ -13,6 +13,7 @@ const router = useRouter();
 const { session, permissionError } = storeToRefs(auth);
 const { departments, doctors, triageDesk } = storeToRefs(workflow);
 const loading = ref(false);
+const difyUrl = import.meta.env.VITE_DIFY_URL || "";
 let unbind: (() => void) | null = null;
 
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);
@@ -80,7 +81,7 @@ onBeforeUnmount(() => unbind?.());
           <span>管理员 #{{ session?.userId || '-' }}</span>
         </div>
         <div class="admin-topline-actions">
-          <a href="http://localhost" target="_blank" rel="noopener" type="button" class="topbar-btn">Dify 管理</a>
+          <a :href="difyUrl" target="_blank" rel="noopener" type="button" class="topbar-btn" v-if="difyUrl">Dify 管理</a>
           <button type="button" class="topbar-btn" :disabled="loading" @click="refresh">刷新</button>
           <button type="button" class="topbar-btn danger" @click="logout">退出</button>
         </div>
