@@ -106,6 +106,15 @@ const homeModuleTypeOptions = [
 ] as const;
 
 const templates: ConfigDrafts = clone(patientSiteConfigTemplates) as ConfigDrafts;
+const emptyAction = (): RouteTargetConfig => ({ label: "", routeName: "" });
+const emptyDrafts: ConfigDrafts = {
+  patient_nav: { brand: { name: "", homeRoute: "" }, menus: [], userLinks: [] },
+  patient_home: {
+    hero: { enabled: false, eyebrow: "", title: "", primaryAction: emptyAction(), secondaryAction: emptyAction() },
+    modules: [],
+  },
+  patient_static_pages: { pages: [] },
+};
 
 const auth = useAuthStore();
 const activeKey = ref<ConfigKey>("patient_nav");
@@ -120,9 +129,9 @@ const staticSearch = ref("");
 const staticDisabledOnly = ref(false);
 
 const drafts = reactive<ConfigDrafts>({
-  patient_nav: clone(templates.patient_nav),
-  patient_home: clone(templates.patient_home),
-  patient_static_pages: clone(templates.patient_static_pages),
+  patient_nav: clone(emptyDrafts.patient_nav),
+  patient_home: clone(emptyDrafts.patient_home),
+  patient_static_pages: clone(emptyDrafts.patient_static_pages),
 });
 const latest = reactive<Record<ConfigKey, DataRow | null>>({
   patient_nav: null,
@@ -207,16 +216,15 @@ function normalizeDraft(key: ConfigKey, value: unknown) {
 
 function normalizeNav(value: unknown): PatientNavConfig {
   const row = isRecord(value) ? value : {};
-  const fallback = templates.patient_nav;
   const brand = isRecord(row.brand) ? row.brand : {};
   return {
     ...row,
     brand: {
-      name: stringValue(brand.name, fallback.brand.name),
-      homeRoute: routeValue(brand.homeRoute, fallback.brand.homeRoute),
+      name: stringValue(brand.name, ""),
+      homeRoute: routeValue(brand.homeRoute, ""),
     },
-    menus: Array.isArray(row.menus) ? row.menus.map(normalizeNavMenu) : clone(fallback.menus),
-    userLinks: Array.isArray(row.userLinks) ? row.userLinks.map((item) => normalizeLink(item)) : clone(fallback.userLinks),
+    menus: Array.isArray(row.menus) ? row.menus.map(normalizeNavMenu) : [],
+    userLinks: Array.isArray(row.userLinks) ? row.userLinks.map((item) => normalizeLink(item)) : [],
   };
 }
 
@@ -240,18 +248,17 @@ function normalizeNavMenu(value: unknown, index = 0): PatientNavMenu {
 
 function normalizeHome(value: unknown): PatientHomeConfig {
   const row = isRecord(value) ? value : {};
-  const fallback = templates.patient_home;
   const hero = isRecord(row.hero) ? row.hero : {};
   return {
     ...row,
     hero: {
-      enabled: hero.enabled !== false,
-      eyebrow: stringValue(hero.eyebrow, fallback.hero.eyebrow || ""),
-      title: stringValue(hero.title, fallback.hero.title),
-      primaryAction: isRecord(hero.primaryAction) ? normalizeLink(hero.primaryAction) : clone(fallback.hero.primaryAction),
-      secondaryAction: isRecord(hero.secondaryAction) ? normalizeLink(hero.secondaryAction) : clone(fallback.hero.secondaryAction),
+      enabled: isRecord(row.hero) && hero.enabled !== false,
+      eyebrow: stringValue(hero.eyebrow, ""),
+      title: stringValue(hero.title, ""),
+      primaryAction: isRecord(hero.primaryAction) ? normalizeLink(hero.primaryAction) : emptyAction(),
+      secondaryAction: isRecord(hero.secondaryAction) ? normalizeLink(hero.secondaryAction) : emptyAction(),
     },
-    modules: Array.isArray(row.modules) ? row.modules.map(normalizeHomeModule) : clone(fallback.modules),
+    modules: Array.isArray(row.modules) ? row.modules.map(normalizeHomeModule) : [],
   };
 }
 
@@ -279,10 +286,9 @@ function normalizeHomeModule(value: unknown, index = 0): PatientHomeModule {
 
 function normalizeStaticPages(value: unknown): PatientStaticPagesConfig {
   const row = isRecord(value) ? value : {};
-  const fallback = templates.patient_static_pages;
   return {
     ...row,
-    pages: Array.isArray(row.pages) ? row.pages.map(normalizeStaticPage) : clone(fallback.pages),
+    pages: Array.isArray(row.pages) ? row.pages.map(normalizeStaticPage) : [],
   };
 }
 
@@ -348,7 +354,7 @@ function configSectionFromPublic(source: unknown, key: ConfigKey) {
 async function loadEffectiveSection(key: ConfigKey) {
   const publicConfig = await api.patientSiteConfig();
   const section = configSectionFromPublic(publicConfig, key);
-  return isRecord(section) && Object.keys(section).length ? section : templates[key];
+  return isRecord(section) ? section : {};
 }
 
 async function loadPublishedRecord(key: ConfigKey) {
@@ -395,7 +401,7 @@ function switchTab(key: ConfigKey) {
 }
 
 function useTemplate() {
-  if (!window.confirm("这会用完整默认配置覆盖当前编辑内容。是否继续？")) return;
+  if (!window.confirm("这会将当前编辑内容改为完整默认模板；保存并生效后会写入数据库成为当前真实配置。是否继续？")) return;
   setDraft(activeKey.value, templates[activeKey.value]);
   status.value = "已填入默认模板，保存后会直接生效";
   error.value = "";

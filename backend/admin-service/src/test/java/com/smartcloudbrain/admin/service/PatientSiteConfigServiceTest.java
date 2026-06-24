@@ -1,6 +1,7 @@
 package com.smartcloudbrain.admin.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -11,6 +12,7 @@ import com.smartcloudbrain.admin.dto.admin.PatientSiteConfigSaveRequest;
 import com.smartcloudbrain.admin.entity.PatientSiteConfig;
 import com.smartcloudbrain.admin.repository.PatientSiteConfigRepository;
 import com.smartcloudbrain.common.exception.BusinessException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -133,6 +135,8 @@ class PatientSiteConfigServiceTest {
     when(repository.findByConfigKeyAndStatusOrderByVersionDesc("patient_nav", "PUBLISHED")).thenReturn(List.of());
     when(repository.findByConfigKeyAndStatusOrderByVersionDesc("patient_home", "PUBLISHED")).thenReturn(List.of(publishedConfig));
     when(repository.findByConfigKeyAndStatusOrderByVersionDesc("patient_static_pages", "PUBLISHED")).thenReturn(List.of());
+    when(repository.findByConfigKeyOrderByVersionDesc("patient_nav")).thenReturn(List.of());
+    when(repository.findByConfigKeyOrderByVersionDesc("patient_static_pages")).thenReturn(List.of());
 
     @SuppressWarnings("unchecked")
     Map<String, Object> home = (Map<String, Object>) service.publicConfig().get("home");
@@ -148,12 +152,44 @@ class PatientSiteConfigServiceTest {
     when(repository.findByConfigKeyAndStatusOrderByVersionDesc("patient_nav", "PUBLISHED")).thenReturn(List.of());
     when(repository.findByConfigKeyAndStatusOrderByVersionDesc("patient_home", "PUBLISHED")).thenReturn(List.of(invalid, valid));
     when(repository.findByConfigKeyAndStatusOrderByVersionDesc("patient_static_pages", "PUBLISHED")).thenReturn(List.of());
+    when(repository.findByConfigKeyOrderByVersionDesc("patient_nav")).thenReturn(List.of());
+    when(repository.findByConfigKeyOrderByVersionDesc("patient_static_pages")).thenReturn(List.of());
 
     @SuppressWarnings("unchecked")
     Map<String, Object> home = (Map<String, Object>) service.publicConfig().get("home");
     @SuppressWarnings("unchecked")
     Map<String, Object> hero = (Map<String, Object>) home.get("hero");
     assertEquals("Fallback", hero.get("title"));
+  }
+
+  @Test
+  void publicConfigInitializesMissingPublishedDefaults() {
+    List<PatientSiteConfig> stored = new ArrayList<>();
+    when(repository.findByConfigKeyAndStatusOrderByVersionDesc(any(), any())).thenAnswer(invocation -> {
+      String key = invocation.getArgument(0);
+      String status = invocation.getArgument(1);
+      return stored.stream()
+          .filter(config -> key.equals(config.getConfigKey()) && status.equals(config.getStatus()))
+          .toList();
+    });
+    when(repository.findByConfigKeyOrderByVersionDesc(any())).thenAnswer(invocation -> {
+      String key = invocation.getArgument(0);
+      return stored.stream().filter(config -> key.equals(config.getConfigKey())).toList();
+    });
+    when(repository.save(any(PatientSiteConfig.class))).thenAnswer(invocation -> {
+      PatientSiteConfig value = invocation.getArgument(0);
+      stored.add(value);
+      return value;
+    });
+
+    Map<String, Object> config = service.publicConfig();
+
+    assertEquals(3, stored.size());
+    assertEquals(3, stored.stream().map(PatientSiteConfig::getConfigKey).distinct().count());
+    assertTrue(stored.stream().allMatch(row -> "PUBLISHED".equals(row.getStatus())));
+    assertTrue(((Map<?, ?>) config.get("nav")).containsKey("brand"));
+    assertTrue(((Map<?, ?>) config.get("home")).containsKey("hero"));
+    assertTrue(((Map<?, ?>) config.get("staticPages")).containsKey("pages"));
   }
 
   private PatientSiteConfig config(String key, String status, int version, String json) {

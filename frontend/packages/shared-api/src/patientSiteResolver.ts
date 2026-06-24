@@ -1,4 +1,3 @@
-import { defaultPatientSiteConfig } from "./patientSiteDefaults";
 import { isAllowedPatientRoute } from "./patientSiteRoutes";
 import type {
   PatientHomeConfig,
@@ -19,9 +18,14 @@ type ResolveOptions = {
 };
 
 const allowedHomeModules = new Set(["notice", "quick_actions", "intro", "locations", "featured_departments", "static_content"]);
+const emptyPatientSiteConfig: PatientSiteConfig = {
+  nav: { brand: { name: "", homeRoute: "" }, menus: [], userLinks: [] },
+  home: { hero: { title: "", enabled: false }, modules: [] },
+  staticPages: { pages: [] },
+};
 
 export function resolvePatientSiteConfig(
-  fallback: PatientSiteConfig = defaultPatientSiteConfig,
+  fallback: PatientSiteConfig = emptyPatientSiteConfig,
   source: unknown = {},
   options: ResolveOptions = {},
 ): PatientSiteConfig {
@@ -34,14 +38,14 @@ export function resolvePatientSiteConfig(
 }
 
 export function normalizePatientSiteConfig(source: unknown = {}, options: ResolveOptions = {}): PatientSiteConfig {
-  return resolvePatientSiteConfig(defaultPatientSiteConfig, source, options);
+  return resolvePatientSiteConfig(emptyPatientSiteConfig, source, options);
 }
 
 export function resolvePatientSiteConfigSection(
   key: PatientSiteConfigKey,
   source: unknown,
   options: ResolveOptions = {},
-  fallbackConfig: PatientSiteConfig = defaultPatientSiteConfig,
+  fallbackConfig: PatientSiteConfig = emptyPatientSiteConfig,
 ) {
   if (key === "patient_nav") return normalizeNav(sectionOrFallback(source, fallbackConfig.nav), options);
   if (key === "patient_home") return normalizeHome(sectionOrFallback(source, fallbackConfig.home), options);
@@ -201,19 +205,21 @@ function normalizeLink(
   };
 }
 
-function normalizeArray<T extends { sort?: number }>(
+function normalizeArray<T>(
   source: unknown,
   normalize: (item: unknown, index: number) => T | undefined,
 ): T[] {
   if (!Array.isArray(source)) return [];
   return source
     .map((item, index) => (isRecord(item) ? normalize(item, index) : undefined))
-    .filter(Boolean)
+    .filter((item): item is T => Boolean(item))
     .sort(bySort) as T[];
 }
 
-function bySort<T extends { sort?: number }>(left: T, right: T) {
-  return numberValue(left.sort, 0) - numberValue(right.sort, 0);
+function bySort(left: unknown, right: unknown) {
+  const leftSort = isRecord(left) ? left.sort : undefined;
+  const rightSort = isRecord(right) ? right.sort : undefined;
+  return numberValue(leftSort, 0) - numberValue(rightSort, 0);
 }
 
 function routeName(value: unknown, fallback: string) {

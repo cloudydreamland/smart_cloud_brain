@@ -6,6 +6,7 @@ import com.smartcloudbrain.admin.dto.admin.PatientSiteConfigSaveRequest;
 import com.smartcloudbrain.admin.entity.PatientSiteConfig;
 import com.smartcloudbrain.admin.repository.PatientSiteConfigRepository;
 import com.smartcloudbrain.common.exception.BusinessException;
+import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -39,14 +40,17 @@ public class PatientSiteConfigService {
 
   private final PatientSiteConfigRepository repository;
   private final ObjectMapper objectMapper;
+  private JsonNode defaultConfig;
 
   public PatientSiteConfigService(PatientSiteConfigRepository repository, ObjectMapper objectMapper) {
     this.repository = repository;
     this.objectMapper = objectMapper;
   }
 
+  @Transactional
   public Map<String, Object> latest(String configKey) {
     if (isBlank(configKey)) {
+      ensurePublishedDefaults();
       Map<String, Object> view = new LinkedHashMap<>();
       for (String key : CONFIG_KEYS.stream().sorted().toList()) {
         view.put(key, repository.findByConfigKeyOrderByVersionDesc(key).stream().findFirst().map(this::view).orElse(Map.of()));
@@ -54,11 +58,14 @@ public class PatientSiteConfigService {
       return view;
     }
     requireConfigKey(configKey);
+    ensurePublishedDefault(configKey);
     return repository.findByConfigKeyOrderByVersionDesc(configKey).stream().findFirst().map(this::view).orElse(Map.of());
   }
 
+  @Transactional
   public List<Map<String, Object>> history(String configKey) {
     requireConfigKey(configKey);
+    ensurePublishedDefault(configKey);
     return repository.findByConfigKeyOrderByVersionDesc(configKey).stream().map(this::view).toList();
   }
 
@@ -123,12 +130,74 @@ public class PatientSiteConfigService {
     return view(repository.save(published));
   }
 
+  @Transactional
   public Map<String, Object> publicConfig() {
+    ensurePublishedDefaults();
     Map<String, Object> view = new LinkedHashMap<>();
     view.put("nav", publishedJson("patient_nav"));
     view.put("home", publishedJson("patient_home"));
     view.put("staticPages", publishedJson("patient_static_pages"));
     return view;
+  }
+
+  private void ensurePublishedDefaults() {
+    for (String key : CONFIG_KEYS) {
+      ensurePublishedDefault(key);
+    }
+  }
+
+  private void ensurePublishedDefault(String configKey) {
+    String key = requireConfigKey(configKey);
+    if (!repository.findByConfigKeyAndStatusOrderByVersionDesc(key, STATUS_PUBLISHED).isEmpty()) {
+      return;
+    }
+    JsonNode root = loadDefaultSection(key);
+    validateStructure(key, root);
+
+    PatientSiteConfig config = new PatientSiteConfig();
+    config.setConfigKey(key);
+    config.setConfigJson(compact(root));
+    config.setStatus(STATUS_PUBLISHED);
+    config.setVersion(nextVersion(key));
+    config.setRemark("系统默认配置初始化");
+    config.setUpdatedAt(LocalDateTime.now());
+    repository.save(config);
+  }
+
+  private JsonNode loadDefaultSection(String configKey) {
+    JsonNode root = defaultConfig();
+    String section = switch (configKey) {
+      case "patient_nav" -> "nav";
+      case "patient_home" -> "home";
+      case "patient_static_pages" -> "staticPages";
+      default -> throw new BusinessException(400, "Unsupported patient site config key: " + configKey);
+    };
+    JsonNode value = root.path(section);
+    if (!value.isObject()) {
+      throw new BusinessException(500, "Default patient site config section missing: " + section);
+    }
+    return value;
+  }
+
+  private JsonNode defaultConfig() {
+    if (defaultConfig != null) {
+      return defaultConfig;
+    }
+    try (InputStream input = PatientSiteConfigService.class.getResourceAsStream("/patient-site-defaults.json")) {
+      if (input == null) {
+        throw new BusinessException(500, "Default patient site config resource not found");
+      }
+      JsonNode root = objectMapper.readTree(input);
+      if (!root.isObject()) {
+        throw new BusinessException(500, "Default patient site config must be a JSON object");
+      }
+      defaultConfig = root;
+      return root;
+    } catch (BusinessException ex) {
+      throw ex;
+    } catch (Exception ex) {
+      throw new BusinessException(500, "Default patient site config is invalid");
+    }
   }
 
   private Object publishedJson(String configKey) {
