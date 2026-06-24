@@ -11,7 +11,6 @@ import {
 import { isAllowedPatientRoute, patientRouteOptions } from "../patientSiteRoutes";
 
 type ConfigKey = "patient_nav" | "patient_home" | "patient_static_pages";
-type EditMode = "form" | "json";
 type JsonObject = Record<string, any>;
 
 type RouteTargetConfig = {
@@ -97,6 +96,14 @@ const tabs: ConfigTab[] = [
 
 const configKeys = new Set<ConfigKey>(tabs.map((tab) => tab.key));
 const allowedHomeModules = new Set(["notice", "quick_actions", "intro", "locations", "featured_departments", "static_content"]);
+const homeModuleTypeOptions = [
+  { value: "notice", label: "notice" },
+  { value: "quick_actions", label: "quick_actions" },
+  { value: "intro", label: "intro" },
+  { value: "locations", label: "locations" },
+  { value: "featured_departments", label: "featured_departments" },
+  { value: "static_content", label: "static_content" },
+] as const;
 
 const templates: ConfigDrafts = clone(patientSiteConfigTemplates) as ConfigDrafts;
 
@@ -107,26 +114,13 @@ const saving = ref(false);
 const publishing = ref(false);
 const status = ref("");
 const error = ref("");
-const applyingJson = ref(false);
 const publishConfirmOpen = ref(false);
-const publishPreparedJson = ref("");
 const editorOpen = ref(false);
 const editingTarget = ref<EditingTarget | null>(null);
 const editingDraft = ref<any>(null);
-const editingContentText = ref("");
 const staticSearch = ref("");
 const staticDisabledOnly = ref(false);
 
-const modes = reactive<Record<ConfigKey, EditMode>>({
-  patient_nav: "form",
-  patient_home: "form",
-  patient_static_pages: "form",
-});
-const editors = reactive<Record<ConfigKey, string>>({
-  patient_nav: pretty(templates.patient_nav),
-  patient_home: pretty(templates.patient_home),
-  patient_static_pages: pretty(templates.patient_static_pages),
-});
 const drafts = reactive<ConfigDrafts>({
   patient_nav: clone(templates.patient_nav),
   patient_home: clone(templates.patient_home),
@@ -151,12 +145,9 @@ const validationErrors = reactive<Record<ConfigKey, string[]>>({
 const activeTab = computed(() => tabs.find((tab) => tab.key === activeKey.value) || tabs[0]);
 const activeRecord = computed(() => latest[activeKey.value]);
 const activeErrors = computed(() => validationErrors[activeKey.value]);
-const activeMode = computed(() => modes[activeKey.value]);
 const navDraft = computed(() => drafts.patient_nav);
 const homeDraft = computed(() => drafts.patient_home);
 const staticDraft = computed(() => drafts.patient_static_pages);
-const noticeModules = computed(() => homeDraft.value.modules.filter((module) => module.type === "notice"));
-const quickActionModules = computed(() => homeDraft.value.modules.filter((module) => module.type === "quick_actions"));
 const filteredStaticPages = computed(() => {
   const keyword = staticSearch.value.trim().toLowerCase();
   return staticDraft.value.pages
@@ -192,17 +183,10 @@ for (const tab of tabs) {
   watch(
     () => drafts[tab.key],
     () => {
-      if (!applyingJson.value && modes[tab.key] === "form") {
-        syncEditorFromDraft(tab.key);
-      }
       publishConfirmOpen.value = false;
     },
     { deep: true },
   );
-}
-
-function pretty(value: unknown) {
-  return JSON.stringify(value, null, 2);
 }
 
 function clone<T>(value: T): T {
@@ -225,15 +209,8 @@ function loadMessageFrom(err: unknown) {
   return `${message}。如果是首次运行，请执行数据库迁移或重新初始化演示库。`;
 }
 
-function syncEditorFromDraft(key: ConfigKey) {
-  editors[key] = pretty(drafts[key]);
-}
-
 function setDraft(key: ConfigKey, value: unknown) {
-  applyingJson.value = true;
   drafts[key] = normalizeDraft(key, value) as never;
-  editors[key] = pretty(drafts[key]);
-  applyingJson.value = false;
 }
 
 function normalizeDraft(key: ConfigKey, value: unknown) {
@@ -429,26 +406,6 @@ function switchTab(key: ConfigKey) {
   if (!latest[key]) void loadConfig(key);
 }
 
-function setMode(mode: EditMode) {
-  const key = activeKey.value;
-  error.value = "";
-  validationErrors[key] = [];
-  publishConfirmOpen.value = false;
-  if (mode === "json") {
-    syncEditorFromDraft(key);
-    modes[key] = "json";
-    return;
-  }
-  try {
-    const parsed = JSON.parse(editors[key]);
-    setDraft(key, parsed);
-    modes[key] = "form";
-    status.value = "JSON 已同步到表单";
-  } catch {
-    validationErrors[key] = ["JSON 格式无效，无法切换到表单编辑。"];
-  }
-}
-
 function useTemplate() {
   if (!window.confirm("这会用完整默认配置覆盖当前编辑草稿，且不会直接发布。是否继续？")) return;
   setDraft(activeKey.value, templates[activeKey.value]);
@@ -462,7 +419,6 @@ function openEditor(target: EditingTarget) {
   editingTarget.value = target;
   editingDraft.value = clone(readEditingTarget(target) || {});
   hydrateEditingDraft(target);
-  syncEditingContentText();
   editorOpen.value = true;
   publishConfirmOpen.value = false;
 }
@@ -471,46 +427,14 @@ function closeEditor() {
   editorOpen.value = false;
   editingTarget.value = null;
   editingDraft.value = null;
-  editingContentText.value = "";
 }
 
 function applyEditor() {
   if (!editingTarget.value) return;
-  if (!applyEditingContentJson()) return;
   writeEditingTarget(editingTarget.value, editingDraft.value);
   status.value = "已更新当前草稿，发布前请保存草稿";
   error.value = "";
   closeEditor();
-}
-
-function syncEditingContentText() {
-  if (editingTarget.value?.type === "home-module" && editingDraft.value && !isSimpleHomeModuleType(editingDraft.value.type)) {
-    editingContentText.value = pretty(editingDraft.value.content || {});
-    return;
-  }
-  editingContentText.value = "";
-}
-
-function applyEditingContentJson() {
-  if (editingTarget.value?.type !== "home-module" || !editingDraft.value || isSimpleHomeModuleType(editingDraft.value.type)) {
-    return true;
-  }
-  try {
-    const parsed = JSON.parse(editingContentText.value || "{}");
-    if (!isRecord(parsed)) {
-      validationErrors[activeKey.value] = ["模块 content 必须是 JSON object。"];
-      return false;
-    }
-    editingDraft.value.content = parsed;
-    return true;
-  } catch {
-    validationErrors[activeKey.value] = ["模块 content JSON 格式无效。"];
-    return false;
-  }
-}
-
-function isSimpleHomeModuleType(type: unknown) {
-  return type === "notice" || type === "quick_actions";
 }
 
 function readEditingTarget(target: EditingTarget) {
@@ -559,14 +483,89 @@ function hydrateEditingDraft(target: EditingTarget) {
   }
   if (target.type === "home-module") {
     if (!editingDraft.value.content || typeof editingDraft.value.content !== "object") editingDraft.value.content = {};
-    if (editingDraft.value.type === "quick_actions" && !Array.isArray(editingDraft.value.content.items)) {
-      editingDraft.value.content.items = [];
-    }
+    hydrateEditingHomeModuleContent();
     return;
   }
   if (target.type === "static-page" && !Array.isArray(editingDraft.value.points)) {
     editingDraft.value.points = [];
   }
+}
+
+function editingContent() {
+  if (!editingDraft.value) editingDraft.value = {};
+  if (!editingDraft.value.content || typeof editingDraft.value.content !== "object" || Array.isArray(editingDraft.value.content)) {
+    editingDraft.value.content = {};
+  }
+  return editingDraft.value.content as JsonObject;
+}
+
+function ensureContentAction(field: string, label: string, routeName: string) {
+  const content = editingContent();
+  if (!isRecord(content[field])) {
+    content[field] = { label, routeName, enabled: true, sort: 0 };
+  }
+  const action = content[field] as JsonObject;
+  action.label = stringValue(action.label, label);
+  action.routeName = routeValue(action.routeName, routeName);
+  action.enabled = action.enabled !== false;
+  action.sort = numberValue(action.sort, 0);
+  return action as RouteTargetConfig;
+}
+
+function ensureObjectArray(field: string) {
+  const content = editingContent();
+  content[field] = Array.isArray(content[field]) ? (content[field] as unknown[]).filter(isRecord) : [];
+  return content[field] as JsonObject[];
+}
+
+function ensureStringArray(field: string) {
+  const content = editingContent();
+  content[field] = Array.isArray(content[field]) ? (content[field] as unknown[]).map((item) => String(item || "")) : [];
+  return content[field] as string[];
+}
+
+function hydrateEditingHomeModuleContent() {
+  if (!editingDraft.value) return;
+  const content = editingContent();
+  const type = editingDraft.value.type;
+  if (type === "notice") {
+    content.level = stringValue(content.level, "info");
+    content.text = stringValue(content.text, "");
+    return;
+  }
+  if (type === "quick_actions") {
+    ensureObjectArray("items");
+    return;
+  }
+  if (type === "intro") {
+    ensureContentAction("action", "进入患者服务", "patient-dashboard");
+    return;
+  }
+  if (type === "locations") {
+    ensureObjectArray("items");
+    return;
+  }
+  if (type === "featured_departments") {
+    content.limit = numberValue(content.limit, 12);
+    ensureObjectArray("items");
+    ensureStringArray("fallbackNames");
+    return;
+  }
+  if (type === "static_content") {
+    ensureContentAction("action", "了解科研与教育", "public-research");
+  }
+}
+
+function addEditingLocationItem() {
+  ensureObjectArray("items").push({ title: "新院区", meta: "", imageUrl: "", alt: "" });
+}
+
+function addEditingDepartmentLink() {
+  ensureObjectArray("items").push({ label: "新诊疗领域", routeName: "public-search", enabled: true, sort: nextSort(ensureObjectArray("items")) });
+}
+
+function addEditingFallbackName() {
+  ensureStringArray("fallbackNames").push("新科室");
 }
 
 function moduleSummary(module: PatientHomeModule) {
@@ -575,7 +574,7 @@ function moduleSummary(module: PatientHomeModule) {
     const items = Array.isArray(module.content?.items) ? module.content.items : [];
     return `${items.length} 个快捷入口`;
   }
-  return Object.keys(module.content || {}).length ? "JSON 内容已配置" : "暂无内容";
+  return Object.keys(module.content || {}).length ? "内容已配置" : "暂无内容";
 }
 
 function routeLabel(routeName = "") {
@@ -646,12 +645,7 @@ function preparePayload(key = activeKey.value) {
     validationErrors[key] = [`configKey 不合法：${key}`];
     return null;
   }
-  try {
-    source = modes[key] === "json" ? JSON.parse(editors[key]) : clone(drafts[key]);
-  } catch {
-    validationErrors[key] = ["JSON 格式无效，请修正后再提交。"];
-    return null;
-  }
+  source = clone(drafts[key]);
   const normalized = normalizeDraft(key, source);
   sanitizeBeforeSubmit(key, normalized);
   const errors = validateConfig(key, normalized);
@@ -659,11 +653,7 @@ function preparePayload(key = activeKey.value) {
     validationErrors[key] = errors;
     return null;
   }
-  if (modes[key] === "form") {
-    setDraft(key, normalized);
-  } else {
-    editors[key] = pretty(normalized);
-  }
+  setDraft(key, normalized);
   return { configJson: JSON.stringify(normalized), data: normalized };
 }
 
@@ -803,13 +793,12 @@ function requestPublish() {
   if (!auth.session) return;
   const payload = preparePayload();
   if (!payload) return;
-  publishPreparedJson.value = payload.configJson;
   publishConfirmOpen.value = true;
   status.value = "";
 }
 
 async function confirmPublish() {
-  if (!auth.session || !publishPreparedJson.value) return;
+  if (!auth.session) return;
   const payload = preparePayload();
   if (!payload) return;
   publishing.value = true;
@@ -824,7 +813,6 @@ async function confirmPublish() {
       setDraft(activeKey.value, JSON.parse(row.configJson));
     }
     publishConfirmOpen.value = false;
-    publishPreparedJson.value = "";
     status.value = "配置已发布；患者端刷新后会读取 /api/patient-site/config 的最新内容";
   } catch (err) {
     error.value = messageFrom(err);
@@ -848,22 +836,6 @@ function addMenu() {
 
 function removeMenu(index: number) {
   navDraft.value.menus[index].enabled = false;
-}
-
-function addMenuLink(menu: PatientNavMenu) {
-  menu.links.push({ label: "新链接", routeName: "patient-home", description: "", enabled: true, sort: nextSort(menu.links) });
-}
-
-function removeMenuLink(menu: PatientNavMenu, index: number) {
-  menu.links[index].enabled = false;
-}
-
-function addMenuFeature(menu: PatientNavMenu) {
-  menu.feature = { label: "特色入口", routeName: "patient-home", enabled: true, sort: 0 };
-}
-
-function removeMenuFeature(menu: PatientNavMenu) {
-  if (menu.feature) menu.feature.enabled = false;
 }
 
 function addUserLink() {
@@ -928,20 +900,6 @@ function removeHomeModule(module: PatientHomeModule) {
   module.enabled = false;
 }
 
-function quickActionItems(module: PatientHomeModule) {
-  if (!Array.isArray(module.content.items)) module.content.items = [];
-  return module.content.items as RouteTargetConfig[];
-}
-
-function addQuickAction(module: PatientHomeModule) {
-  const items = quickActionItems(module);
-  items.push({ label: "新快捷入口", routeName: "patient-home", enabled: true, sort: nextSort(items) });
-}
-
-function removeQuickAction(module: PatientHomeModule, index: number) {
-  quickActionItems(module)[index].enabled = false;
-}
-
 function addStaticPage() {
   staticDraft.value.pages.push({
     routeName: "service-internet-clinic",
@@ -958,22 +916,6 @@ function addStaticPage() {
 
 function removeStaticPage(index: number) {
   staticDraft.value.pages[index].enabled = false;
-}
-
-function addPoint(page: StaticPageConfig) {
-  page.points.push({ title: "新要点", text: "" });
-}
-
-function removePoint(page: StaticPageConfig, index: number) {
-  page.points.splice(index, 1);
-}
-
-function addPrimary(page: StaticPageConfig) {
-  page.primary = { label: "返回首页", routeName: "patient-home" };
-}
-
-function removePrimary(page: StaticPageConfig) {
-  if (page.primary) page.primary.enabled = false;
 }
 
 onMounted(loadAll);
@@ -1022,11 +964,6 @@ onMounted(loadAll);
             </div>
           </dl>
 
-          <div class="patient-site-mode-switch" role="group" aria-label="编辑模式">
-            <button type="button" :class="{ active: activeMode === 'form' }" @click="setMode('form')">表单编辑</button>
-            <button type="button" :class="{ active: activeMode === 'json' }" @click="setMode('json')">JSON 高级编辑</button>
-          </div>
-
           <label>
             <span>本次备注</span>
             <input v-model.trim="remarks[activeKey]" type="text" placeholder="本次调整说明">
@@ -1064,8 +1001,7 @@ onMounted(loadAll);
         </aside>
 
         <div class="patient-site-main">
-          <template v-if="activeMode === 'form'">
-            <template v-if="activeKey === 'patient_nav'">
+          <template v-if="activeKey === 'patient_nav'">
               <section class="config-section">
                 <div class="config-section-head">
                   <div>
@@ -1154,7 +1090,7 @@ onMounted(loadAll);
                 <div class="config-section-head">
                   <div>
                     <h3>首页模块</h3>
-                    <p>模块详情在弹窗中维护，复杂内容可切换 JSON 编辑。</p>
+                    <p>模块详情在弹窗中维护。</p>
                   </div>
                   <div class="inline-actions">
                     <button type="button" class="topbar-refresh" @click="addNoticeModule">新增 notice</button>
@@ -1217,286 +1153,6 @@ onMounted(loadAll);
                 </div>
               </section>
             </template>
-          </template>
-
-          <template v-else-if="activeMode === 'json'">
-            <textarea
-              v-model="editors[activeKey]"
-              spellcheck="false"
-              :aria-label="`${activeTab.label} JSON`"
-            />
-          </template>
-
-          <template v-else-if="activeKey === 'patient_nav'">
-            <section class="config-section">
-              <div class="config-section-head">
-                <div>
-                  <h3>品牌</h3>
-                  <p>控制患者端页头品牌名称和点击品牌后的目标路由。</p>
-                </div>
-              </div>
-              <div class="config-grid two">
-                <label><span>brand.name</span><input v-model.trim="navDraft.brand.name" type="text"></label>
-                <label>
-                  <span>brand.homeRoute</span>
-                  <select v-model="navDraft.brand.homeRoute">
-                    <option v-for="route in patientRouteOptions" :key="route.name" :value="route.name">{{ route.label }} / {{ route.name }}</option>
-                  </select>
-                </label>
-              </div>
-            </section>
-
-            <section class="config-section">
-              <div class="config-section-head">
-                <div>
-                  <h3>菜单列表</h3>
-                  <p>配置顶部导航下拉菜单及菜单内链接。</p>
-                </div>
-                <button type="button" class="topbar-refresh" @click="addMenu">新增菜单</button>
-              </div>
-
-              <article v-for="(menu, menuIndex) in navDraft.menus" :key="menu.key || menuIndex" class="config-card">
-                <div class="config-card-head">
-                  <strong>菜单 {{ menuIndex + 1 }}</strong>
-                  <button type="button" class="danger-link" @click="removeMenu(menuIndex)">删除菜单</button>
-                </div>
-                <div class="config-grid four">
-                  <label><span>key</span><input v-model.trim="menu.key" type="text"></label>
-                  <label><span>label</span><input v-model.trim="menu.label" type="text"></label>
-                  <label><span>sort</span><input v-model.number="menu.sort" type="number"></label>
-                  <label class="check-field"><input v-model="menu.enabled" type="checkbox"><span>enabled</span></label>
-                </div>
-                <div class="config-grid two">
-                  <label><span>lead</span><input v-model.trim="menu.lead" type="text"></label>
-                  <label><span>description</span><input v-model.trim="menu.description" type="text"></label>
-                </div>
-
-                <div class="nested-list">
-                  <div class="nested-list-head">
-                    <strong>菜单链接</strong>
-                    <button type="button" class="topbar-refresh" @click="addMenuLink(menu)">新增链接</button>
-                  </div>
-                  <div v-for="(link, linkIndex) in menu.links" :key="`${menu.key}-${linkIndex}`" class="config-row-card">
-                    <div class="config-grid five">
-                      <label><span>label</span><input v-model.trim="link.label" type="text"></label>
-                      <label>
-                        <span>routeName</span>
-                        <select v-model="link.routeName">
-                          <option v-for="route in patientRouteOptions" :key="route.name" :value="route.name">{{ route.label }} / {{ route.name }}</option>
-                        </select>
-                      </label>
-                      <label><span>description</span><input v-model.trim="link.description" type="text"></label>
-                      <label><span>sort</span><input v-model.number="link.sort" type="number"></label>
-                      <label class="check-field"><input v-model="link.enabled" type="checkbox"><span>enabled</span></label>
-                    </div>
-                    <button type="button" class="danger-link" @click="removeMenuLink(menu, linkIndex)">删除链接</button>
-                  </div>
-                </div>
-
-                <div class="nested-list">
-                  <div class="nested-list-head">
-                    <strong>feature</strong>
-                    <button v-if="!menu.feature" type="button" class="topbar-refresh" @click="addMenuFeature(menu)">添加特色入口</button>
-                    <button v-else type="button" class="danger-link" @click="removeMenuFeature(menu)">删除特色入口</button>
-                  </div>
-                  <div v-if="menu.feature" class="config-grid three">
-                    <label><span>feature.label</span><input v-model.trim="menu.feature.label" type="text"></label>
-                    <label>
-                      <span>feature.routeName</span>
-                      <select v-model="menu.feature.routeName">
-                        <option v-for="route in patientRouteOptions" :key="route.name" :value="route.name">{{ route.label }} / {{ route.name }}</option>
-                      </select>
-                    </label>
-                    <label><span>feature.sort</span><input v-model.number="menu.feature.sort" type="number"></label>
-                  </div>
-                </div>
-              </article>
-            </section>
-
-            <section class="config-section">
-              <div class="config-section-head">
-                <div>
-                  <h3>用户菜单链接</h3>
-                  <p>登录后用户名下拉菜单中的入口。</p>
-                </div>
-                <button type="button" class="topbar-refresh" @click="addUserLink">新增用户链接</button>
-              </div>
-              <div v-for="(link, linkIndex) in navDraft.userLinks" :key="`user-${linkIndex}`" class="config-row-card">
-                <div class="config-grid four">
-                  <label><span>label</span><input v-model.trim="link.label" type="text"></label>
-                  <label>
-                    <span>routeName</span>
-                    <select v-model="link.routeName">
-                      <option v-for="route in patientRouteOptions" :key="route.name" :value="route.name">{{ route.label }} / {{ route.name }}</option>
-                    </select>
-                  </label>
-                  <label><span>sort</span><input v-model.number="link.sort" type="number"></label>
-                  <label class="check-field"><input v-model="link.enabled" type="checkbox"><span>enabled</span></label>
-                </div>
-                <button type="button" class="danger-link" @click="removeUserLink(linkIndex)">删除</button>
-              </div>
-            </section>
-          </template>
-
-          <template v-else-if="activeKey === 'patient_home'">
-            <section class="config-section">
-              <div class="config-section-head">
-                <div>
-                  <h3>Hero</h3>
-                  <p>控制首页首屏文案和主操作。</p>
-                </div>
-              </div>
-              <div class="config-grid two">
-                <label><span>hero.eyebrow</span><input v-model.trim="homeDraft.hero.eyebrow" type="text"></label>
-                <label><span>hero.title</span><input v-model.trim="homeDraft.hero.title" type="text"></label>
-                <label class="check-field"><input v-model="homeDraft.hero.enabled" type="checkbox"><span>hero.enabled</span></label>
-              </div>
-              <div class="config-grid two">
-                <label><span>primaryAction.label</span><input v-model.trim="homeDraft.hero.primaryAction.label" type="text"></label>
-                <label>
-                  <span>primaryAction.routeName</span>
-                  <select v-model="homeDraft.hero.primaryAction.routeName">
-                    <option v-for="route in patientRouteOptions" :key="route.name" :value="route.name">{{ route.label }} / {{ route.name }}</option>
-                  </select>
-                </label>
-                <label><span>secondaryAction.label</span><input v-model.trim="homeDraft.hero.secondaryAction.label" type="text"></label>
-                <label>
-                  <span>secondaryAction.routeName</span>
-                  <select v-model="homeDraft.hero.secondaryAction.routeName">
-                    <option v-for="route in patientRouteOptions" :key="route.name" :value="route.name">{{ route.label }} / {{ route.name }}</option>
-                  </select>
-                </label>
-              </div>
-            </section>
-
-            <section class="config-section">
-              <div class="config-section-head">
-                <div>
-                  <h3>模块列表</h3>
-                  <p>当前表单支持 notice 和 quick_actions，其他模块可在 JSON 高级模式维护。</p>
-                </div>
-                <div class="inline-actions">
-                  <button type="button" class="topbar-refresh" @click="addNoticeModule">新增 notice</button>
-                  <button type="button" class="topbar-refresh" @click="addQuickActionsModule">新增 quick_actions</button>
-                </div>
-              </div>
-
-              <article v-for="module in noticeModules" :key="module.key" class="config-card">
-                <div class="config-card-head">
-                  <strong>notice / {{ module.key }}</strong>
-                  <button type="button" class="danger-link" @click="removeHomeModule(module)">删除模块</button>
-                </div>
-                <div class="config-grid five">
-                  <label><span>key</span><input v-model.trim="module.key" type="text"></label>
-                  <label><span>sort</span><input v-model.number="module.sort" type="number"></label>
-                  <label><span>content.level</span><input v-model.trim="module.content.level" type="text"></label>
-                  <label><span>content.text</span><input v-model.trim="module.content.text" type="text"></label>
-                  <label class="check-field"><input v-model="module.enabled" type="checkbox"><span>enabled</span></label>
-                </div>
-              </article>
-
-              <article v-for="module in quickActionModules" :key="module.key" class="config-card">
-                <div class="config-card-head">
-                  <strong>quick_actions / {{ module.key }}</strong>
-                  <button type="button" class="danger-link" @click="removeHomeModule(module)">删除模块</button>
-                </div>
-                <div class="config-grid three">
-                  <label><span>key</span><input v-model.trim="module.key" type="text"></label>
-                  <label><span>sort</span><input v-model.number="module.sort" type="number"></label>
-                  <label class="check-field"><input v-model="module.enabled" type="checkbox"><span>enabled</span></label>
-                </div>
-                <div class="nested-list">
-                  <div class="nested-list-head">
-                    <strong>快捷入口</strong>
-                    <button type="button" class="topbar-refresh" @click="addQuickAction(module)">新增 quick action</button>
-                  </div>
-                  <div v-for="(item, itemIndex) in quickActionItems(module)" :key="`${module.key}-${itemIndex}`" class="config-row-card">
-                    <div class="config-grid four">
-                      <label><span>label</span><input v-model.trim="item.label" type="text"></label>
-                      <label>
-                        <span>routeName</span>
-                        <select v-model="item.routeName">
-                          <option v-for="route in patientRouteOptions" :key="route.name" :value="route.name">{{ route.label }} / {{ route.name }}</option>
-                        </select>
-                      </label>
-                      <label><span>sort</span><input v-model.number="item.sort" type="number"></label>
-                      <label class="check-field"><input v-model="item.enabled" type="checkbox"><span>enabled</span></label>
-                    </div>
-                    <button type="button" class="danger-link" @click="removeQuickAction(module, itemIndex)">删除</button>
-                  </div>
-                </div>
-              </article>
-
-              <p v-if="homeDraft.modules.some((module) => module.type !== 'notice' && module.type !== 'quick_actions')" class="muted-hint">
-                存在未在表单中展示的模块，请使用 JSON 高级模式维护。
-              </p>
-            </section>
-          </template>
-
-          <template v-else>
-            <section class="config-section">
-              <div class="config-section-head">
-                <div>
-                  <h3>静态页面</h3>
-                  <p>按患者端 routeName 匹配静态内容页。</p>
-                </div>
-                <button type="button" class="topbar-refresh" @click="addStaticPage">新增页面</button>
-              </div>
-
-              <article v-for="(page, pageIndex) in staticDraft.pages" :key="`${page.routeName}-${pageIndex}`" class="config-card">
-                <div class="config-card-head">
-                  <strong>页面 {{ pageIndex + 1 }}</strong>
-                  <button type="button" class="danger-link" @click="removeStaticPage(pageIndex)">删除页面</button>
-                </div>
-                <div class="config-grid four">
-                  <label>
-                    <span>routeName</span>
-                    <select v-model="page.routeName">
-                      <option v-for="route in patientRouteOptions" :key="route.name" :value="route.name">{{ route.label }} / {{ route.name }}</option>
-                    </select>
-                  </label>
-                  <label><span>sort</span><input v-model.number="page.sort" type="number"></label>
-                  <label><span>label</span><input v-model.trim="page.label" type="text"></label>
-                  <label class="check-field"><input v-model="page.enabled" type="checkbox"><span>enabled</span></label>
-                </div>
-                <div class="config-grid two">
-                  <label><span>title</span><input v-model.trim="page.title" type="text"></label>
-                  <label><span>intro</span><input v-model.trim="page.intro" type="text"></label>
-                </div>
-
-                <div class="nested-list">
-                  <div class="nested-list-head">
-                    <strong>points</strong>
-                    <button type="button" class="topbar-refresh" @click="addPoint(page)">新增 point</button>
-                  </div>
-                  <div v-for="(point, pointIndex) in page.points" :key="`${pageIndex}-${pointIndex}`" class="config-row-card">
-                    <div class="config-grid two">
-                      <label><span>point.title</span><input v-model.trim="point.title" type="text"></label>
-                      <label><span>point.text</span><input v-model.trim="point.text" type="text"></label>
-                    </div>
-                    <button type="button" class="danger-link" @click="removePoint(page, pointIndex)">删除</button>
-                  </div>
-                </div>
-
-                <div class="nested-list">
-                  <div class="nested-list-head">
-                    <strong>primary</strong>
-                    <button v-if="!page.primary" type="button" class="topbar-refresh" @click="addPrimary(page)">添加主按钮</button>
-                    <button v-else type="button" class="danger-link" @click="removePrimary(page)">删除主按钮</button>
-                  </div>
-                  <div v-if="page.primary" class="config-grid two">
-                    <label><span>primary.label</span><input v-model.trim="page.primary.label" type="text"></label>
-                    <label>
-                      <span>primary.routeName</span>
-                      <select v-model="page.primary.routeName">
-                        <option v-for="route in patientRouteOptions" :key="route.name" :value="route.name">{{ route.label }} / {{ route.name }}</option>
-                      </select>
-                    </label>
-                  </div>
-                </div>
-              </article>
-            </section>
-          </template>
         </div>
       </div>
     </div>
@@ -1613,7 +1269,12 @@ onMounted(loadAll);
 
         <template v-else-if="editingTarget.type === 'home-module'">
           <div class="config-grid four">
-            <label><span>type</span><input v-model.trim="editingDraft.type" type="text"></label>
+            <label>
+              <span>type</span>
+              <select v-model="editingDraft.type" @change="hydrateEditingHomeModuleContent">
+                <option v-for="type in homeModuleTypeOptions" :key="type.value" :value="type.value">{{ type.label }}</option>
+              </select>
+            </label>
             <label><span>key</span><input v-model.trim="editingDraft.key" type="text"></label>
             <label><span>sort</span><input v-model.number="editingDraft.sort" type="number"></label>
             <label class="check-field"><input v-model="editingDraft.enabled" type="checkbox"><span>enabled</span></label>
@@ -1642,10 +1303,107 @@ onMounted(loadAll);
               <button type="button" class="danger-link" @click="editingContentItems()[itemIndex].enabled = false">删除</button>
             </div>
           </div>
-          <label v-else>
-            <span>content JSON</span>
-            <textarea v-model="editingContentText" spellcheck="false" rows="12"></textarea>
-          </label>
+          <div v-else-if="editingDraft.type === 'intro'" class="nested-list">
+            <div class="config-grid two">
+              <label><span>content.title</span><input v-model.trim="editingDraft.content.title" type="text"></label>
+              <label><span>content.imageUrl</span><input v-model.trim="editingDraft.content.imageUrl" type="text"></label>
+              <label><span>content.firstTitle</span><input v-model.trim="editingDraft.content.firstTitle" type="text"></label>
+              <label><span>content.firstText</span><input v-model.trim="editingDraft.content.firstText" type="text"></label>
+              <label><span>content.secondTitle</span><input v-model.trim="editingDraft.content.secondTitle" type="text"></label>
+              <label><span>content.secondTextPrefix</span><input v-model.trim="editingDraft.content.secondTextPrefix" type="text"></label>
+              <label><span>content.departmentUnit</span><input v-model.trim="editingDraft.content.departmentUnit" type="text"></label>
+              <label><span>content.doctorUnit</span><input v-model.trim="editingDraft.content.doctorUnit" type="text"></label>
+              <label><span>content.imageAlt</span><input v-model.trim="editingDraft.content.imageAlt" type="text"></label>
+            </div>
+            <div class="nested-list">
+              <div class="nested-list-head"><strong>action</strong></div>
+              <div class="config-grid two">
+                <label><span>action.label</span><input v-model.trim="editingDraft.content.action.label" type="text"></label>
+                <label>
+                  <span>action.routeName</span>
+                  <select v-model="editingDraft.content.action.routeName">
+                    <option v-for="route in patientRouteOptions" :key="route.name" :value="route.name">{{ route.label }} / {{ route.name }}</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+          </div>
+          <div v-else-if="editingDraft.type === 'locations'" class="nested-list">
+            <div class="config-grid two">
+              <label><span>content.title</span><input v-model.trim="editingDraft.content.title" type="text"></label>
+              <label><span>content.description</span><input v-model.trim="editingDraft.content.description" type="text"></label>
+            </div>
+            <div class="nested-list-head">
+              <strong>院区列表</strong>
+              <button type="button" class="topbar-refresh" @click="addEditingLocationItem">新增院区</button>
+            </div>
+            <div v-for="(item, itemIndex) in editingDraft.content.items" :key="`editing-location-${itemIndex}`" class="config-row-card">
+              <div class="config-grid four">
+                <label><span>title</span><input v-model.trim="item.title" type="text"></label>
+                <label><span>meta</span><input v-model.trim="item.meta" type="text"></label>
+                <label><span>imageUrl</span><input v-model.trim="item.imageUrl" type="text"></label>
+                <label><span>alt</span><input v-model.trim="item.alt" type="text"></label>
+              </div>
+              <button type="button" class="danger-link" @click="editingDraft.content.items.splice(itemIndex, 1)">删除</button>
+            </div>
+          </div>
+          <div v-else-if="editingDraft.type === 'featured_departments'" class="nested-list">
+            <div class="config-grid three">
+              <label><span>content.title</span><input v-model.trim="editingDraft.content.title" type="text"></label>
+              <label><span>content.description</span><input v-model.trim="editingDraft.content.description" type="text"></label>
+              <label><span>content.limit</span><input v-model.number="editingDraft.content.limit" type="number" min="1"></label>
+            </div>
+            <div class="nested-list">
+              <div class="nested-list-head">
+                <strong>备用入口</strong>
+                <button type="button" class="topbar-refresh" @click="addEditingDepartmentLink">新增入口</button>
+              </div>
+              <div v-for="(item, itemIndex) in editingDraft.content.items" :key="`editing-dept-link-${itemIndex}`" class="config-row-card">
+                <div class="config-grid four">
+                  <label><span>label</span><input v-model.trim="item.label" type="text"></label>
+                  <label>
+                    <span>routeName</span>
+                    <select v-model="item.routeName">
+                      <option v-for="route in patientRouteOptions" :key="route.name" :value="route.name">{{ route.label }} / {{ route.name }}</option>
+                    </select>
+                  </label>
+                  <label><span>sort</span><input v-model.number="item.sort" type="number"></label>
+                  <label class="check-field"><input v-model="item.enabled" type="checkbox"><span>enabled</span></label>
+                </div>
+                <button type="button" class="danger-link" @click="editingDraft.content.items.splice(itemIndex, 1)">删除</button>
+              </div>
+            </div>
+            <div class="nested-list">
+              <div class="nested-list-head">
+                <strong>默认科室名</strong>
+                <button type="button" class="topbar-refresh" @click="addEditingFallbackName">新增科室名</button>
+              </div>
+              <div v-for="(_name, nameIndex) in editingDraft.content.fallbackNames" :key="`editing-fallback-${nameIndex}`" class="config-row-card">
+                <label><span>name</span><input v-model.trim="editingDraft.content.fallbackNames[nameIndex]" type="text"></label>
+                <button type="button" class="danger-link" @click="editingDraft.content.fallbackNames.splice(nameIndex, 1)">删除</button>
+              </div>
+            </div>
+          </div>
+          <div v-else-if="editingDraft.type === 'static_content'" class="nested-list">
+            <div class="config-grid two">
+              <label><span>content.title</span><input v-model.trim="editingDraft.content.title" type="text"></label>
+              <label><span>content.imageUrl</span><input v-model.trim="editingDraft.content.imageUrl" type="text"></label>
+              <label><span>content.text</span><input v-model.trim="editingDraft.content.text" type="text"></label>
+              <label><span>content.imageAlt</span><input v-model.trim="editingDraft.content.imageAlt" type="text"></label>
+            </div>
+            <div class="nested-list">
+              <div class="nested-list-head"><strong>action</strong></div>
+              <div class="config-grid two">
+                <label><span>action.label</span><input v-model.trim="editingDraft.content.action.label" type="text"></label>
+                <label>
+                  <span>action.routeName</span>
+                  <select v-model="editingDraft.content.action.routeName">
+                    <option v-for="route in patientRouteOptions" :key="route.name" :value="route.name">{{ route.label }} / {{ route.name }}</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+          </div>
         </template>
 
         <template v-else-if="editingTarget.type === 'static-page'">

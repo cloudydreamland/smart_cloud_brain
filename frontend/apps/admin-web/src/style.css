@@ -212,45 +212,10 @@
   padding: 0;
 }
 
-.patient-site-editor textarea {
-  min-height: 620px;
-  padding: 14px;
-  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  font-size: 12px;
-  line-height: 1.55;
-  resize: vertical;
-}
-
 .patient-site-main {
   display: grid;
   gap: 14px;
   min-width: 0;
-}
-
-.patient-site-mode-switch {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-  padding: 4px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: #f8fafc;
-}
-
-.patient-site-mode-switch button {
-  height: 30px;
-  border: 0;
-  border-radius: 7px;
-  background: transparent;
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.patient-site-mode-switch button.active {
-  background: #fff;
-  color: #1d4ed8;
-  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
 }
 
 .patient-site-side-actions {
