@@ -132,6 +132,7 @@ onBeforeUnmount(() => {
       :user-name="session?.name || '医生'"
       :user-meta="`${statusLabel(session?.role, '医生')} #${session?.userId || '-'}`"
       :current-path="route.path"
+      @navigate="router.push"
     />
 
     <div class="doctor-app">

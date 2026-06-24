@@ -67,7 +67,7 @@ onBeforeUnmount(() => unbind?.());
       :user-name="session?.name || '管理员'"
       :user-meta="`${statusText(session?.role, '')} #${session?.userId || ''}`"
       :current-path="route.path"
-
+      @navigate="router.push"
     />
 
     <div class="admin-app">

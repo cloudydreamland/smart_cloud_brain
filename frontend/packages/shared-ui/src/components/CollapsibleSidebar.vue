@@ -26,7 +26,7 @@ const props = withDefaults(defineProps<{
   icons: () => ({}),
 });
 
-defineEmits<{ logout: [] }>();
+defineEmits<{ logout: []; navigate: [path: string] }>();
 
 const open = ref(false);
 
@@ -79,7 +79,7 @@ function isActive(to: string) {
         <template v-for="(group, gi) in groups" :key="group.label ?? gi">
           <div v-if="group.label" class="c-group-label">{{ group.label }}</div>
           <div class="c-nav-group">
-            <a
+            <a @click.prevent="$emit('navigate', item.to)"
               v-for="item in group.items"
               :key="item.to"
               :href="item.to"
