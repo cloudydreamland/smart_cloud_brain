@@ -3,7 +3,14 @@ import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { api, type DataRow } from "@smart-cloud-brain/shared-api";
 import { usePatientSiteConfig } from "../site-config/usePatientSiteConfig";
-import type { RouteTargetConfig } from "../site-config/types";
+import type { PatientHomeModule, RouteTargetConfig } from "../site-config/types";
+
+type HomeLocation = {
+  title: string;
+  meta: string;
+  imageUrl: string;
+  alt: string;
+};
 
 const router = useRouter();
 const departments = ref<DataRow[]>([]);
@@ -11,14 +18,109 @@ const doctors = ref<DataRow[]>([]);
 const conditionQuery = ref("");
 const { config, load: loadSiteConfig } = usePatientSiteConfig();
 
-const featuredDepartments = computed(() => departments.value.slice(0, 12));
 const hero = computed(() => config.value.home.hero);
-const notice = computed(() => config.value.home.modules.find((module) => module.type === "notice"));
+const homeModules = computed(() => config.value.home.modules);
+const notice = computed(() => homeModules.value.find((module) => module.type === "notice"));
+const introModule = computed(() => moduleByType("intro"));
+const locationsModule = computed(() => moduleByType("locations"));
+const featuredDepartmentsModule = computed(() => moduleByType("featured_departments"));
+const staticContentModule = computed(() => moduleByType("static_content"));
+
 const quickActions = computed(() => {
-  const module = config.value.home.modules.find((item) => item.type === "quick_actions");
-  const items = module?.content?.items;
-  return Array.isArray(items) ? items.filter(isRouteAction) : [];
+  const module = moduleByType("quick_actions");
+  const items = contentArray(module, "items");
+  return items.filter(isRouteAction);
 });
+
+const introContent = computed(() => contentOf(introModule.value));
+const locationsContent = computed(() => contentOf(locationsModule.value));
+const featuredDepartmentsContent = computed(() => contentOf(featuredDepartmentsModule.value));
+const staticContent = computed(() => contentOf(staticContentModule.value));
+
+const introAction = computed(() =>
+  actionValue(introContent.value.action, { label: "进入患者服务", routeName: "patient-dashboard" }),
+);
+
+const staticContentAction = computed(() =>
+  actionValue(staticContent.value.action, { label: "了解科研与教育", routeName: "public-research" }),
+);
+
+const locationItems = computed(() => {
+  const items = contentArray(locationsModule.value, "items")
+    .map((item) => {
+      const row = record(item);
+      return {
+        title: textValue(row.title, ""),
+        meta: textValue(row.meta, ""),
+        imageUrl: textValue(row.imageUrl, ""),
+        alt: textValue(row.alt, textValue(row.title, "院区图片")),
+      };
+    })
+    .filter((item) => item.title && item.imageUrl);
+  return items.length ? items : defaultLocations;
+});
+
+const featuredDepartmentLimit = computed(() => numberValue(featuredDepartmentsContent.value.limit, 12));
+const featuredDepartments = computed(() => departments.value.slice(0, featuredDepartmentLimit.value));
+const configuredDepartmentLinks = computed(() => contentArray(featuredDepartmentsModule.value, "items").filter(isRouteAction));
+const fallbackDepartmentNames = computed(() => {
+  const names = contentArray(featuredDepartmentsModule.value, "fallbackNames")
+    .filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+    .map((item) => item.trim());
+  return names.length ? names : defaultDepartmentNames;
+});
+
+const defaultLocations: HomeLocation[] = [
+  {
+    imageUrl: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=900&q=80",
+    alt: "现代化医院建筑",
+    title: "智慧云脑北京中心",
+    meta: "北京 · 海淀",
+  },
+  {
+    imageUrl: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=900&q=80",
+    alt: "医院走廊",
+    title: "智慧云脑上海中心",
+    meta: "上海 · 浦东",
+  },
+  {
+    imageUrl: "https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&w=900&q=80",
+    alt: "临床团队工作场景",
+    title: "智慧云脑深圳中心",
+    meta: "深圳 · 南山",
+  },
+];
+
+const defaultDepartmentNames = ["神经内科", "心血管内科", "呼吸内科", "消化内科", "骨科", "妇科", "儿科", "肿瘤科", "康复医学科"];
+
+function moduleByType(type: string): PatientHomeModule | undefined {
+  return homeModules.value.find((module) => module.type === type);
+}
+
+function contentOf(module: PatientHomeModule | undefined): Record<string, unknown> {
+  return record(module?.content);
+}
+
+function contentArray(module: PatientHomeModule | undefined, key: string): unknown[] {
+  const value = contentOf(module)[key];
+  return Array.isArray(value) ? value : [];
+}
+
+function record(value: unknown): Record<string, unknown> {
+  return Boolean(value && typeof value === "object" && !Array.isArray(value)) ? value as Record<string, unknown> : {};
+}
+
+function textValue(value: unknown, fallback: string) {
+  return typeof value === "string" && value.trim() ? value.trim() : fallback;
+}
+
+function numberValue(value: unknown, fallback: number) {
+  return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : fallback;
+}
+
+function actionValue(value: unknown, fallback: RouteTargetConfig): RouteTargetConfig {
+  return isRouteAction(value) ? value : fallback;
+}
 
 function isRouteAction(value: unknown): value is RouteTargetConfig {
   return Boolean(value && typeof value === "object" && "label" in value && "routeName" in value);
@@ -94,48 +196,46 @@ onMounted(async () => {
       </div>
     </section>
 
-    <section class="home-section home-split">
+    <section v-if="introModule" class="home-section home-split">
       <div>
-        <h2>患者服务是医院官网的一部分</h2>
-        <h3>从分诊到复诊，保持同一条就医线索</h3>
-        <p>智慧云脑把 AI 分诊、医生号源、预约记录、病历和处方连接起来，让患者在同一医院门户内完成关键服务。</p>
-        <h3>真实数据驱动服务入口</h3>
-        <p>当前已接入 {{ departments.length }} 个科室、{{ doctors.length }} 位医生。登录后可查看个人预约、诊后资料和家庭成员信息。</p>
-        <RouterLink class="home-pill outline-blue" :to="{ name: 'patient-dashboard' }">进入患者服务</RouterLink>
+        <h2>{{ textValue(introContent.title, "患者服务是医院官网的一部分") }}</h2>
+        <h3>{{ textValue(introContent.firstTitle, "从分诊到复诊，保持同一条就医线索") }}</h3>
+        <p>{{ textValue(introContent.firstText, "智慧云脑把 AI 分诊、医生号源、预约记录、病历和处方连接起来，让患者在同一医院门户内完成关键服务。") }}</p>
+        <h3>{{ textValue(introContent.secondTitle, "真实数据驱动服务入口") }}</h3>
+        <p>
+          {{ textValue(introContent.secondTextPrefix, "当前已接入") }}
+          {{ departments.length }}
+          {{ textValue(introContent.departmentUnit, "个科室、") }}{{ doctors.length }}
+          {{ textValue(introContent.doctorUnit, "位医生。登录后可查看个人预约、诊后资料和家庭成员信息。") }}
+        </p>
+        <RouterLink class="home-pill outline-blue" :to="toRoute(introAction)">{{ introAction.label }}</RouterLink>
       </div>
       <div class="home-image-panel">
-        <img src="https://images.unsplash.com/photo-1582750433449-648ed127bb54?auto=format&fit=crop&w=1200&q=80" alt="医生与患者沟通">
+        <img
+          :src="textValue(introContent.imageUrl, 'https://images.unsplash.com/photo-1582750433449-648ed127bb54?auto=format&fit=crop&w=1200&q=80')"
+          :alt="textValue(introContent.imageAlt, '医生与患者沟通')"
+        >
       </div>
     </section>
 
-    <section class="home-section">
+    <section v-if="locationsModule" class="home-section">
       <div class="home-section-head">
-        <h2>院区与到院服务</h2>
-        <p>了解智慧云脑各院区服务方向，结合预约时间、科室位置和检查安排做好到院准备。</p>
+        <h2>{{ textValue(locationsContent.title, "院区与到院服务") }}</h2>
+        <p>{{ textValue(locationsContent.description, "了解智慧云脑各院区服务方向，结合预约时间、科室位置和检查安排做好到院准备。") }}</p>
       </div>
       <div class="home-locations">
-        <article>
-          <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=900&q=80" alt="现代化医院建筑">
-          <h3>智慧云脑北京中心</h3>
-          <p>北京 · 海淀</p>
-        </article>
-        <article>
-          <img src="https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=900&q=80" alt="医院走廊">
-          <h3>智慧云脑上海中心</h3>
-          <p>上海 · 浦东</p>
-        </article>
-        <article>
-          <img src="https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&w=900&q=80" alt="临床团队工作场景">
-          <h3>智慧云脑深圳中心</h3>
-          <p>深圳 · 南山</p>
+        <article v-for="item in locationItems" :key="item.title">
+          <img :src="item.imageUrl" :alt="item.alt">
+          <h3>{{ item.title }}</h3>
+          <p>{{ item.meta }}</p>
         </article>
       </div>
     </section>
 
-    <section class="home-section">
+    <section v-if="featuredDepartmentsModule" class="home-section">
       <div class="home-section-head">
-        <h2>重点诊疗领域</h2>
-        <p>优先展示后端真实科室数据；暂无数据时展示常见诊疗方向。</p>
+        <h2>{{ textValue(featuredDepartmentsContent.title, "重点诊疗领域") }}</h2>
+        <p>{{ textValue(featuredDepartmentsContent.description, "优先展示后端真实科室数据；暂无数据时展示常见诊疗方向。") }}</p>
       </div>
       <div class="home-care-grid">
         <RouterLink
@@ -145,22 +245,30 @@ onMounted(async () => {
         >
           {{ dept.name || dept.departmentName || "科室" }} <span>→</span>
         </RouterLink>
-        <template v-if="!featuredDepartments.length">
-          <RouterLink v-for="name in ['神经内科','心血管内科','呼吸内科','消化内科','骨科','妇科','儿科','肿瘤科','康复医学科']" :key="name" :to="{ name: 'public-search', query: { q: name } }">
+        <template v-if="!featuredDepartments.length && configuredDepartmentLinks.length">
+          <RouterLink v-for="item in configuredDepartmentLinks" :key="item.label" :to="toRoute(item)">
+            {{ item.label }} <span>→</span>
+          </RouterLink>
+        </template>
+        <template v-else-if="!featuredDepartments.length">
+          <RouterLink v-for="name in fallbackDepartmentNames" :key="name" :to="{ name: 'public-search', query: { q: name } }">
             {{ name }} <span>→</span>
           </RouterLink>
         </template>
       </div>
     </section>
 
-    <section class="home-donate">
+    <section v-if="staticContentModule" class="home-donate">
       <div>
-        <img src="https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=1200&q=80" alt="实验室医学研究人员">
+        <img
+          :src="textValue(staticContent.imageUrl, 'https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=1200&q=80')"
+          :alt="textValue(staticContent.imageAlt, '实验室医学研究人员')"
+        >
       </div>
       <div>
-        <h2>科研与教育推动更好的患者照护</h2>
-        <p>智慧云脑关注分诊质量、诊疗效率、用药安全和患者可理解性，把临床问题转化为可持续改进的服务能力。</p>
-        <RouterLink class="home-pill" :to="{ name: 'public-research' }">了解科研与教育</RouterLink>
+        <h2>{{ textValue(staticContent.title, "科研与教育推动更好的患者照护") }}</h2>
+        <p>{{ textValue(staticContent.text, "智慧云脑关注分诊质量、诊疗效率、用药安全和患者可理解性，把临床问题转化为可持续改进的服务能力。") }}</p>
+        <RouterLink class="home-pill" :to="toRoute(staticContentAction)">{{ staticContentAction.label }}</RouterLink>
       </div>
     </section>
   </main>

@@ -448,6 +448,36 @@ export const defaultPatientSiteConfig: PatientSiteConfig = {
           ],
         },
       },
+      {
+        type: "intro",
+        key: "patient_service_intro",
+        enabled: true,
+        sort: 30,
+        content: {},
+      },
+      {
+        type: "locations",
+        key: "hospital_locations",
+        enabled: true,
+        sort: 40,
+        content: {},
+      },
+      {
+        type: "featured_departments",
+        key: "featured_departments",
+        enabled: true,
+        sort: 50,
+        content: {
+          limit: 12,
+        },
+      },
+      {
+        type: "static_content",
+        key: "research_education",
+        enabled: true,
+        sort: 60,
+        content: {},
+      },
     ],
   },
   staticPages: {

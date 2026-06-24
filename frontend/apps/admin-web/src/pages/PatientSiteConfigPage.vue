@@ -113,6 +113,7 @@ const publishPreparedJson = ref("");
 const editorOpen = ref(false);
 const editingTarget = ref<EditingTarget | null>(null);
 const editingDraft = ref<any>(null);
+const editingContentText = ref("");
 const staticSearch = ref("");
 const staticDisabledOnly = ref(false);
 
@@ -398,7 +399,7 @@ async function loadConfig(key = activeKey.value) {
     const configJson = hasDraft ? JSON.parse(row.configJson) : await loadEffectiveSection(key);
     setDraft(key, configJson);
     remarks[key] = typeof row.remark === "string" ? row.remark : "";
-    status.value = hasDraft ? "已加载草稿配置" : "已加载患者端当前生效配置";
+    status.value = hasDraft ? "已加载草稿配置；患者端仍读取已发布版本" : "已加载患者端当前生效配置";
   } catch (err) {
     latest[key] = null;
     try {
@@ -461,6 +462,7 @@ function openEditor(target: EditingTarget) {
   editingTarget.value = target;
   editingDraft.value = clone(readEditingTarget(target) || {});
   hydrateEditingDraft(target);
+  syncEditingContentText();
   editorOpen.value = true;
   publishConfirmOpen.value = false;
 }
@@ -469,14 +471,46 @@ function closeEditor() {
   editorOpen.value = false;
   editingTarget.value = null;
   editingDraft.value = null;
+  editingContentText.value = "";
 }
 
 function applyEditor() {
   if (!editingTarget.value) return;
+  if (!applyEditingContentJson()) return;
   writeEditingTarget(editingTarget.value, editingDraft.value);
   status.value = "已更新当前草稿，发布前请保存草稿";
   error.value = "";
   closeEditor();
+}
+
+function syncEditingContentText() {
+  if (editingTarget.value?.type === "home-module" && editingDraft.value && !isSimpleHomeModuleType(editingDraft.value.type)) {
+    editingContentText.value = pretty(editingDraft.value.content || {});
+    return;
+  }
+  editingContentText.value = "";
+}
+
+function applyEditingContentJson() {
+  if (editingTarget.value?.type !== "home-module" || !editingDraft.value || isSimpleHomeModuleType(editingDraft.value.type)) {
+    return true;
+  }
+  try {
+    const parsed = JSON.parse(editingContentText.value || "{}");
+    if (!isRecord(parsed)) {
+      validationErrors[activeKey.value] = ["模块 content 必须是 JSON object。"];
+      return false;
+    }
+    editingDraft.value.content = parsed;
+    return true;
+  } catch {
+    validationErrors[activeKey.value] = ["模块 content JSON 格式无效。"];
+    return false;
+  }
+}
+
+function isSimpleHomeModuleType(type: unknown) {
+  return type === "notice" || type === "quick_actions";
 }
 
 function readEditingTarget(target: EditingTarget) {
@@ -757,7 +791,7 @@ async function saveDraft() {
   publishConfirmOpen.value = false;
   try {
     await saveDraftRecord(payload.configJson);
-    status.value = "草稿已保存";
+    status.value = "草稿已保存；患者端不会变化，点击发布后才会生效";
   } catch (err) {
     error.value = messageFrom(err);
   } finally {
@@ -791,7 +825,7 @@ async function confirmPublish() {
     }
     publishConfirmOpen.value = false;
     publishPreparedJson.value = "";
-    status.value = "配置已发布";
+    status.value = "配置已发布；患者端刷新后会读取 /api/patient-site/config 的最新内容";
   } catch (err) {
     error.value = messageFrom(err);
   } finally {
@@ -813,7 +847,7 @@ function addMenu() {
 }
 
 function removeMenu(index: number) {
-  navDraft.value.menus.splice(index, 1);
+  navDraft.value.menus[index].enabled = false;
 }
 
 function addMenuLink(menu: PatientNavMenu) {
@@ -821,7 +855,7 @@ function addMenuLink(menu: PatientNavMenu) {
 }
 
 function removeMenuLink(menu: PatientNavMenu, index: number) {
-  menu.links.splice(index, 1);
+  menu.links[index].enabled = false;
 }
 
 function addMenuFeature(menu: PatientNavMenu) {
@@ -829,7 +863,7 @@ function addMenuFeature(menu: PatientNavMenu) {
 }
 
 function removeMenuFeature(menu: PatientNavMenu) {
-  delete menu.feature;
+  if (menu.feature) menu.feature.enabled = false;
 }
 
 function addUserLink() {
@@ -838,7 +872,7 @@ function addUserLink() {
 }
 
 function removeUserLink(index: number) {
-  navDraft.value.userLinks.splice(index, 1);
+  navDraft.value.userLinks[index].enabled = false;
 }
 
 function addNoticeModule() {
@@ -863,9 +897,35 @@ function addQuickActionsModule() {
   openEditor({ type: "home-module", index: homeDraft.value.modules.length - 1 });
 }
 
+function addHomeModule(type: string, keyPrefix: string, content: JsonObject = {}) {
+  homeDraft.value.modules.push({
+    type,
+    key: `${keyPrefix}-${Date.now()}`,
+    enabled: true,
+    sort: nextSort(homeDraft.value.modules),
+    content,
+  });
+  openEditor({ type: "home-module", index: homeDraft.value.modules.length - 1 });
+}
+
+function addIntroModule() {
+  addHomeModule("intro", "intro");
+}
+
+function addLocationsModule() {
+  addHomeModule("locations", "locations");
+}
+
+function addFeaturedDepartmentsModule() {
+  addHomeModule("featured_departments", "featured-departments", { limit: 12 });
+}
+
+function addStaticContentModule() {
+  addHomeModule("static_content", "static-content");
+}
+
 function removeHomeModule(module: PatientHomeModule) {
-  const index = homeDraft.value.modules.indexOf(module);
-  if (index >= 0) homeDraft.value.modules.splice(index, 1);
+  module.enabled = false;
 }
 
 function quickActionItems(module: PatientHomeModule) {
@@ -879,7 +939,7 @@ function addQuickAction(module: PatientHomeModule) {
 }
 
 function removeQuickAction(module: PatientHomeModule, index: number) {
-  quickActionItems(module).splice(index, 1);
+  quickActionItems(module)[index].enabled = false;
 }
 
 function addStaticPage() {
@@ -897,7 +957,7 @@ function addStaticPage() {
 }
 
 function removeStaticPage(index: number) {
-  staticDraft.value.pages.splice(index, 1);
+  staticDraft.value.pages[index].enabled = false;
 }
 
 function addPoint(page: StaticPageConfig) {
@@ -913,7 +973,7 @@ function addPrimary(page: StaticPageConfig) {
 }
 
 function removePrimary(page: StaticPageConfig) {
-  delete page.primary;
+  if (page.primary) page.primary.enabled = false;
 }
 
 onMounted(loadAll);
@@ -986,6 +1046,7 @@ onMounted(loadAll);
             <p>当前草稿：{{ activeRecord?.status || "未保存" }} / v{{ activeRecord?.version || "-" }}</p>
             <p>本次备注：{{ remarks[activeKey] || "无" }}</p>
             <p class="patient-site-confirm-warning">发布后患者端将读取该配置。</p>
+            <p>公开读取接口：<code>/api/patient-site/config</code></p>
             <div>
               <button type="button" class="quick-btn publish" :disabled="publishing" @click="confirmPublish">确认发布</button>
               <button type="button" class="topbar-refresh" :disabled="publishing" @click="publishConfirmOpen = false">取消</button>
@@ -1098,6 +1159,10 @@ onMounted(loadAll);
                   <div class="inline-actions">
                     <button type="button" class="topbar-refresh" @click="addNoticeModule">新增 notice</button>
                     <button type="button" class="topbar-refresh" @click="addQuickActionsModule">新增 quick_actions</button>
+                    <button type="button" class="topbar-refresh" @click="addIntroModule">新增 intro</button>
+                    <button type="button" class="topbar-refresh" @click="addLocationsModule">新增 locations</button>
+                    <button type="button" class="topbar-refresh" @click="addFeaturedDepartmentsModule">新增 featured_departments</button>
+                    <button type="button" class="topbar-refresh" @click="addStaticContentModule">新增 static_content</button>
                   </div>
                 </div>
                 <div class="config-card-grid">
@@ -1486,14 +1551,14 @@ onMounted(loadAll);
                 <label><span>sort</span><input v-model.number="link.sort" type="number"></label>
                 <label class="check-field"><input v-model="link.enabled" type="checkbox"><span>enabled</span></label>
               </div>
-              <button type="button" class="danger-link" @click="editingDraft.links.splice(linkIndex, 1)">删除</button>
+              <button type="button" class="danger-link" @click="editingDraft.links[linkIndex].enabled = false">删除</button>
             </div>
           </div>
           <div class="nested-list">
             <div class="nested-list-head">
               <strong>feature</strong>
               <button v-if="!editingDraft.feature" type="button" class="topbar-refresh" @click="editingDraft.feature = { label: '特色入口', routeName: 'patient-home', enabled: true, sort: 0 }">添加入口</button>
-              <button v-else type="button" class="danger-link" @click="delete editingDraft.feature">删除入口</button>
+              <button v-else type="button" class="danger-link" @click="editingDraft.feature.enabled = false">删除入口</button>
             </div>
             <div v-if="editingDraft.feature" class="config-grid three">
               <label><span>feature.label</span><input v-model.trim="editingDraft.feature.label" type="text"></label>
@@ -1574,10 +1639,13 @@ onMounted(loadAll);
                 <label><span>sort</span><input v-model.number="item.sort" type="number"></label>
                 <label class="check-field"><input v-model="item.enabled" type="checkbox"><span>enabled</span></label>
               </div>
-              <button type="button" class="danger-link" @click="editingContentItems().splice(itemIndex, 1)">删除</button>
+              <button type="button" class="danger-link" @click="editingContentItems()[itemIndex].enabled = false">删除</button>
             </div>
           </div>
-          <p v-else class="muted-hint">该模块内容请使用 JSON 编辑维护，弹窗仅维护基础字段。</p>
+          <label v-else>
+            <span>content JSON</span>
+            <textarea v-model="editingContentText" spellcheck="false" rows="12"></textarea>
+          </label>
         </template>
 
         <template v-else-if="editingTarget.type === 'static-page'">
@@ -1613,7 +1681,7 @@ onMounted(loadAll);
             <div class="nested-list-head">
               <strong>primary</strong>
               <button v-if="!editingDraft.primary" type="button" class="topbar-refresh" @click="editingDraft.primary = { label: '返回首页', routeName: 'patient-home' }">添加主按钮</button>
-              <button v-else type="button" class="danger-link" @click="delete editingDraft.primary">删除主按钮</button>
+              <button v-else type="button" class="danger-link" @click="editingDraft.primary.enabled = false">删除主按钮</button>
             </div>
             <div v-if="editingDraft.primary" class="config-grid two">
               <label><span>primary.label</span><input v-model.trim="editingDraft.primary.label" type="text"></label>
