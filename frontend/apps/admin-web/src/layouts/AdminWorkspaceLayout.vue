@@ -4,7 +4,7 @@ import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { statusText, useAdminWorkflowStore, useAuthStore } from "@smart-cloud-brain/shared-api";
 import { useRoute } from "vue-router";
-import { CollapsibleSidebar, Toast, TopBar } from "@smart-cloud-brain/shared-ui";
+import { CollapsibleSidebar, Toast } from "@smart-cloud-brain/shared-ui";
 
 const route = useRoute();
 const auth = useAuthStore();
@@ -28,6 +28,7 @@ const navGroups = computed(() => [
     { label: "排班", to: "/schedule" },
     { label: "分诊台", to: "/triage-desk", badge: highRisk.value },
     { label: "账户权限", to: "/accounts" },
+    { label: "统计分析", to: "/statistics" },
   ] },
   { label: "配置", items: [
     { label: "知识库", to: "/knowledge" },
@@ -76,13 +77,16 @@ onBeforeUnmount(() => unbind?.());
     />
 
     <div class="admin-app">
-      <TopBar eyebrow="管理端" title="运营管理工作台" description="基础数据、号源与智能配置统一维护">
-        <template #actions>
-          <span class="topbar-meta">管理员 #{{ session?.userId || '' }}</span>
-          <button type="button" class="topbar-refresh" :disabled="loading" @click="refresh">刷新数据</button>
-          <button type="button" class="topbar-logout" @click="logout">退出登录</button>
-        </template>
-      </TopBar>
+      <header class="admin-topline">
+        <div class="admin-session">
+          <strong>{{ session?.name || '管理员' }}</strong>
+          <span>管理员 #{{ session?.userId || '-' }}</span>
+        </div>
+        <div class="admin-topline-actions">
+          <button type="button" class="topbar-btn" :disabled="loading" @click="refresh">刷新</button>
+          <button type="button" class="topbar-btn danger" @click="logout">退出</button>
+        </div>
+      </header>
 
       <div class="admin-notices"><div v-if="permissionError" class="notice error">{{ permissionError }}</div></div>
       <RouterView @refresh="refresh" />

@@ -3,7 +3,7 @@ import { computed, reactive, ref } from "vue";
 import { storeToRefs } from "pinia";
 import {
   api,
-  fieldText,
+  displayText,
   formatApiError,
   statusText,
   statusClass,
@@ -11,9 +11,14 @@ import {
   usePagination,
   useAdminWorkflowStore,
   useAuthStore,
-  type DataRow,
+  type Department,
+  type Doctor,
+  type Drug,
+  type KnowledgeEntry,
   type PromptTemplateSaveRequest,
   type PromptTestRequest,
+  type PromptTemplate,
+  type SystemDict,
 } from "@smart-cloud-brain/shared-api";
 import { DataTable, ErrorState, FormField, Modal, PaginationBar, StatusTag } from "@smart-cloud-brain/shared-ui";
 
@@ -21,6 +26,7 @@ type Entity = "department" | "doctor" | "drug" | "knowledge" | "prompt" | "dict"
 type FieldType = "text" | "password" | "number" | "textarea" | "checkbox" | "department-select";
 type FieldConfig = [key: string, label: string, type: FieldType];
 type DictOption = { value: string; label: string };
+type CatalogRow = Department | Doctor | Drug | KnowledgeEntry | PromptTemplate | SystemDict;
 
 const props = defineProps<{ entity: Entity }>();
 const emit = defineEmits<{ refresh: [] }>();
@@ -105,7 +111,7 @@ const fallbackDicts: Record<string, DictOption[]> = {
 const configs: Record<Entity, {
   title: string;
   description: string;
-  rows: () => DataRow[];
+  rows: () => CatalogRow[];
   keys: string[];
   columns: string[];
   fields: FieldConfig[];
@@ -175,15 +181,19 @@ const rows = computed(() => {
   const q = keyword.value.trim().toLowerCase();
   const source = config.value.rows();
   if (!q) return source;
-  return source.filter((item) => config.value.keys.some((key) => fieldText(item, key, "").toLowerCase().includes(q)));
+  return source.filter((item) => config.value.keys.some((key) => displayText(getCatalogValue(item, key), "").toLowerCase().includes(q)));
 });
 const { currentPage, pageSize, total, pageRows } = usePagination(rows, 8);
 
+function getCatalogValue(row: CatalogRow, key: string) {
+  return (row as Record<string, unknown>)[key];
+}
+
 function dictionaryOptions(dictType: string): DictOption[] {
   const options = dicts.value
-    .filter((item) => fieldText(item, "dictType") === dictType && fieldText(item, "status", "ENABLED") !== "DISABLED")
+    .filter((item) => item.dictType === dictType && displayText(item.status, "ENABLED") !== "DISABLED")
     .sort((left, right) => toNumber(left.sort) - toNumber(right.sort) || toNumber(left.id) - toNumber(right.id))
-    .map((item) => ({ value: fieldText(item, "dictKey"), label: fieldText(item, "dictValue") }))
+    .map((item) => ({ value: displayText(item.dictKey), label: displayText(item.dictValue) }))
     .filter((item) => item.value);
   return options.length ? options : fallbackDicts[dictType] ?? [];
 }
@@ -211,8 +221,8 @@ function dictionaryLabel(dictType: string, value: unknown) {
 function departmentCodeOptions() {
   const options = departments.value
     .map((department) => ({
-      value: fieldText(department, "code"),
-      label: `${fieldText(department, "name")}（${fieldText(department, "code")}）`,
+      value: displayText(department.code),
+      label: `${displayText(department.name)}（${displayText(department.code)}）`,
     }))
     .filter((item) => item.value);
   return [{ value: "GENERAL", label: "通用（GENERAL）" }, ...options];
@@ -238,13 +248,13 @@ async function refresh() {
   }
 }
 
-function openEditor(item?: DataRow) {
+function openEditor(item?: CatalogRow) {
   notice.value = "";
   error.value = "";
   Object.keys(form).forEach((key) => delete form[key]);
   if (item) {
-    form.id = toNumber(item.id) || undefined;
-    config.value.fields.forEach(([key]) => { form[key] = item[key] as string | number | boolean | undefined; });
+    form.id = toNumber(getCatalogValue(item, "id")) || undefined;
+    config.value.fields.forEach(([key]) => { form[key] = getCatalogValue(item, key) as string | number | boolean | undefined; });
   } else {
     config.value.fields.forEach(([key, , type]) => {
       form[key] = type === "checkbox" ? true : ["number", "department-select"].includes(type) ? 0 : "";
@@ -408,7 +418,7 @@ refresh();
   <section class="catalog-layout">
     <section class="panel">
       <header class="panel-header">
-        <div class="panel-title"><p class="eyebrow">基础目录</p><h2>{{ config.title }}</h2><p>{{ config.description }}</p></div>
+        <div class="panel-title"><h2>{{ config.title }}</h2></div>
         <div class="toolbar">
           <button type="button" :disabled="loading" @click="refresh">刷新</button>
           <button type="button" class="primary" @click="openEditor()">新增</button>
@@ -423,9 +433,9 @@ refresh();
           <tbody>
             <tr v-for="item in pageRows" :key="String(item.id)">
               <td v-for="column in config.columns" :key="column">
-                <StatusTag v-if="column === 'status'" :status="displayCell(column, item[column])" :tone="statusClass(item[column])" />
-                <StatusTag v-else-if="column === 'enabled'" :status="fieldText(item, column)" :tone="statusClass(item[column])" />
-                <span v-else>{{ displayCell(column, item[column]) }}</span>
+                <StatusTag v-if="column === 'status'" :status="displayCell(column, getCatalogValue(item, column))" :tone="statusClass(getCatalogValue(item, column))" />
+                <StatusTag v-else-if="column === 'enabled'" :status="displayText(getCatalogValue(item, column))" :tone="statusClass(getCatalogValue(item, column))" />
+                <span v-else>{{ displayCell(column, getCatalogValue(item, column)) }}</span>
               </td>
               <td><button type="button" @click="openEditor(item)">编辑</button></td>
             </tr>
@@ -434,13 +444,12 @@ refresh();
         <PaginationBar v-model="currentPage" :total="total" :page-size="pageSize" />
       </div>
     </section>
-    <aside class="panel">
-      <header class="panel-header"><div class="panel-title"><h2>维护说明</h2><p>所有保存动作直接调用后端 API。</p></div></header>
+    <aside class="panel catalog-aside">
       <div class="panel-body">
-        <div class="notice warning">请确认字段含义后保存。当前页面不伪造接口，也不修改后端路径。</div>
+        <div class="notice warning">请确认字段含义后保存。</div>
       </div>
     </aside>
-    <Modal :open="editorOpen" :title="config.title" description="新增或编辑当前维护对象。" @close="editorOpen = false">
+    <Modal :open="editorOpen" :title="config.title" @close="editorOpen = false">
       <div class="stack">
         <FormField v-for="[key, label, type] in config.fields" :key="key" :label="label" :hint="fieldHint(key)">
           <textarea v-if="type === 'textarea'" v-model="form[key]" />
@@ -451,7 +460,7 @@ refresh();
           <select v-else-if="type === 'department-select'" v-model.number="form[key]">
             <option :value="0" disabled>请选择科室</option>
             <option v-for="department in departments" :key="String(department.id)" :value="toNumber(department.id)">
-              {{ fieldText(department, "name") }}
+              {{ displayText(department.name) }}
             </option>
           </select>
           <select v-else-if="key === 'departmentCode'" v-model="form[key]">

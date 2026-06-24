@@ -9,7 +9,68 @@
 .admin-app {
   margin-left: 56px;
   min-width: 0;
-  padding: 0 24px 32px;
+  padding: 0 0 32px;
+}
+.admin-app > *:not(.admin-topline) {
+  padding-left: 28px;
+  padding-right: 28px;
+}
+
+.admin-topline {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 0 28px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(238, 242, 244, 0.86);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+.admin-session {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  margin-right: auto;
+}
+.admin-session strong {
+  font-size: 15px;
+}
+.admin-session span {
+  color: var(--muted);
+  font-size: 12px;
+}
+.admin-topline-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.topbar-btn {
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.topbar-btn:hover {
+  background: var(--surface-alt, #f3f5f8);
+}
+.topbar-btn.danger {
+  color: var(--danger);
+  border-color: var(--danger-soft, #fbe5e2);
+}
+.topbar-btn.danger:hover {
+  background: var(--danger-soft, #fbe5e2);
 }
 
 .admin-notices {
