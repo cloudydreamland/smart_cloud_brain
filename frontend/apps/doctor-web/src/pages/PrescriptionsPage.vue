@@ -36,7 +36,6 @@ refresh();
       <div class="panel-title">
         <p class="eyebrow">处方记录</p>
         <h2>处方审核结果</h2>
-        <p>重点突出高风险和待复核处方。</p>
       </div>
       <button class="refresh-btn" type="button" :disabled="loading" @click="refresh">{{ loading ? "刷新中" : "刷新" }}</button>
     </header>

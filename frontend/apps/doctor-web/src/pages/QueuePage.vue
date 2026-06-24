@@ -64,7 +64,6 @@ refresh();
         <div class="panel-title">
           <p class="eyebrow">接诊队列</p>
           <h2>患者队列筛选</h2>
-          <p>支持状态筛选、患者搜索和快速进入接诊。</p>
         </div>
         <button class="refresh-btn" type="button" :disabled="loading" @click="refresh">{{ loading ? "刷新中" : "刷新" }}</button>
       </header>

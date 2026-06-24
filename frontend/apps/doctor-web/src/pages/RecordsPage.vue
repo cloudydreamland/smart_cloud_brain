@@ -36,7 +36,6 @@ refresh();
       <div class="panel-title">
         <p class="eyebrow">病历记录</p>
         <h2>已保存病历</h2>
-        <p>按患者和诊断快速回看。</p>
       </div>
       <div style="display:flex;gap:8px;align-items:center;">
         <div class="view-segmented" role="tablist">
