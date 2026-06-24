@@ -460,7 +460,8 @@ function useTemplate() {
 
 function openEditor(target: EditingTarget) {
   editingTarget.value = target;
-  editingDraft.value = clone(readEditingTarget(target));
+  editingDraft.value = clone(readEditingTarget(target) || {});
+  hydrateEditingDraft(target);
   editorOpen.value = true;
   publishConfirmOpen.value = false;
 }
@@ -510,6 +511,29 @@ function writeEditingTarget(target: EditingTarget, value: unknown) {
   staticDraft.value.pages[target.index] = normalizeStaticPage(value, target.index);
 }
 
+function hydrateEditingDraft(target: EditingTarget) {
+  if (!editingDraft.value) editingDraft.value = {};
+  if (target.type === "nav-menu") {
+    if (!Array.isArray(editingDraft.value.links)) editingDraft.value.links = [];
+    return;
+  }
+  if (target.type === "home-hero") {
+    if (!editingDraft.value.primaryAction) editingDraft.value.primaryAction = { label: "", routeName: "patient-home" };
+    if (!editingDraft.value.secondaryAction) editingDraft.value.secondaryAction = { label: "", routeName: "patient-home" };
+    return;
+  }
+  if (target.type === "home-module") {
+    if (!editingDraft.value.content || typeof editingDraft.value.content !== "object") editingDraft.value.content = {};
+    if (editingDraft.value.type === "quick_actions" && !Array.isArray(editingDraft.value.content.items)) {
+      editingDraft.value.content.items = [];
+    }
+    return;
+  }
+  if (target.type === "static-page" && !Array.isArray(editingDraft.value.points)) {
+    editingDraft.value.points = [];
+  }
+}
+
 function moduleSummary(module: PatientHomeModule) {
   if (module.type === "notice") return String(module.content?.text || "未填写通知内容");
   if (module.type === "quick_actions") {
@@ -521,6 +545,11 @@ function moduleSummary(module: PatientHomeModule) {
 
 function routeLabel(routeName = "") {
   return patientRouteOptions.find((route) => route.name === routeName)?.label || routeName || "-";
+}
+
+function toggleEnabled(item: { enabled?: boolean }) {
+  item.enabled = item.enabled === false;
+  publishConfirmOpen.value = false;
 }
 
 function editingArray(field: string) {
@@ -1006,7 +1035,7 @@ onMounted(loadAll);
                       <small>{{ menu.lead || menu.description || "未填写导语" }}</small>
                     </div>
                     <div class="config-card-actions">
-                      <span class="status-pill" :class="menu.enabled === false ? 'disabled' : 'enabled'">{{ menu.enabled === false ? "停用" : "启用" }}</span>
+                      <button type="button" class="status-pill" :class="menu.enabled === false ? 'disabled' : 'enabled'" @click="toggleEnabled(menu)">{{ menu.enabled === false ? "禁用" : "启用" }}</button>
                       <button type="button" class="topbar-refresh" @click="openEditor({ type: 'nav-menu', index: menuIndex })">编辑</button>
                       <button type="button" class="danger-link" @click="removeMenu(menuIndex)">删除</button>
                     </div>
@@ -1029,7 +1058,7 @@ onMounted(loadAll);
                       <span>{{ routeLabel(link.routeName) }} / {{ link.routeName }} · sort {{ link.sort ?? "-" }}</span>
                     </div>
                     <div class="config-card-actions">
-                      <span class="status-pill" :class="link.enabled === false ? 'disabled' : 'enabled'">{{ link.enabled === false ? "停用" : "启用" }}</span>
+                      <button type="button" class="status-pill" :class="link.enabled === false ? 'disabled' : 'enabled'" @click="toggleEnabled(link)">{{ link.enabled === false ? "禁用" : "启用" }}</button>
                       <button type="button" class="topbar-refresh" @click="openEditor({ type: 'user-link', index: linkIndex })">编辑</button>
                       <button type="button" class="danger-link" @click="removeUserLink(linkIndex)">删除</button>
                     </div>
@@ -1053,7 +1082,7 @@ onMounted(loadAll);
                     <p>{{ homeDraft.hero.eyebrow || "无 eyebrow" }}</p>
                     <small>{{ homeDraft.hero.primaryAction?.label }} / {{ homeDraft.hero.secondaryAction?.label }}</small>
                   </div>
-                  <span class="status-pill" :class="homeDraft.hero.enabled === false ? 'disabled' : 'enabled'">{{ homeDraft.hero.enabled === false ? "停用" : "启用" }}</span>
+                  <button type="button" class="status-pill" :class="homeDraft.hero.enabled === false ? 'disabled' : 'enabled'" @click="toggleEnabled(homeDraft.hero)">{{ homeDraft.hero.enabled === false ? "禁用" : "启用" }}</button>
                 </article>
               </section>
 
@@ -1076,7 +1105,7 @@ onMounted(loadAll);
                       <small>sort {{ module.sort ?? "-" }}</small>
                     </div>
                     <div class="config-card-actions">
-                      <span class="status-pill" :class="module.enabled === false ? 'disabled' : 'enabled'">{{ module.enabled === false ? "停用" : "启用" }}</span>
+                      <button type="button" class="status-pill" :class="module.enabled === false ? 'disabled' : 'enabled'" @click="toggleEnabled(module)">{{ module.enabled === false ? "禁用" : "启用" }}</button>
                       <button type="button" class="topbar-refresh" @click="openEditor({ type: 'home-module', index: moduleIndex })">编辑</button>
                       <button type="button" class="danger-link" @click="removeHomeModule(module)">删除</button>
                     </div>
@@ -1112,7 +1141,7 @@ onMounted(loadAll);
                       <small>{{ page.intro || "未填写说明" }}</small>
                     </div>
                     <div class="config-card-actions">
-                      <span class="status-pill" :class="page.enabled === false ? 'disabled' : 'enabled'">{{ page.enabled === false ? "停用" : "启用" }}</span>
+                      <button type="button" class="status-pill" :class="page.enabled === false ? 'disabled' : 'enabled'" @click="toggleEnabled(page)">{{ page.enabled === false ? "禁用" : "启用" }}</button>
                       <button type="button" class="topbar-refresh" @click="openEditor({ type: 'static-page', index })">编辑</button>
                       <button type="button" class="danger-link" @click="removeStaticPage(index)">删除</button>
                     </div>
