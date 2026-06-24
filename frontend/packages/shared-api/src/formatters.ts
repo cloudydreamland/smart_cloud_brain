@@ -60,6 +60,18 @@ export function aiSourceTone(provider: unknown) {
   return String(provider ?? "").trim().toLowerCase() === "mock" ? "warning" : "success";
 }
 
+export function formatDateTime(value: unknown, fallback = "-") {
+  if (!value) return fallback;
+  try {
+    const d = new Date(String(value));
+    if (isNaN(d.getTime())) return fallback;
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getMonth() + 1}月${d.getDate()}日 ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  } catch {
+    return fallback;
+  }
+}
+
 export function usePagination<T>(source: MaybeRefOrGetter<T[]>, initialPageSize = 8) {
   const currentPage = ref(1);
   const pageSize = ref(initialPageSize);

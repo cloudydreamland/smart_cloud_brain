@@ -22,6 +22,7 @@ import HighRiskConfirmModal from "../components/HighRiskConfirmModal.vue";
 import CompleteRegistrationConfirmModal from "../components/CompleteRegistrationConfirmModal.vue";
 import {
   formatAiDraft,
+  formatTime,
   liveRows,
   patientName,
   statusLabel,
@@ -306,18 +307,12 @@ watch(() => props.registrationId, applyRegistration, { immediate: true });
           <span class="tag" :class="statusTone(registration?.status)">{{ statusLabel(registration?.status, "接诊中") }}</span>
           <span class="tag" :class="statusTone(triageRisk)">{{ statusLabel(triageRisk, "中风险") }}</span>
         </div>
-        <p>
-          患者 ID #{{ fieldText(registration, "patientId") || "-" }} ·
-          挂号 #{{ fieldText(registration, "registrationId", registrationId) }} ·
-          {{ fieldText(registration, "departmentName", "未分配科室") }} ·
-          {{ fieldText(registration, "appointmentTime", "待确认预约") }}
-        </p>
       </div>
       <div class="patient-grid">
         <div><b>患者 ID</b><span>{{ fieldText(registration, "patientId") }}</span></div>
         <div><b>挂号 ID</b><span>#{{ fieldText(registration, "registrationId", registrationId) }}</span></div>
         <div><b>科室</b><span>{{ fieldText(registration, "departmentName") }}</span></div>
-        <div><b>预约</b><span>{{ fieldText(registration, "appointmentTime") }}</span></div>
+        <div><b>预约</b><span>{{ formatTime(fieldText(registration, "appointmentTime")) }}</span></div>
         <div><b>状态</b><span><span class="tag" :class="statusTone(registration?.status)">{{ statusLabel(registration?.status, "接诊中") }}</span></span></div>
       </div>
       <div class="context-actions">
@@ -342,7 +337,6 @@ watch(() => props.registrationId, applyRegistration, { immediate: true });
           <header class="panel-header">
             <div class="panel-title">
               <h3>患者分诊</h3>
-              <p>接诊侧栏摘要，详情仍由患者上下文抽屉承载。</p>
             </div>
             <button type="button" @click="contextOpen = true">详情</button>
           </header>
@@ -372,7 +366,6 @@ watch(() => props.registrationId, applyRegistration, { immediate: true });
           <header class="panel-header">
             <div class="panel-title">
               <h3>处方与风险</h3>
-              <p>结合过敏史、诊断、剂量和相互作用进行风险提示。</p>
             </div>
             <span class="tag" :class="statusTone(prescription.riskLevel)">{{ statusLabel(prescription.riskLevel) }}</span>
           </header>
@@ -410,7 +403,6 @@ watch(() => props.registrationId, applyRegistration, { immediate: true });
         <header class="panel-header">
           <div class="panel-title">
             <h3>病历工作区</h3>
-            <p>问诊文本、AI 草稿和结构化病历在同一工作区内闭环。</p>
           </div>
           <div class="record-status">
             <span class="tag info">{{ statusLabel(streamStatus) }}</span>

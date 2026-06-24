@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { Drawer } from "@smart-cloud-brain/shared-ui";
-import { fieldText, type DataRow } from "@smart-cloud-brain/shared-api";
+import { fieldText, formatDateTime, type DataRow } from "@smart-cloud-brain/shared-api";
 import { patientName, statusLabel, statusTone } from "../doctorPresentation";
 
 const props = defineProps<{ open: boolean; registration: DataRow | null; triage: DataRow | null }>();
@@ -23,7 +23,7 @@ const triageRisk = computed(() => fieldText(props.triage, "riskLevel", fieldText
           <div><b>挂号 ID</b><span>#{{ fieldText(registration, "registrationId") }}</span></div>
           <div><b>医保类型</b><span>职工医保</span></div>
           <div><b>科室</b><span>{{ fieldText(registration, "departmentName") }}</span></div>
-          <div><b>预约</b><span>{{ fieldText(registration, "appointmentTime") }}</span></div>
+          <div><b>预约</b><span>{{ formatDateTime(registration?.appointmentTime) }}</span></div>
         </div>
       </section>
 

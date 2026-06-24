@@ -1324,7 +1324,7 @@ textarea {
 .consultation-workbench .patient-context {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(280px, 0.72fr) minmax(0, 1.5fr) auto;
+  grid-template-columns: minmax(200px, 0.45fr) minmax(0, 1.5fr) auto;
   align-items: stretch;
   gap: 18px;
   padding: 16px;
@@ -1377,13 +1377,6 @@ textarea {
 .consultation-workbench .patient-title strong {
   font-size: 22px;
   letter-spacing: -0.02em;
-}
-
-.consultation-workbench .patient-main p {
-  margin: 0;
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1.55;
 }
 
 .consultation-workbench .patient-grid {
@@ -1594,6 +1587,33 @@ textarea {
 }
 
 .consultation-workbench .dl-grid > div > span {
+  color: var(--ink);
+  line-height: 1.5;
+}
+
+/* Drawer teleport 补偿：Drawer 用 Teleport 到 body，脱离 .consultation-workbench */
+.drawer-body .dl-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.drawer-body .dl-grid div {
+  padding: 10px;
+  border: 1px solid rgba(223, 231, 234, 0.68);
+  border-radius: 13px;
+  background: rgba(248, 250, 251, 0.78);
+}
+
+.drawer-body .dl-grid b {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.drawer-body .dl-grid > div > span {
   color: var(--ink);
   line-height: 1.5;
 }
@@ -1917,7 +1937,7 @@ textarea {
 .notice.success { background: var(--success-soft); color: var(--success); border: 1px solid var(--success-soft); }
 .notice.danger { background: var(--danger-soft); color: var(--danger); border: 1px solid var(--danger-soft); }
 
-@media (max-width: 1280px) {
+@media (max-width: 1000px) {
   .consultation-workbench .patient-context {
     grid-template-columns: 1fr;
   }
@@ -2167,6 +2187,191 @@ textarea {
   font-size: 13px;
   color: var(--muted);
   line-height: 1.5;
+}
+
+/* ── 设置页：纵向堆叠布局 ── */
+.settings-page {
+  width: 100%;
+}
+.settings-page .panel-body.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.settings-stack {
+  display: flex;
+  flex-direction: column;
+}
+.setting-row {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+}
+.setting-row:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+.setting-row:first-child {
+  padding-top: 0;
+}
+.setting-row-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.setting-row-header strong {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.setting-row-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* 部门选择网格 */
+.dept-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+}
+
+/* Choicebox 选项卡片（基于 choicebox-1 参考） */
+.choicebox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+.choicebox-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.choicebox-item:hover {
+  border-color: var(--line-strong);
+  background: var(--surface-alt, #f6f8f9);
+}
+.choicebox-item.selected {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+.choicebox-indicator {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--line-strong);
+  display: grid;
+  place-items: center;
+  margin-top: 1px;
+  transition: border-color 0.15s ease;
+}
+.choicebox-item.selected .choicebox-indicator {
+  border-color: var(--primary);
+}
+.radio-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+  transform: scale(0);
+  transition: transform 0.15s ease;
+}
+.choicebox-item.selected .radio-dot {
+  transform: scale(1);
+}
+.choicebox-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.choicebox-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.choicebox-desc {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+/* Toggle 开关 */
+.toggle-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.toggle-switch {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  border: 0;
+  background: var(--line-strong);
+  cursor: pointer;
+  transition: background 0.2s ease;
+  padding: 0;
+  flex-shrink: 0;
+}
+.toggle-switch.on {
+  background: var(--primary);
+}
+.toggle-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  transition: transform 0.2s ease;
+}
+.toggle-switch.on .toggle-knob {
+  transform: translateX(20px);
+}
+
+/* Segmented Control */
+.segmented-control {
+  display: inline-flex;
+  gap: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  margin-top: 6px;
+}
+.segmented-control button {
+  flex: 1;
+  height: 34px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+}
+.segmented-control button + button {
+  border-left: 1px solid var(--line);
+}
+.segmented-control button:hover {
+  background: var(--surface-alt, #f6f8f9);
+}
+.segmented-control button.active {
+  background: var(--primary);
+  color: #fff;
 }
 
 /* ===== Login Page ===== */

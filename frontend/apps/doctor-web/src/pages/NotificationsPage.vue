@@ -58,7 +58,6 @@ refresh();
       <div class="panel-title">
         <p class="eyebrow">风险通知</p>
         <h2>通知中心</h2>
-        <p>处方、病历、系统消息统一处理。</p>
       </div>
       <button class="refresh-btn" type="button" :disabled="loading" @click="refresh">{{ loading ? "刷新中" : "刷新" }}</button>
     </header>

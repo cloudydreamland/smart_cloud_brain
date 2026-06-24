@@ -7,6 +7,7 @@
       leave-active-class="transition-opacity duration-150 ease-in"
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
+      appear
     >
       <div
         v-if="open"
