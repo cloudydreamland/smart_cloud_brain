@@ -59,10 +59,10 @@ async function save() {
   try {
     await api.saveDevice(auth.token(), { ...form, departmentId: toNumber(form.departmentId) || undefined });
     editorOpen.value = false;
-    notice.value = "Device saved";
+    notice.value = "设备已保存";
     await refresh();
   } catch (err) {
-    error.value = formatApiError(err, "Device save failed");
+    error.value = formatApiError(err, "保存设备失败");
   } finally {
     loading.value = false;
   }
@@ -75,7 +75,7 @@ async function changeStatus(item: Device, nextStatus: string) {
     await api.updateDeviceStatus(auth.token(), { deviceId: toNumber(item.id), status: nextStatus });
     await refresh();
   } catch (err) {
-    error.value = formatApiError(err, "Device status failed");
+    error.value = formatApiError(err, "更新设备状态失败");
   } finally {
     loading.value = false;
   }
@@ -101,7 +101,7 @@ async function saveUsage() {
     usages.value = await api.deviceUsages(auth.token(), usageForm.deviceId) as DeviceUsage[];
     await refresh();
   } catch (err) {
-    error.value = formatApiError(err, "Usage save failed");
+    error.value = formatApiError(err, "保存使用记录失败");
   } finally {
     loading.value = false;
   }
@@ -133,7 +133,7 @@ refresh();
               <td>{{ displayText(item.category) }}</td>
               <td>{{ displayText(item.departmentName) }}</td>
               <td><StatusTag :status="displayText(item.status)" /></td>
-              <td>{{ displayText(item.usageCount, "0") }} / abnormal {{ displayText(item.abnormalCount, "0") }}</td>
+              <td>{{ displayText(item.usageCount, "0") }} / 异常 {{ displayText(item.abnormalCount, "0") }}</td>
               <td class="toolbar">
                 <button type="button" class="action-btn" @click="openEditor(item)">编辑</button>
                 <button type="button" class="action-btn" @click="openUsage(item)">使用记录</button>

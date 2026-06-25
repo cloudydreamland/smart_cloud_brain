@@ -45,9 +45,9 @@ async function save() {
   try {
     patient.value = await api.saveProfile(auth.token(), { ...form });
     await workflow.refreshAuthenticated(auth.token());
-    notice.value = "Profile saved";
+    notice.value = "资料已保存";
   } catch (err) {
-    error.value = formatApiError(err, "Profile save failed");
+    error.value = formatApiError(err, "保存资料失败");
   } finally {
     loading.value = false;
   }
@@ -57,7 +57,7 @@ async function save() {
 <template>
   <section class="portal-grid">
     <section class="panel">
-      <header class="panel-header"><div class="panel-title"><p class="eyebrow">Profile</p><h2>个人资料</h2><p>维护账户本人档案，供分诊、预约和处方审核使用。</p></div></header>
+      <header class="panel-header"><div class="panel-title"><p class="eyebrow">个人信息</p><h2>个人资料</h2><p>维护账户本人档案，供分诊、预约和处方审核使用。</p></div></header>
       <div class="panel-body stack">
         <ErrorState v-if="error" :message="error" />
         <LoadingState v-if="loading" />

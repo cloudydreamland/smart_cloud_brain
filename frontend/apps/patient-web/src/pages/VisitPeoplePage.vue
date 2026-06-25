@@ -110,7 +110,7 @@ onMounted(loadVisitors);
     <section class="panel">
       <header class="panel-header">
         <div class="panel-title">
-          <p class="eyebrow">Account</p>
+          <p class="eyebrow">就诊人</p>
           <h2>就诊人管理</h2>
           <p>一个患者账户可以维护本人和多个家属就诊人。</p>
         </div>
