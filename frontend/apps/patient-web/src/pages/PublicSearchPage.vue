@@ -17,6 +17,9 @@ const keyword = ref(String(route.query.q || ""));
 const departments = ref<DataRow[]>([]);
 const doctors = ref<DataRow[]>([]);
 const loading = ref(true);
+const typeFilter = ref<SearchItem["type"] | "全部">("全部");
+const currentPage = ref(1);
+const pageSize = 8;
 
 const staticItems: SearchItem[] = [
   {
@@ -110,29 +113,43 @@ const results = computed(() => {
   return allItems.value.filter((item) => `${item.title} ${item.description} ${item.type} ${item.meta.join(" ")}`.toLowerCase().includes(q));
 });
 
-const groupedResults = computed(() => {
+const filteredResults = computed(() => typeFilter.value === "全部" ? results.value : results.value.filter((item) => item.type === typeFilter.value));
+const totalPages = computed(() => Math.max(1, Math.ceil(filteredResults.value.length / pageSize)));
+const pagedResults = computed(() => filteredResults.value.slice((currentPage.value - 1) * pageSize, currentPage.value * pageSize));
+const pagedGroupedResults = computed(() => {
   const groups: Record<SearchItem["type"], SearchItem[]> = {
     科室: [],
     医生: [],
     "疾病/症状": [],
     服务资料: [],
   };
-  results.value.forEach((item) => groups[item.type].push(item));
+  pagedResults.value.forEach((item) => groups[item.type].push(item));
   return Object.entries(groups)
     .map(([type, items]) => ({ type, items }))
     .filter((group) => group.items.length);
 });
+const typeOptions: Array<SearchItem["type"] | "全部"> = ["全部", "科室", "医生", "疾病/症状", "服务资料"];
 
 function submitSearch() {
   router.replace({ name: "public-search", query: keyword.value.trim() ? { q: keyword.value.trim() } : {} });
+}
+
+function setTypeFilter(value: SearchItem["type"] | "全部") {
+  typeFilter.value = value;
+  currentPage.value = 1;
 }
 
 watch(
   () => route.query.q,
   (value) => {
     keyword.value = String(value || "");
+    currentPage.value = 1;
   },
 );
+
+watch(filteredResults, () => {
+  if (currentPage.value > totalPages.value) currentPage.value = totalPages.value;
+});
 
 onMounted(async () => {
   try {
@@ -174,11 +191,17 @@ onMounted(async () => {
       <div class="resource-section-head">
         <h2>{{ keyword.trim() ? `“${keyword.trim()}” 的搜索结果` : "推荐资料" }}</h2>
         <p v-if="loading">正在同步后端科室与医生数据。</p>
-        <p v-else>共 {{ results.length }} 条结果。</p>
+        <p v-else>共 {{ filteredResults.length }} 条结果。</p>
       </div>
 
-      <div v-if="groupedResults.length" class="search-group-list">
-        <section v-for="group in groupedResults" :key="group.type" class="search-group">
+      <div class="search-filter-tabs" role="tablist" aria-label="结果分类">
+        <button v-for="item in typeOptions" :key="item" type="button" :class="{ active: typeFilter === item }" @click="setTypeFilter(item)">
+          {{ item }}
+        </button>
+      </div>
+
+      <div v-if="pagedGroupedResults.length" class="search-group-list">
+        <section v-for="group in pagedGroupedResults" :key="group.type" class="search-group">
           <h3>{{ group.type }}</h3>
           <article v-for="item in group.items" :key="`${item.type}-${item.title}`" class="search-result-card">
             <div>
@@ -191,6 +214,11 @@ onMounted(async () => {
             <RouterLink v-if="item.to" :to="item.to">打开</RouterLink>
           </article>
         </section>
+        <div class="search-pagination" aria-label="搜索结果分页">
+          <button type="button" :disabled="currentPage <= 1" @click="currentPage -= 1">上一页</button>
+          <span>第 {{ currentPage }} / {{ totalPages }} 页</span>
+          <button type="button" :disabled="currentPage >= totalPages" @click="currentPage += 1">下一页</button>
+        </div>
       </div>
 
       <p v-else-if="!loading" class="public-empty">没有找到匹配结果。可以换一个症状、科室或医生姓名重新搜索。</p>
