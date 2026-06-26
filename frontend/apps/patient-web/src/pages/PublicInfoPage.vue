@@ -46,6 +46,13 @@ const page = computed(() => getPublicPage(String(route.name || "")));
           <p>{{ page.emergency }}</p>
         </div>
 
+        <section v-if="page.narrative?.length" class="resource-article-section">
+          <article v-for="section in page.narrative" :key="section.title" class="resource-article">
+            <h2>{{ section.title }}</h2>
+            <p v-for="paragraph in section.paragraphs" :key="paragraph">{{ paragraph }}</p>
+          </article>
+        </section>
+
         <section v-if="page.features?.length" id="重点模块" class="resource-feature-section">
           <div class="resource-section-head">
             <h2>重点模块</h2>

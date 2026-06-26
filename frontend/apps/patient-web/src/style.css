@@ -1166,10 +1166,40 @@
 }
 
 .resource-feature-section,
+.resource-article-section,
 .resource-workflow,
 .resource-faq {
   padding-bottom: 28px;
   border-bottom: 1px solid var(--hospital-line);
+}
+
+.resource-article-section {
+  display: grid;
+  gap: 24px;
+}
+
+.resource-article {
+  max-width: 820px;
+}
+
+.resource-article h2 {
+  margin: 0 0 16px;
+  color: var(--hospital-ink);
+  font-family: var(--hospital-serif);
+  font-size: 32px;
+  font-weight: 650;
+  line-height: 1.18;
+}
+
+.resource-article p {
+  margin: 0 0 16px;
+  color: #243247;
+  font-size: 17px;
+  line-height: 1.9;
+}
+
+.resource-article p:last-child {
+  margin-bottom: 0;
 }
 
 .resource-feature-grid {
@@ -1869,6 +1899,17 @@
   padding-left: 18px;
   color: var(--hospital-muted);
   line-height: 1.65;
+}
+
+.update-detail-body {
+  display: grid;
+  gap: 12px;
+}
+
+.update-detail-body p {
+  margin: 0;
+  color: #243247;
+  line-height: 1.8;
 }
 
 .public-detail-panel a {
