@@ -4,7 +4,6 @@ import { useAuthStore } from "@smart-cloud-brain/shared-api";
 /* Layout（首屏必需，不懒加载） */
 import PatientPublicLayout from "../layouts/PatientPublicLayout.vue";
 import PatientPortalLayout from "../layouts/PatientPortalLayout.vue";
-import StaticPage from "../pages/StaticPage.vue";
 
 /* 页面组件（懒加载，访问时才加载） */
 const HomePage = () => import("../pages/HomePage.vue");
@@ -21,41 +20,44 @@ const VisitPeoplePage = () => import("../pages/VisitPeoplePage.vue");
 const PublicInfoPage = () => import("../pages/PublicInfoPage.vue");
 const PublicSearchPage = () => import("../pages/PublicSearchPage.vue");
 const DepartmentsPage = () => import("../pages/DepartmentsPage.vue");
+const DoctorTeamPage = () => import("../pages/DoctorTeamPage.vue");
+const PublicUpdatesPage = () => import("../pages/PublicUpdatesPage.vue");
+const PatientReportsPage = () => import("../pages/PatientReportsPage.vue");
+const PatientInvoicesPage = () => import("../pages/PatientInvoicesPage.vue");
+const PatientMessagesPage = () => import("../pages/PatientMessagesPage.vue");
 const NotFound = () => import("../pages/NotFound.vue");
 
 const staticRoutes = [
-  { path: "services/internet-clinic", name: "service-internet-clinic" },
-  { path: "services/exam-booking", name: "service-exam-booking" },
-  { path: "services/inpatient", name: "service-inpatient" },
-  { path: "services/emergency", name: "service-emergency" },
-  { path: "services/international", name: "service-international" },
-  { path: "doctors/experts", name: "doctor-experts" },
-  { path: "doctors/centers", name: "doctor-centers" },
-  { path: "doctors/schedules", name: "doctor-schedules" },
-  { path: "library/symptoms", name: "library-symptoms" },
-  { path: "library/drugs", name: "library-drugs" },
-  { path: "library/tests", name: "library-tests" },
-  { path: "library/rehab", name: "library-rehab" },
-  { path: "library/articles", name: "library-articles" },
-  { path: "ai/symptom-consult", name: "ai-symptom" },
-  { path: "ai/record-summary", name: "ai-record-summary" },
-  { path: "ai/medication", name: "ai-medication" },
-  { path: "ai/health-assessment", name: "ai-assessment" },
-  { path: "about/hospital", name: "about-hospital" },
-  { path: "about/news", name: "about-news" },
-  { path: "about/careers", name: "about-careers" },
-  { path: "about/contact", name: "about-contact" },
-  { path: "research", name: "public-research" },
-  { path: "conditions", name: "public-conditions" },
-  { path: "departments", name: "public-departments" },
-  { path: "giving", name: "public-giving" },
-  { path: "guide", name: "public-guide" },
-  { path: "locations", name: "public-locations" },
-  { path: "professionals", name: "public-professionals" },
-  { path: "search", name: "public-search" },
-
-
-].map((route) => ({ ...route, component: StaticPage }));
+  { path: "services/internet-clinic", name: "service-internet-clinic", component: PublicInfoPage },
+  { path: "services/exam-booking", name: "service-exam-booking", component: PublicInfoPage },
+  { path: "services/inpatient", name: "service-inpatient", component: PublicInfoPage },
+  { path: "services/emergency", name: "service-emergency", component: PublicInfoPage },
+  { path: "services/international", name: "service-international", component: PublicInfoPage },
+  { path: "doctors/experts", name: "doctor-experts", component: DoctorTeamPage },
+  { path: "doctors/centers", name: "doctor-centers", component: PublicInfoPage },
+  { path: "doctors/schedules", name: "doctor-schedules", component: PublicInfoPage },
+  { path: "library/symptoms", name: "library-symptoms", component: PublicInfoPage },
+  { path: "library/drugs", name: "library-drugs", component: PublicInfoPage },
+  { path: "library/tests", name: "library-tests", component: PublicInfoPage },
+  { path: "library/rehab", name: "library-rehab", component: PublicInfoPage },
+  { path: "library/articles", name: "library-articles", component: PublicUpdatesPage },
+  { path: "ai/symptom-consult", name: "ai-symptom", component: PublicInfoPage },
+  { path: "ai/record-summary", name: "ai-record-summary", component: PublicInfoPage },
+  { path: "ai/medication", name: "ai-medication", component: PublicInfoPage },
+  { path: "ai/health-assessment", name: "ai-assessment", component: PublicInfoPage },
+  { path: "about/hospital", name: "about-hospital", component: PublicInfoPage },
+  { path: "about/news", name: "about-news", component: PublicUpdatesPage },
+  { path: "about/careers", name: "about-careers", component: PublicInfoPage },
+  { path: "about/contact", name: "about-contact", component: PublicInfoPage },
+  { path: "research", name: "public-research", component: PublicInfoPage },
+  { path: "conditions", name: "public-conditions", component: PublicInfoPage },
+  { path: "departments", name: "public-departments", component: DepartmentsPage },
+  { path: "giving", name: "public-giving", component: PublicInfoPage },
+  { path: "guide", name: "public-guide", component: PublicInfoPage },
+  { path: "locations", name: "public-locations", component: PublicInfoPage },
+  { path: "professionals", name: "public-professionals", component: PublicInfoPage },
+  { path: "search", name: "public-search", component: PublicSearchPage },
+];
 
 const router = createRouter({
   history: createWebHistory(),
@@ -81,9 +83,9 @@ const router = createRouter({
         { path: "appointments", name: "patient-appointments", component: AppointmentsPage },
         { path: "records", name: "patient-records", component: MedicalRecordsPage },
         { path: "prescriptions", name: "patient-prescriptions", component: PrescriptionsPage },
-        { path: "reports", name: "patient-reports", component: StaticPage },
-        { path: "invoices", name: "patient-invoices", component: StaticPage },
-        { path: "messages", name: "patient-messages", component: StaticPage },
+        { path: "reports", name: "patient-reports", component: PatientReportsPage },
+        { path: "invoices", name: "patient-invoices", component: PatientInvoicesPage },
+        { path: "messages", name: "patient-messages", component: PatientMessagesPage },
         { path: "profile", name: "patient-profile", component: ProfilePage },
         { path: "family", name: "patient-visitors", component: VisitPeoplePage },
       ],
