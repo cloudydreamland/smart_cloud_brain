@@ -212,4 +212,5 @@ docker exec scb-auth-service env | grep JWT_SECRET
 - shared-ui 组件依赖 Tailwind 类名，新增/修改组件时确保 Tailwind 可用
 - 不要删除 `tailwind.config.js` 中的 `content` 配置里的 shared-ui 路径
 - 遇到 CSS 视觉问题，先用 `browser_console` 的 `getBoundingClientRect()` 量实际渲染数据，不要只读代码推断
+- Windows 环境下如需通过网页验证功能或视觉效果，不要手动启动前端开发服务器；应在项目根目录执行 `.\scripts\start-local.ps1`，等待 Docker 构建和容器启动完成后，再连接浏览器进行测试
 - 全中文项目内容，保留英文专有名词

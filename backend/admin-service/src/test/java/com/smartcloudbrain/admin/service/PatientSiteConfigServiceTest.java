@@ -12,6 +12,7 @@ import com.smartcloudbrain.admin.dto.admin.PatientSiteConfigSaveRequest;
 import com.smartcloudbrain.admin.entity.PatientSiteConfig;
 import com.smartcloudbrain.admin.repository.PatientSiteConfigRepository;
 import com.smartcloudbrain.common.exception.BusinessException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +37,8 @@ class PatientSiteConfigServiceTest {
 
   @Test
   void savesValidDraftConfig() {
+    when(repository.findFirstByConfigKeyAndStatusOrderByVersionDesc("patient_nav", "DRAFT"))
+        .thenReturn(Optional.empty());
     when(repository.findByConfigKeyOrderByVersionDesc("patient_nav")).thenReturn(List.of());
     when(repository.save(any(PatientSiteConfig.class))).thenAnswer(invocation -> {
       PatientSiteConfig value = invocation.getArgument(0);
@@ -52,6 +55,37 @@ class PatientSiteConfigServiceTest {
     assertEquals("patient_nav", saved.get("configKey"));
     assertEquals("DRAFT", saved.get("status"));
     assertEquals(1, saved.get("version"));
+    assertEquals(9L, saved.get("createdBy"));
+    assertEquals(9L, saved.get("updatedBy"));
+  }
+
+  @Test
+  void savesDraftUpdatesExistingDraftWithoutChangingVersion() {
+    PatientSiteConfig draft = config("patient_nav", "DRAFT", 7,
+        "{\"brand\":{\"name\":\"Old\",\"homeRoute\":\"patient-home\"},\"menus\":[],\"userLinks\":[]}");
+    draft.setId(42L);
+    draft.setCreatedBy(5L);
+    draft.setCreatedAt(LocalDateTime.of(2026, 1, 2, 3, 4, 5));
+    when(repository.findFirstByConfigKeyAndStatusOrderByVersionDesc("patient_nav", "DRAFT"))
+        .thenReturn(Optional.of(draft));
+    when(repository.save(any(PatientSiteConfig.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+    Map<String, Object> saved = service.saveDraft(new PatientSiteConfigSaveRequest(
+        "patient_nav",
+        "{\"brand\":{\"name\":\"New\",\"homeRoute\":\"patient-home\"},\"menus\":[],\"userLinks\":[]}",
+        "updated"
+    ), 9L);
+
+    assertEquals(42L, saved.get("id"));
+    assertEquals("patient_nav", saved.get("configKey"));
+    assertEquals("DRAFT", saved.get("status"));
+    assertEquals(7, saved.get("version"));
+    assertEquals(5L, saved.get("createdBy"));
+    assertEquals(9L, saved.get("updatedBy"));
+    assertEquals("2026-01-02T03:04:05", saved.get("createdAt"));
+    assertEquals("updated", saved.get("remark"));
+    assertEquals("{\"brand\":{\"name\":\"New\",\"homeRoute\":\"patient-home\"},\"menus\":[],\"userLinks\":[]}", saved.get("configJson"));
+    verify(repository, org.mockito.Mockito.never()).findByConfigKeyOrderByVersionDesc("patient_nav");
   }
 
   @Test
@@ -155,6 +189,7 @@ class PatientSiteConfigServiceTest {
   void publishesDraftArchivesOldPublishedAndPublicReadsPublishedOnly() {
     PatientSiteConfig draft = config("patient_home", "DRAFT", 2,
         "{\"hero\":{\"title\":\"Home\",\"primaryAction\":{\"label\":\"Book\",\"routeName\":\"patient-doctors\"}},\"modules\":[{\"type\":\"notice\",\"key\":\"notice\"}]}");
+    draft.setCreatedBy(3L);
     PatientSiteConfig old = config("patient_home", "PUBLISHED", 1, "{\"hero\":{\"title\":\"Old\"},\"modules\":[]}");
     when(repository.findFirstByConfigKeyAndStatusOrderByVersionDesc("patient_home", "DRAFT"))
         .thenReturn(Optional.of(draft));
@@ -167,8 +202,12 @@ class PatientSiteConfigServiceTest {
 
     assertEquals("PUBLISHED", published.get("status"));
     assertEquals(3, published.get("version"));
+    assertEquals(3L, published.get("createdBy"));
+    assertEquals(7L, published.get("updatedBy"));
     assertEquals("ARCHIVED", old.getStatus());
+    assertEquals(7L, old.getUpdatedBy());
     assertEquals("ARCHIVED", draft.getStatus());
+    assertEquals(7L, draft.getUpdatedBy());
 
     ArgumentCaptor<PatientSiteConfig> captor = ArgumentCaptor.forClass(PatientSiteConfig.class);
     verify(repository, org.mockito.Mockito.atLeastOnce()).save(captor.capture());

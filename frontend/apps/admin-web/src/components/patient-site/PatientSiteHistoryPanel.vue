@@ -102,15 +102,15 @@ function displayValue(value?: string) {
     <div class="patient-site-history-actions">
       <button type="button" class="topbar-refresh" :disabled="saving" @click="saveDraft">保存草稿</button>
       <button type="button" class="topbar-refresh" :disabled="saving" @click="publishDraft">发布最新草稿</button>
-      <button type="button" class="topbar-refresh" :disabled="!records.length" @click="openHistoryModal">查看草稿版本</button>
+      <button type="button" class="topbar-refresh" :disabled="!records.length" @click="openHistoryModal">查看版本记录</button>
     </div>
     <p class="patient-site-history-summary">当前共 {{ records.length }} 个版本，点击按钮在弹窗中分页查看。</p>
 
     <div v-if="modalOpen" class="patient-config-modal-backdrop" @click.self="modalOpen = false">
-      <section class="patient-config-modal-card patient-site-history-modal-card" role="dialog" aria-modal="true" aria-label="草稿版本记录">
+      <section class="patient-config-modal-card patient-site-history-modal-card" role="dialog" aria-modal="true" aria-label="版本记录">
         <button type="button" class="patient-config-modal-close" aria-label="关闭" @click="modalOpen = false">×</button>
         <header class="patient-config-modal-head">
-          <h2>草稿版本记录</h2>
+          <h2>版本记录</h2>
           <p>按版本倒序查看配置历史、字段差异，并可回滚到非发布版本。</p>
         </header>
 

@@ -88,14 +88,11 @@ public class PatientSiteConfigService {
   public Map<String, Object> saveDraft(PatientSiteConfigSaveRequest request, Long userId) {
     String key = requireConfigKey(request.configKey());
     JsonNode root = parseObject(request.configJson());
-    int version = nextVersion(key);
-    PatientSiteConfig config = new PatientSiteConfig();
+    PatientSiteConfig config = repository.findFirstByConfigKeyAndStatusOrderByVersionDesc(key, STATUS_DRAFT)
+        .orElseGet(() -> newDraft(key, userId));
     config.setConfigKey(key);
     config.setConfigJson(compact(root));
-    config.setStatus(STATUS_DRAFT);
-    config.setVersion(version);
     config.setRemark(request.remark());
-    config.setCreatedBy(userId);
     config.setUpdatedBy(userId);
     config.setUpdatedAt(LocalDateTime.now());
     return view(repository.save(config));
@@ -144,6 +141,15 @@ public class PatientSiteConfigService {
     published.setUpdatedBy(userId);
     published.setUpdatedAt(LocalDateTime.now());
     return view(repository.save(published));
+  }
+
+  private PatientSiteConfig newDraft(String key, Long userId) {
+    PatientSiteConfig config = new PatientSiteConfig();
+    config.setConfigKey(key);
+    config.setStatus(STATUS_DRAFT);
+    config.setVersion(nextVersion(key));
+    config.setCreatedBy(userId);
+    return config;
   }
 
   @Transactional
