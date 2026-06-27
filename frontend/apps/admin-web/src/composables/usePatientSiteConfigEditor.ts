@@ -25,6 +25,7 @@ import {
   useAuthStore,
 } from "@smart-cloud-brain/shared-api";
 import { isAllowedPatientRoute, patientRouteOptions } from "../patientSiteRoutes";
+import { homeModuleTypeLabel } from "../patientSitePresentation";
 
 type ConfigKey = PatientSiteConfigKey;
 type EditorDraft = any;
@@ -47,18 +48,18 @@ type ConfigDrafts = {
 
 export const configTabs: ConfigTab[] = [
   { key: "patient_nav", label: "导航配置", description: "患者端顶部导航、下拉入口和登录后用户菜单。" },
-  { key: "patient_home", label: "首页配置", description: "首页 hero、notice 和 quick actions 模块。" },
-  { key: "patient_static_pages", label: "静态页配置", description: "按 routeName 匹配的内容页标题、说明、要点和主按钮。" },
-  { key: "patient_pages", label: "CMS 动态页", description: "配置 /pages/:slug 动态页面及页面区块内容。" },
+  { key: "patient_home", label: "首页配置", description: "首页横幅、通知公告和快捷入口模块。" },
+  { key: "patient_static_pages", label: "静态页配置", description: "按页面入口匹配的内容页标题、说明、要点和主按钮。" },
+  { key: "patient_pages", label: "CMS 动态页", description: "配置患者端动态页面及页面区块内容。" },
 ];
 
 export const homeModuleTypeOptions = [
-  { value: "notice", label: "notice" },
-  { value: "quick_actions", label: "quick_actions" },
-  { value: "intro", label: "intro" },
-  { value: "locations", label: "locations" },
-  { value: "featured_departments", label: "featured_departments" },
-  { value: "static_content", label: "static_content" },
+  { value: "notice", label: homeModuleTypeLabel("notice") },
+  { value: "quick_actions", label: homeModuleTypeLabel("quick_actions") },
+  { value: "intro", label: homeModuleTypeLabel("intro") },
+  { value: "locations", label: homeModuleTypeLabel("locations") },
+  { value: "featured_departments", label: homeModuleTypeLabel("featured_departments") },
+  { value: "static_content", label: homeModuleTypeLabel("static_content") },
 ] as const;
 
 const configKeys = new Set<ConfigKey>(configTabs.map((tab) => tab.key));

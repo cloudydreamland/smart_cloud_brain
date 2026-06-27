@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { PatientNavConfig } from "@smart-cloud-brain/shared-api";
 import type { EditingTarget } from "../../composables/usePatientSiteConfigEditor";
+import { patientSiteFieldLabel } from "../../patientSitePresentation";
 
 defineProps<{
   navDraft: PatientNavConfig;
@@ -25,7 +26,7 @@ defineProps<{
     <article class="config-card config-summary-card">
       <div>
         <strong>{{ navDraft.brand.name }}</strong>
-        <p>{{ routeLabel(navDraft.brand.homeRoute) }} / {{ navDraft.brand.homeRoute }}</p>
+        <p>首页入口：{{ routeLabel(navDraft.brand.homeRoute) }} · 内部标识：{{ navDraft.brand.homeRoute }}</p>
       </div>
       <span class="status-pill enabled">生效</span>
     </article>
@@ -43,7 +44,7 @@ defineProps<{
       <article v-for="(menu, menuIndex) in navDraft.menus" :key="menu.key || menuIndex" class="config-card config-summary-card">
         <div>
           <strong>{{ menu.label || "未命名菜单" }}</strong>
-          <p>{{ menu.key }} · {{ menu.links?.length || 0 }} 个链接 · sort {{ menu.sort ?? "-" }}</p>
+          <p>内部标识：{{ menu.key }} · {{ menu.links?.length || 0 }} 个链接 · {{ patientSiteFieldLabel("sort") }}：{{ menu.sort ?? "-" }}</p>
           <small>{{ menu.lead || menu.description || "未填写导语" }}</small>
         </div>
         <div class="config-card-actions">
@@ -67,7 +68,7 @@ defineProps<{
       <article v-for="(link, linkIndex) in navDraft.userLinks" :key="`user-${linkIndex}`" class="config-row-card config-summary-row">
         <div>
           <strong>{{ link.label || "未命名入口" }}</strong>
-          <span>{{ routeLabel(link.routeName) }} / {{ link.routeName }} · sort {{ link.sort ?? "-" }}</span>
+          <span>页面入口：{{ routeLabel(link.routeName) }} · 内部标识：{{ link.routeName }} · {{ patientSiteFieldLabel("sort") }}：{{ link.sort ?? "-" }}</span>
         </div>
         <div class="config-card-actions">
           <button type="button" class="status-pill" :class="link.enabled === false ? 'disabled' : 'enabled'" @click="toggleEnabled(link)">{{ link.enabled === false ? "禁用" : "启用" }}</button>

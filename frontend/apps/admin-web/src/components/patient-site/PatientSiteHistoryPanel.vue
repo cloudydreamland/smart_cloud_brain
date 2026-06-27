@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import { formatDateTime, type PatientSiteConfigHistoryPage, type PatientSiteConfigRecord } from "@smart-cloud-brain/shared-api";
+import { patientSiteConfigStatusText } from "../../patientSitePresentation";
 
 const props = defineProps<{
   records: PatientSiteConfigRecord[];
@@ -129,7 +130,7 @@ function displayValue(value?: string) {
               :class="{ active: selectedRecord && recordKey(record) === recordKey(selectedRecord) }"
             >
               <div>
-                <span class="status-pill" :class="record.status === 'PUBLISHED' ? 'enabled' : 'disabled'">{{ record.status }}</span>
+                <span class="status-pill" :class="record.status === 'PUBLISHED' ? 'enabled' : 'disabled'">{{ patientSiteConfigStatusText(record.status) }}</span>
                 <strong>v{{ record.version || "-" }}</strong>
               </div>
               <p>{{ record.remark || "无备注" }}</p>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { PatientHomeConfig, PatientHomeModule } from "@smart-cloud-brain/shared-api";
 import type { EditingTarget } from "../../composables/usePatientSiteConfigEditor";
+import { homeModuleBusinessTitle, homeModuleInternalIdentifier, homeModuleTypeLabel } from "../../patientSitePresentation";
 
 defineProps<{
   homeDraft: PatientHomeConfig;
@@ -29,7 +30,7 @@ defineProps<{
     <article class="config-card config-summary-card">
       <div>
         <strong>{{ homeDraft.hero.title }}</strong>
-        <p>{{ homeDraft.hero.eyebrow || "无 eyebrow" }}</p>
+        <p>{{ homeDraft.hero.eyebrow || "未填写眉题" }}</p>
         <small>{{ homeDraft.hero.primaryAction?.label }} / {{ homeDraft.hero.secondaryAction?.label }}</small>
       </div>
       <button type="button" class="status-pill" :class="homeDraft.hero.enabled === false ? 'disabled' : 'enabled'" @click="toggleEnabled(homeDraft.hero)">
@@ -45,20 +46,20 @@ defineProps<{
         <p>模块详情在弹窗中维护。</p>
       </div>
       <div class="inline-actions">
-        <button type="button" class="topbar-refresh" @click="addNoticeModule">新增 notice</button>
-        <button type="button" class="topbar-refresh" @click="addQuickActionsModule">新增 quick_actions</button>
-        <button type="button" class="topbar-refresh" @click="addIntroModule">新增 intro</button>
-        <button type="button" class="topbar-refresh" @click="addLocationsModule">新增 locations</button>
-        <button type="button" class="topbar-refresh" @click="addFeaturedDepartmentsModule">新增 featured_departments</button>
-        <button type="button" class="topbar-refresh" @click="addStaticContentModule">新增 static_content</button>
+        <button type="button" class="topbar-refresh" @click="addNoticeModule">新增{{ homeModuleTypeLabel("notice") }}</button>
+        <button type="button" class="topbar-refresh" @click="addQuickActionsModule">新增{{ homeModuleTypeLabel("quick_actions") }}</button>
+        <button type="button" class="topbar-refresh" @click="addIntroModule">新增{{ homeModuleTypeLabel("intro") }}</button>
+        <button type="button" class="topbar-refresh" @click="addLocationsModule">新增{{ homeModuleTypeLabel("locations") }}</button>
+        <button type="button" class="topbar-refresh" @click="addFeaturedDepartmentsModule">新增{{ homeModuleTypeLabel("featured_departments") }}</button>
+        <button type="button" class="topbar-refresh" @click="addStaticContentModule">新增{{ homeModuleTypeLabel("static_content") }}</button>
       </div>
     </div>
     <div class="config-card-grid">
       <article v-for="(module, moduleIndex) in homeDraft.modules" :key="module.key || moduleIndex" class="config-card config-summary-card">
         <div>
-          <strong>{{ module.type }} / {{ module.key }}</strong>
+          <strong>{{ homeModuleBusinessTitle(module.type, module.key) }}</strong>
           <p>{{ moduleSummary(module) }}</p>
-          <small>sort {{ module.sort ?? "-" }}</small>
+          <small>显示顺序：{{ module.sort ?? "-" }} · 内部标识：{{ homeModuleInternalIdentifier(module.type, module.key) }}</small>
         </div>
         <div class="config-card-actions">
           <button type="button" class="status-pill" :class="module.enabled === false ? 'disabled' : 'enabled'" @click="toggleEnabled(module)">{{ module.enabled === false ? "禁用" : "启用" }}</button>

@@ -2,6 +2,7 @@
 import { onMounted } from "vue";
 import { formatDateTime } from "@smart-cloud-brain/shared-api";
 import { usePatientSiteConfigEditor } from "../../composables/usePatientSiteConfigEditor";
+import { patientSiteConfigStatusText } from "../../patientSitePresentation";
 import NavConfigEditor from "./NavConfigEditor.vue";
 import HomeConfigEditor from "./HomeConfigEditor.vue";
 import PagesConfigEditor from "./PagesConfigEditor.vue";
@@ -64,7 +65,7 @@ onMounted(editor.loadAll);
           <dl>
             <div>
               <dt>状态</dt>
-              <dd>{{ activeRecord?.status || "未保存" }}</dd>
+              <dd>{{ activeRecord?.status ? patientSiteConfigStatusText(activeRecord.status) : "未保存" }}</dd>
             </div>
             <div>
               <dt>版本</dt>

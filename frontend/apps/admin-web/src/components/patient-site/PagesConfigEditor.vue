@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import type { PatientSitePagesConfig, PatientSiteSectionType } from "@smart-cloud-brain/shared-api";
+import { patientSiteFieldLabel } from "../../patientSitePresentation";
 import PageSectionFieldsEditor from "./PageSectionFieldsEditor.vue";
 
 const props = defineProps<{
@@ -39,6 +40,10 @@ function dropSection(pageIndex: number, toIndex: number) {
   props.reorderPageSection(pageIndex, draggedSection.value.sectionIndex, toIndex);
   draggedSection.value = null;
 }
+
+function sectionTypeLabel(type: PatientSiteSectionType) {
+  return props.sectionTypeOptions.find((option) => option.type === type)?.label || type;
+}
 </script>
 
 <template>
@@ -46,7 +51,7 @@ function dropSection(pageIndex: number, toIndex: number) {
     <div class="config-section-head">
       <div>
         <h3>CMS 动态页</h3>
-        <p>配置渲染在 /pages/:slug 下的患者端动态内容页。</p>
+        <p>配置患者端动态内容页，页面地址会生成在 /pages/ 下。</p>
       </div>
       <button type="button" class="topbar-refresh" @click="addCmsPage">新增页面</button>
     </div>
@@ -66,7 +71,7 @@ function dropSection(pageIndex: number, toIndex: number) {
         <div class="page-editor-head">
           <div>
             <strong>{{ page.title || "未命名 CMS 动态页" }}</strong>
-            <p>{{ page.slug ? `/pages/${page.slug}` : "未填写 slug" }} · {{ page.sections.length }} 个区块</p>
+            <p>{{ page.slug ? `页面地址：/pages/${page.slug}` : "未填写页面地址" }} · {{ page.sections.length }} 个区块</p>
           </div>
           <div class="config-card-actions">
             <button type="button" class="status-pill" :class="page.enabled === false ? 'disabled' : 'enabled'" @click="toggleEnabled(page)">
@@ -79,19 +84,19 @@ function dropSection(pageIndex: number, toIndex: number) {
 
         <div class="config-grid four">
           <label>
-            <span>routeName</span>
+            <span>{{ patientSiteFieldLabel("routeName") }}</span>
             <select v-model="page.routeName">
-              <option v-for="route in patientRouteOptions" :key="route.name" :value="route.name">{{ route.label }} / {{ route.name }}</option>
+              <option v-for="route in patientRouteOptions" :key="route.name" :value="route.name">{{ route.label }}</option>
             </select>
           </label>
-          <label><span>slug</span><input v-model.trim="page.slug" type="text" placeholder="hospital-guide"></label>
-          <label><span>排序</span><input v-model.number="page.sort" type="number"></label>
+          <label><span>{{ patientSiteFieldLabel("slug") }}</span><input v-model.trim="page.slug" type="text" placeholder="hospital-guide"></label>
+          <label><span>{{ patientSiteFieldLabel("sort") }}</span><input v-model.number="page.sort" type="number"></label>
           <label class="check-field"><input v-model="page.enabled" type="checkbox"><span>启用</span></label>
         </div>
 
         <div class="config-grid two">
-          <label><span>分组标签</span><input v-model.trim="page.label" type="text"></label>
-          <label><span>页面标题</span><input v-model.trim="page.title" type="text"></label>
+          <label><span>{{ patientSiteFieldLabel("label") }}</span><input v-model.trim="page.label" type="text"></label>
+          <label><span>{{ patientSiteFieldLabel("title") }}</span><input v-model.trim="page.title" type="text"></label>
           <label><span>页面简介</span><textarea v-model.trim="page.intro" rows="3"></textarea></label>
           <div class="nested-list">
             <div class="nested-list-head">
@@ -100,8 +105,8 @@ function dropSection(pageIndex: number, toIndex: number) {
               <button v-else type="button" class="danger-link" @click="page.seo = undefined">移除 SEO</button>
             </div>
             <div v-if="page.seo" class="config-grid two">
-              <label><span>seo.title</span><input v-model.trim="page.seo.title" type="text"></label>
-              <label><span>seo.description</span><input v-model.trim="page.seo.description" type="text"></label>
+              <label><span>SEO 标题</span><input v-model.trim="page.seo.title" type="text"></label>
+              <label><span>SEO 描述</span><input v-model.trim="page.seo.description" type="text"></label>
             </div>
           </div>
         </div>
@@ -128,7 +133,7 @@ function dropSection(pageIndex: number, toIndex: number) {
             @dragend="draggedSection = null"
           >
             <div class="page-section-head">
-              <strong>{{ section.type }}</strong>
+              <strong>{{ sectionTypeLabel(section.type) }}</strong>
               <button type="button" class="danger-link" @click="removePageSection(pageIndex, sectionIndex)">删除区块</button>
             </div>
             <PageSectionFieldsEditor :section="section" :patient-route-options="patientRouteOptions" />
