@@ -357,9 +357,38 @@
   gap: 8px;
 }
 
+.patient-site-history-summary {
+  color: var(--muted);
+}
+
+.patient-config-modal-card.patient-site-history-modal-card {
+  width: min(1080px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+}
+
+.patient-site-history-modal-body {
+  display: grid;
+  gap: 12px;
+}
+
+.patient-site-version-toolbar,
+.patient-site-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.patient-site-version-toolbar span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
 .patient-site-version-list {
   display: grid;
   gap: 8px;
+  max-height: 280px;
+  overflow: auto;
 }
 
 .patient-site-version {

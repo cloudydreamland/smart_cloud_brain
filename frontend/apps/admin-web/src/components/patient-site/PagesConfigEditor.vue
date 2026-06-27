@@ -45,10 +45,10 @@ function dropSection(pageIndex: number, toIndex: number) {
   <section class="config-section">
     <div class="config-section-head">
       <div>
-        <h3>CMS pages</h3>
-        <p>Build dynamic patient pages rendered at /pages/:slug.</p>
+        <h3>CMS 动态页</h3>
+        <p>配置渲染在 /pages/:slug 下的患者端动态内容页。</p>
       </div>
-      <button type="button" class="topbar-refresh" @click="addCmsPage">Add page</button>
+      <button type="button" class="topbar-refresh" @click="addCmsPage">新增页面</button>
     </div>
 
     <div class="config-card-grid cms-page-editor-grid">
@@ -65,15 +65,15 @@ function dropSection(pageIndex: number, toIndex: number) {
       >
         <div class="page-editor-head">
           <div>
-            <strong>{{ page.title || "Untitled CMS page" }}</strong>
-            <p>{{ page.slug ? `/pages/${page.slug}` : "slug missing" }} · {{ page.sections.length }} sections</p>
+            <strong>{{ page.title || "未命名 CMS 动态页" }}</strong>
+            <p>{{ page.slug ? `/pages/${page.slug}` : "未填写 slug" }} · {{ page.sections.length }} 个区块</p>
           </div>
           <div class="config-card-actions">
             <button type="button" class="status-pill" :class="page.enabled === false ? 'disabled' : 'enabled'" @click="toggleEnabled(page)">
-              {{ page.enabled === false ? "disabled" : "enabled" }}
+              {{ page.enabled === false ? "禁用" : "启用" }}
             </button>
-            <button type="button" class="topbar-refresh" @click="previewCmsPage(page)">Preview</button>
-            <button type="button" class="danger-link" @click="removeCmsPage(pageIndex)">Delete</button>
+            <button type="button" class="topbar-refresh" @click="previewCmsPage(page)">预览</button>
+            <button type="button" class="danger-link" @click="removeCmsPage(pageIndex)">删除</button>
           </div>
         </div>
 
@@ -85,19 +85,19 @@ function dropSection(pageIndex: number, toIndex: number) {
             </select>
           </label>
           <label><span>slug</span><input v-model.trim="page.slug" type="text" placeholder="hospital-guide"></label>
-          <label><span>sort</span><input v-model.number="page.sort" type="number"></label>
-          <label class="check-field"><input v-model="page.enabled" type="checkbox"><span>enabled</span></label>
+          <label><span>排序</span><input v-model.number="page.sort" type="number"></label>
+          <label class="check-field"><input v-model="page.enabled" type="checkbox"><span>启用</span></label>
         </div>
 
         <div class="config-grid two">
-          <label><span>label</span><input v-model.trim="page.label" type="text"></label>
-          <label><span>title</span><input v-model.trim="page.title" type="text"></label>
-          <label><span>intro</span><textarea v-model.trim="page.intro" rows="3"></textarea></label>
+          <label><span>分组标签</span><input v-model.trim="page.label" type="text"></label>
+          <label><span>页面标题</span><input v-model.trim="page.title" type="text"></label>
+          <label><span>页面简介</span><textarea v-model.trim="page.intro" rows="3"></textarea></label>
           <div class="nested-list">
             <div class="nested-list-head">
-              <strong>seo</strong>
-              <button v-if="!page.seo" type="button" class="topbar-refresh" @click="page.seo = {}">Add SEO</button>
-              <button v-else type="button" class="danger-link" @click="page.seo = undefined">Remove SEO</button>
+              <strong>SEO</strong>
+              <button v-if="!page.seo" type="button" class="topbar-refresh" @click="page.seo = {}">添加 SEO</button>
+              <button v-else type="button" class="danger-link" @click="page.seo = undefined">移除 SEO</button>
             </div>
             <div v-if="page.seo" class="config-grid two">
               <label><span>seo.title</span><input v-model.trim="page.seo.title" type="text"></label>
@@ -108,7 +108,7 @@ function dropSection(pageIndex: number, toIndex: number) {
 
         <div class="nested-list">
           <div class="nested-list-head">
-            <strong>sections</strong>
+            <strong>页面区块</strong>
             <div class="section-add-buttons">
               <button v-for="option in sectionTypeOptions" :key="option.type" type="button" class="topbar-refresh" @click="addPageSection(pageIndex, option.type)">
                 {{ option.label }}
@@ -129,7 +129,7 @@ function dropSection(pageIndex: number, toIndex: number) {
           >
             <div class="page-section-head">
               <strong>{{ section.type }}</strong>
-              <button type="button" class="danger-link" @click="removePageSection(pageIndex, sectionIndex)">Delete section</button>
+              <button type="button" class="danger-link" @click="removePageSection(pageIndex, sectionIndex)">删除区块</button>
             </div>
             <PageSectionFieldsEditor :section="section" :patient-route-options="patientRouteOptions" />
           </div>

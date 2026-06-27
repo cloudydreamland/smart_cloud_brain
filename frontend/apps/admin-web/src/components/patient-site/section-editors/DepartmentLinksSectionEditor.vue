@@ -13,25 +13,25 @@ const emptyLink = (): RouteTargetConfig => ({ label: "", routeName: "patient-hom
 <template>
   <div class="nested-list">
     <div class="config-grid two">
-      <label><span>limit</span><input v-model.number="section.limit" type="number"></label>
+      <label><span>数量上限</span><input v-model.number="section.limit" type="number"></label>
     </div>
     <div class="nested-list-head">
-      <strong>links</strong>
-      <button type="button" class="topbar-refresh" @click="section.links.push(emptyLink())">Add link</button>
+      <strong>固定链接</strong>
+      <button type="button" class="topbar-refresh" @click="section.links.push(emptyLink())">新增链接</button>
     </div>
     <div v-for="(link, linkIndex) in section.links" :key="`department-link-${linkIndex}`" class="config-row-card">
       <div class="config-grid three">
         <RouteTargetEditor :model="link" prefix="link" :patient-route-options="patientRouteOptions" include-sort include-enabled />
       </div>
-      <button type="button" class="danger-link" @click="section.links.splice(linkIndex, 1)">Delete link</button>
+      <button type="button" class="danger-link" @click="section.links.splice(linkIndex, 1)">删除链接</button>
     </div>
     <div class="nested-list-head">
-      <strong>fallbackNames</strong>
-      <button type="button" class="topbar-refresh" @click="section.fallbackNames.push('New department')">Add name</button>
+      <strong>默认科室名</strong>
+      <button type="button" class="topbar-refresh" @click="section.fallbackNames.push('新科室')">新增科室</button>
     </div>
     <div v-for="(_name, nameIndex) in section.fallbackNames" :key="`fallback-name-${nameIndex}`" class="config-row-card">
-      <label><span>name</span><input v-model.trim="section.fallbackNames[nameIndex]" type="text"></label>
-      <button type="button" class="danger-link" @click="section.fallbackNames.splice(nameIndex, 1)">Delete name</button>
+      <label><span>科室名</span><input v-model.trim="section.fallbackNames[nameIndex]" type="text"></label>
+      <button type="button" class="danger-link" @click="section.fallbackNames.splice(nameIndex, 1)">删除科室</button>
     </div>
   </div>
 </template>

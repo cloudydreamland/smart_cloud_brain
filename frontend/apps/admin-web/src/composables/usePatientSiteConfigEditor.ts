@@ -48,7 +48,7 @@ export const configTabs: ConfigTab[] = [
   { key: "patient_nav", label: "导航配置", description: "患者端顶部导航、下拉入口和登录后用户菜单。" },
   { key: "patient_home", label: "首页配置", description: "首页 hero、notice 和 quick actions 模块。" },
   { key: "patient_static_pages", label: "静态页配置", description: "按 routeName 匹配的内容页标题、说明、要点和主按钮。" },
-  { key: "patient_pages", label: "CMS pages", description: "Configure /pages/:slug dynamic pages and section content." },
+  { key: "patient_pages", label: "CMS 动态页", description: "配置 /pages/:slug 动态页面及页面区块内容。" },
 ];
 
 export const homeModuleTypeOptions = [
@@ -419,7 +419,7 @@ export function usePatientSiteConfigEditor() {
     if (!auth.session) return;
     const slug = typeof page.slug === "string" ? page.slug.trim().toLowerCase() : "";
     if (!slug) {
-      validationErrors.patient_pages = ["CMS page slug is required for preview"];
+      validationErrors.patient_pages = ["预览 CMS 动态页前必须填写 slug"];
       return;
     }
     saving.value = true;
@@ -431,12 +431,12 @@ export function usePatientSiteConfigEditor() {
       const row = await api.savePatientSiteConfig(auth.token(), {
         configKey: "patient_pages",
         configJson: JSON.stringify(normalized),
-        remark: remarks.patient_pages || "Preview draft",
+        remark: remarks.patient_pages || "预览草稿",
       });
       await refreshHistory("patient_pages");
       const token = await api.patientSitePreviewToken(auth.token(), "patient_pages", Number(row.version));
       window.open(`${patientPreviewOrigin()}/pages/${encodeURIComponent(slug)}?previewToken=${encodeURIComponent(token.token)}`, "_blank", "noopener");
-      status.value = "Preview draft saved. A patient preview window has been opened.";
+      status.value = "预览草稿已保存，并已打开患者端预览窗口。";
     } catch (err) {
       error.value = messageFrom(err);
     } finally {
@@ -448,8 +448,8 @@ export function usePatientSiteConfigEditor() {
     pagesDraft.value.pages.push({
       routeName: "about-hospital",
       slug: `cms-page-${Date.now()}`,
-      label: "CMS page",
-      title: "New CMS page",
+      label: "CMS 动态页",
+      title: "新的 CMS 动态页",
       intro: "",
       enabled: true,
       sort: nextSort(pagesDraft.value.pages),
@@ -817,7 +817,7 @@ function validateStaticPages(staticPages: PatientStaticPagesConfig, errors: stri
 function validateLink(link: RouteTargetConfig, path: string, errors: string[]) {
   requireText(link.label, `${path}.label 不能为空`, errors);
   requireRoute(link.routeName, `${path}.routeName`, errors);
-  if (link.routeName === "cms-page" && !link.slug?.trim()) errors.push(`${path}.slug is required when routeName is cms-page`);
+  if (link.routeName === "cms-page" && !link.slug?.trim()) errors.push(`${path}.slug 在 routeName 为 cms-page 时必填`);
 }
 
 function requireText(value: unknown, message: string, errors: string[]) {

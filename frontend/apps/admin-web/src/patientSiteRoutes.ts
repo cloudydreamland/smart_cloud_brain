@@ -39,5 +39,5 @@ export const patientRouteOptions = [
   { name: "about-news", label: "新闻动态" },
   { name: "about-careers", label: "招聘信息" },
   { name: "about-contact", label: "联系我们" },
-  { name: "cms-page", label: "CMS page" },
+  { name: "cms-page", label: "CMS 动态页" },
 ] as const;

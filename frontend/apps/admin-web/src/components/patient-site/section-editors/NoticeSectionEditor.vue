@@ -7,13 +7,13 @@ defineProps<{ section: NoticeSection }>();
 <template>
   <div class="config-grid two">
     <label>
-      <span>level</span>
+      <span>提示级别</span>
       <select v-model="section.level">
         <option value="info">info</option>
         <option value="warning">warning</option>
         <option value="success">success</option>
       </select>
     </label>
-    <label><span>text</span><textarea v-model.trim="section.text" rows="3"></textarea></label>
+    <label><span>提示正文</span><textarea v-model.trim="section.text" rows="3"></textarea></label>
   </div>
 </template>

@@ -13,14 +13,14 @@ const emptyLink = (): RouteTargetConfig => ({ label: "", routeName: "patient-hom
 <template>
   <div class="nested-list">
     <div class="nested-list-head">
-      <strong>links</strong>
-      <button type="button" class="topbar-refresh" @click="section.links.push(emptyLink())">Add link</button>
+      <strong>链接列表</strong>
+      <button type="button" class="topbar-refresh" @click="section.links.push(emptyLink())">新增链接</button>
     </div>
     <div v-for="(link, linkIndex) in section.links" :key="`section-link-${linkIndex}`" class="config-row-card">
       <div class="config-grid three">
         <RouteTargetEditor :model="link" prefix="link" :patient-route-options="patientRouteOptions" include-sort include-enabled />
       </div>
-      <button type="button" class="danger-link" @click="section.links.splice(linkIndex, 1)">Delete link</button>
+      <button type="button" class="danger-link" @click="section.links.splice(linkIndex, 1)">删除链接</button>
     </div>
   </div>
 </template>

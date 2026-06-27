@@ -311,7 +311,7 @@ function validateRouteTarget(link: RouteTargetConfig, path: string, errors: stri
   requireText(link.label, `${path}.label`, errors);
   requireText(link.routeName, `${path}.routeName`, errors);
   if (link.routeName && !isAllowedPatientRoute(link.routeName)) errors.push(`${path}.routeName 不在患者端路由白名单内：${link.routeName}`);
-  if (link.routeName === "cms-page" && !link.slug?.trim()) errors.push(`${path}.slug is required when routeName is cms-page`);
+  if (link.routeName === "cms-page" && !link.slug?.trim()) errors.push(`${path}.slug 在 routeName 为 cms-page 时必填`);
 }
 
 function requireText(value: unknown, path: string, errors: string[]) {

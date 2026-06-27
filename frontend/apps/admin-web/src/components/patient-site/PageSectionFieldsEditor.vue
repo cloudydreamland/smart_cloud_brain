@@ -14,10 +14,10 @@ const editorComponent = computed(() => sectionEditorMap[props.section.type]);
 <template>
   <div class="page-section-fields">
     <div class="config-grid three">
-      <label><span>id</span><input v-model.trim="section.id" type="text"></label>
-      <label><span>title</span><input v-model.trim="section.title" type="text"></label>
-      <label><span>sort</span><input v-model.number="section.sort" type="number"></label>
-      <label class="check-field"><input v-model="section.enabled" type="checkbox"><span>enabled</span></label>
+      <label><span>区块 ID</span><input v-model.trim="section.id" type="text"></label>
+      <label><span>区块标题</span><input v-model.trim="section.title" type="text"></label>
+      <label><span>排序</span><input v-model.number="section.sort" type="number"></label>
+      <label class="check-field"><input v-model="section.enabled" type="checkbox"><span>启用</span></label>
     </div>
     <component :is="editorComponent" :section="section" :patient-route-options="patientRouteOptions" />
   </div>
