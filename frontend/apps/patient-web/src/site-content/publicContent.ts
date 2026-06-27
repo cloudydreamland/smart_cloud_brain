@@ -1,4 +1,5 @@
 import { defaultStaticPages } from "../site-config/defaultConfig";
+import type { StaticPageConfig } from "../site-config/types";
 
 export type RouteTarget = { name: string; query?: Record<string, string> };
 
@@ -208,7 +209,7 @@ function makeSimplePage(label: string, title: string, intro: string, rows: [stri
   };
 }
 
-function makeStaticPage(item: (typeof defaultStaticPages)[number]): PublicPage {
+function makeStaticPage(item: StaticPageConfig): PublicPage {
   const details = pageSpecificDetails[item.routeName] || [];
   return {
     label: item.label,
@@ -598,6 +599,14 @@ export const publicPages: { [routeName: string]: PublicPage } = {
   ...Object.fromEntries(Object.entries(existingPages).map(([routeName, page]) => [routeName, enrichPage(routeName, page)])),
 };
 
-export function getPublicPage(routeName = "") {
+export function makeCmsPublicPage(page: StaticPageConfig): PublicPage {
+  return enrichPage(page.routeName, makeStaticPage(page));
+}
+
+export function getFallbackPublicPage(routeName = "") {
   return publicPages[routeName] || publicPages["public-guide"];
+}
+
+export function getPublicPage(routeName = "") {
+  return getFallbackPublicPage(routeName);
 }

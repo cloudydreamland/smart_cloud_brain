@@ -10,6 +10,7 @@ vi.mock("@smart-cloud-brain/shared-api", async () => {
     api: {
       ...actual.api,
       patientSiteConfig: vi.fn(),
+      patientSitePreviewConfig: vi.fn(),
     },
   };
 });
@@ -23,6 +24,7 @@ describe("normalizeConfig", () => {
     expect(config.home.hero.enabled).toBe(false);
     expect(config.home.modules).toEqual([]);
     expect(config.staticPages.pages).toEqual([]);
+    expect(config.pages.pages).toEqual([]);
   });
 
   it("does not fill missing whole sections from defaults", () => {
@@ -36,6 +38,31 @@ describe("normalizeConfig", () => {
     expect(config.nav.menus[0].key).toBe("custom");
     expect(config.home.modules).toEqual([]);
     expect(config.staticPages.pages).toEqual([]);
+    expect(config.pages.pages).toEqual([]);
+  });
+
+  it("normalizes dynamic patient CMS pages from the published payload", () => {
+    const config = normalizeConfig({
+      pages: {
+        pages: [
+          {
+            routeName: "about-hospital",
+            slug: "hospital-guide",
+            label: "Hospital guide",
+            title: "Hospital guide",
+            sections: [
+              { type: "notice", sort: 20, text: "Notice" },
+              { type: "unknown", text: "Bad" },
+              { type: "rich_text", sort: 10, body: "Body" },
+            ],
+          },
+        ],
+      },
+    });
+
+    expect(config.pages.pages).toHaveLength(1);
+    expect(config.pages.pages[0].slug).toBe("hospital-guide");
+    expect(config.pages.pages[0].sections.map((section) => section.type)).toEqual(["rich_text", "notice"]);
   });
 
   it("filters disabled entries and unknown routes", () => {
@@ -176,6 +203,7 @@ describe("normalizeConfig", () => {
     expect(patientSiteConfigTemplates.patient_nav.menus).toEqual(defaultPatientSiteConfig.nav.menus);
     expect(patientSiteConfigTemplates.patient_home.modules).toEqual(defaultPatientSiteConfig.home.modules);
     expect(patientSiteConfigTemplates.patient_static_pages.pages).toEqual(defaultPatientSiteConfig.staticPages.pages);
+    expect(patientSiteConfigTemplates.patient_pages.pages).toEqual(defaultPatientSiteConfig.pages.pages);
   });
 
   it("reloads published config instead of keeping the first response forever", async () => {
@@ -191,5 +219,41 @@ describe("normalizeConfig", () => {
     await load();
     expect(patientSiteConfig).toHaveBeenCalledTimes(2);
     expect(config.value.home.hero.title).toBe("Published version");
+  });
+
+  it("tracks disabled static page route names for navigation filtering", async () => {
+    const patientSiteConfig = vi.mocked(api.patientSiteConfig);
+    patientSiteConfig.mockResolvedValueOnce({
+      staticPages: {
+        pages: [
+          { routeName: "about-contact", title: "Contact", enabled: false },
+          { routeName: "about-hospital", title: "Hospital", enabled: true },
+        ],
+      },
+    });
+
+    const { disabledStaticPageRouteNames, load } = usePatientSiteConfig();
+    await load();
+
+    expect(disabledStaticPageRouteNames.value.has("about-contact")).toBe(true);
+    expect(disabledStaticPageRouteNames.value.has("about-hospital")).toBe(false);
+  });
+
+  it("loads preview config by token and refreshes preview while it is active", async () => {
+    const patientSitePreviewConfig = vi.mocked(api.patientSitePreviewConfig);
+    const patientSiteConfig = vi.mocked(api.patientSiteConfig);
+    const publishedCallCount = patientSiteConfig.mock.calls.length;
+    patientSitePreviewConfig
+      .mockResolvedValueOnce({ pages: { pages: [{ routeName: "about-hospital", slug: "draft", label: "Draft", title: "Draft", sections: [] }] } })
+      .mockResolvedValueOnce({ pages: { pages: [{ routeName: "about-hospital", slug: "draft-2", label: "Draft", title: "Draft 2", sections: [] }] } });
+
+    const { config, loadPreview, refresh } = usePatientSiteConfig();
+    await loadPreview("preview-token");
+    expect(config.value.pages.pages[0].slug).toBe("draft");
+
+    await refresh();
+    expect(config.value.pages.pages[0].slug).toBe("draft-2");
+    expect(patientSitePreviewConfig).toHaveBeenCalledTimes(2);
+    expect(patientSiteConfig).toHaveBeenCalledTimes(publishedCallCount);
   });
 });

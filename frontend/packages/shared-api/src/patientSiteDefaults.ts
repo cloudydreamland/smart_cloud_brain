@@ -1,3 +1,4 @@
+import type { PatientSitePagesConfig } from "./patientSitePageTypes";
 import type { PatientHomeConfig, PatientNavConfig, PatientSiteConfig, PatientStaticPagesConfig, StaticPageConfig } from "./patientSiteTypes";
 
 export const defaultStaticPages: StaticPageConfig[] = [
@@ -483,14 +484,19 @@ export const defaultPatientSiteConfig: PatientSiteConfig = {
   staticPages: {
     pages: defaultStaticPages,
   },
+  pages: {
+    pages: [],
+  },
 };
 
 export const patientSiteConfigTemplates: {
   patient_nav: PatientNavConfig;
   patient_home: PatientHomeConfig;
   patient_static_pages: PatientStaticPagesConfig;
+  patient_pages: PatientSitePagesConfig;
 } = {
   patient_nav: defaultPatientSiteConfig.nav,
   patient_home: defaultPatientSiteConfig.home,
   patient_static_pages: defaultPatientSiteConfig.staticPages,
+  patient_pages: defaultPatientSiteConfig.pages,
 };

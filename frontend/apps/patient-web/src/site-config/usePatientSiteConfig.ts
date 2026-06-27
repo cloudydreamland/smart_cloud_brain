@@ -1,8 +1,10 @@
 import { ref } from "vue";
-import { api, normalizePatientSiteConfig, type PatientSiteConfig } from "@smart-cloud-brain/shared-api";
+import { api, normalizePatientSiteConfig, type DataRow, type PatientSiteConfig } from "@smart-cloud-brain/shared-api";
 
 const loading = ref(false);
 const config = ref<PatientSiteConfig>(normalizeConfig({}));
+const disabledStaticPageRouteNames = ref<Set<string>>(new Set());
+const activePreviewToken = ref("");
 let pending: Promise<void> | null = null;
 let autoRefreshTimer: ReturnType<typeof setInterval> | null = null;
 let autoRefreshListenersBound = false;
@@ -14,13 +16,16 @@ type LoadOptions = {
 async function loadConfig(options: LoadOptions = {}) {
   if (pending) return pending;
   loading.value = true;
-  pending = api.patientSiteConfig()
+  const request = activePreviewToken.value ? api.patientSitePreviewConfig(activePreviewToken.value) : api.patientSiteConfig();
+  pending = request
     .then((remote) => {
       config.value = normalizeConfig(remote);
+      disabledStaticPageRouteNames.value = collectDisabledStaticPageRouteNames(remote);
     })
     .catch(() => {
       if (!options.keepCurrentOnError) {
         config.value = normalizeConfig({});
+        disabledStaticPageRouteNames.value = new Set();
       }
     })
     .finally(() => {
@@ -32,8 +37,16 @@ async function loadConfig(options: LoadOptions = {}) {
 
 export function usePatientSiteConfig() {
   const load = () => loadConfig();
+  const loadPreview = (token: string) => {
+    activePreviewToken.value = token;
+    if (pending) return pending.finally(() => loadConfig());
+    return loadConfig();
+  };
+  const clearPreview = () => {
+    activePreviewToken.value = "";
+  };
 
-  return { config, loading, load, refresh: load };
+  return { config, disabledStaticPageRouteNames, loading, activePreviewToken, load, loadPreview, clearPreview, refresh: load };
 }
 
 export function startPatientSiteConfigAutoRefresh(intervalMs = 5000) {
@@ -55,4 +68,19 @@ export function startPatientSiteConfigAutoRefresh(intervalMs = 5000) {
 
 export function normalizeConfig(source: unknown): PatientSiteConfig {
   return normalizePatientSiteConfig(source);
+}
+
+function collectDisabledStaticPageRouteNames(source: unknown) {
+  const row = isRow(source) ? source : {};
+  const staticPages = isRow(row.staticPages) ? row.staticPages : {};
+  const pages = Array.isArray(staticPages.pages) ? staticPages.pages : [];
+  return new Set(
+    pages
+      .filter((page): page is DataRow => isRow(page) && page.enabled === false && typeof page.routeName === "string")
+      .map((page) => String(page.routeName)),
+  );
+}
+
+function isRow(value: unknown): value is DataRow {
+  return Boolean(value && typeof value === "object" && !Array.isArray(value));
 }

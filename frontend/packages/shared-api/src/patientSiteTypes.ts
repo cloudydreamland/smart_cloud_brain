@@ -1,6 +1,9 @@
+import type { PatientSitePagesConfig } from "./patientSitePageTypes";
+
 export type RouteTargetConfig = {
   label: string;
   routeName: string;
+  slug?: string;
   query?: Record<string, string>;
   description?: string;
   enabled?: boolean;
@@ -62,4 +65,5 @@ export type PatientSiteConfig = {
   nav: PatientNavConfig;
   home: PatientHomeConfig;
   staticPages: PatientStaticPagesConfig;
+  pages: PatientSitePagesConfig;
 };

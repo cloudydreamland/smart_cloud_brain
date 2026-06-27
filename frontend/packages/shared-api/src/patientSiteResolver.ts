@@ -1,4 +1,5 @@
 import { isAllowedPatientRoute } from "./patientSiteRoutes";
+import { normalizePatientSitePagesConfig } from "./patientSiteSectionRegistry";
 import type {
   PatientHomeConfig,
   PatientHomeModule,
@@ -9,9 +10,10 @@ import type {
   RouteTargetConfig,
   StaticPageConfig,
 } from "./patientSiteTypes";
+import type { PatientSitePagesConfig } from "./patientSitePageTypes";
 import type { DataRow } from "./types";
 
-export type PatientSiteConfigKey = "patient_nav" | "patient_home" | "patient_static_pages";
+export type PatientSiteConfigKey = "patient_nav" | "patient_home" | "patient_static_pages" | "patient_pages";
 
 type ResolveOptions = {
   preserveDisabled?: boolean;
@@ -22,6 +24,7 @@ const emptyPatientSiteConfig: PatientSiteConfig = {
   nav: { brand: { name: "", homeRoute: "" }, menus: [], userLinks: [] },
   home: { hero: { title: "", enabled: false }, modules: [] },
   staticPages: { pages: [] },
+  pages: { pages: [] },
 };
 
 export function resolvePatientSiteConfig(
@@ -34,6 +37,7 @@ export function resolvePatientSiteConfig(
     nav: resolvePatientSiteConfigSection("patient_nav", row.nav, options, fallback) as PatientNavConfig,
     home: resolvePatientSiteConfigSection("patient_home", row.home, options, fallback) as PatientHomeConfig,
     staticPages: resolvePatientSiteConfigSection("patient_static_pages", row.staticPages, options, fallback) as PatientStaticPagesConfig,
+    pages: normalizePages(sectionOrFallback(row.pages, fallback.pages)),
   };
 }
 
@@ -49,6 +53,7 @@ export function resolvePatientSiteConfigSection(
 ) {
   if (key === "patient_nav") return normalizeNav(sectionOrFallback(source, fallbackConfig.nav), options);
   if (key === "patient_home") return normalizeHome(sectionOrFallback(source, fallbackConfig.home), options);
+  if (key === "patient_pages") return normalizePages(sectionOrFallback(source, fallbackConfig.pages));
   return normalizeStaticPages(sectionOrFallback(source, fallbackConfig.staticPages), options);
 }
 
@@ -156,6 +161,10 @@ function normalizeStaticPages(source: unknown, options: ResolveOptions): Patient
   };
 }
 
+function normalizePages(source: unknown): PatientSitePagesConfig {
+  return normalizePatientSitePagesConfig(source);
+}
+
 function normalizePage(
   source: unknown,
   index: number,
@@ -198,6 +207,7 @@ function normalizeLink(
   return {
     label,
     routeName: route,
+    slug: slugValue(row.slug),
     query: isStringRecord(row.query) ? row.query : undefined,
     description: text(row.description, ""),
     enabled: row.enabled === false ? false : true,
@@ -238,6 +248,10 @@ function isStringRecord(value: unknown): value is Record<string, string> {
 
 function text(value: unknown, fallback: string) {
   return typeof value === "string" && value.trim() ? value.trim() : fallback;
+}
+
+function slugValue(value: unknown) {
+  return typeof value === "string" && value.trim() ? value.trim().toLowerCase() : undefined;
 }
 
 function numberValue(value: unknown, fallback: number) {

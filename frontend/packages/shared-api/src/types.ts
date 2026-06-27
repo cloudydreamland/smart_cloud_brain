@@ -83,7 +83,20 @@ export type RolePermissionSaveRequest = { role: Role; permissionKeys: string[] }
 export type StatisticsQuery = { startDate?: string; endDate?: string };
 export type StatisticsReportRow = { metric: string; value: number | string };
 export type PatientSiteConfigSaveRequest = { configKey: string; configJson: string; remark?: string };
-export type PatientSiteConfigPublishRequest = { configKey: string };
+export type PatientSiteConfigPublishRequest = { configKey: string; remark: string };
+export type PatientSiteConfigRecord = {
+  id?: number;
+  configKey?: string;
+  configJson?: string;
+  status?: string;
+  version?: number;
+  remark?: string;
+  createdBy?: number;
+  updatedBy?: number;
+  createdAt?: string;
+  updatedAt?: string;
+};
+export type PatientSitePreviewToken = { token: string; configKey: string; version: number; expiresAt: number };
 
 export class ApiError extends Error {
   constructor(public message: string, public code: number, public status: number) {

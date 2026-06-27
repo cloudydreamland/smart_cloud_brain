@@ -6,14 +6,20 @@ import com.smartcloudbrain.admin.dto.admin.PatientSiteConfigSaveRequest;
 import com.smartcloudbrain.admin.entity.PatientSiteConfig;
 import com.smartcloudbrain.admin.repository.PatientSiteConfigRepository;
 import com.smartcloudbrain.common.exception.BusinessException;
+import java.nio.charset.StandardCharsets;
 import java.io.InputStream;
 import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,7 +29,7 @@ public class PatientSiteConfigService {
   private static final String STATUS_DRAFT = "DRAFT";
   private static final String STATUS_PUBLISHED = "PUBLISHED";
   private static final String STATUS_ARCHIVED = "ARCHIVED";
-  private static final Set<String> CONFIG_KEYS = Set.of("patient_nav", "patient_home", "patient_static_pages");
+  private static final Set<String> CONFIG_KEYS = Set.of("patient_nav", "patient_home", "patient_static_pages", "patient_pages");
   private static final Set<String> ROUTES = Set.of(
       "patient-home", "patient-dashboard", "patient-triage", "patient-doctors", "patient-appointments",
       "patient-records", "patient-prescriptions", "patient-reports", "patient-invoices", "patient-messages",
@@ -32,19 +38,28 @@ public class PatientSiteConfigService {
       "service-emergency", "service-international", "doctor-experts", "doctor-centers", "doctor-schedules",
       "library-symptoms", "library-drugs", "library-tests", "library-rehab", "library-articles",
       "ai-symptom", "ai-record-summary", "ai-medication", "ai-assessment", "about-hospital",
-      "about-news", "about-careers", "about-contact"
+      "about-news", "about-careers", "about-contact", "cms-page"
   );
   private static final Set<String> HOME_MODULES = Set.of(
       "notice", "quick_actions", "intro", "locations", "featured_departments", "static_content"
   );
+  private static final Set<String> SECTION_TYPES = Set.of(
+      "notice", "rich_text", "card_grid", "faq", "timeline", "cta", "link_grid", "department_links"
+  );
 
   private final PatientSiteConfigRepository repository;
   private final ObjectMapper objectMapper;
+  private final byte[] previewSecret;
   private JsonNode defaultConfig;
 
-  public PatientSiteConfigService(PatientSiteConfigRepository repository, ObjectMapper objectMapper) {
+  public PatientSiteConfigService(
+      PatientSiteConfigRepository repository,
+      ObjectMapper objectMapper,
+      @Value("${patient-site.preview-secret:${JWT_SECRET:smart-cloud-brain-local-secret-please-change}}") String previewSecret
+  ) {
     this.repository = repository;
     this.objectMapper = objectMapper;
+    this.previewSecret = previewSecret.getBytes(StandardCharsets.UTF_8);
   }
 
   @Transactional
@@ -91,12 +106,13 @@ public class PatientSiteConfigService {
     String key = requireConfigKey(request.configKey());
     JsonNode root = parseObject(request.configJson());
     validateStructure(key, root);
-    return createPublished(key, root, request.remark(), userId, userId);
+    return createPublished(key, root, requireRemark(request.remark()), userId, userId);
   }
 
   @Transactional
-  public Map<String, Object> publish(String configKey, Long userId) {
+  public Map<String, Object> publish(String configKey, String remark, Long userId) {
     String key = requireConfigKey(configKey);
+    String publishRemark = requireRemark(remark);
     PatientSiteConfig draft = repository.findFirstByConfigKeyAndStatusOrderByVersionDesc(key, STATUS_DRAFT)
         .orElseThrow(() -> new BusinessException(400, "Draft config not found: " + key));
     JsonNode root = parseObject(draft.getConfigJson());
@@ -107,7 +123,7 @@ public class PatientSiteConfigService {
     draft.setUpdatedAt(LocalDateTime.now());
     repository.save(draft);
 
-    return createPublished(key, root, draft.getRemark(), draft.getCreatedBy(), userId);
+    return createPublished(key, root, publishRemark, draft.getCreatedBy(), userId);
   }
 
   private Map<String, Object> createPublished(String key, JsonNode root, String remark, Long createdBy, Long userId) {
@@ -137,6 +153,36 @@ public class PatientSiteConfigService {
     view.put("nav", publishedJson("patient_nav"));
     view.put("home", publishedJson("patient_home"));
     view.put("staticPages", publishedJson("patient_static_pages"));
+    view.put("pages", publishedJson("patient_pages"));
+    return view;
+  }
+
+  @Transactional
+  public Map<String, Object> createPreviewToken(String configKey, Integer version) {
+    String key = requireConfigKey(configKey);
+    PatientSiteConfig preview = selectPreviewConfig(key, version);
+    long expiresAt = Instant.now().plusSeconds(15 * 60).getEpochSecond();
+    String payload = key + "|" + preview.getVersion() + "|" + expiresAt;
+    String encodedPayload = Base64.getUrlEncoder().withoutPadding().encodeToString(payload.getBytes(StandardCharsets.UTF_8));
+    String signature = sign(encodedPayload);
+    Map<String, Object> view = new LinkedHashMap<>();
+    view.put("token", encodedPayload + "." + signature);
+    view.put("configKey", key);
+    view.put("version", preview.getVersion());
+    view.put("expiresAt", expiresAt);
+    return view;
+  }
+
+  @Transactional
+  public Map<String, Object> previewConfig(String token) {
+    PreviewPayload payload = parsePreviewToken(token);
+    PatientSiteConfig preview = repository.findByConfigKeyOrderByVersionDesc(payload.configKey()).stream()
+        .filter(row -> Integer.valueOf(payload.version()).equals(row.getVersion()))
+        .findFirst()
+        .orElseThrow(() -> new BusinessException(404, "Preview config version not found"));
+    JsonNode override = parseObject(preview.getConfigJson());
+    Map<String, Object> view = publicConfig();
+    view.put(publicField(payload.configKey()), objectMapper.convertValue(override, Object.class));
     return view;
   }
 
@@ -170,13 +216,42 @@ public class PatientSiteConfigService {
       case "patient_nav" -> "nav";
       case "patient_home" -> "home";
       case "patient_static_pages" -> "staticPages";
+      case "patient_pages" -> "pages";
       default -> throw new BusinessException(400, "Unsupported patient site config key: " + configKey);
     };
+    if ("patient_pages".equals(configKey) && !root.has(section)) {
+      return objectMapper.createObjectNode().set("pages", objectMapper.createArrayNode());
+    }
     JsonNode value = root.path(section);
     if (!value.isObject()) {
       throw new BusinessException(500, "Default patient site config section missing: " + section);
     }
     return value;
+  }
+
+  private PatientSiteConfig selectPreviewConfig(String configKey, Integer version) {
+    List<PatientSiteConfig> configs = repository.findByConfigKeyOrderByVersionDesc(configKey);
+    if (version != null) {
+      return configs.stream()
+          .filter(row -> version.equals(row.getVersion()))
+          .findFirst()
+          .orElseThrow(() -> new BusinessException(404, "Preview config version not found: " + version));
+    }
+    return configs.stream()
+        .filter(row -> STATUS_DRAFT.equals(row.getStatus()))
+        .findFirst()
+        .or(() -> configs.stream().findFirst())
+        .orElseThrow(() -> new BusinessException(404, "Preview config not found: " + configKey));
+  }
+
+  private String publicField(String configKey) {
+    return switch (configKey) {
+      case "patient_nav" -> "nav";
+      case "patient_home" -> "home";
+      case "patient_static_pages" -> "staticPages";
+      case "patient_pages" -> "pages";
+      default -> throw new BusinessException(400, "Unsupported patient site config key: " + configKey);
+    };
   }
 
   private JsonNode defaultConfig() {
@@ -226,6 +301,13 @@ public class PatientSiteConfigService {
     return key;
   }
 
+  private String requireRemark(String remark) {
+    if (isBlank(remark)) {
+      throw new BusinessException(400, "Publish remark is required");
+    }
+    return remark.trim();
+  }
+
   private JsonNode parseObject(String configJson) {
     if (isBlank(configJson)) {
       throw new BusinessException(400, "configJson is required");
@@ -261,6 +343,7 @@ public class PatientSiteConfigService {
       case "patient_nav" -> validateNav(root);
       case "patient_home" -> validateHome(root);
       case "patient_static_pages" -> validateStaticPages(root);
+      case "patient_pages" -> validatePages(root);
       default -> throw new BusinessException(400, "Unsupported patient site config key: " + configKey);
     }
   }
@@ -334,6 +417,85 @@ public class PatientSiteConfigService {
     }
   }
 
+  private void validatePages(JsonNode root) {
+    for (JsonNode page : array(root.path("pages"), "patient_pages.pages")) {
+      requireText(page, "routeName", "patient_pages.pages[].routeName");
+      requireAllowedRoute(page.path("routeName").asText(), "patient_pages.pages[].routeName");
+      requireText(page, "label", "patient_pages.pages[].label");
+      requireText(page, "title", "patient_pages.pages[].title");
+      String slug = page.path("slug").asText("");
+      if (!isBlank(slug) && !slug.matches("^[a-z0-9][a-z0-9-]{1,62}[a-z0-9]$")) {
+        throw new BusinessException(400, "patient_pages.pages[].slug is invalid: " + slug);
+      }
+      for (JsonNode section : array(page.path("sections"), "patient_pages.pages[].sections")) {
+        String type = requireText(section, "type", "patient_pages.pages[].sections[].type");
+        if (!SECTION_TYPES.contains(type)) {
+          throw new BusinessException(400, "Unsupported patient page section type: " + type);
+        }
+        validateSection(section, type);
+      }
+    }
+  }
+
+  private void validateSection(JsonNode section, String type) {
+    switch (type) {
+      case "notice" -> requireText(section, "text", "patient_pages.pages[].sections[].text");
+      case "rich_text" -> requireText(section, "body", "patient_pages.pages[].sections[].body");
+      case "card_grid" -> validateCards(section.path("cards"), "patient_pages.pages[].sections[].cards");
+      case "faq" -> validateFaqItems(section.path("items"), "patient_pages.pages[].sections[].items");
+      case "timeline" -> validateTimelineItems(section.path("items"), "patient_pages.pages[].sections[].items");
+      case "cta" -> {
+        requireText(section, "text", "patient_pages.pages[].sections[].text");
+        validateOptionalAction(section.path("primary"), "patient_pages.pages[].sections[].primary");
+        validateOptionalAction(section.path("secondary"), "patient_pages.pages[].sections[].secondary");
+      }
+      case "link_grid" -> {
+        requireNonEmptyArray(section.path("links"), "patient_pages.pages[].sections[].links");
+        validateRouteTargets(section.path("links"), "patient_pages.pages[].sections[].links");
+      }
+      case "department_links" -> validateRouteTargets(section.path("links"), "patient_pages.pages[].sections[].links");
+      default -> throw new BusinessException(400, "Unsupported patient page section type: " + type);
+    }
+  }
+
+  private void validateRouteTargets(JsonNode links, String path) {
+    for (JsonNode link : array(links, path)) {
+      requireText(link, "label", path + "[].label");
+      requireRouteName(link, path + "[].routeName");
+    }
+  }
+
+  private void validateCards(JsonNode cards, String path) {
+    requireNonEmptyArray(cards, path);
+    for (JsonNode card : array(cards, path)) {
+      requireText(card, "title", path + "[].title");
+      requireText(card, "text", path + "[].text");
+      validateOptionalAction(card.path("target"), path + "[].target");
+    }
+  }
+
+  private void validateFaqItems(JsonNode items, String path) {
+    requireNonEmptyArray(items, path);
+    for (JsonNode item : array(items, path)) {
+      requireText(item, "question", path + "[].question");
+      requireText(item, "answer", path + "[].answer");
+    }
+  }
+
+  private void validateTimelineItems(JsonNode items, String path) {
+    requireNonEmptyArray(items, path);
+    for (JsonNode item : array(items, path)) {
+      requireText(item, "title", path + "[].title");
+      requireText(item, "text", path + "[].text");
+    }
+  }
+
+  private void requireNonEmptyArray(JsonNode node, String path) {
+    if (!node.isArray() || node.isEmpty()) {
+      throw new BusinessException(400, path + " must be a non-empty array");
+    }
+  }
+
   private List<JsonNode> array(JsonNode node, String path) {
     if (node.isMissingNode() || node.isNull()) {
       return List.of();
@@ -365,11 +527,57 @@ public class PatientSiteConfigService {
   private void requireRouteName(JsonNode node, String path) {
     String routeName = requireText(node, "routeName", path);
     requireAllowedRoute(routeName, path);
+    if ("cms-page".equals(routeName)) {
+      requireText(node, "slug", path.replace(".routeName", ".slug"));
+    }
   }
 
   private void requireAllowedRoute(String routeName, String path) {
     if (!ROUTES.contains(routeName)) {
       throw new BusinessException(400, "Unsupported patient routeName at " + path + ": " + routeName);
+    }
+  }
+
+  private PreviewPayload parsePreviewToken(String token) {
+    if (isBlank(token) || !token.contains(".")) {
+      throw new BusinessException(401, "Preview token is required");
+    }
+    String[] parts = token.split("\\.", 2);
+    if (parts.length != 2 || !sign(parts[0]).equals(parts[1])) {
+      throw new BusinessException(401, "Preview token is invalid");
+    }
+    String payloadText;
+    try {
+      payloadText = new String(Base64.getUrlDecoder().decode(parts[0]), StandardCharsets.UTF_8);
+    } catch (IllegalArgumentException ex) {
+      throw new BusinessException(401, "Preview token is invalid");
+    }
+    String[] values = payloadText.split("\\|", 3);
+    if (values.length != 3) {
+      throw new BusinessException(401, "Preview token is invalid");
+    }
+    String configKey = requireConfigKey(values[0]);
+    int version;
+    long expiresAt;
+    try {
+      version = Integer.parseInt(values[1]);
+      expiresAt = Long.parseLong(values[2]);
+    } catch (NumberFormatException ex) {
+      throw new BusinessException(401, "Preview token is invalid");
+    }
+    if (Instant.now().getEpochSecond() > expiresAt) {
+      throw new BusinessException(401, "Preview token is expired");
+    }
+    return new PreviewPayload(configKey, version);
+  }
+
+  private String sign(String payload) {
+    try {
+      Mac mac = Mac.getInstance("HmacSHA256");
+      mac.init(new SecretKeySpec(previewSecret, "HmacSHA256"));
+      return Base64.getUrlEncoder().withoutPadding().encodeToString(mac.doFinal(payload.getBytes(StandardCharsets.UTF_8)));
+    } catch (Exception ex) {
+      throw new BusinessException(500, "Preview token signing failed");
     }
   }
 
@@ -425,4 +633,6 @@ public class PatientSiteConfigService {
   private boolean isBlank(String value) {
     return value == null || value.isBlank();
   }
+
+  private record PreviewPayload(String configKey, int version) {}
 }

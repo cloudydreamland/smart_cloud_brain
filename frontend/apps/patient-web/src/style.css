@@ -1571,6 +1571,251 @@
   line-height: 1.65;
 }
 
+.cms-page-content {
+  gap: 22px;
+}
+
+.cms-page-empty {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.cms-page-empty a,
+.cms-section a,
+.cms-department-links__items a,
+.cms-link-grid__items a {
+  color: var(--hospital-blue);
+  font-weight: 850;
+}
+
+.resource-toc span {
+  color: var(--hospital-muted);
+  font-size: 14px;
+}
+
+.cms-section-anchor {
+  scroll-margin-top: 112px;
+}
+
+.cms-section {
+  padding: 24px 0;
+  border-bottom: 1px solid var(--hospital-line);
+}
+
+.cms-section h2,
+.cms-section-head h2 {
+  margin: 0;
+  color: var(--hospital-blue);
+  font-family: var(--hospital-serif);
+  font-size: 27px;
+  font-weight: 650;
+  line-height: 1.18;
+}
+
+.cms-section-head {
+  margin-bottom: 16px;
+}
+
+.cms-notice {
+  padding: 18px 20px;
+  border: 1px solid var(--line-strong);
+  border-left: 4px solid var(--hospital-blue);
+  background: var(--primary-soft);
+}
+
+.cms-notice--warning {
+  border-left-color: var(--warning);
+  background: var(--warning-soft);
+}
+
+.cms-notice--success {
+  border-left-color: var(--success);
+  background: var(--success-soft);
+}
+
+.cms-notice p,
+.cms-rich-text p,
+.cms-card p,
+.cms-cta p,
+.cms-timeline p {
+  margin: 0;
+  color: var(--hospital-ink);
+  line-height: 1.7;
+}
+
+.cms-notice h2 {
+  margin-bottom: 8px;
+  font-size: 21px;
+}
+
+.cms-rich-text {
+  display: grid;
+  gap: 14px;
+}
+
+.cms-card-grid__items,
+.cms-link-grid__items {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.cms-card,
+.cms-link-grid__items a {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  border: 1px solid var(--hospital-line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.cms-card img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.cms-card span {
+  color: var(--hospital-blue);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.cms-card h3,
+.cms-link-grid__items strong,
+.cms-timeline strong {
+  margin: 0;
+  color: var(--hospital-ink);
+  font-size: 18px;
+}
+
+.cms-link-grid__items span {
+  color: var(--hospital-muted);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.55;
+}
+
+.cms-faq {
+  display: grid;
+  gap: 10px;
+}
+
+.cms-faq details {
+  border: 1px solid var(--hospital-line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.cms-faq summary {
+  padding: 16px 18px;
+  color: var(--hospital-ink);
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.cms-faq details p {
+  margin: 0;
+  padding: 0 18px 18px;
+  color: var(--hospital-muted);
+  line-height: 1.65;
+}
+
+.cms-timeline ol {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cms-timeline li {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr);
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--hospital-line);
+  border-radius: 8px;
+  background: var(--surface-alt);
+}
+
+.cms-timeline li > span {
+  display: grid;
+  min-width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--hospital-navy);
+  color: var(--surface);
+  font-weight: 900;
+}
+
+.cms-timeline strong {
+  display: block;
+}
+
+.cms-timeline p {
+  margin-top: 6px;
+  color: var(--hospital-muted);
+}
+
+.cms-cta {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: center;
+  padding: 22px;
+  border: 1px solid var(--hospital-line);
+  border-radius: 8px;
+  background: var(--surface-alt);
+}
+
+.cms-cta h2 {
+  margin-bottom: 8px;
+}
+
+.cms-cta__actions,
+.cms-department-links__items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.cms-cta__actions a,
+.cms-department-links__items a {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  padding: 0 14px;
+  border: 1px solid var(--hospital-blue);
+  border-radius: 999px;
+  background: var(--hospital-blue);
+  color: var(--surface);
+}
+
+.cms-cta__actions .cms-link-secondary,
+.cms-department-links__items a {
+  border-color: var(--hospital-line);
+  background: var(--surface);
+  color: var(--hospital-blue);
+}
+
+@media (max-width: 980px) {
+  .cms-card-grid__items,
+  .cms-link-grid__items {
+    grid-template-columns: 1fr;
+  }
+
+  .cms-cta {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
 .search-filter-tabs,
 .update-filter {
   display: flex;

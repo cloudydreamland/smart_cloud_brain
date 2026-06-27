@@ -18,6 +18,7 @@ const PrescriptionsPage = () => import("../pages/PrescriptionsPage.vue");
 const ProfilePage = () => import("../pages/ProfilePage.vue");
 const VisitPeoplePage = () => import("../pages/VisitPeoplePage.vue");
 const PublicInfoPage = () => import("../pages/PublicInfoPage.vue");
+const CmsPage = () => import("../pages/CmsPage.vue");
 const PublicSearchPage = () => import("../pages/PublicSearchPage.vue");
 const DepartmentsPage = () => import("../pages/DepartmentsPage.vue");
 const DoctorTeamPage = () => import("../pages/DoctorTeamPage.vue");
@@ -69,6 +70,7 @@ const router = createRouter({
         { path: "", name: "patient-home", component: HomePage },
         { path: "login", name: "patient-login", component: LoginPage },
         { path: "register", name: "patient-register", component: RegisterPage },
+        { path: "pages/:slug", name: "cms-page", component: CmsPage },
         ...staticRoutes,
       ],
     },

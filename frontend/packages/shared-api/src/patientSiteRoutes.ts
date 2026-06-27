@@ -37,6 +37,7 @@ export const patientRouteWhitelist = new Set([
   "about-news",
   "about-careers",
   "about-contact",
+  "cms-page",
 ]);
 
 export function isAllowedRoute(routeName = "") {

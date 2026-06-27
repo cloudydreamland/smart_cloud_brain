@@ -6,11 +6,14 @@ import {
   formatApiError,
   gatewayBase,
   medicalRecordStreamUrl,
+  normalizePatientSitePagesConfig,
   notificationWebSocketUrl,
+  patientSiteSectionTypes,
   request,
   statusClass,
   statusText,
   toNumber,
+  validatePatientSitePagesConfig,
 } from "../index";
 
 function jsonResponse(data: unknown = {}) {
@@ -97,5 +100,67 @@ describe("shared api business logic", () => {
       ok: false, status: 503, statusText: "Unavailable", text: async () => "",
     })));
     await expect(request("/x")).rejects.toThrow("Unavailable");
+  });
+
+  it("normalizes and validates patient site page sections through the registry", () => {
+    expect(patientSiteSectionTypes).toEqual([
+      "notice",
+      "rich_text",
+      "card_grid",
+      "faq",
+      "timeline",
+      "cta",
+      "link_grid",
+      "department_links",
+    ]);
+
+    const config = normalizePatientSitePagesConfig({
+      pages: [
+        {
+          routeName: "about-hospital",
+          slug: "hospital-intro",
+          label: "关于智慧云脑",
+          title: "医院介绍",
+          intro: "简介",
+          sections: [
+            { id: "b", type: "rich_text", sort: 20, body: "正文" },
+            { id: "a", type: "notice", sort: 10, level: "warning", text: "提醒" },
+            { id: "bad", type: "unknown", text: "bad" },
+            { id: "links", type: "link_grid", links: [{ label: "联系", routeName: "about-contact" }, { label: "专题", routeName: "cms-page", slug: "hospital-intro" }, { label: "Bad", routeName: "bad-route" }] },
+          ],
+        },
+      ],
+    });
+
+    expect(config.pages).toHaveLength(1);
+    expect(config.pages[0].sections.map((section) => section.type)).toEqual(["notice", "rich_text", "link_grid"]);
+    const linkGrid = config.pages[0].sections.find((section) => section.type === "link_grid");
+    expect(linkGrid?.type === "link_grid" && linkGrid.links).toHaveLength(2);
+    expect(linkGrid?.type === "link_grid" && linkGrid.links[1].slug).toBe("hospital-intro");
+    expect(validatePatientSitePagesConfig(config)).toEqual([]);
+  });
+
+  it("returns validation errors for incomplete patient site pages", () => {
+    const config = normalizePatientSitePagesConfig({
+      pages: [
+        {
+          routeName: "bad-route",
+          label: "",
+          title: "Bad",
+          sections: [
+            { type: "notice", text: "" },
+            { type: "card_grid", cards: [] },
+            { type: "link_grid", links: [{ label: "CMS", routeName: "cms-page" }] },
+          ],
+        },
+      ],
+    });
+
+    const errors = validatePatientSitePagesConfig(config);
+    expect(errors.some((item) => item.includes("routeName"))).toBe(true);
+    expect(errors.some((item) => item.includes("label"))).toBe(true);
+    expect(errors.some((item) => item.includes("text"))).toBe(true);
+    expect(errors.some((item) => item.includes("cards"))).toBe(true);
+    expect(errors.some((item) => item.includes("slug"))).toBe(true);
   });
 });

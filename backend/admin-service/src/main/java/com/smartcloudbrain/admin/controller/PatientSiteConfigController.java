@@ -60,12 +60,26 @@ public class PatientSiteConfigController {
   @PostMapping("/api/admin/patient-site/publish")
   public Result<?> publish(@Valid @RequestBody PatientSiteConfigPublishRequest request) {
     AuthenticatedUser user = requireManagePermission();
-    return Result.success(patientSiteConfigService.publish(request.configKey(), user.userId()));
+    return Result.success(patientSiteConfigService.publish(request.configKey(), request.remark(), user.userId()));
+  }
+
+  @PostMapping("/api/admin/patient-site/preview-token")
+  public Result<?> previewToken(
+      @RequestParam("configKey") String configKey,
+      @RequestParam(name = "version", required = false) Integer version
+  ) {
+    requireManagePermission();
+    return Result.success(patientSiteConfigService.createPreviewToken(configKey, version));
   }
 
   @GetMapping("/api/patient-site/config")
   public Result<?> publicConfig() {
     return Result.success(patientSiteConfigService.publicConfig());
+  }
+
+  @GetMapping("/api/patient-site/preview")
+  public Result<?> previewConfig(@RequestParam("token") String token) {
+    return Result.success(patientSiteConfigService.previewConfig(token));
   }
 
   private AuthenticatedUser requireManagePermission() {

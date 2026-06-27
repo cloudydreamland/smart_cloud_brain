@@ -9,3 +9,5 @@ export * from "./patientSiteTypes";
 export * from "./patientSiteRoutes";
 export * from "./patientSiteDefaults";
 export * from "./patientSiteResolver";
+export * from "./patientSitePageTypes";
+export * from "./patientSiteSectionRegistry";

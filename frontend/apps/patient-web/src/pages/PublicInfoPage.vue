@@ -1,10 +1,20 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { RouterLink, useRoute } from "vue-router";
-import { getPublicPage } from "../site-content/publicContent";
+import { getFallbackPublicPage, makeCmsPublicPage } from "../site-content/publicContent";
+import { usePatientSiteConfig } from "../site-config/usePatientSiteConfig";
 
 const route = useRoute();
-const page = computed(() => getPublicPage(String(route.name || "")));
+const { config } = usePatientSiteConfig();
+const routeName = computed(() => String(route.name || ""));
+const cmsStaticPage = computed(() =>
+  config.value.staticPages.pages.find((item) => item.routeName === routeName.value),
+);
+const page = computed(() => {
+  const cmsPage = cmsStaticPage.value;
+  if (cmsPage && cmsPage.enabled !== false) return makeCmsPublicPage(cmsPage);
+  return getFallbackPublicPage(routeName.value);
+});
 </script>
 
 <template>

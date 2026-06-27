@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { api, type DataRow } from "@smart-cloud-brain/shared-api";
+import { toPatientRoute } from "../site-config/routeTarget";
 import { usePatientSiteConfig } from "../site-config/usePatientSiteConfig";
 import type { PatientHomeModule, RouteTargetConfig } from "../site-config/types";
 
@@ -123,11 +124,9 @@ function actionValue(value: unknown, fallback: RouteTargetConfig): RouteTargetCo
 }
 
 function isRouteAction(value: unknown): value is RouteTargetConfig {
-  return Boolean(value && typeof value === "object" && "label" in value && "routeName" in value);
-}
-
-function toRoute(link: RouteTargetConfig) {
-  return link.query ? { name: link.routeName, query: link.query } : { name: link.routeName };
+  if (!value || typeof value !== "object" || !("label" in value) || !("routeName" in value)) return false;
+  const link = value as RouteTargetConfig;
+  return link.routeName !== "cms-page" || Boolean(link.slug);
 }
 
 function goSearch(q = "") {
@@ -155,8 +154,8 @@ onMounted(async () => {
         <p class="home-eyebrow">{{ hero.eyebrow }}</p>
         <h1>{{ hero.title }}</h1>
         <div class="home-hero-actions">
-          <RouterLink v-if="hero.primaryAction" :to="toRoute(hero.primaryAction)">{{ hero.primaryAction.label }}</RouterLink>
-          <RouterLink v-if="hero.secondaryAction" class="home-pill" :to="toRoute(hero.secondaryAction)">
+          <RouterLink v-if="hero.primaryAction" :to="toPatientRoute(hero.primaryAction)">{{ hero.primaryAction.label }}</RouterLink>
+          <RouterLink v-if="hero.secondaryAction" class="home-pill" :to="toPatientRoute(hero.secondaryAction)">
             {{ hero.secondaryAction.label }}
           </RouterLink>
         </div>
@@ -169,7 +168,7 @@ onMounted(async () => {
     </div>
 
     <section v-if="quickActions.length" class="home-section home-care-grid">
-      <RouterLink v-for="action in quickActions" :key="action.label" :to="toRoute(action)">
+      <RouterLink v-for="action in quickActions" :key="action.label" :to="toPatientRoute(action)">
         {{ action.label }} <span>→</span>
       </RouterLink>
     </section>
@@ -208,7 +207,7 @@ onMounted(async () => {
           {{ textValue(introContent.departmentUnit, "个科室、") }}{{ doctors.length }}
           {{ textValue(introContent.doctorUnit, "位医生。登录后可查看个人预约、诊后资料和家庭成员信息。") }}
         </p>
-        <RouterLink class="home-pill outline-blue" :to="toRoute(introAction)">{{ introAction.label }}</RouterLink>
+        <RouterLink class="home-pill outline-blue" :to="toPatientRoute(introAction)">{{ introAction.label }}</RouterLink>
       </div>
       <div class="home-image-panel">
         <img
@@ -246,7 +245,7 @@ onMounted(async () => {
           {{ dept.name || dept.departmentName || "科室" }} <span>→</span>
         </RouterLink>
         <template v-if="!featuredDepartments.length && configuredDepartmentLinks.length">
-          <RouterLink v-for="item in configuredDepartmentLinks" :key="item.label" :to="toRoute(item)">
+          <RouterLink v-for="item in configuredDepartmentLinks" :key="item.label" :to="toPatientRoute(item)">
             {{ item.label }} <span>→</span>
           </RouterLink>
         </template>
@@ -268,7 +267,7 @@ onMounted(async () => {
       <div>
         <h2>{{ textValue(staticContent.title, "科研与教育推动更好的患者照护") }}</h2>
         <p>{{ textValue(staticContent.text, "智慧云脑关注分诊质量、诊疗效率、用药安全和患者可理解性，把临床问题转化为可持续改进的服务能力。") }}</p>
-        <RouterLink class="home-pill" :to="toRoute(staticContentAction)">{{ staticContentAction.label }}</RouterLink>
+        <RouterLink class="home-pill" :to="toPatientRoute(staticContentAction)">{{ staticContentAction.label }}</RouterLink>
       </div>
     </section>
   </main>

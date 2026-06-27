@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "@smart-cloud-brain/shared-api";
+import { toPatientRoute } from "../site-config/routeTarget";
 import { startPatientSiteConfigAutoRefresh, usePatientSiteConfig } from "../site-config/usePatientSiteConfig";
 import type { PatientNavMenu, RouteTargetConfig } from "../site-config/types";
 
@@ -13,7 +14,7 @@ const { session } = storeToRefs(auth);
 const activeMenu = ref<string | null>(null);
 const mobileOpen = ref(false);
 const userOpen = ref(false);
-const { config, load } = usePatientSiteConfig();
+const { config, disabledStaticPageRouteNames, load } = usePatientSiteConfig();
 
 auth.load("patient-session", "PATIENT");
 onMounted(() => {
@@ -37,12 +38,15 @@ const navMenus = computed<PatientNavMenu[]>(() =>
 const userLinks = computed(() => visibleLinks(nav.value.userLinks));
 const brandRoute = computed(() => ({ name: nav.value.brand.homeRoute || "patient-home" }));
 
-function toRoute(link: RouteTargetConfig) {
-  return link.query ? { name: link.routeName, query: link.query } : { name: link.routeName };
-}
-
 function isVisibleLink(link: RouteTargetConfig | undefined): link is RouteTargetConfig {
-  return Boolean(link && link.enabled !== false && link.label && link.routeName);
+  return Boolean(
+    link &&
+      link.enabled !== false &&
+      link.label &&
+      link.routeName &&
+      (link.routeName !== "cms-page" || link.slug) &&
+      !disabledStaticPageRouteNames.value.has(link.routeName),
+  );
 }
 
 function visibleLinks(links: RouteTargetConfig[] | undefined) {
@@ -65,7 +69,7 @@ function closeMenus() {
 
 function isMenuActive(menu: PatientNavMenu) {
   return (menu.links || []).some((link) => {
-    const to = router.resolve(toRoute(link)).path;
+    const to = router.resolve(toPatientRoute(link)).path;
     return route.path === to || (to !== "/" && route.path.startsWith(to));
   });
 }
@@ -109,7 +113,7 @@ async function logout() {
               <span>{{ menu.description }}</span>
             </section>
             <section class="site-mega-links">
-              <RouterLink v-for="link in menu.links" :key="`${menu.key}-${link.label}`" :to="toRoute(link)" @click="closeMenus">
+              <RouterLink v-for="link in menu.links" :key="`${menu.key}-${link.label}`" :to="toPatientRoute(link)" @click="closeMenus">
                 <strong>{{ link.label }}</strong>
                 <span v-if="link.description">{{ link.description }}</span>
               </RouterLink>
@@ -117,7 +121,7 @@ async function logout() {
             <aside v-if="menu.feature" class="site-mega-feature">
               <p>患者导向服务</p>
               <strong>官网内完成查找、预约、资料查看和复诊准备。</strong>
-              <RouterLink :to="toRoute(menu.feature)" @click="closeMenus">{{ menu.feature.label }}</RouterLink>
+              <RouterLink :to="toPatientRoute(menu.feature)" @click="closeMenus">{{ menu.feature.label }}</RouterLink>
             </aside>
           </div>
         </div>
@@ -133,7 +137,7 @@ async function logout() {
             <span aria-hidden="true"></span>
           </button>
           <div v-show="userOpen" class="site-user-dropdown">
-            <RouterLink v-for="link in userLinks" :key="link.label" :to="toRoute(link)" @click="closeMenus">
+            <RouterLink v-for="link in userLinks" :key="link.label" :to="toPatientRoute(link)" @click="closeMenus">
               {{ link.label }}
             </RouterLink>
             <button type="button" @click="logout">退出登录</button>
