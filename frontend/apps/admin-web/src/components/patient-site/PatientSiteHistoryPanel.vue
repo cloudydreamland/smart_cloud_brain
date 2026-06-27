@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import { formatDateTime, type PatientSiteConfigRecord } from "@smart-cloud-brain/shared-api";
+import { formatDateTime, type PatientSiteConfigHistoryPage, type PatientSiteConfigRecord } from "@smart-cloud-brain/shared-api";
 
 const props = defineProps<{
   records: PatientSiteConfigRecord[];
+  pageInfo: PatientSiteConfigHistoryPage;
+  historyLoading: boolean;
   saving: boolean;
+  loadHistoryPage: (page: number) => void | Promise<void>;
   saveDraft: () => void;
   publishDraft: () => void;
   rollbackTo: (record: PatientSiteConfigRecord) => void;
@@ -12,16 +15,12 @@ const props = defineProps<{
 
 type DiffRow = { path: string; before: string; after: string };
 
-const pageSize = 5;
 const modalOpen = ref(false);
 const selectedKey = ref("");
-const currentPage = ref(1);
-const totalPages = computed(() => Math.max(1, Math.ceil(props.records.length / pageSize)));
-const pagedRecords = computed(() => {
-  const start = (currentPage.value - 1) * pageSize;
-  return props.records.slice(start, start + pageSize);
-});
-const selectedRecord = computed(() => props.records.find((record) => recordKey(record) === selectedKey.value) || pagedRecords.value[0] || null);
+const currentPage = computed(() => props.pageInfo.page || 1);
+const totalPages = computed(() => Math.max(1, props.pageInfo.totalPages || 1));
+const totalRecords = computed(() => props.pageInfo.total || props.records.length);
+const selectedRecord = computed(() => props.records.find((record) => recordKey(record) === selectedKey.value) || props.records[0] || null);
 const previousRecord = computed(() => {
   const record = selectedRecord.value;
   if (!record) return null;
@@ -30,8 +29,7 @@ const previousRecord = computed(() => {
 });
 const diffRows = computed(() => buildDiff(previousRecord.value?.configJson, selectedRecord.value?.configJson));
 
-watch(() => props.records.length, () => {
-  currentPage.value = 1;
+watch(() => props.records.map(recordKey).join("|"), () => {
   selectedKey.value = "";
 });
 
@@ -39,18 +37,21 @@ function recordKey(record: PatientSiteConfigRecord) {
   return `${record.status || "-"}-${record.version || "-"}-${record.id || "-"}`;
 }
 
-function openHistoryModal() {
+async function openHistoryModal() {
   modalOpen.value = true;
-  if (!selectedKey.value && pagedRecords.value[0]) selectRecord(pagedRecords.value[0]);
+  await props.loadHistoryPage(1);
+  if (!selectedKey.value && props.records[0]) selectRecord(props.records[0]);
 }
 
 function selectRecord(record: PatientSiteConfigRecord) {
   selectedKey.value = recordKey(record);
 }
 
-function goPage(page: number) {
-  currentPage.value = Math.min(Math.max(page, 1), totalPages.value);
-  if (pagedRecords.value[0]) selectRecord(pagedRecords.value[0]);
+async function goPage(page: number) {
+  const target = Math.min(Math.max(page, 1), totalPages.value);
+  if (target === currentPage.value || props.historyLoading) return;
+  await props.loadHistoryPage(target);
+  if (props.records[0]) selectRecord(props.records[0]);
 }
 
 function buildDiff(beforeJson?: string, afterJson?: string): DiffRow[] {
@@ -102,9 +103,9 @@ function displayValue(value?: string) {
     <div class="patient-site-history-actions">
       <button type="button" class="topbar-refresh" :disabled="saving" @click="saveDraft">保存草稿</button>
       <button type="button" class="topbar-refresh" :disabled="saving" @click="publishDraft">发布最新草稿</button>
-      <button type="button" class="topbar-refresh" :disabled="!records.length" @click="openHistoryModal">查看版本记录</button>
+      <button type="button" class="topbar-refresh" :disabled="!totalRecords" @click="openHistoryModal">查看版本记录</button>
     </div>
-    <p class="patient-site-history-summary">当前共 {{ records.length }} 个版本，点击按钮在弹窗中分页查看。</p>
+    <p class="patient-site-history-summary">当前共 {{ totalRecords }} 个版本，点击按钮在弹窗中分页查看。</p>
 
     <div v-if="modalOpen" class="patient-config-modal-backdrop" @click.self="modalOpen = false">
       <section class="patient-config-modal-card patient-site-history-modal-card" role="dialog" aria-modal="true" aria-label="版本记录">
@@ -117,12 +118,12 @@ function displayValue(value?: string) {
         <div class="patient-site-history-modal-body">
           <div class="patient-site-version-toolbar">
             <strong>版本列表</strong>
-            <span>第 {{ currentPage }} / {{ totalPages }} 页</span>
+            <span>{{ historyLoading ? "加载中" : `第 ${currentPage} / ${totalPages} 页` }}</span>
           </div>
 
           <div class="patient-site-version-list">
             <article
-              v-for="record in pagedRecords"
+              v-for="record in records"
               :key="recordKey(record)"
               class="patient-site-version"
               :class="{ active: selectedRecord && recordKey(record) === recordKey(selectedRecord) }"
@@ -139,18 +140,19 @@ function displayValue(value?: string) {
                 <button v-if="record.status !== 'PUBLISHED'" type="button" class="danger-link" :disabled="saving" @click="rollbackTo(record)">回滚到此版本</button>
               </div>
             </article>
+            <p v-if="!historyLoading && !records.length">暂无版本记录。</p>
           </div>
 
           <div class="patient-site-pagination">
-            <button type="button" class="topbar-refresh" :disabled="currentPage <= 1" @click="goPage(currentPage - 1)">上一页</button>
-            <button type="button" class="topbar-refresh" :disabled="currentPage >= totalPages" @click="goPage(currentPage + 1)">下一页</button>
+            <button type="button" class="topbar-refresh" :disabled="historyLoading || currentPage <= 1" @click="goPage(currentPage - 1)">上一页</button>
+            <button type="button" class="topbar-refresh" :disabled="historyLoading || currentPage >= totalPages" @click="goPage(currentPage + 1)">下一页</button>
           </div>
         </div>
 
         <div v-if="selectedRecord" class="patient-site-diff">
           <div>
             <strong>v{{ selectedRecord.version || "-" }} 变更内容</strong>
-            <p>对比 {{ previousRecord ? `v${previousRecord.version || "-"}` : "空版本" }}</p>
+            <p>对比 {{ previousRecord ? `v${previousRecord.version || "-"}` : "当前页无上一条记录" }}</p>
           </div>
           <div v-if="diffRows.length" class="patient-site-diff-table">
             <div class="patient-site-diff-head">

@@ -13,6 +13,7 @@ import {
   type PatientHomeModule,
   type PatientNavConfig,
   type PatientNavMenu,
+  type PatientSiteConfigHistoryPage,
   type PatientSiteConfigRecord,
   type PatientSiteConfigKey,
   type PatientSitePageConfig,
@@ -61,6 +62,7 @@ export const homeModuleTypeOptions = [
 ] as const;
 
 const configKeys = new Set<ConfigKey>(configTabs.map((tab) => tab.key));
+const historyPageSize = 10;
 const allowedHomeModules = new Set(homeModuleTypeOptions.map((item) => item.value));
 const templates = clone(patientSiteConfigTemplates) as ConfigDrafts;
 const emptyAction = (): RouteTargetConfig => ({ label: "", routeName: "" });
@@ -86,6 +88,13 @@ export function usePatientSiteConfigEditor() {
   const drafts = reactive<ConfigDrafts>(clone(emptyDrafts));
   const latest = reactive<Record<ConfigKey, PatientSiteConfigRecord | null>>({ patient_nav: null, patient_home: null, patient_static_pages: null, patient_pages: null });
   const histories = reactive<Record<ConfigKey, PatientSiteConfigRecord[]>>({ patient_nav: [], patient_home: [], patient_static_pages: [], patient_pages: [] });
+  const historyPages = reactive<Record<ConfigKey, PatientSiteConfigHistoryPage>>({
+    patient_nav: emptyHistoryPage(),
+    patient_home: emptyHistoryPage(),
+    patient_static_pages: emptyHistoryPage(),
+    patient_pages: emptyHistoryPage(),
+  });
+  const historyLoading = ref(false);
   const remarks = reactive<Record<ConfigKey, string>>({ patient_nav: "", patient_home: "", patient_static_pages: "", patient_pages: "" });
   const validationErrors = reactive<Record<ConfigKey, string[]>>({ patient_nav: [], patient_home: [], patient_static_pages: [], patient_pages: [] });
 
@@ -113,13 +122,13 @@ export function usePatientSiteConfigEditor() {
     validationErrors[key] = [];
     try {
       setDraft(key, await loadEffectiveSection(key));
-      histories[key] = await loadHistory(auth.token(), key);
-      latest[key] = histories[key].find((row) => row.status === "PUBLISHED") || null;
+      await refreshHistory(key, 1, true);
       remarks[key] = typeof latest[key]?.remark === "string" ? latest[key]?.remark || "" : "";
       status.value = "已加载患者端当前生效配置";
     } catch (err) {
       latest[key] = null;
       histories[key] = [];
+      historyPages[key] = emptyHistoryPage();
       setDraft(key, {});
       remarks[key] = "";
       error.value = loadMessageFrom(err);
@@ -286,9 +295,23 @@ export function usePatientSiteConfigEditor() {
     return remark;
   }
 
-  async function refreshHistory(key: ConfigKey) {
-    histories[key] = await loadHistory(auth.token(), key);
-    latest[key] = histories[key].find((row) => row.status === "PUBLISHED") || null;
+  async function refreshHistory(key: ConfigKey, page = historyPages[key].page, syncLatest = false) {
+    historyLoading.value = true;
+    try {
+      const result = await loadHistory(auth.token(), key, page, historyPageSize);
+      histories[key] = result.items;
+      historyPages[key] = result;
+      if (syncLatest) {
+        latest[key] = result.items.find((row) => row.status === "PUBLISHED") || latest[key] || null;
+      }
+    } finally {
+      historyLoading.value = false;
+    }
+  }
+
+  async function loadHistoryPage(page: number) {
+    if (!auth.session) return;
+    await refreshHistory(activeKey.value, page);
   }
 
   function readEditingTarget(target: EditingTarget) {
@@ -514,6 +537,8 @@ export function usePatientSiteConfigEditor() {
     status,
     error,
     remarks,
+    historyPages,
+    historyLoading,
     navDraft,
     homeDraft,
     staticDraft,
@@ -531,6 +556,7 @@ export function usePatientSiteConfigEditor() {
     homeModuleTypeOptions,
     loadAll,
     loadConfig,
+    loadHistoryPage,
     switchTab,
     useTemplate,
     openEditor,
@@ -580,6 +606,10 @@ export function usePatientSiteConfigEditor() {
 
 function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
+}
+
+function emptyHistoryPage(): PatientSiteConfigHistoryPage {
+  return { items: [], page: 1, pageSize: historyPageSize, total: 0, totalPages: 1 };
 }
 
 function isRow(value: unknown): value is DataRow {
@@ -637,11 +667,11 @@ async function loadEffectiveSection(key: ConfigKey) {
   return isRow(section) ? section : {};
 }
 
-async function loadHistory(token: string, key: ConfigKey) {
+async function loadHistory(token: string, key: ConfigKey, page: number, pageSize: number) {
   try {
-    return await api.patientSiteConfigHistory(token, key);
+    return await api.patientSiteConfigHistory(token, key, page, pageSize);
   } catch {
-    return [];
+    return emptyHistoryPage();
   }
 }
 

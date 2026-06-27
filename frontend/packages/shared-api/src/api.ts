@@ -17,6 +17,7 @@ import {
   type PatientVisitorSaveRequest,
   type PatientRegisterRequest,
   type PatientSiteConfigRecord,
+  type PatientSiteConfigHistoryPage,
   type PatientSiteConfigPublishRequest,
   type PatientSiteConfigSaveRequest,
   type PatientSitePreviewToken,
@@ -224,7 +225,8 @@ export const adminApi = {
   savePatientSiteConfig: (token: string, body: PatientSiteConfigSaveRequest) => post<PatientSiteConfigRecord>("/admin/patient-site/save", body, token),
   savePublishedPatientSiteConfig: (token: string, body: PatientSiteConfigSaveRequest) => post<PatientSiteConfigRecord>("/admin/patient-site/save-published", body, token),
   publishPatientSiteConfig: (token: string, body: PatientSiteConfigPublishRequest) => post<PatientSiteConfigRecord>("/admin/patient-site/publish", body, token),
-  patientSiteConfigHistory: (token: string, configKey: string) => get<PatientSiteConfigRecord[]>(`/admin/patient-site/history${query({ configKey })}`, token),
+  patientSiteConfigHistory: (token: string, configKey: string, page = 1, pageSize = 10) =>
+    get<PatientSiteConfigHistoryPage>(`/admin/patient-site/history${query({ configKey, page, pageSize })}`, token),
   patientSitePreviewToken: (token: string, configKey: string, version?: number) =>
     post<PatientSitePreviewToken>(`/admin/patient-site/preview-token${query({ configKey, version })}`, undefined, token),
   searchKnowledge: (token: string, q: string, departmentCode = "") => get<DataRow[]>(`/search/knowledge${query({ q, departmentCode })}`, token),

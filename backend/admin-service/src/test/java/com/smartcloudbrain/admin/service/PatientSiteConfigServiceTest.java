@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -23,6 +24,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 @ExtendWith(MockitoExtension.class)
 class PatientSiteConfigServiceTest {
@@ -89,11 +93,59 @@ class PatientSiteConfigServiceTest {
   }
 
   @Test
+  void trimsOldArchivedVersionsWhenHistoryExceedsRetentionLimit() {
+    PatientSiteConfig draft = config("patient_nav", "DRAFT", 51,
+        "{\"brand\":{\"name\":\"Old\",\"homeRoute\":\"patient-home\"},\"menus\":[],\"userLinks\":[]}");
+    PatientSiteConfig archived1 = config("patient_nav", "ARCHIVED", 1, "{}");
+    PatientSiteConfig archived2 = config("patient_nav", "ARCHIVED", 2, "{}");
+    PatientSiteConfig archived3 = config("patient_nav", "ARCHIVED", 3, "{}");
+    List<PatientSiteConfig> expired = List.of(archived1, archived2, archived3);
+    when(repository.findFirstByConfigKeyAndStatusOrderByVersionDesc("patient_nav", "DRAFT"))
+        .thenReturn(Optional.of(draft));
+    when(repository.save(any(PatientSiteConfig.class))).thenAnswer(invocation -> invocation.getArgument(0));
+    when(repository.countByConfigKey("patient_nav")).thenReturn(53L);
+    when(repository.findByConfigKeyAndStatusOrderByVersionAsc(eq("patient_nav"), eq("ARCHIVED"), any(Pageable.class)))
+        .thenReturn(expired);
+
+    service.saveDraft(new PatientSiteConfigSaveRequest(
+        "patient_nav",
+        "{\"brand\":{\"name\":\"New\",\"homeRoute\":\"patient-home\"},\"menus\":[],\"userLinks\":[]}",
+        "updated"
+    ), 9L);
+
+    ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+    verify(repository).findByConfigKeyAndStatusOrderByVersionAsc(eq("patient_nav"), eq("ARCHIVED"), pageableCaptor.capture());
+    assertEquals(3, pageableCaptor.getValue().getPageSize());
+    verify(repository).deleteAll(expired);
+  }
+
+  @Test
   void rejectsInvalidJsonAndUnknownKeyOnSave() {
     assertThrows(BusinessException.class, () -> service.saveDraft(
         new PatientSiteConfigSaveRequest("patient_nav", "{bad", null), 1L));
     assertThrows(BusinessException.class, () -> service.saveDraft(
         new PatientSiteConfigSaveRequest("unknown", "{}", null), 1L));
+  }
+
+  @Test
+  void historyReturnsPagedRecordsAndMetadata() {
+    PatientSiteConfig published = config("patient_pages", "PUBLISHED", 5, "{\"pages\":[]}");
+    PatientSiteConfig archived = config("patient_pages", "ARCHIVED", 4, "{\"pages\":[]}");
+    when(repository.findByConfigKeyAndStatusOrderByVersionDesc("patient_pages", "PUBLISHED"))
+        .thenReturn(List.of(published));
+    when(repository.findByConfigKeyOrderByVersionDesc(eq("patient_pages"), any(Pageable.class)))
+        .thenReturn(new PageImpl<>(List.of(published, archived), PageRequest.of(1, 2), 5));
+
+    Map<String, Object> result = service.history("patient_pages", 2, 2);
+
+    assertEquals(2, result.get("page"));
+    assertEquals(2, result.get("pageSize"));
+    assertEquals(5L, result.get("total"));
+    assertEquals(3, result.get("totalPages"));
+    @SuppressWarnings("unchecked")
+    List<Map<String, Object>> items = (List<Map<String, Object>>) result.get("items");
+    assertEquals(2, items.size());
+    assertEquals(5, items.get(0).get("version"));
   }
 
   @Test

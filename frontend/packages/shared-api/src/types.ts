@@ -96,6 +96,13 @@ export type PatientSiteConfigRecord = {
   createdAt?: string;
   updatedAt?: string;
 };
+export type PatientSiteConfigHistoryPage = {
+  items: PatientSiteConfigRecord[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+};
 export type PatientSitePreviewToken = { token: string; configKey: string; version: number; expiresAt: number };
 
 export class ApiError extends Error {

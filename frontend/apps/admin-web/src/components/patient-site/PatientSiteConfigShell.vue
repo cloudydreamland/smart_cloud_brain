@@ -22,6 +22,8 @@ const {
   status,
   error,
   remarks,
+  historyPages,
+  historyLoading,
   navDraft,
   homeDraft,
   pagesDraft,
@@ -84,7 +86,10 @@ onMounted(editor.loadAll);
           </div>
           <PatientSiteHistoryPanel
             :records="histories[activeKey]"
+            :page-info="historyPages[activeKey]"
+            :history-loading="historyLoading"
             :saving="saving"
+            :load-history-page="editor.loadHistoryPage"
             :save-draft="editor.saveDraft"
             :publish-draft="editor.publishDraft"
             :rollback-to="editor.rollbackTo"

@@ -40,9 +40,13 @@ public class PatientSiteConfigController {
   }
 
   @GetMapping("/api/admin/patient-site/history")
-  public Result<?> history(@RequestParam("configKey") String configKey) {
+  public Result<?> history(
+      @RequestParam("configKey") String configKey,
+      @RequestParam(name = "page", defaultValue = "1") int page,
+      @RequestParam(name = "pageSize", defaultValue = "10") int pageSize
+  ) {
     requireManagePermission();
-    return Result.success(patientSiteConfigService.history(configKey));
+    return Result.success(patientSiteConfigService.history(configKey, page, pageSize));
   }
 
   @PostMapping("/api/admin/patient-site/save")

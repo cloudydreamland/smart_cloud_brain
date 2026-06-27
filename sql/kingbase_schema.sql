@@ -477,6 +477,8 @@ CREATE INDEX IF NOT EXISTS idx_device_department_status ON medical_device(depart
 CREATE INDEX IF NOT EXISTS idx_device_usage_device_time ON device_usage_record(device_id, started_at);
 CREATE INDEX IF NOT EXISTS idx_role_permission_role ON role_permission(role, enabled);
 CREATE INDEX IF NOT EXISTS idx_patient_site_config_key_status ON patient_site_config(config_key, status);
+CREATE INDEX IF NOT EXISTS idx_patient_site_config_key_version ON patient_site_config(config_key, version DESC);
+CREATE INDEX IF NOT EXISTS idx_patient_site_config_key_status_version ON patient_site_config(config_key, status, version DESC);
 CREATE INDEX IF NOT EXISTS idx_patient_name_phone ON patient(name, phone);
 CREATE INDEX IF NOT EXISTS idx_registration_status_time ON registration(status, appointment_time);
 CREATE INDEX IF NOT EXISTS idx_registration_department_time ON registration(department_id, appointment_time);

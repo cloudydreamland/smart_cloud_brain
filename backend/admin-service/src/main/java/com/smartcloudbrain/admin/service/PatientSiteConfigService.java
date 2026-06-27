@@ -20,6 +20,8 @@ import java.util.Set;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +31,8 @@ public class PatientSiteConfigService {
   private static final String STATUS_DRAFT = "DRAFT";
   private static final String STATUS_PUBLISHED = "PUBLISHED";
   private static final String STATUS_ARCHIVED = "ARCHIVED";
+  private static final int HISTORY_RETENTION_LIMIT = 50;
+  private static final int MAX_HISTORY_PAGE_SIZE = 100;
   private static final Set<String> CONFIG_KEYS = Set.of("patient_nav", "patient_home", "patient_static_pages", "patient_pages");
   private static final Set<String> ROUTES = Set.of(
       "patient-home", "patient-dashboard", "patient-triage", "patient-doctors", "patient-appointments",
@@ -78,10 +82,22 @@ public class PatientSiteConfigService {
   }
 
   @Transactional
-  public List<Map<String, Object>> history(String configKey) {
+  public Map<String, Object> history(String configKey, int page, int pageSize) {
     requireConfigKey(configKey);
     ensurePublishedDefault(configKey);
-    return repository.findByConfigKeyOrderByVersionDesc(configKey).stream().map(this::view).toList();
+    int normalizedPage = normalizePage(page);
+    int normalizedPageSize = normalizePageSize(pageSize);
+    Page<PatientSiteConfig> rows = repository.findByConfigKeyOrderByVersionDesc(
+        configKey,
+        PageRequest.of(normalizedPage - 1, normalizedPageSize)
+    );
+    Map<String, Object> result = new LinkedHashMap<>();
+    result.put("items", rows.getContent().stream().map(this::view).toList());
+    result.put("page", normalizedPage);
+    result.put("pageSize", normalizedPageSize);
+    result.put("total", rows.getTotalElements());
+    result.put("totalPages", Math.max(1, rows.getTotalPages()));
+    return result;
   }
 
   @Transactional
@@ -95,7 +111,9 @@ public class PatientSiteConfigService {
     config.setRemark(request.remark());
     config.setUpdatedBy(userId);
     config.setUpdatedAt(LocalDateTime.now());
-    return view(repository.save(config));
+    PatientSiteConfig saved = repository.save(config);
+    enforceHistoryRetention(key);
+    return view(saved);
   }
 
   @Transactional
@@ -140,7 +158,9 @@ public class PatientSiteConfigService {
     published.setCreatedBy(createdBy);
     published.setUpdatedBy(userId);
     published.setUpdatedAt(LocalDateTime.now());
-    return view(repository.save(published));
+    PatientSiteConfig saved = repository.save(published);
+    enforceHistoryRetention(key);
+    return view(saved);
   }
 
   private PatientSiteConfig newDraft(String key, Long userId) {
@@ -150,6 +170,22 @@ public class PatientSiteConfigService {
     config.setVersion(nextVersion(key));
     config.setCreatedBy(userId);
     return config;
+  }
+
+  private void enforceHistoryRetention(String key) {
+    long overflow = repository.countByConfigKey(key) - HISTORY_RETENTION_LIMIT;
+    if (overflow <= 0) {
+      return;
+    }
+    int deleteCount = overflow > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) overflow;
+    List<PatientSiteConfig> archived = repository.findByConfigKeyAndStatusOrderByVersionAsc(
+        key,
+        STATUS_ARCHIVED,
+        PageRequest.of(0, deleteCount)
+    );
+    if (!archived.isEmpty()) {
+      repository.deleteAll(archived);
+    }
   }
 
   @Transactional
@@ -297,6 +333,14 @@ public class PatientSiteConfigService {
         .filter(version -> version != null)
         .max(Comparator.naturalOrder())
         .orElse(0) + 1;
+  }
+
+  private int normalizePage(int page) {
+    return Math.max(1, page);
+  }
+
+  private int normalizePageSize(int pageSize) {
+    return Math.min(Math.max(1, pageSize), MAX_HISTORY_PAGE_SIZE);
   }
 
   private String requireConfigKey(String configKey) {
