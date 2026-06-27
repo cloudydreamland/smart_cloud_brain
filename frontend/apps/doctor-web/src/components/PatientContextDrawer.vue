@@ -17,13 +17,31 @@ const triageRisk = computed(() => displayText(props.triage?.riskLevel, displayTe
         <header>
           <div class="panel-title"><h3>基本信息</h3></div>
         </header>
-        <div class="dl-grid">
-          <div><b>姓名</b><span>{{ patientName(registration) }}</span></div>
-          <div><b>患者 ID</b><span>{{ displayText(registration.patientId) }}</span></div>
-          <div><b>挂号 ID</b><span>#{{ displayText(registration.registrationId) }}</span></div>
-          <div><b>医保类型</b><span>职工医保</span></div>
-          <div><b>科室</b><span>{{ displayText(registration.departmentName) }}</span></div>
-          <div><b>预约</b><span>{{ formatDateTime(registration?.appointmentTime) }}</span></div>
+        <div class="info-card-grid">
+          <div class="info-card">
+            <span class="info-label">姓名</span>
+            <strong class="info-value">{{ patientName(registration) }}</strong>
+          </div>
+          <div class="info-card">
+            <span class="info-label">患者 ID</span>
+            <strong class="info-value">{{ displayText(registration.patientId) }}</strong>
+          </div>
+          <div class="info-card">
+            <span class="info-label">挂号 ID</span>
+            <strong class="info-value">#{{ displayText(registration.registrationId) }}</strong>
+          </div>
+          <div class="info-card">
+            <span class="info-label">医保类型</span>
+            <strong class="info-value">职工医保</strong>
+          </div>
+          <div class="info-card">
+            <span class="info-label">科室</span>
+            <strong class="info-value">{{ displayText(registration.departmentName) }}</strong>
+          </div>
+          <div class="info-card">
+            <span class="info-label">预约</span>
+            <strong class="info-value">{{ formatDateTime(registration?.appointmentTime) }}</strong>
+          </div>
         </div>
       </section>
 
@@ -64,3 +82,36 @@ const triageRisk = computed(() => displayText(props.triage?.riskLevel, displayTe
     <div v-else class="empty-state">未选择患者</div>
   </Drawer>
 </template>
+
+<style scoped>
+.info-card-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.info-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  background: var(--surface, #f8fafc);
+  border: 1px solid var(--line, #e5e7eb);
+  border-radius: var(--radius-sm, 6px);
+  transition: border-color 0.15s ease;
+}
+.info-card:hover {
+  border-color: var(--primary, #0b5f78);
+}
+.info-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary, #6b7280);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.info-value {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text, #1f2937);
+}
+</style>

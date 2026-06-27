@@ -3,6 +3,7 @@ package com.smartcloudbrain.medicalrecord.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import com.smartcloudbrain.aiapi.dto.MedicalRecordGenerateRequest;
@@ -18,6 +19,7 @@ import com.smartcloudbrain.medicalrecord.repository.MedicalRecordRepository;
 import com.smartcloudbrain.medicalrecord.repository.PatientRepository;
 import com.smartcloudbrain.medicalrecord.repository.RegistrationRepository;
 import java.time.LocalDateTime;
+import org.springframework.data.domain.Sort;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -70,9 +72,9 @@ class MedicalRecordServiceTest {
         .thenReturn(new AuthenticatedUser(1L, RoleType.PATIENT, "患者"))
         .thenReturn(new AuthenticatedUser(2L, RoleType.DOCTOR, "医生"))
         .thenReturn(new AuthenticatedUser(9L, RoleType.ADMIN, "管理员"));
-    when(medicalRecordRepository.findByPatientId(1L)).thenReturn(List.of(record));
-    when(medicalRecordRepository.findByDoctorId(2L)).thenReturn(List.of(record));
-    when(medicalRecordRepository.findAll()).thenReturn(List.of(record));
+    when(medicalRecordRepository.findByPatientId(eq(1L), any(Sort.class))).thenReturn(List.of(record));
+    when(medicalRecordRepository.findByDoctorId(eq(2L), any(Sort.class))).thenReturn(List.of(record));
+    when(medicalRecordRepository.findAll(any(Sort.class))).thenReturn(List.of(record));
     when(patientRepository.findById(1L)).thenReturn(Optional.empty());
 
     assertEquals(1, service.list().size());

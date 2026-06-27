@@ -16,6 +16,7 @@ import com.smartcloudbrain.common.security.CurrentUserService;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -63,19 +64,21 @@ public class MedicalRecordService {
 
   public List<Map<String, Object>> list() {
     AuthenticatedUser user = currentUserService.get();
+    Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
     List<MedicalRecord> records;
     if (user.role() == RoleType.PATIENT) {
-      records = medicalRecordRepository.findByPatientId(user.userId());
+      records = medicalRecordRepository.findByPatientId(user.userId(), sort);
     } else if (user.role() == RoleType.DOCTOR) {
-      records = medicalRecordRepository.findByDoctorId(user.userId());
+      records = medicalRecordRepository.findByDoctorId(user.userId(), sort);
     } else {
-      records = medicalRecordRepository.findAll();
+      records = medicalRecordRepository.findAll(sort);
     }
     return records.stream().map(this::recordView).toList();
   }
 
   public List<Map<String, Object>> recordsByPatient(Long patientId) {
-    return medicalRecordRepository.findByPatientId(patientId).stream()
+    Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
+    return medicalRecordRepository.findByPatientId(patientId, sort).stream()
         .map(this::recordView)
         .toList();
   }

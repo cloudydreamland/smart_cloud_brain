@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from "vue";
+import { computed, onMounted, reactive, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import {
@@ -65,10 +65,20 @@ const dialogueText = ref("患者诉咳嗽、咽痛、发热 3 天，最高体温
 const checkResult = ref<PrescriptionCheckResult | null>(null);
 const recordAiProvider = ref("Dify");
 const recordAiModel = ref("medical-record-v2");
+const recordMode = ref<"ai" | "manual">("ai");
+watch(recordMode, (mode) => { medicalForm.aiGenerated = mode === "ai"; });
+const aiDraftMode = ref<"preview" | "auto">("preview");
+onMounted(() => {
+  try {
+    const saved = JSON.parse(localStorage.getItem("doctor-settings") || "{}");
+    if (saved.aiDraftMode) aiDraftMode.value = saved.aiDraftMode;
+  } catch { /* ignore */ }
+});
 let recordStream: AbortController | null = null;
 
-const registration = computed(() => displayRegistrations.value.find((item) => toNumber(item.registrationId) === toNumber(props.registrationId)) ?? displayRegistrations.value[0] ?? null);
-const triage = computed(() => displayTriage.value.find((item) => toNumber(item.triageRecordId) === toNumber(registration.value?.triageRecordId)) ?? displayTriage.value[0] ?? null);
+const registration = computed(() => displayRegistrations.value.find((item) => toNumber(item.registrationId) === toNumber(props.registrationId)) ?? null);
+const hasRegistration = computed(() => Boolean(registration.value && toNumber(registration.value.registrationId)));
+const triage = computed(() => hasRegistration.value ? displayTriage.value.find((item) => toNumber(item.triageRecordId) === toNumber(registration.value?.triageRecordId)) ?? null : null);
 const triageRisk = computed(() => displayText(triage.value?.riskLevel, displayText(registration.value?.riskLevel, "MEDIUM")));
 const isCompleted = computed(() => displayText(registration.value?.status, "").toUpperCase() === "COMPLETED");
 const medicalForm = reactive({
@@ -89,9 +99,14 @@ const prescription = reactive({
     { drugName: "氨溴索片", dosage: "30mg", frequency: "tid", usageMethod: "口服" },
   ] as DrugItem[],
 });
-const canSaveRecord = computed(() => medicalForm.registrationId > 0 && medicalForm.chiefComplaint.trim() && medicalForm.diagnosis.trim());
+const canSaveRecord = computed(() => hasRegistration.value && medicalForm.registrationId > 0 && medicalForm.chiefComplaint.trim() && medicalForm.diagnosis.trim());
 const canCheck = computed(() => prescription.drugs.every((item) => item.drugName.trim() && item.dosage.trim() && item.frequency.trim() && item.usageMethod.trim()));
 const canCreate = computed(() => prescription.medicalRecordId > 0 && canCheck.value);
+
+function insertChip(text: string) {
+  const sep = dialogueText.value.trim() ? "，" : "";
+  dialogueText.value += `${sep}${text}`;
+}
 
 function applyRegistration() {
   medicalForm.registrationId = toNumber(props.registrationId, toNumber(registration.value?.registrationId));
@@ -158,7 +173,7 @@ function handleStreamBlock(block: string) {
     streamText.value += `${displayText(data.text, dataText)}\n`;
   } else if (eventName === "structured") {
     const draft = normalizeDraft(parseEventData(dataText));
-    applyDraft(draft);
+    if (aiDraftMode.value === "auto") applyDraft(draft);
     recordAiProvider.value = displayText(draft.provider, "Dify");
     recordAiModel.value = displayText(draft.model, "medical-record-v2");
     streamText.value = formatDraft(draft);
@@ -195,12 +210,12 @@ async function generateRecord() {
     }
     if (buffer.trim()) handleStreamBlock(buffer);
     streamStatus.value = "DRAFT_READY";
-    previewOpen.value = true;
+    if (aiDraftMode.value === "preview") previewOpen.value = true;
     setNotice("病历草稿已生成，请确认后保存。");
   } catch (err) {
     streamText.value = formatAiDraft();
     streamStatus.value = "DRAFT_READY";
-    previewOpen.value = true;
+    if (aiDraftMode.value === "preview") previewOpen.value = true;
     setNotice(`${formatApiError(err, "病历生成服务不可用")}；已保留本地空白草稿，请确认后再保存。`, "info");
   } finally {
     loading.record = false;
@@ -306,13 +321,20 @@ watch(() => props.registrationId, applyRegistration, { immediate: true });
 
 <template>
   <section class="clinical-page consultation-workbench">
+    <div v-if="!hasRegistration" class="panel consultation-empty-state">
+      <div class="empty-state">
+        <strong>未找到接诊患者</strong>
+        <span>当前链接没有匹配到有效挂号记录，请回到队列选择具体患者后进入接诊。</span>
+        <button type="button" class="action-btn primary" @click="router.push({ name: 'doctor-queue' })">返回队列</button>
+      </div>
+    </div>
+
+    <template v-else>
     <header class="patient-context">
       <div class="patient-main">
         <span class="eyebrow">当前患者</span>
         <div class="patient-title">
           <strong>{{ registration ? patientName(registration) : "未选择" }}</strong>
-          <span class="tag" :class="statusTone(registration?.status)">{{ statusLabel(registration?.status, "接诊中") }}</span>
-          <span class="tag" :class="statusTone(triageRisk)">{{ statusLabel(triageRisk, "中风险") }}</span>
         </div>
       </div>
       <div class="patient-grid">
@@ -334,7 +356,7 @@ watch(() => props.registrationId, applyRegistration, { immediate: true });
     </div>
     <div v-else-if="notice" class="notice-stack success">
       <div><strong>状态更新：</strong>{{ notice }}</div>
-      <span>{{ statusLabel(streamStatus) }} · {{ recordAiProvider }} · {{ recordAiModel }}</span>
+      <span>{{ statusLabel(streamStatus) }}</span>
     </div>
 
     <div class="consult-layout">
@@ -376,8 +398,8 @@ watch(() => props.registrationId, applyRegistration, { immediate: true });
             </div>
             <span class="tag" :class="statusTone(prescription.riskLevel)">{{ statusLabel(prescription.riskLevel) }}</span>
           </header>
-          <div class="table-wrap table-breakout">
-            <table class="data-table">
+          <div class="table-wrap prescription-table-wrap">
+            <table class="data-table prescription-table">
               <thead><tr><th class="drug-name">药品</th><th>剂量</th><th>频次</th><th>用法</th><th></th></tr></thead>
               <tbody>
                 <tr v-for="(drug, index) in prescription.drugs" :key="index">
@@ -411,35 +433,28 @@ watch(() => props.registrationId, applyRegistration, { immediate: true });
           <div class="panel-title">
             <h3>病历工作区</h3>
           </div>
-          <div class="record-status">
-            <span class="tag info">{{ statusLabel(streamStatus) }}</span>
-            <span>{{ recordAiProvider }} · {{ recordAiModel }}</span>
-          </div>
         </header>
         <div class="editor-grid">
-          <label class="field full">
-            <span>问诊文本 <small>AI 生成病历前的核心输入</small></span>
+          <div class="record-mode-toggle">
+            <span class="mode-label">录入方式</span>
+            <div class="segmented-control">
+              <button :class="{ active: recordMode === 'ai' }" type="button" @click="recordMode = 'ai'">AI 生成</button>
+              <button :class="{ active: recordMode === 'manual' }" type="button" @click="recordMode = 'manual'">手动录入</button>
+            </div>
+          </div>
+          <label v-if="recordMode === 'ai'" class="field full">
+            <span>问诊文本</span>
             <div class="prompt-box">
               <textarea v-model.trim="dialogueText" class="consultation-textarea" rows="4" />
               <div class="prompt-actions">
-                <span class="prompt-chip">青霉素过敏</span>
-                <span class="prompt-chip">发热</span>
-                <span class="prompt-chip">黄痰</span>
+                <span class="prompt-chip" @click="insertChip('青霉素过敏')">青霉素过敏</span>
+                <span class="prompt-chip" @click="insertChip('发热')">发热</span>
+                <span class="prompt-chip" @click="insertChip('黄痰')">黄痰</span>
                 <span class="spacer"></span>
                 <button class="action-btn primary" type="button" :disabled="loading.record" @click="generateRecord">{{ loading.record ? "生成中" : "生成病历" }}</button>
               </div>
             </div>
           </label>
-          <div class="ai-pane full">
-            <div class="inline-toolbar">
-              <strong>智能病历草稿</strong>
-              <span class="tag info">SOAP</span>
-              <span v-if="streamText" class="tag success">可保存</span>
-              <span class="spacer"></span>
-              <button type="button" class="action-btn" :disabled="!streamText" @click="previewOpen = true">预览</button>
-            </div>
-            <pre class="ai-draft">{{ streamText || "尚未生成。点击\"生成病历\"后展示结构化 SOAP 草稿。" }}</pre>
-          </div>
           <label class="field"><span>主诉</span><input v-model.trim="medicalForm.chiefComplaint" /></label>
           <label class="field"><span>诊断</span><input v-model.trim="medicalForm.diagnosis" /></label>
           <label class="field full"><span>现病史</span><textarea v-model.trim="medicalForm.presentIllness" rows="2" /></label>
@@ -448,7 +463,7 @@ watch(() => props.registrationId, applyRegistration, { immediate: true });
           <label class="field full"><span>处理建议</span><textarea v-model.trim="medicalForm.treatmentAdvice" rows="2" /></label>
         </div>
         <footer class="footer-actions">
-          <button class="action-btn primary" type="button" :disabled="loading.record" @click="generateRecord">{{ loading.record ? "生成中" : "生成病历" }}</button>
+          <button v-if="recordMode === 'ai'" class="action-btn primary" type="button" :disabled="loading.record" @click="generateRecord">{{ loading.record ? "生成中" : "生成病历" }}</button>
           <button type="button" class="action-btn" :disabled="!canSaveRecord || loading.record" @click="saveConfirmOpen = true">保存病历</button>
         </footer>
       </main>
@@ -461,5 +476,44 @@ watch(() => props.registrationId, applyRegistration, { immediate: true });
     <HighRiskConfirmModal :open="highRiskOpen" :busy="loading.prescription" @close="highRiskOpen = false" @confirm="createPrescription" />
     <CompleteRegistrationConfirmModal :open="completeOpen" :busy="loading.complete" @close="completeOpen = false" @confirm="completeRegistration" />
     <Toast ref="toastRef" />
+    </template>
   </section>
 </template>
+
+<style scoped>
+.record-mode-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  grid-column: 1 / -1;
+  margin-bottom: var(--space-2, 8px);
+}
+.mode-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary, #6b7280);
+  white-space: nowrap;
+}
+.segmented-control {
+  display: inline-flex;
+  border: 1px solid var(--line, #e5e7eb);
+  border-radius: var(--radius-sm, 6px);
+  overflow: hidden;
+}
+.segmented-control button {
+  flex: 1;
+  height: 34px;
+  padding: 0 14px;
+  border: 0;
+  background: transparent;
+  color: var(--muted, #9ca3af);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.segmented-control button.active {
+  background: var(--primary, #0b5f78);
+  color: #fff;
+}
+</style>

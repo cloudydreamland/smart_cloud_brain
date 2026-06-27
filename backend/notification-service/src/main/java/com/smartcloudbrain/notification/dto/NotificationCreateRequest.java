@@ -7,7 +7,19 @@ public record NotificationCreateRequest(
     String type,
     String title,
     String content,
-    String riskLevel
+    String riskLevel,
+    Long triageRecordId,
+    Long medicalRecordId
 ) {
+  public NotificationCreateRequest(
+      Long doctorId,
+      Long patientId,
+      Long prescriptionId,
+      String type,
+      String title,
+      String content,
+      String riskLevel
+  ) {
+    this(doctorId, patientId, prescriptionId, type, title, content, riskLevel, null, null);
+  }
 }
-

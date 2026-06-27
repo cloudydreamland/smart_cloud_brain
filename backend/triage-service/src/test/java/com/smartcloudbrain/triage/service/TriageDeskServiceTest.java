@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.times;
 
 import com.smartcloudbrain.common.exception.BusinessException;
+import com.smartcloudbrain.triage.client.InternalNotificationClient;
 import com.smartcloudbrain.triage.entity.TriageRecord;
 import com.smartcloudbrain.triage.repository.TriageRecordRepository;
 import java.util.List;
@@ -21,6 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class TriageDeskServiceTest {
 
   @Mock private TriageRecordRepository triageRecordRepository;
+  @Mock private InternalNotificationClient notificationClient;
   @InjectMocks private TriageDeskService triageDeskService;
 
   @Test
@@ -41,6 +43,7 @@ class TriageDeskServiceTest {
 
     assertEquals("ASSIGNED", triageDeskService.assign(5L, 8L).get("status"));
     assertEquals(8L, record.getAssignedDoctorId());
+    verify(notificationClient).createTriageAssign(8L, 1L, 5L, "患者分诊已分配给您，主诉：fever", "");
     assertEquals("CLOSED", triageDeskService.close(5L).get("status"));
     verify(triageRecordRepository, times(2)).save(record);
   }

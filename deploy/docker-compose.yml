@@ -236,6 +236,7 @@ services:
       <<: *domain-env
       SERVER_PORT: 8086
       AI_SERVICE_BASE_URL: http://ai-service:8081
+      NOTIFICATION_SERVICE_BASE_URL: http://notification-service:8089
 
   medical-record-service:
     <<: *domain-service

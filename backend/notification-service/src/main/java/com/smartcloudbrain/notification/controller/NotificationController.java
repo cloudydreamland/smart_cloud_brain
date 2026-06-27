@@ -21,14 +21,27 @@ public class NotificationController {
   }
 
   @GetMapping("/list")
-  public Result<?> list(@RequestParam(name = "readStatus", required = false) String readStatus) {
-    return Result.success(notificationService.list(readStatus));
+  public Result<?> list(
+      @RequestParam(name = "readStatus", required = false) String readStatus,
+      @RequestParam(name = "handleStatus", required = false) String handleStatus,
+      @RequestParam(name = "type", required = false) String type,
+      @RequestParam(name = "riskLevel", required = false) String riskLevel,
+      @RequestParam(name = "q", required = false) String q,
+      @RequestParam(name = "sort", required = false) String sort
+  ) {
+    return Result.success(notificationService.list(readStatus, handleStatus, type, riskLevel, q, sort));
   }
 
   @PostMapping("/read")
   public Result<?> read(@RequestBody Map<String, Long> request) {
     return Result.success(notificationService.markRead(request.get("notificationId")));
   }
-}
 
+  @PostMapping("/handle")
+  public Result<?> handle(@RequestBody Map<String, Object> request) {
+    Long notificationId = Long.valueOf(String.valueOf(request.get("notificationId")));
+    String handleStatus = String.valueOf(request.get("handleStatus"));
+    return Result.success(notificationService.handle(notificationId, handleStatus));
+  }
+}
 

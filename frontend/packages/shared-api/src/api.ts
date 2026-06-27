@@ -35,6 +35,15 @@ import {
   type TriageRequest,
 } from "./types";
 
+export type NotificationQuery = {
+  readStatus?: string;
+  handleStatus?: string;
+  type?: string;
+  riskLevel?: string;
+  q?: string;
+  sort?: string;
+};
+
 const API_BASE = normalizeBase(import.meta.env?.VITE_API_BASE ?? "/api");
 export const SESSION_EVENT = "smart-cloud-brain:unauthorized";
 
@@ -155,8 +164,9 @@ export const doctorApi = {
   prescriptions: (token: string) => get<DataRow[]>("/prescription/list", token),
   prescriptionDetail: patientApi.prescriptionDetail,
   searchDrugs: (token: string, q = "") => get<DataRow[]>(`/search/drugs${query({ q })}`, token),
-  notifications: (token: string, readStatus?: string) => get<DataRow[]>(`/notification/list${query({ readStatus })}`, token),
+  notifications: (token: string, params?: string | NotificationQuery) => get<DataRow[]>(`/notification/list${query(typeof params === "string" ? { readStatus: params } : params ?? {})}`, token),
   markNotificationRead: (token: string, notificationId: number) => post<DataRow>("/notification/read", { notificationId }, token),
+  handleNotification: (token: string, notificationId: number, handleStatus: "HANDLED" | "IGNORED") => post<DataRow>("/notification/handle", { notificationId, handleStatus }, token),
   schedules: (token: string, params: StatisticsQuery & { status?: string } = {}) => get<DataRow[]>(`/doctor/schedule/list${query(params)}`, token),
 };
 
@@ -229,7 +239,7 @@ export const api = {
   medicalRecords: patientApi.medicalRecords, medicalRecordDetail: patientApi.medicalRecordDetail,
   checkPrescription: doctorApi.checkPrescription, createPrescription: doctorApi.createPrescription,
   prescriptions: patientApi.prescriptions, prescriptionDetail: patientApi.prescriptionDetail,
-  notifications: doctorApi.notifications, markNotificationRead: doctorApi.markNotificationRead,
+  notifications: doctorApi.notifications, markNotificationRead: doctorApi.markNotificationRead, handleNotification: doctorApi.handleNotification,
   saveDepartment: adminApi.saveDepartment, adminDepartments: adminApi.departments,
   accounts: adminApi.accounts, roles: adminApi.roles, saveAccount: adminApi.saveAccount,
   saveDoctor: adminApi.saveDoctor, saveDrug: adminApi.saveDrug, prompts: adminApi.prompts,

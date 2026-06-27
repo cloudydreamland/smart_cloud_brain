@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
+import { useRoute } from "vue-router";
 import { storeToRefs } from "pinia";
 import { displayText, formatApiError, useAuthStore, useDoctorWorkflowStore, usePagination } from "@smart-cloud-brain/shared-api";
 import { ErrorState, LoadingState, PaginationBar } from "@smart-cloud-brain/shared-ui";
@@ -7,10 +8,11 @@ import { formatTime, liveRows, patientName, riskText, statusLabel, statusTone } 
 
 const auth = useAuthStore();
 const workflow = useDoctorWorkflowStore();
+const route = useRoute();
 const { registrations } = storeToRefs(workflow);
 const sourceRows = liveRows(registrations);
 const filter = ref("");
-const keyword = ref("");
+const keyword = ref(displayText(route.query.patientId ?? route.query.triageRecordId, ""));
 const loading = ref(false);
 const error = ref("");
 const options = [
@@ -21,7 +23,7 @@ const options = [
 ];
 
 const rows = computed(() => sourceRows.value.filter((item) => {
-  const haystack = `${patientName(item)} ${displayText(item.patientId, "")} ${displayText(item.departmentName, "")} ${displayText(item.chiefComplaint, "")}`.toLowerCase();
+  const haystack = `${patientName(item)} ${displayText(item.patientId, "")} ${displayText(item.registrationId, "")} ${displayText(item.triageRecordId, "")} ${displayText(item.departmentName, "")} ${displayText(item.chiefComplaint, "")}`.toLowerCase();
   return (!filter.value || displayText(item.status) === filter.value) && (!keyword.value || haystack.includes(keyword.value.toLowerCase()));
 }));
 const { currentPage, pageSize, total, pageRows } = usePagination(rows, 10);
@@ -39,6 +41,11 @@ async function refresh() {
 }
 
 refresh();
+
+watch(() => [route.query.patientId, route.query.triageRecordId], ([patientId, triageRecordId]) => {
+  const next = displayText(patientId ?? triageRecordId, "");
+  if (next) keyword.value = next;
+});
 </script>
 
 <template>
@@ -58,6 +65,7 @@ refresh();
       </div>
       <span class="match-pill">匹配 {{ rows.length }} 条</span>
     </header>
+    <div v-if="route.query.notice === 'select-patient'" class="notice info">当前通知没有可直接进入的挂号记录，请在队列中选择患者接诊。</div>
 
     <section class="panel">
       <header>

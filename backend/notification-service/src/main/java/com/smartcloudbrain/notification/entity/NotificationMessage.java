@@ -3,6 +3,7 @@ package com.smartcloudbrain.notification.entity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "notification_message")
@@ -14,6 +15,10 @@ public class NotificationMessage extends BaseEntity {
   private Long patientId;
   @Column(name = "prescription_id")
   private Long prescriptionId;
+  @Column(name = "triage_record_id")
+  private Long triageRecordId;
+  @Column(name = "medical_record_id")
+  private Long medicalRecordId;
   private String type;
   private String title;
   private String content;
@@ -21,6 +26,10 @@ public class NotificationMessage extends BaseEntity {
   private String riskLevel;
   @Column(name = "read_status")
   private String readStatus;
+  @Column(name = "handle_status")
+  private String handleStatus;
+  @Column(name = "handled_at")
+  private LocalDateTime handledAt;
 
   public Long getDoctorId() {
     return doctorId;
@@ -44,6 +53,22 @@ public class NotificationMessage extends BaseEntity {
 
   public void setPrescriptionId(Long prescriptionId) {
     this.prescriptionId = prescriptionId;
+  }
+
+  public Long getTriageRecordId() {
+    return triageRecordId;
+  }
+
+  public void setTriageRecordId(Long triageRecordId) {
+    this.triageRecordId = triageRecordId;
+  }
+
+  public Long getMedicalRecordId() {
+    return medicalRecordId;
+  }
+
+  public void setMedicalRecordId(Long medicalRecordId) {
+    this.medicalRecordId = medicalRecordId;
   }
 
   public String getType() {
@@ -85,6 +110,21 @@ public class NotificationMessage extends BaseEntity {
   public void setReadStatus(String readStatus) {
     this.readStatus = readStatus;
   }
-}
 
+  public String getHandleStatus() {
+    return handleStatus;
+  }
+
+  public void setHandleStatus(String handleStatus) {
+    this.handleStatus = handleStatus;
+  }
+
+  public LocalDateTime getHandledAt() {
+    return handledAt;
+  }
+
+  public void setHandledAt(LocalDateTime handledAt) {
+    this.handledAt = handledAt;
+  }
+}
 

@@ -318,12 +318,16 @@ export interface Notification {
   doctorId?: number;
   patientId?: number;
   prescriptionId?: number;
+  triageRecordId?: number;
+  medicalRecordId?: number;
   type?: string;
   title?: string;
   content?: string;
   riskLevel?: string;
   readStatus?: string;
+  handleStatus?: string;
   createdAt?: string;
+  handledAt?: string;
 }
 
 export interface ScheduleSuggestion extends Schedule {

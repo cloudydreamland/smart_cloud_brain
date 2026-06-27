@@ -25,10 +25,13 @@ const navGroups = computed(() => [
     { label: "工作台", to: "/" },
     { label: "科室", to: "/departments", badge: departments.value.length },
     { label: "医生", to: "/doctors", badge: doctors.value.length },
+    { label: "患者", to: "/patients" },
     { label: "药品", to: "/drugs" },
     { label: "排班", to: "/schedule" },
     { label: "分诊台", to: "/triage-desk", badge: highRisk.value },
     { label: "账户权限", to: "/accounts" },
+    { label: "权限", to: "/permissions" },
+    { label: "设备", to: "/devices" },
     { label: "统计分析", to: "/statistics" },
   ] },
   { label: "配置", items: [

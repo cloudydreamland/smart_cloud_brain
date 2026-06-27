@@ -26,5 +26,6 @@ management:
 services:
   ai:
     base-url: ${AI_SERVICE_BASE_URL:http://localhost:8081}
-
+  notification:
+    base-url: ${NOTIFICATION_SERVICE_BASE_URL:http://localhost:8089}
 

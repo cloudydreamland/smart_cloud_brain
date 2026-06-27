@@ -2,6 +2,7 @@ package com.smartcloudbrain.triage.service;
 
 import com.smartcloudbrain.common.error.ErrorCode;
 import com.smartcloudbrain.common.exception.BusinessException;
+import com.smartcloudbrain.triage.client.InternalNotificationClient;
 import com.smartcloudbrain.triage.entity.TriageRecord;
 import com.smartcloudbrain.triage.repository.TriageRecordRepository;
 import java.util.List;
@@ -13,9 +14,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class TriageDeskService {
 
   private final TriageRecordRepository triageRecordRepository;
+  private final InternalNotificationClient notificationClient;
 
-  public TriageDeskService(TriageRecordRepository triageRecordRepository) {
+  public TriageDeskService(TriageRecordRepository triageRecordRepository, InternalNotificationClient notificationClient) {
     this.triageRecordRepository = triageRecordRepository;
+    this.notificationClient = notificationClient;
   }
 
   public List<Map<String, Object>> list() {
@@ -33,7 +36,9 @@ public class TriageDeskService {
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
     record.setAssignedDoctorId(doctorId);
     record.setStatus("ASSIGNED");
-    return triageView(triageRecordRepository.save(record));
+    TriageRecord saved = triageRecordRepository.save(record);
+    publishAssignNotification(saved, doctorId);
+    return triageView(saved);
   }
 
   @Transactional
@@ -56,5 +61,18 @@ public class TriageDeskService {
         "status", record.getStatus(),
         "createdAt", record.getCreatedAt() == null ? "" : record.getCreatedAt().toString()
     );
+  }
+
+  private void publishAssignNotification(TriageRecord record, Long doctorId) {
+    if (notificationClient == null || doctorId == null) {
+      return;
+    }
+    String content = "患者分诊已分配给您，主诉：" + record.getChiefComplaint()
+        + (record.getReason() == null || record.getReason().isBlank() ? "" : "。建议：" + record.getReason());
+    try {
+      notificationClient.createTriageAssign(doctorId, record.getPatientId(), record.getId(), content, "");
+    } catch (BusinessException ignored) {
+      // 分诊分配是主流程，通知失败不应阻断业务操作。
+    }
   }
 }

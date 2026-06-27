@@ -47,7 +47,7 @@ export function statusText(status: unknown, fallback = "-") {
     CREATED: "已创建", CONFIRMED: "已确认", COMPLETED: "已完成", AVAILABLE: "可预约",
     ENABLED: "启用", PUBLISHED: "已发布", AI_RECOMMENDED: "智能推荐", LOW: "低风险",
     READ: "已读", CANCELLED: "已取消", FAILED: "失败", DISABLED: "停用", HIGH: "高风险",
-    CLOSED: "已关闭", FULL: "已约满", PENDING: "待处理", DRAFT: "草稿",
+    CLOSED: "已关闭", FULL: "已约满", PENDING: "待处理", HANDLED: "已处理", IGNORED: "已忽略", DRAFT: "草稿",
     UNPUBLISHED: "未发布", UNREVIEWED: "未审核", MEDIUM: "中风险",
     MANUAL_REQUIRED: "待人工处理", UNREAD: "未读", PATIENT: "患者", DOCTOR: "医生",
     ADMIN: "管理员", MALE: "男", FEMALE: "女", UNKNOWN: "未说明",

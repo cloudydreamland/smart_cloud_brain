@@ -8,7 +8,7 @@ defineEmits<{ close: []; confirm: [] }>();
 </script>
 
 <template>
-  <Modal :open="open" title="处方风险复核" description="高风险处方需要医生二次确认。" @close="$emit('close')">
+  <Modal :open="open" title="处方风险复核" @close="$emit('close')">
     <div class="stack">
       <div class="notice danger">
         <strong>{{ statusLabel(displayText(result?.riskLevel, "HIGH")) }}：</strong>
@@ -16,8 +16,6 @@ defineEmits<{ close: []; confirm: [] }>();
       </div>
       <div class="dl-grid">
         <div><b>风险等级</b><span><span class="tag" :class="statusTone(displayText(result?.riskLevel, 'HIGH'))">{{ statusLabel(displayText(result?.riskLevel, "HIGH")) }}</span></span></div>
-        <div><b>审核来源</b><span>{{ displayText(result?.provider, "AI 审方") }}</span></div>
-        <div class="span"><b>系统建议</b><span>{{ displayText(result?.suggestions, "复核过敏史，调整抗菌药物；保留氨溴索对症处理。") }}</span></div>
       </div>
     </div>
     <template #footer>

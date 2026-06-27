@@ -6,9 +6,18 @@ defineProps<{ open: boolean; text: string }>();
 defineEmits<{ close: [] }>();
 </script>
 
+<style scoped>
+.ai-draft {
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+  padding: 12px;
+}
+</style>
+
 <template>
   <Modal :open="open" title="AI 病历草稿预览" description="医生确认后才能保存病历。" @close="$emit('close')">
-    <pre class="ai-draft">{{ text || formatAiDraft() }}</pre>
+    <div class="ai-draft">{{ text || formatAiDraft() }}</div>
     <template #footer>
       <button type="button" @click="$emit('close')">返回编辑</button>
       <button type="button" class="primary" @click="$emit('close')">确认采用</button>

@@ -7,26 +7,14 @@ const auth = useAuthStore();
 const toast = inject<Ref<{ success: (t: string, d?: string) => void; error: (t: string, d?: string) => void }> | null>(null);
 
 /* ── 设置项 ── */
-const defaultDept = ref("心内科");
 const aiDraftMode = ref<"preview" | "auto">("preview");
 const highRiskConfirm = ref(true);
 const notifyMode = ref<"realtime" | "queue" | "dnd">("realtime");
-
-/* ── 部门选项 ── */
-const departments = [
-  { value: "心内科", desc: "心血管系统疾病诊治" },
-  { value: "呼吸内科", desc: "呼吸系统疾病诊治" },
-  { value: "神经内科", desc: "神经系统疾病诊治" },
-  { value: "消化内科", desc: "消化系统疾病诊治" },
-  { value: "内分泌科", desc: "内分泌代谢疾病诊治" },
-  { value: "普通外科", desc: "常见外科疾病诊治" },
-];
 
 /* ── 读取 localStorage ── */
 onMounted(() => {
   try {
     const saved = JSON.parse(localStorage.getItem("doctor-settings") || "{}");
-    if (saved.defaultDept) defaultDept.value = saved.defaultDept;
     if (saved.aiDraftMode) aiDraftMode.value = saved.aiDraftMode;
     if (saved.highRiskConfirm !== undefined) highRiskConfirm.value = saved.highRiskConfirm;
     if (saved.notifyMode) notifyMode.value = saved.notifyMode;
@@ -36,7 +24,6 @@ onMounted(() => {
 /* ── 自动保存：任意设置变化即写入 localStorage ── */
 function persist() {
   localStorage.setItem("doctor-settings", JSON.stringify({
-    defaultDept: defaultDept.value,
     aiDraftMode: aiDraftMode.value,
     highRiskConfirm: highRiskConfirm.value,
     notifyMode: notifyMode.value,
@@ -44,7 +31,7 @@ function persist() {
   toast?.value?.success("设置已保存");
 }
 
-watch([defaultDept, aiDraftMode, highRiskConfirm, notifyMode], persist);
+watch([aiDraftMode, highRiskConfirm, notifyMode], persist);
 
 /* ── 通知方式标签 ── */
 const notifyLabel = computed(() => {
@@ -80,31 +67,7 @@ const notifyLabel = computed(() => {
 
       <!-- 设置区域 -->
       <div class="settings-stack">
-        <!-- 1. 默认科室 -->
-        <article class="setting-row">
-          <div class="setting-row-header">
-            <strong>默认科室</strong>
-          </div>
-          <div class="dept-grid">
-            <div
-              v-for="d in departments"
-              :key="d.value"
-              class="choicebox-item"
-              :class="{ selected: defaultDept === d.value }"
-              @click="defaultDept = d.value"
-            >
-              <div class="choicebox-indicator">
-                <span class="radio-dot" />
-              </div>
-              <div class="choicebox-text">
-                <span class="choicebox-title">{{ d.value }}</span>
-                <span class="choicebox-desc">{{ d.desc }}</span>
-              </div>
-            </div>
-          </div>
-        </article>
-
-        <!-- 2. AI 草稿策略 -->
+        <!-- 1. AI 草稿策略 -->
         <article class="setting-row">
           <div class="setting-row-header">
             <strong>AI 草稿策略</strong>
