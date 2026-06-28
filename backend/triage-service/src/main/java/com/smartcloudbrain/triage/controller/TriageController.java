@@ -25,6 +25,11 @@ public class TriageController {
     return Result.success(triageService.consult(request));
   }
 
+  @PostMapping
+  public Result<?> consultAlias(@Valid @RequestBody TriageRequest request) {
+    return consult(request);
+  }
+
   @GetMapping("/list")
   public Result<?> list() {
     return Result.success(triageService.list());

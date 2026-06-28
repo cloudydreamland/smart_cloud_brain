@@ -107,6 +107,11 @@ public class AdminCatalogService {
     return departmentRepository.findAll().stream().map(this::departmentView).toList();
   }
 
+  public List<Map<String, Object>> doctors(Long departmentId) {
+    List<Doctor> doctors = departmentId == null ? doctorRepository.findAll() : doctorRepository.findByDepartmentId(departmentId);
+    return doctors.stream().map(this::doctorView).toList();
+  }
+
   public List<Map<String, Object>> accounts() {
     List<Map<String, Object>> rows = new java.util.ArrayList<>();
     adminUserRepository.findAll().stream().map(this::adminAccountView).forEach(rows::add);

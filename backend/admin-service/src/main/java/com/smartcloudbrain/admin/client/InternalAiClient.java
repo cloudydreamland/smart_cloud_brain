@@ -13,6 +13,7 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 
 @Component
 public class InternalAiClient {
@@ -46,7 +47,7 @@ public class InternalAiClient {
           .body(OBJECT_RESULT);
       return data(result);
     } catch (RestClientException ex) {
-      throw new BusinessException(500, "ai-service unavailable");
+      throw unavailable(ex);
     }
   }
 
@@ -58,7 +59,7 @@ public class InternalAiClient {
           .body(OBJECT_RESULT);
       return data(result);
     } catch (RestClientException ex) {
-      throw new BusinessException(500, "ai-service unavailable");
+      throw unavailable(ex);
     }
   }
 
@@ -71,8 +72,17 @@ public class InternalAiClient {
           .body(SCHEDULE_RESULT);
       return scheduleData(result);
     } catch (RestClientException ex) {
-      throw new BusinessException(500, "ai-service unavailable");
+      throw unavailable(ex);
     }
+  }
+
+  private BusinessException unavailable(RestClientException ex) {
+    if (ex instanceof RestClientResponseException response) {
+      String body = response.getResponseBodyAsString();
+      String detail = body == null || body.isBlank() ? response.getStatusText() : body;
+      return new BusinessException(500, "ai-service request failed: " + response.getStatusCode().value() + " " + detail);
+    }
+    return new BusinessException(500, "ai-service unavailable: " + ex.getMessage());
   }
 
   private Object data(Result<Object> result) {

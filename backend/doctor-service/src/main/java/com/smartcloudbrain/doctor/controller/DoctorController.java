@@ -6,6 +6,7 @@ import com.smartcloudbrain.common.security.CurrentUserService;
 import com.smartcloudbrain.common.security.RoleType;
 import com.smartcloudbrain.doctor.service.DoctorService;
 import com.smartcloudbrain.doctor.service.DoctorScheduleService;
+import com.smartcloudbrain.doctor.service.DoctorWorkspaceService;
 import java.time.LocalDate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,11 +19,18 @@ public class DoctorController {
 
   private final DoctorService doctorService;
   private final DoctorScheduleService doctorScheduleService;
+  private final DoctorWorkspaceService doctorWorkspaceService;
   private final CurrentUserService currentUserService;
 
-  public DoctorController(DoctorService doctorService, DoctorScheduleService doctorScheduleService, CurrentUserService currentUserService) {
+  public DoctorController(
+      DoctorService doctorService,
+      DoctorScheduleService doctorScheduleService,
+      DoctorWorkspaceService doctorWorkspaceService,
+      CurrentUserService currentUserService
+  ) {
     this.doctorService = doctorService;
     this.doctorScheduleService = doctorScheduleService;
+    this.doctorWorkspaceService = doctorWorkspaceService;
     this.currentUserService = currentUserService;
   }
 
@@ -49,6 +57,18 @@ public class DoctorController {
   ) {
     AuthenticatedUser user = currentUserService.require(RoleType.DOCTOR);
     return Result.success(doctorScheduleService.schedules(startDate, endDate, null, user.userId(), status));
+  }
+
+  @GetMapping("/dashboard")
+  public Result<?> dashboard() {
+    AuthenticatedUser user = currentUserService.require(RoleType.DOCTOR);
+    return Result.success(doctorWorkspaceService.dashboard(user.userId()));
+  }
+
+  @GetMapping("/queue")
+  public Result<?> queue() {
+    AuthenticatedUser user = currentUserService.require(RoleType.DOCTOR);
+    return Result.success(doctorWorkspaceService.queue(user.userId()));
   }
 }
 

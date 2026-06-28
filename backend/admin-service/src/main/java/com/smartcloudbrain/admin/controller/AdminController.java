@@ -53,6 +53,12 @@ public class AdminController {
     return Result.success(adminCatalogService.departments());
   }
 
+  @GetMapping("/doctor/list")
+  public Result<?> doctors(@RequestParam(name = "departmentId", required = false) Long departmentId) {
+    requireAdmin();
+    return Result.success(adminCatalogService.doctors(departmentId));
+  }
+
   @GetMapping("/account/list")
   public Result<?> accounts() {
     requireAdmin();
@@ -270,6 +276,12 @@ public class AdminController {
   @GetMapping("/statistics/overview")
   public Result<?> statisticsOverview() {
     requireAdminPermission("statistics:view");
+    return Result.success(adminOperationsService.overview());
+  }
+
+  @GetMapping("/dashboard/stats")
+  public Result<?> dashboardStats() {
+    requireAdminPermission("dashboard:view");
     return Result.success(adminOperationsService.overview());
   }
 
