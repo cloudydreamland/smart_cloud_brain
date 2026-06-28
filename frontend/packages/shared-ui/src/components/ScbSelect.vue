@@ -108,9 +108,12 @@ function onClickOutside(e: MouseEvent) {
   removeAncestorScrollListener();
 }
 
-function onReposition() {
+function onReposition(e: Event) {
   if (!isOpen.value) return;
   if (props.closeOnScroll) {
+    // 面板内滚动不关闭（用户在选选项），只关闭 Modal/页面滚动
+    const target = e.target as Node;
+    if (menuRef.value?.contains(target)) return;
     isOpen.value = false;
     removeAncestorScrollListener();
   } else {

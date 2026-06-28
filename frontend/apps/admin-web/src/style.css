@@ -92,6 +92,10 @@
   gap: 16px;
 }
 
+.schedule-layout {
+  grid-template-columns: 1fr;
+}
+
 .account-layout {
   display: block;
 }
@@ -863,8 +867,7 @@ button.status-pill:hover {
 }
 
 .patient-config-modal input,
-.patient-config-modal select,
-.patient-config-modal .scb-select {
+.patient-config-modal select {
   width: 100%;
   height: 36px;
   padding: 0 10px;

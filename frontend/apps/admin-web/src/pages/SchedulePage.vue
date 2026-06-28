@@ -137,6 +137,22 @@ loadSchedules();
 
 <template>
   <section class="schedule-layout">
+    <aside class="panel">
+      <header class="panel-header"><div class="panel-title"><h2>AI 排班建议</h2></div></header>
+      <div class="panel-body stack">
+        <div class="admin-filter-row">
+          <input v-model="generateForm.startDate" type="date" />
+          <input v-model.number="generateForm.days" type="number" min="1" max="14" placeholder="天数" />
+          <button type="button" :disabled="loading" @click="generate">生成建议</button>
+          <button class="primary" type="button" :disabled="loading || !suggestions.length" @click="publish">发布</button>
+        </div>
+        <article v-for="item in pagedSuggestions" :key="String(item.id)" class="list-row">
+          <div class="row-main"><strong>{{ displayText(item.workDate) }} {{ displayText(item.timeRange) }}</strong><p>{{ displayText(item.doctorName) }} / 容量 {{ displayText(item.capacity) }}</p><span class="tag" :class="aiSourceTone(item.source)">{{ aiSourceLabel(item.source) }}</span></div>
+        </article>
+        <PaginationBar v-model="suggestionPage" :total="suggestionTotal" :page-size="suggestionPageSize" />
+        <EmptyState v-if="!suggestions.length" title="暂无 AI 建议" />
+      </div>
+    </aside>
     <section class="panel">
       <header class="panel-header">
         <div class="panel-title"><h2>排班管理</h2></div>
@@ -175,21 +191,6 @@ loadSchedules();
         <EmptyState v-else title="暂无排班" />
       </div>
     </section>
-    <aside class="panel">
-      <header class="panel-header"><div class="panel-title"><h2>AI 排班建议</h2></div></header>
-      <div class="panel-body stack">
-        <div class="form-grid">
-          <FormField label="开始日期"><input v-model="generateForm.startDate" type="date" /></FormField>
-          <FormField label="天数"><input v-model.number="generateForm.days" type="number" min="1" max="14" /></FormField>
-        </div>
-        <div class="toolbar"><button type="button" :disabled="loading" @click="generate">生成建议</button><button class="primary" type="button" :disabled="loading || !suggestions.length" @click="publish">发布</button></div>
-        <article v-for="item in pagedSuggestions" :key="String(item.id)" class="list-row">
-          <div class="row-main"><strong>{{ displayText(item.workDate) }} {{ displayText(item.timeRange) }}</strong><p>{{ displayText(item.doctorName) }} / 容量 {{ displayText(item.capacity) }}</p><span class="tag" :class="aiSourceTone(item.source)">{{ aiSourceLabel(item.source) }}</span></div>
-        </article>
-        <PaginationBar v-model="suggestionPage" :total="suggestionTotal" :page-size="suggestionPageSize" />
-        <EmptyState v-if="!suggestions.length" title="暂无 AI 建议" />
-      </div>
-    </aside>
     <Modal :open="editorOpen" title="排班编辑" description="创建或修改医生排班及预约时段。" @close="editorOpen = false">
       <div class="stack">
         <div class="form-grid">
