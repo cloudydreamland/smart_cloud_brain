@@ -22,7 +22,7 @@ async function refresh() {
   loadError.value = "";
   try {
     await workflow.refreshPublicData();
-    await workflow.refreshAuthenticated(auth.token());
+    await workflow.refreshAuthenticated();
   } catch (err) {
     loadError.value = formatApiError(err, "患者资料加载失败");
   } finally {

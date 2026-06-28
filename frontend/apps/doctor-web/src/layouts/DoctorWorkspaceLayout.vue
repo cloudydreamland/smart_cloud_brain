@@ -62,7 +62,7 @@ async function refresh() {
   if (!session.value || !auth.requireRole("DOCTOR")) return;
   loading.value = true;
   try {
-    await workflow.refresh(auth.token());
+    await workflow.refresh();
   } catch {
     socketStatus.value = "同步失败";
   } finally {

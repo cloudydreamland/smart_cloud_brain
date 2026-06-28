@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from "vue";
-import { api, fieldText, formatApiError, statusText, toNumber, useAuthStore, type DataRow, type PatientVisitorSaveRequest } from "@smart-cloud-brain/shared-api";
+import { api, fieldText, formatApiError, statusText, toNumber, type DataRow, type PatientVisitorSaveRequest } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, FormField, LoadingState } from "@smart-cloud-brain/shared-ui";
 
-const auth = useAuthStore();
 const loading = ref(false);
 const saving = ref(false);
 const error = ref("");
@@ -56,7 +55,7 @@ async function loadVisitors() {
   loading.value = true;
   error.value = "";
   try {
-    visitors.value = await api.patientVisitors(auth.token());
+    visitors.value = await api.patientVisitors();
   } catch (err) {
     error.value = formatApiError(err, "就诊人加载失败");
   } finally {
@@ -73,7 +72,7 @@ async function saveVisitor() {
   error.value = "";
   notice.value = "";
   try {
-    await api.savePatientVisitor(auth.token(), { ...form, name: form.name.trim() });
+    await api.savePatientVisitor({ ...form, name: form.name.trim() });
     resetForm();
     await loadVisitors();
     notice.value = "就诊人已保存";
@@ -91,7 +90,7 @@ async function deleteVisitor(row: DataRow) {
   error.value = "";
   notice.value = "";
   try {
-    await api.deletePatientVisitor(auth.token(), id);
+    await api.deletePatientVisitor(id);
     if (form.id === id) resetForm();
     await loadVisitors();
     notice.value = "就诊人已删除";

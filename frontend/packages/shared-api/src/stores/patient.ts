@@ -19,10 +19,10 @@ export const usePatientWorkflowStore = defineStore("patientWorkflow", () => {
     doctors.value = await patientApi.doctors();
   }
 
-  async function refreshAuthenticated(token: string) {
+  async function refreshAuthenticated() {
     const [info, triages, slotList, registrationList, recordList, prescriptionList] = await Promise.all([
-      patientApi.info(token), patientApi.triageList(token), patientApi.registrationSlots(token),
-      patientApi.registrations(token), patientApi.medicalRecords(token), patientApi.prescriptions(token),
+      patientApi.info(), patientApi.triageList(), patientApi.registrationSlots(),
+      patientApi.registrations(), patientApi.medicalRecords(), patientApi.prescriptions(),
     ]);
     patient.value = info;
     triageHistory.value = [...triages].sort((left, right) =>

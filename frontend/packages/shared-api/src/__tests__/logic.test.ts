@@ -10,6 +10,7 @@ import {
   notificationWebSocketUrl,
   patientSiteSectionTypes,
   request,
+  setTokenProvider,
   statusClass,
   statusText,
   toNumber,
@@ -26,35 +27,38 @@ function jsonResponse(data: unknown = {}) {
 }
 
 describe("shared api business logic", () => {
-  afterEach(() => vi.restoreAllMocks());
+  afterEach(() => {
+    setTokenProvider(() => "");
+    vi.restoreAllMocks();
+  });
 
-  it("builds every public API request with compatible arguments", async () => {
+  it("builds every public API request with token provider auth", async () => {
     const fetch = vi.fn(async () => jsonResponse([]));
     vi.stubGlobal("fetch", fetch);
-    const token = "jwt";
+    setTokenProvider(() => "jwt");
     await Promise.all([
       api.registerPatient({ name: "患者", phone: "13800000001", password: "123456" }),
-      api.currentUser(token), api.loginPatient("p", "x"), api.loginDoctor("d", "x"), api.loginAdmin("a", "x"),
-      api.patientInfo(token), api.departments(), api.doctors(1), api.doctorDetail(1), api.drugs(token),
-      api.triage(token, "胸痛"), api.triageList(token),
-      api.createRegistration(token, { doctorId: 1, departmentId: 1, appointmentTime: "2026-06-21T09:00:00" }),
-      api.registrationSlots(token), api.registrations(token), api.cancelRegistration(token, 1), api.completeRegistration(token, 1),
-      api.generateMedicalRecord(token, { registrationId: 1, dialogueText: "胸痛" }),
-      api.saveMedicalRecord(token, { registrationId: 1, chiefComplaint: "胸痛", diagnosis: "待查" }),
-      api.medicalRecords(token), api.medicalRecordDetail(token, 1),
-      api.checkPrescription(token, { drugs: [] }),
-      api.createPrescription(token, { patientId: 1, medicalRecordId: 1, drugs: [] }),
-      api.prescriptions(token), api.prescriptionDetail(token, 1), api.notifications(token), api.markNotificationRead(token, 1),
-      api.saveDepartment(token, { code: "C", name: "科室" }), api.adminDepartments(token),
-      api.saveDoctor(token, { name: "医生", phone: "1", departmentId: 1 }),
-      api.saveDrug(token, { name: "药品" }), api.prompts(token),
-      api.savePrompt(token, { taskType: "SCHEDULE", templateName: "t", templateContent: "c" }),
-      api.knowledgeEntries(token), api.saveKnowledgeEntry(token, { title: "t", symptoms: "s", advice: "a" }),
-      api.dicts(token), api.saveDict(token, { dictType: "t", dictKey: "k", dictValue: "v" }),
-      api.generateSchedule(token, { startDate: "2026-06-21", days: 2 }), api.publishSchedule(token, { suggestionIds: [1] }),
-      api.schedules(token), api.scheduleSuggestionDetail(token, 1), api.triageDesk(token), api.triageDetail(token, 1),
-      api.assignTriage(token, { triageRecordId: 1, doctorId: 2 }), api.closeTriage(token, 1),
-      api.searchKnowledge(token, "胸痛", "CARDIOLOGY"), api.searchDrugs(token, "阿司匹林"), api.searchPrompts(token, "排班"),
+      api.currentUser(), api.loginPatient("p", "x"), api.loginDoctor("d", "x"), api.loginAdmin("a", "x"),
+      api.patientInfo(), api.departments(), api.doctors(1), api.doctorDetail(1), api.drugs(),
+      api.triage("胸痛"), api.triageList(),
+      api.createRegistration({ doctorId: 1, departmentId: 1, appointmentTime: "2026-06-21T09:00:00" }),
+      api.registrationSlots(), api.registrations(), api.cancelRegistration(1), api.completeRegistration(1),
+      api.generateMedicalRecord({ registrationId: 1, dialogueText: "胸痛" }),
+      api.saveMedicalRecord({ registrationId: 1, chiefComplaint: "胸痛", diagnosis: "待查" }),
+      api.medicalRecords(), api.medicalRecordDetail(1),
+      api.checkPrescription({ drugs: [] }),
+      api.createPrescription({ patientId: 1, medicalRecordId: 1, drugs: [] }),
+      api.prescriptions(), api.prescriptionDetail(1), api.notifications(), api.markNotificationRead(1),
+      api.saveDepartment({ code: "C", name: "科室" }), api.adminDepartments(),
+      api.saveDoctor({ name: "医生", phone: "1", departmentId: 1 }),
+      api.saveDrug({ name: "药品" }), api.prompts(),
+      api.savePrompt({ taskType: "SCHEDULE", templateName: "t", templateContent: "c" }),
+      api.knowledgeEntries(), api.saveKnowledgeEntry({ title: "t", symptoms: "s", advice: "a" }),
+      api.dicts(), api.saveDict({ dictType: "t", dictKey: "k", dictValue: "v" }),
+      api.generateSchedule({ startDate: "2026-06-21", days: 2 }), api.publishSchedule({ suggestionIds: [1] }),
+      api.schedules(), api.scheduleSuggestionDetail(1), api.triageDesk(), api.triageDetail(1),
+      api.assignTriage({ triageRecordId: 1, doctorId: 2 }), api.closeTriage(1),
+      api.searchKnowledge("胸痛", "CARDIOLOGY"), api.searchDrugs("阿司匹林"), api.searchPrompts("排班"),
     ]);
     expect(fetch.mock.calls.length).toBeGreaterThan(40);
     expect(String(fetch.mock.calls.find(([url]) => String(url).includes("departmentId=1"))?.[0])).toContain("departmentId=1");

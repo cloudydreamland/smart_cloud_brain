@@ -7,7 +7,6 @@ import {
   displayText,
   formatApiError,
   toNumber,
-  useAuthStore,
   useDoctorWorkflowStore,
   usePagination,
   type Notification,
@@ -24,7 +23,6 @@ type ToastHandle = {
 type FilterKey = "read" | "type" | "risk" | "sort";
 
 const emit = defineEmits<{ refresh: [] }>();
-const auth = useAuthStore();
 const workflow = useDoctorWorkflowStore();
 const router = useRouter();
 const { notifications, registrations } = storeToRefs(workflow);
@@ -290,7 +288,7 @@ async function refresh() {
   loading.value = true;
   error.value = "";
   try {
-    await workflow.refresh(auth.token());
+    await workflow.refresh();
     allRows.value = [...displayNotifications.value];
   } catch (err) {
     error.value = formatApiError(err, "通知列表加载失败，请稍后重试。");
@@ -304,7 +302,7 @@ async function markRead(item = selected.value) {
   loading.value = true;
   error.value = "";
   try {
-    await api.markNotificationRead(auth.token(), toNumber(item.notificationId));
+    await api.markNotificationRead(toNumber(item.notificationId));
     selected.value = null;
     emit("refresh");
     await refresh();
@@ -323,7 +321,7 @@ async function handleNotification(item: Notification | null, handleStatus: "HAND
   loading.value = true;
   error.value = "";
   try {
-    await api.handleNotification(auth.token(), toNumber(item.notificationId), handleStatus);
+    await api.handleNotification(toNumber(item.notificationId), handleStatus);
     selected.value = null;
     emit("refresh");
     await refresh();

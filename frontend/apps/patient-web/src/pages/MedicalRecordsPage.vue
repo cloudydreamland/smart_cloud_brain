@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { api, fieldText, formatApiError, useAuthStore, usePatientWorkflowStore, type DataRow } from "@smart-cloud-brain/shared-api";
+import { api, fieldText, formatApiError, usePatientWorkflowStore, type DataRow } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, LoadingState } from "@smart-cloud-brain/shared-ui";
 import MedicalRecordDetailModal from "../components/MedicalRecordDetailModal.vue";
 
-const auth = useAuthStore();
 const workflow = usePatientWorkflowStore();
 const { records } = storeToRefs(workflow);
 const loading = ref(false);
@@ -17,7 +16,7 @@ async function refresh() {
   loading.value = true;
   error.value = "";
   try {
-    await workflow.refreshAuthenticated(auth.token());
+    await workflow.refreshAuthenticated();
   } catch (err) {
     error.value = formatApiError(err, "病历记录加载失败");
   } finally {
@@ -34,7 +33,7 @@ async function open(item: DataRow) {
   detailLoading.value = true;
   error.value = "";
   try {
-    selected.value = await api.medicalRecordDetail(auth.token(), id);
+    selected.value = await api.medicalRecordDetail(id);
   } catch (err) {
     error.value = formatApiError(err, "病历详情加载失败，请稍后重试");
   } finally {

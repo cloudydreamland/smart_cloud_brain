@@ -13,10 +13,10 @@ export const useDoctorWorkflowStore = defineStore("doctorWorkflow", () => {
   const streamText = ref("");
   const streamStatus = ref("IDLE");
 
-  async function refresh(token: string) {
+  async function refresh() {
     const settled = await Promise.allSettled([
-      doctorApi.registrations(token), doctorApi.triageList(token), doctorApi.medicalRecords(token),
-      doctorApi.prescriptions(token), doctorApi.searchDrugs(token, ""), doctorApi.notifications(token),
+      doctorApi.registrations(), doctorApi.triageList(), doctorApi.medicalRecords(),
+      doctorApi.prescriptions(), doctorApi.searchDrugs(""), doctorApi.notifications(),
     ]);
     const pick = <T>(r: PromiseSettledResult<unknown>, fallback: T[]): T[] =>
       r.status === "fulfilled" && Array.isArray(r.value) ? r.value as T[] : fallback;

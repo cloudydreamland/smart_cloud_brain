@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
-import { api, fieldText, formatApiError, statusClass, statusText, toNumber, useAuthStore, usePatientWorkflowStore, type DataRow } from "@smart-cloud-brain/shared-api";
+import { api, fieldText, formatApiError, statusClass, statusText, toNumber, usePatientWorkflowStore, type DataRow } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, LoadingState, StatusTag } from "@smart-cloud-brain/shared-ui";
 import ConfirmAppointmentModal from "../components/ConfirmAppointmentModal.vue";
 
@@ -20,7 +20,6 @@ type DoctorGroup = {
   periods: { key: string; label: string; slots: DataRow[] }[];
 };
 
-const auth = useAuthStore();
 const workflow = usePatientWorkflowStore();
 const { slots, doctors, triageHistory } = storeToRefs(workflow);
 const loading = ref(false);
@@ -95,7 +94,7 @@ async function refresh() {
   notice.value = "";
   try {
     await workflow.refreshPublicData();
-    await workflow.refreshAuthenticated(auth.token());
+    await workflow.refreshAuthenticated();
   } catch (err) {
     error.value = formatApiError(err, "号源加载失败");
   } finally {
@@ -151,14 +150,14 @@ async function confirmAppointment() {
   error.value = "";
   notice.value = "";
   try {
-    await api.createRegistration(auth.token(), {
+    await api.createRegistration({
       doctorId: toNumber(selectedSlot.value.doctorId),
       departmentId: toNumber(selectedSlot.value.departmentId),
       appointmentTime: fieldText(selectedSlot.value, "startTime", ""),
       slotId: toNumber(selectedSlot.value.slotId) || null,
       triageRecordId: toNumber(triageHistory.value[0]?.triageRecordId, 0) || null,
     });
-    await workflow.refreshAuthenticated(auth.token());
+    await workflow.refreshAuthenticated();
     confirmOpen.value = false;
     notice.value = "预约已提交，可在“我的挂号”页面查看或取消。";
   } catch (err) {

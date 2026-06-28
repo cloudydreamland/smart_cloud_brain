@@ -44,7 +44,7 @@ async function refresh() {
   if (!session.value || !auth.requireRole("ADMIN")) return;
   loading.value = true;
   try {
-    await workflow.refresh(auth.token());
+    await workflow.refresh();
     toastRef.value?.success("数据已刷新", "所有模块数据已同步最新状态。");
   } catch {
     toastRef.value?.error("刷新失败", "请检查网络后重试。");

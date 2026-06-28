@@ -43,8 +43,8 @@ async function save() {
   error.value = "";
   notice.value = "";
   try {
-    patient.value = await api.saveProfile(auth.token(), { ...form });
-    await workflow.refreshAuthenticated(auth.token());
+    patient.value = await api.saveProfile({ ...form });
+    await workflow.refreshAuthenticated();
     notice.value = "资料已保存";
   } catch (err) {
     error.value = formatApiError(err, "保存资料失败");

@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { reactive, ref } from "vue";
-import { api, displayText, formatApiError, useAuthStore, usePagination, type Drug, type KnowledgeEntry, type PromptTemplate } from "@smart-cloud-brain/shared-api";
+import { api, displayText, formatApiError, usePagination, type Drug, type KnowledgeEntry, type PromptTemplate } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, FormField, LoadingState, PaginationBar } from "@smart-cloud-brain/shared-ui";
 
-const auth = useAuthStore();
 const loading = ref(false);
 const error = ref("");
 const form = reactive({ q: "", departmentCode: "" });
@@ -36,9 +35,9 @@ async function search() {
   error.value = "";
   try {
     const [knowledge, drugs, prompts] = await Promise.all([
-      api.searchKnowledge(auth.token(), form.q.trim(), form.departmentCode.trim()),
-      api.searchDrugs(auth.token(), form.q.trim()),
-      api.searchPrompts(auth.token(), form.q.trim()),
+      api.searchKnowledge(form.q.trim(), form.departmentCode.trim()),
+      api.searchDrugs(form.q.trim()),
+      api.searchPrompts(form.q.trim()),
     ]);
     results.knowledge = knowledge as KnowledgeEntry[];
     results.drugs = drugs as Drug[];

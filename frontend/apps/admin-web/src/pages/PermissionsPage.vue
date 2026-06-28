@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
-import { api, displayText, formatApiError, useAuthStore, type PermissionCatalogItem, type PermissionPayload, type Role } from "@smart-cloud-brain/shared-api";
+import { api, displayText, formatApiError, type PermissionCatalogItem, type PermissionPayload, type Role } from "@smart-cloud-brain/shared-api";
 import { DataTable, ErrorState, SegmentedControl, StatusTag } from "@smart-cloud-brain/shared-ui";
 
-const auth = useAuthStore();
 const payload = ref<PermissionPayload | null>(null);
 const activeRole = ref<Role>("ADMIN");
 const selectedKeys = ref<string[]>([]);
@@ -50,7 +49,7 @@ async function refresh() {
   loading.value = true;
   error.value = "";
   try {
-    payload.value = await api.permissions(auth.token()) as PermissionPayload;
+    payload.value = await api.permissions() as PermissionPayload;
     syncSelectedKeys();
   } catch (err) {
     error.value = formatApiError(err, "Permission list failed");
@@ -64,7 +63,7 @@ async function save() {
   error.value = "";
   notice.value = "";
   try {
-    payload.value = await api.saveRolePermissions(auth.token(), {
+    payload.value = await api.saveRolePermissions({
       role: activeRole.value,
       permissionKeys: selectedKeys.value,
     }) as PermissionPayload;

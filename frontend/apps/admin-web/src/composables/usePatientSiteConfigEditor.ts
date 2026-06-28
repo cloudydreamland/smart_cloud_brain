@@ -188,7 +188,7 @@ export function usePatientSiteConfigEditor() {
     saving.value = true;
     status.value = "";
     try {
-      const row = await api.savePublishedPatientSiteConfig(auth.token(), {
+      const row = await api.savePublishedPatientSiteConfig({
         configKey: activeKey.value,
         configJson: payload.configJson,
         remark,
@@ -211,7 +211,7 @@ export function usePatientSiteConfigEditor() {
     saving.value = true;
     status.value = "";
     try {
-      await api.savePatientSiteConfig(auth.token(), {
+      await api.savePatientSiteConfig({
         configKey: activeKey.value,
         configJson: payload.configJson,
         remark: remarks[activeKey.value],
@@ -233,7 +233,7 @@ export function usePatientSiteConfigEditor() {
     status.value = "";
     error.value = "";
     try {
-      const row = await api.publishPatientSiteConfig(auth.token(), { configKey: activeKey.value, remark });
+      const row = await api.publishPatientSiteConfig({ configKey: activeKey.value, remark });
       await refreshHistory(activeKey.value);
       latest[activeKey.value] = row;
       if (typeof row.configJson === "string") setDraft(activeKey.value, JSON.parse(row.configJson));
@@ -252,7 +252,7 @@ export function usePatientSiteConfigEditor() {
     status.value = "";
     error.value = "";
     try {
-      const row = await api.savePublishedPatientSiteConfig(auth.token(), {
+      const row = await api.savePublishedPatientSiteConfig({
         configKey: activeKey.value,
         configJson: record.configJson,
         remark: `回滚到版本 ${record.version || "-"}`,
@@ -299,7 +299,7 @@ export function usePatientSiteConfigEditor() {
   async function refreshHistory(key: ConfigKey, page = historyPages[key].page, syncLatest = false) {
     historyLoading.value = true;
     try {
-      const result = await loadHistory(auth.token(), key, page, historyPageSize);
+      const result = await loadHistory(key, page, historyPageSize);
       histories[key] = result.items;
       historyPages[key] = result;
       if (syncLatest) {
@@ -452,13 +452,13 @@ export function usePatientSiteConfigEditor() {
     try {
       const normalized = resolvePatientSiteConfigSection("patient_pages", clone(pagesDraft.value), { preserveDisabled: true }) as PatientSitePagesConfig;
       drafts.patient_pages = normalized;
-      const row = await api.savePatientSiteConfig(auth.token(), {
+      const row = await api.savePatientSiteConfig({
         configKey: "patient_pages",
         configJson: JSON.stringify(normalized),
         remark: remarks.patient_pages || "预览草稿",
       });
       await refreshHistory("patient_pages");
-      const token = await api.patientSitePreviewToken(auth.token(), "patient_pages", Number(row.version));
+      const token = await api.patientSitePreviewToken("patient_pages", Number(row.version));
       window.open(`${patientPreviewOrigin()}/pages/${encodeURIComponent(slug)}?previewToken=${encodeURIComponent(token.token)}`, "_blank", "noopener");
       status.value = "预览草稿已保存，并已打开患者端预览窗口。";
     } catch (err) {
@@ -668,9 +668,9 @@ async function loadEffectiveSection(key: ConfigKey) {
   return isRow(section) ? section : {};
 }
 
-async function loadHistory(token: string, key: ConfigKey, page: number, pageSize: number) {
+async function loadHistory(key: ConfigKey, page: number, pageSize: number) {
   try {
-    return await api.patientSiteConfigHistory(token, key, page, pageSize);
+    return await api.patientSiteConfigHistory(key, page, pageSize);
   } catch {
     return emptyHistoryPage();
   }

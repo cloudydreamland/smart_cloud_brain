@@ -8,7 +8,6 @@ import {
   statusClass,
   toNumber,
   useAdminWorkflowStore,
-  useAuthStore,
   usePagination,
   type AccountSaveRequest,
   type Account,
@@ -17,7 +16,6 @@ import {
 } from "@smart-cloud-brain/shared-api";
 import { DataTable, ErrorState, FormField, Modal, PaginationBar, SegmentedControl, StatusTag } from "@smart-cloud-brain/shared-ui";
 
-const auth = useAuthStore();
 const workflow = useAdminWorkflowStore();
 const { departments } = storeToRefs(workflow);
 const accounts = ref<Account[]>([]);
@@ -124,13 +122,13 @@ async function refresh() {
   error.value = "";
   try {
     const [accountList, roleList] = await Promise.all([
-      api.accounts(auth.token()),
-      api.roles(auth.token()),
+      api.accounts(),
+      api.roles(),
     ]);
     accounts.value = accountList as Account[];
     roles.value = roleList as RoleInfo[];
     if (!departments.value.length) {
-      await workflow.refresh(auth.token());
+      await workflow.refresh();
     }
   } catch (err) {
     error.value = formatApiError(err, "账户权限数据加载失败");
@@ -206,7 +204,7 @@ async function save() {
   error.value = "";
   notice.value = "";
   try {
-    await api.saveAccount(auth.token(), saveBody());
+    await api.saveAccount(saveBody());
     editorOpen.value = false;
     notice.value = "账户与权限已保存。";
     await refresh();

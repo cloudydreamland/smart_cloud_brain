@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { api, displayText, formatApiError, statusClass, toNumber, useAdminWorkflowStore, useAuthStore, usePagination, type TriageRecord } from "@smart-cloud-brain/shared-api";
+import { api, displayText, formatApiError, statusClass, toNumber, useAdminWorkflowStore, usePagination, type TriageRecord } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, FormField, PaginationBar, StatusTag } from "@smart-cloud-brain/shared-ui";
 import TriageDetailModal from "../components/TriageDetailModal.vue";
 import AssignDoctorModal from "../components/AssignDoctorModal.vue";
 import CloseTriageConfirmModal from "../components/CloseTriageConfirmModal.vue";
 
 const emit = defineEmits<{ refresh: [] }>();
-const auth = useAuthStore();
 const workflow = useAdminWorkflowStore();
 const { triageDesk, doctors, refreshErrors } = storeToRefs(workflow);
 const filter = reactive({ keyword: "", department: "", status: "" });
@@ -33,7 +32,7 @@ async function detail(item: TriageRecord) {
   loading.value = true;
   error.value = "";
   try {
-    selected.value = await api.triageDetail(auth.token(), toNumber(item.triageRecordId)) as TriageRecord;
+    selected.value = await api.triageDetail(toNumber(item.triageRecordId)) as TriageRecord;
   } catch (err) {
     error.value = formatApiError(err, "分诊详情加载失败");
   } finally {
@@ -56,7 +55,7 @@ async function assign() {
   error.value = "";
   notice.value = "";
   try {
-    await api.assignTriage(auth.token(), { ...assignForm });
+    await api.assignTriage({ ...assignForm });
     assignOpen.value = false;
     emit("refresh");
     notice.value = "分诊已分配给医生。";
@@ -73,7 +72,7 @@ async function closeTriage() {
   error.value = "";
   notice.value = "";
   try {
-    await api.closeTriage(auth.token(), toNumber(closeTarget.value.triageRecordId));
+    await api.closeTriage(toNumber(closeTarget.value.triageRecordId));
     closeTarget.value = null;
     emit("refresh");
     notice.value = "分诊记录已关闭。";

@@ -81,7 +81,7 @@ describe("workflow stores", () => {
   it("refreshes patient public and authenticated workflow data", async () => {
     const store = usePatientWorkflowStore();
     await store.refreshPublicData();
-    await store.refreshAuthenticated("jwt");
+    await store.refreshAuthenticated();
 
     expect(store.departments).toHaveLength(1);
     expect(store.patient?.name).toBe("患者");
@@ -94,7 +94,7 @@ describe("workflow stores", () => {
         ? [{ triageRecordId: 2, status: "OLDER" }, { triageRecordId: 9, status: "LATEST" }]
         : routeData(url));
     }));
-    await store.refreshAuthenticated("jwt");
+    await store.refreshAuthenticated();
     expect(store.triage?.status).toBe("LATEST");
     expect(store.triageHistory.map((item) => item.triageRecordId)).toEqual([9, 2]);
 
@@ -103,13 +103,13 @@ describe("workflow stores", () => {
       const url = String(input);
       return ok(url.includes("/triage/list") ? [] : routeData(url));
     }));
-    await store.refreshAuthenticated("jwt");
+    await store.refreshAuthenticated();
     expect(store.triage?.status).toBe("PRESERVED");
   });
 
   it("refreshes doctor workflow data", async () => {
     const store = useDoctorWorkflowStore();
-    await store.refresh("jwt");
+    await store.refresh();
 
     expect(store.registrations).toHaveLength(1);
     expect(store.drugs).toHaveLength(1);
@@ -131,7 +131,7 @@ describe("workflow stores", () => {
     }));
     const store = useAdminWorkflowStore();
     store.prompts = [{ id: "kept" }];
-    await store.refresh("jwt");
+    await store.refresh();
 
     expect(store.departments).toHaveLength(1);
     expect(store.prompts[0].id).toBe("kept");

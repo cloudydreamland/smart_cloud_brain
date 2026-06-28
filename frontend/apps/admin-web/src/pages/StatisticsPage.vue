@@ -5,7 +5,6 @@ import {
   api,
   displayText,
   formatApiError,
-  useAuthStore,
   type DeviceUsageStatsRow,
   type DoctorWorkloadRow,
   type PatientDistribution,
@@ -15,7 +14,6 @@ import {
 } from "@smart-cloud-brain/shared-api";
 import { ErrorState, LoadingState } from "@smart-cloud-brain/shared-ui";
 
-const auth = useAuthStore();
 const loading = ref(false);
 const error = ref("");
 const startDate = ref(new Date(Date.now() - 14 * 86400000).toISOString().slice(0, 10));
@@ -37,11 +35,11 @@ async function refresh() {
   try {
     const params = { startDate: startDate.value, endDate: endDate.value };
     const [nextOverview, nextTrend, nextWorkload, nextDistribution, nextDeviceUsage] = await Promise.all([
-      api.statisticsOverview(auth.token()),
-      api.statisticsTrend(auth.token(), params),
-      api.doctorWorkload(auth.token(), params),
-      api.patientDistribution(auth.token()),
-      api.deviceUsageStatistics(auth.token()),
+      api.statisticsOverview(),
+      api.statisticsTrend(params),
+      api.doctorWorkload(params),
+      api.patientDistribution(),
+      api.deviceUsageStatistics(),
     ]);
     overview.value = nextOverview as StatisticsOverview;
     trend.value = nextTrend as StatisticsTrendRow[];
@@ -111,7 +109,7 @@ function renderCharts() {
 }
 
 async function exportCsv() {
-  const rows = await api.statisticsReport(auth.token(), { startDate: startDate.value, endDate: endDate.value });
+  const rows = await api.statisticsReport({ startDate: startDate.value, endDate: endDate.value });
   const csv = ["metric,value", ...(rows as StatisticsReportRow[]).map((row) => `${displayText(row.metric, "")},${displayText(row.value, "0")}`)].join("\n");
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
   const link = document.createElement("a");

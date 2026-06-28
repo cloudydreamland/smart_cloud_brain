@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
-import { api, fieldText, formatApiError, toNumber, useAuthStore, type DataRow } from "@smart-cloud-brain/shared-api";
+import { api, fieldText, formatApiError, toNumber, type DataRow } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, LoadingState, SegmentedControl } from "@smart-cloud-brain/shared-ui";
 
 type MessageRow = {
@@ -13,7 +13,6 @@ type MessageRow = {
   source?: DataRow;
 };
 
-const auth = useAuthStore();
 const rows = ref<DataRow[]>([]);
 const loading = ref(false);
 const saving = ref(false);
@@ -60,7 +59,7 @@ async function refresh() {
   loading.value = true;
   error.value = "";
   try {
-    rows.value = await api.notifications(auth.token(), filter.value);
+    rows.value = await api.notifications(filter.value);
   } catch (err) {
     error.value = formatApiError(err, "消息加载失败，当前显示本地服务提醒");
     rows.value = [];
@@ -75,7 +74,7 @@ async function markRead(item: MessageRow) {
   saving.value = true;
   error.value = "";
   try {
-    await api.markNotificationRead(auth.token(), item.id);
+    await api.markNotificationRead(item.id);
     await refresh();
   } catch (err) {
     error.value = formatApiError(err, "标记已读失败");

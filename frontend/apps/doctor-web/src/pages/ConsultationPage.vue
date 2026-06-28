@@ -227,7 +227,7 @@ async function saveRecord() {
   if (!canSaveRecord.value) return setError("主诉和诊断为必填项。");
   loading.record = true;
   try {
-    const saved = await api.saveMedicalRecord(auth.token(), { ...medicalForm });
+    const saved = await api.saveMedicalRecord({ ...medicalForm });
     prescription.medicalRecordId = toNumber(saved.medicalRecordId);
     emit("refresh");
     saveConfirmOpen.value = false;
@@ -256,7 +256,7 @@ async function checkPrescription() {
   if (!canCheck.value) return setError("请完整填写药品、剂量、频次和用法。");
   loading.prescription = true;
   try {
-    checkResult.value = await api.checkPrescription(auth.token(), {
+    checkResult.value = await api.checkPrescription({
       patientId: toNumber(registration.value?.patientId),
       doctorId: auth.session?.userId,
       medicalRecordId: prescription.medicalRecordId || undefined,
@@ -284,7 +284,7 @@ async function createPrescription() {
   }
   loading.prescription = true;
   try {
-    await api.createPrescription(auth.token(), {
+    await api.createPrescription({
       patientId: toNumber(registration.value?.patientId),
       medicalRecordId: prescription.medicalRecordId,
       registrationId: toNumber(registration.value?.registrationId),
@@ -305,9 +305,9 @@ async function createPrescription() {
 async function completeRegistration() {
   loading.complete = true;
   try {
-    await api.completeRegistration(auth.token(), medicalForm.registrationId);
+    await api.completeRegistration(medicalForm.registrationId);
     completeOpen.value = false;
-    await workflow.refresh(auth.token());
+    await workflow.refresh();
   } catch {
     completeOpen.value = false;
   } finally {

@@ -8,6 +8,7 @@ import {
   gatewayBase,
   medicalRecordStreamUrl,
   notificationWebSocketUrl,
+  setTokenProvider,
   statusClass,
   statusText,
   toNumber,
@@ -28,14 +29,16 @@ describe("shared api request handling", () => {
   });
 
   afterEach(() => {
+    setTokenProvider(() => "");
     vi.restoreAllMocks();
   });
 
   it("sends json requests with authorization and query parameters", async () => {
     const fetch = vi.fn(async () => ok([{ id: 1 }]));
     vi.stubGlobal("fetch", fetch);
+    setTokenProvider(() => "jwt");
 
-    await expect(api.searchKnowledge("jwt", "cold", "CARD")).resolves.toEqual([{ id: 1 }]);
+    await expect(api.searchKnowledge("cold", "CARD")).resolves.toEqual([{ id: 1 }]);
 
     expect(String(fetch.mock.calls[0][0])).toContain("/search/knowledge?q=cold&departmentCode=CARD");
     const init = fetch.mock.calls[0][1] as RequestInit;
@@ -50,46 +53,46 @@ describe("shared api request handling", () => {
       api.registerPatient({ name: "Alice", phone: "13800000001", password: "123456" }),
       api.loginDoctor("doctor1", "123456"),
       api.loginAdmin("admin", "123456"),
-      api.patientInfo("jwt"),
+      api.patientInfo(),
       api.departments(),
       api.doctors(1),
       api.doctorDetail(1),
-      api.triage("jwt", "headache"),
-      api.createRegistration("jwt", { doctorId: 1, departmentId: 2, appointmentTime: "2026-01-01T09:00:00" }),
-      api.cancelRegistration("jwt", 1),
-      api.completeRegistration("jwt", 1),
-      api.generateMedicalRecord("jwt", { registrationId: 1, dialogueText: "dialogue" }),
-      api.saveMedicalRecord("jwt", { registrationId: 1, chiefComplaint: "pain", diagnosis: "cold" }),
-      api.medicalRecordDetail("jwt", 1),
-      api.checkPrescription("jwt", { drugs: [] }),
-      api.createPrescription("jwt", { patientId: 1, medicalRecordId: 2, drugs: [] }),
-      api.notifications("jwt", "UNREAD"),
-      api.markNotificationRead("jwt", 1),
-      api.accounts("jwt"),
-      api.roles("jwt"),
-      api.saveAccount("jwt", { role: "ADMIN", account: "admin2", name: "管理员", password: "123456" }),
-      api.adminDepartments("jwt"),
-      api.saveDepartment("jwt", { code: "CARD", name: "Cardiology" }),
-      api.saveDoctor("jwt", { name: "doctor", phone: "13900000001", departmentId: 1 }),
-      api.drugs("jwt"),
-      api.saveDrug("jwt", { name: "aspirin" }),
-      api.prompts("jwt"),
-      api.savePrompt("jwt", { taskType: "TRIAGE", templateName: "default", templateContent: "content" }),
-      api.testPrompt("jwt", { taskType: "TRIAGE", templateContent: "content", outputSchema: "{\"type\":\"object\"}" }),
-      api.knowledgeEntries("jwt"),
-      api.saveKnowledgeEntry("jwt", { title: "cold", symptoms: "cough", advice: "rest" }),
-      api.dicts("jwt", "gender"),
-      api.saveDict("jwt", { dictType: "gender", dictKey: "MALE", dictValue: "male" }),
-      api.generateSchedule("jwt", { days: 3 }),
-      api.publishSchedule("jwt", { suggestionIds: [1] }),
-      api.schedules("jwt"),
-      api.scheduleSuggestionDetail("jwt", 1),
-      api.triageDesk("jwt"),
-      api.triageDetail("jwt", 1),
-      api.assignTriage("jwt", { triageRecordId: 1, doctorId: 2 }),
-      api.closeTriage("jwt", 1),
-      api.searchDrugs("jwt", "aspirin"),
-      api.searchPrompts("jwt", "triage"),
+      api.triage("headache"),
+      api.createRegistration({ doctorId: 1, departmentId: 2, appointmentTime: "2026-01-01T09:00:00" }),
+      api.cancelRegistration(1),
+      api.completeRegistration(1),
+      api.generateMedicalRecord({ registrationId: 1, dialogueText: "dialogue" }),
+      api.saveMedicalRecord({ registrationId: 1, chiefComplaint: "pain", diagnosis: "cold" }),
+      api.medicalRecordDetail(1),
+      api.checkPrescription({ drugs: [] }),
+      api.createPrescription({ patientId: 1, medicalRecordId: 2, drugs: [] }),
+      api.notifications("UNREAD"),
+      api.markNotificationRead(1),
+      api.accounts(),
+      api.roles(),
+      api.saveAccount({ role: "ADMIN", account: "admin2", name: "管理员", password: "123456" }),
+      api.adminDepartments(),
+      api.saveDepartment({ code: "CARD", name: "Cardiology" }),
+      api.saveDoctor({ name: "doctor", phone: "13900000001", departmentId: 1 }),
+      api.drugs(),
+      api.saveDrug({ name: "aspirin" }),
+      api.prompts(),
+      api.savePrompt({ taskType: "TRIAGE", templateName: "default", templateContent: "content" }),
+      api.testPrompt({ taskType: "TRIAGE", templateContent: "content", outputSchema: "{\"type\":\"object\"}" }),
+      api.knowledgeEntries(),
+      api.saveKnowledgeEntry({ title: "cold", symptoms: "cough", advice: "rest" }),
+      api.dicts("gender"),
+      api.saveDict({ dictType: "gender", dictKey: "MALE", dictValue: "male" }),
+      api.generateSchedule({ days: 3 }),
+      api.publishSchedule({ suggestionIds: [1] }),
+      api.schedules(),
+      api.scheduleSuggestionDetail(1),
+      api.triageDesk(),
+      api.triageDetail(1),
+      api.assignTriage({ triageRecordId: 1, doctorId: 2 }),
+      api.closeTriage(1),
+      api.searchDrugs("aspirin"),
+      api.searchPrompts("triage"),
     ]);
 
     expect(fetch.mock.calls.length).toBeGreaterThan(30);
@@ -103,16 +106,16 @@ describe("shared api request handling", () => {
     await expect(api.loginPatient("bad", "bad")).rejects.toMatchObject({ code: 409 });
 
     vi.stubGlobal("fetch", vi.fn(async () => fail(500, "server", 500)));
-    await expect(api.currentUser("jwt")).rejects.toMatchObject({ status: 500 });
+    await expect(api.currentUser()).rejects.toMatchObject({ status: 500 });
 
     vi.stubGlobal("fetch", vi.fn(async () => { throw new Error("offline"); }));
-    await expect(api.currentUser("jwt")).rejects.toBeInstanceOf(ApiError);
+    await expect(api.currentUser()).rejects.toBeInstanceOf(ApiError);
 
     vi.stubGlobal("fetch", vi.fn(async () => new Response("", { status: 200 })));
-    await expect(api.currentUser("jwt")).resolves.toBeUndefined();
+    await expect(api.currentUser()).resolves.toBeUndefined();
 
     vi.stubGlobal("fetch", vi.fn(async () => new Response("not json", { status: 200 })));
-    await expect(api.currentUser("jwt")).rejects.toBeInstanceOf(ApiError);
+    await expect(api.currentUser()).rejects.toBeInstanceOf(ApiError);
   });
 
   it("dispatches unauthorized event for 401 responses", async () => {
@@ -120,7 +123,7 @@ describe("shared api request handling", () => {
     window.addEventListener("smart-cloud-brain:unauthorized", listener);
     vi.stubGlobal("fetch", vi.fn(async () => fail(401, "unauthorized", 401)));
 
-    await expect(api.currentUser("expired")).rejects.toMatchObject({ code: 401 });
+    await expect(api.currentUser()).rejects.toMatchObject({ code: 401 });
     expect(listener).toHaveBeenCalledTimes(1);
     window.removeEventListener("smart-cloud-brain:unauthorized", listener);
   });
@@ -133,6 +136,7 @@ describe("shared api utilities and stores", () => {
   });
 
   afterEach(() => {
+    setTokenProvider(() => "");
     vi.restoreAllMocks();
   });
 
@@ -180,12 +184,12 @@ describe("shared api utilities and stores", () => {
     }));
 
     const patient = usePatientWorkflowStore();
-    await patient.refreshAuthenticated("jwt");
+    await patient.refreshAuthenticated();
     expect(patient.patient?.name).toBe("Alice");
     expect(patient.triage?.triageRecordId).toBe(1);
 
     const doctor = useDoctorWorkflowStore();
-    await doctor.refresh("jwt");
+    await doctor.refresh();
     expect(doctor.registrations).toHaveLength(1);
     expect(doctor.notifications).toHaveLength(1);
   });
@@ -198,7 +202,7 @@ describe("shared api utilities and stores", () => {
     const admin = useAdminWorkflowStore();
     admin.drugs = [{ id: 99 }];
 
-    await admin.refresh("jwt");
+    await admin.refresh();
 
     expect(admin.departments).toEqual([{ id: 1 }]);
     expect(admin.drugs).toEqual([{ id: 99 }]);

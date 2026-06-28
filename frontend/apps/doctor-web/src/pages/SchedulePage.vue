@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { api, displayText, formatApiError, useAuthStore, usePagination, type Schedule } from "@smart-cloud-brain/shared-api";
+import { api, displayText, formatApiError, usePagination, type Schedule } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, LoadingState, PaginationBar, StatusTag } from "@smart-cloud-brain/shared-ui";
 
-const auth = useAuthStore();
 const rows = ref<Schedule[]>([]);
 const loading = ref(false);
 const error = ref("");
@@ -16,7 +15,7 @@ async function refresh() {
   loading.value = true;
   error.value = "";
   try {
-    rows.value = await api.doctorSchedules(auth.token(), { startDate: startDate.value, endDate: endDate.value, status: status.value }) as Schedule[];
+    rows.value = await api.doctorSchedules({ startDate: startDate.value, endDate: endDate.value, status: status.value }) as Schedule[];
   } catch (err) {
     error.value = formatApiError(err, "加载排班失败");
   } finally {

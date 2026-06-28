@@ -50,8 +50,8 @@ describe("closed-loop page smoke tests", () => {
 
   it("renders administrator AI schedule", () => {
     const wrapper = shallowMount(SchedulePage);
-    expect(wrapper.text()).toContain("Doctor Schedule Management");
-    expect(wrapper.text()).toContain("Generate");
+    expect(wrapper.text()).toContain("排班管理");
+    expect(wrapper.text()).toContain("生成建议");
   });
 
   it("renders administrator account permissions", () => {
@@ -62,25 +62,25 @@ describe("closed-loop page smoke tests", () => {
 
   it("renders administrator device management", () => {
     const wrapper = shallowMount(DevicesPage);
-    expect(wrapper.text()).toContain("Medical Device Management");
-    expect(wrapper.text()).toContain("New Device");
+    expect(wrapper.text()).toContain("设备管理");
+    expect(wrapper.text()).toContain("新增设备");
   });
 
   it("renders administrator patient management", () => {
     const wrapper = shallowMount(PatientsPage);
-    expect(wrapper.text()).toContain("Patient Management");
-    expect(wrapper.text()).toContain("Search");
+    expect(wrapper.text()).toContain("患者管理");
+    expect(wrapper.text()).toContain("搜索");
   });
 
   it("renders administrator statistics", () => {
     const wrapper = shallowMount(StatisticsPage);
-    expect(wrapper.text()).toContain("Diagnosis Data Statistics");
+    expect(wrapper.text()).toContain("数据统计");
     expect(wrapper.text()).toContain("CSV");
   });
 
   it("renders administrator permissions", () => {
     const wrapper = shallowMount(PermissionsPage);
-    expect(wrapper.text()).toContain("Role Permissions");
-    expect(wrapper.text()).toContain("Save");
+    expect(wrapper.text()).toContain("角色权限");
+    expect(wrapper.text()).toContain("保存");
   });
 });

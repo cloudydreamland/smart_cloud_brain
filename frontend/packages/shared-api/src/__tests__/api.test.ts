@@ -1,8 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { api } from "../index";
+import { api, setTokenProvider } from "../index";
 
 describe("shared api", () => {
   afterEach(() => {
+    setTokenProvider(() => "");
     vi.restoreAllMocks();
   });
 
@@ -36,8 +37,9 @@ describe("shared api", () => {
       ok: true,
       json: async () => ({ code: 0, message: "success", data: { userId: 3, role: "ADMIN", name: "管理员" } }),
     })));
+    setTokenProvider(() => "jwt.admin.token");
 
-    await expect(api.currentUser("jwt.admin.token")).resolves.toMatchObject({
+    await expect(api.currentUser()).resolves.toMatchObject({
       userId: 3,
       role: "ADMIN",
     });
@@ -53,8 +55,9 @@ describe("shared api", () => {
       }),
     }));
     vi.stubGlobal("fetch", fetch);
+    setTokenProvider(() => "jwt.patient.token");
 
-    await expect(api.prescriptionDetail("jwt.patient.token", 11)).resolves.toMatchObject({
+    await expect(api.prescriptionDetail(11)).resolves.toMatchObject({
       prescriptionId: 11,
     });
     expect(String(fetch.mock.calls[0][0])).toContain("/prescription/detail?id=11");

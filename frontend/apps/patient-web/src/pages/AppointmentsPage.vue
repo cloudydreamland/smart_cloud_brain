@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
-import { api, fieldText, formatApiError, statusClass, statusText, toNumber, useAuthStore, usePagination, usePatientWorkflowStore, type DataRow } from "@smart-cloud-brain/shared-api";
+import { api, fieldText, formatApiError, statusClass, statusText, toNumber, usePagination, usePatientWorkflowStore, type DataRow } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, LoadingState, PaginationBar, SegmentedControl, StatusTag } from "@smart-cloud-brain/shared-ui";
 import CancelAppointmentModal from "../components/CancelAppointmentModal.vue";
 
-const auth = useAuthStore();
 const workflow = usePatientWorkflowStore();
 const { registrations } = storeToRefs(workflow);
 const statusFilter = ref("UNFINISHED");
@@ -49,7 +48,7 @@ async function refresh() {
   loading.value = true;
   error.value = "";
   try {
-    await workflow.refreshAuthenticated(auth.token());
+    await workflow.refreshAuthenticated();
   } catch (err) {
     error.value = formatApiError(err, "挂号记录加载失败");
   } finally {
@@ -63,7 +62,7 @@ async function cancel() {
   error.value = "";
   notice.value = "";
   try {
-    await api.cancelRegistration(auth.token(), toNumber(selected.value.registrationId));
+    await api.cancelRegistration(toNumber(selected.value.registrationId));
     selected.value = null;
     await refresh();
     notice.value = "挂号已取消。";

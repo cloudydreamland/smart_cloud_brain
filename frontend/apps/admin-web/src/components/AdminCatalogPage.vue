@@ -10,7 +10,6 @@ import {
   toNumber,
   usePagination,
   useAdminWorkflowStore,
-  useAuthStore,
   type Department,
   type Doctor,
   type Drug,
@@ -30,7 +29,6 @@ type CatalogRow = Department | Doctor | Drug | KnowledgeEntry | PromptTemplate |
 
 const props = defineProps<{ entity: Entity }>();
 const emit = defineEmits<{ refresh: [] }>();
-const auth = useAuthStore();
 const workflow = useAdminWorkflowStore();
 const { departments, doctors, drugs, knowledge, prompts, dicts } = storeToRefs(workflow);
 const keyword = ref("");
@@ -170,12 +168,12 @@ const config = computed(() => configs[props.entity]);
 
 /* ---------- 实体保存策略（替代散落的 if 链） ---------- */
 const saveHandlers: Record<Entity, () => Promise<void>> = {
-  department: () => api.saveDepartment(auth.token(), form as never),
-  doctor:     () => api.saveDoctor(auth.token(), form as never),
-  drug:       () => api.saveDrug(auth.token(), form as never),
-  knowledge:  () => api.saveKnowledgeEntry(auth.token(), form as never),
-  prompt:     () => api.savePrompt(auth.token(), promptSaveBody()),
-  dict:       () => api.saveDict(auth.token(), form as never),
+  department: () => api.saveDepartment(form as never),
+  doctor:     () => api.saveDoctor(form as never),
+  drug:       () => api.saveDrug(form as never),
+  knowledge:  () => api.saveKnowledgeEntry(form as never),
+  prompt:     () => api.savePrompt(promptSaveBody()),
+  dict:       () => api.saveDict(form as never),
 };
 const rows = computed(() => {
   const q = keyword.value.trim().toLowerCase();
@@ -240,7 +238,7 @@ async function refresh() {
   loading.value = true;
   error.value = "";
   try {
-    await workflow.refresh(auth.token());
+    await workflow.refresh();
   } catch (err) {
     error.value = formatApiError(err, "列表加载失败");
   } finally {
@@ -402,7 +400,7 @@ async function testPrompt() {
   error.value = "";
   testResult.value = "";
   try {
-    const result = await api.testPrompt(auth.token(), promptTestBody());
+    const result = await api.testPrompt(promptTestBody());
     testResult.value = JSON.stringify(result, null, 2);
   } catch (err) {
     error.value = formatApiError(err, "提示词试运行失败");

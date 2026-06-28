@@ -2,12 +2,11 @@
 import { computed, reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
-import { aiSourceLabel, aiSourceTone, api, fieldText, formatApiError, statusClass, statusText, useAuthStore, usePagination, usePatientWorkflowStore } from "@smart-cloud-brain/shared-api";
+import { aiSourceLabel, aiSourceTone, api, fieldText, formatApiError, statusClass, statusText, usePagination, usePatientWorkflowStore } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, FormField, LoadingState, PaginationBar, StatusTag } from "@smart-cloud-brain/shared-ui";
 import TriageResultModal from "../components/TriageResultModal.vue";
 
 const router = useRouter();
-const auth = useAuthStore();
 const workflow = usePatientWorkflowStore();
 const { triageHistory, triage } = storeToRefs(workflow);
 const form = reactive({ symptoms: "", duration: "", severity: "MEDIUM", extra: "" });
@@ -37,8 +36,8 @@ async function submit() {
   error.value = "";
   notice.value = "";
   try {
-    triage.value = await api.triage(auth.token(), { chiefComplaint: complaint() });
-    await workflow.refreshAuthenticated(auth.token());
+    triage.value = await api.triage({ chiefComplaint: complaint() });
+    await workflow.refreshAuthenticated();
     notice.value = "分诊已提交，请根据推荐科室继续选择号源。";
     resultOpen.value = true;
   } catch (err) {

@@ -2,11 +2,10 @@
 import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { storeToRefs } from "pinia";
-import { displayText, formatApiError, useAuthStore, useDoctorWorkflowStore, usePagination } from "@smart-cloud-brain/shared-api";
+import { displayText, formatApiError, useDoctorWorkflowStore, usePagination } from "@smart-cloud-brain/shared-api";
 import { ErrorState, LoadingState, PaginationBar } from "@smart-cloud-brain/shared-ui";
 import { formatTime, liveRows, patientName, riskText, statusLabel, statusTone } from "../doctorPresentation";
 
-const auth = useAuthStore();
 const workflow = useDoctorWorkflowStore();
 const route = useRoute();
 const { registrations } = storeToRefs(workflow);
@@ -32,7 +31,7 @@ async function refresh() {
   loading.value = true;
   error.value = "";
   try {
-    await workflow.refresh(auth.token());
+    await workflow.refresh();
   } catch (err) {
     error.value = formatApiError(err, "队列加载失败，请稍后重试。");
   } finally {

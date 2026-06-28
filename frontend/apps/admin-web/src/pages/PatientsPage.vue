@@ -6,7 +6,6 @@ import {
   formatApiError,
   formatDateTime,
   toNumber,
-  useAuthStore,
   usePagination,
   type Patient,
   type PatientDetail,
@@ -14,7 +13,6 @@ import {
 } from "@smart-cloud-brain/shared-api";
 import { DataTable, ErrorState, FormField, Modal, PaginationBar, StatusTag } from "@smart-cloud-brain/shared-ui";
 
-const auth = useAuthStore();
 type PatientDetailRow = Record<string, unknown>;
 const rows = ref<Patient[]>([]);
 const detail = ref<PatientDetail | null>(null);
@@ -53,7 +51,7 @@ async function refresh() {
   loading.value = true;
   error.value = "";
   try {
-    rows.value = await api.patients(auth.token(), {
+    rows.value = await api.patients({
       keyword: keyword.value.trim(),
       gender: gender.value,
       minAge: minAge.value,
@@ -70,7 +68,7 @@ async function openDetail(item: Patient) {
   loading.value = true;
   error.value = "";
   try {
-    detail.value = await api.patientDetail(auth.token(), toNumber(item.id)) as PatientDetail;
+    detail.value = await api.patientDetail(toNumber(item.id)) as PatientDetail;
     detailOpen.value = true;
   } catch (err) {
     error.value = formatApiError(err, "加载患者详情失败");
@@ -99,7 +97,7 @@ async function save() {
   error.value = "";
   notice.value = "";
   try {
-    await api.savePatient(auth.token(), {
+    await api.savePatient({
       id: form.id,
       name: form.name.trim(),
       gender: form.gender || undefined,

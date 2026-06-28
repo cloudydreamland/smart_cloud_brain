@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { reactive, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { aiSourceLabel, aiSourceTone, api, displayText, formatApiError, toNumber, useAdminWorkflowStore, useAuthStore, usePagination, type Schedule, type ScheduleSaveRequest } from "@smart-cloud-brain/shared-api";
+import { aiSourceLabel, aiSourceTone, api, displayText, formatApiError, toNumber, useAdminWorkflowStore, usePagination, type Schedule, type ScheduleSaveRequest } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, FormField, LoadingState, Modal, PaginationBar, StatusTag } from "@smart-cloud-brain/shared-ui";
 
 const emit = defineEmits<{ refresh: [] }>();
-const auth = useAuthStore();
 const workflow = useAdminWorkflowStore();
 const { suggestions, schedules, doctors, departments } = storeToRefs(workflow);
 const generateForm = reactive({ startDate: new Date(Date.now() + 86400000).toISOString().slice(0, 10), days: 3 });
@@ -22,7 +21,7 @@ async function loadSchedules() {
   loading.value = true;
   error.value = "";
   try {
-    schedules.value = await api.filteredSchedules(auth.token(), {
+    schedules.value = await api.filteredSchedules({
       startDate: filter.startDate,
       endDate: filter.endDate,
       departmentId: filter.departmentId || undefined,
@@ -41,7 +40,7 @@ async function generate() {
   error.value = "";
   notice.value = "";
   try {
-    suggestions.value = await api.generateSchedule(auth.token(), { ...generateForm }) as typeof suggestions.value;
+    suggestions.value = await api.generateSchedule({ ...generateForm }) as typeof suggestions.value;
     notice.value = `已生成 ${suggestions.value.length} 条 AI 建议`;
   } catch (err) {
     error.value = formatApiError(err, "生成排班建议失败");
@@ -55,7 +54,7 @@ async function publish() {
   error.value = "";
   try {
     const ids = suggestions.value.map((item) => toNumber(item.id)).filter(Boolean);
-    await api.publishSchedule(auth.token(), { suggestionIds: ids });
+    await api.publishSchedule({ suggestionIds: ids });
     suggestions.value = [];
     await loadSchedules();
     emit("refresh");
@@ -87,7 +86,7 @@ async function saveSchedule() {
   loading.value = true;
   error.value = "";
   try {
-    await api.saveSchedule(auth.token(), { ...form, doctorId: toNumber(form.doctorId), departmentId: toNumber(form.departmentId), capacity: toNumber(form.capacity) });
+    await api.saveSchedule({ ...form, doctorId: toNumber(form.doctorId), departmentId: toNumber(form.departmentId), capacity: toNumber(form.capacity) });
     editorOpen.value = false;
     await loadSchedules();
     notice.value = "排班已保存";
@@ -102,7 +101,7 @@ async function cancelSchedule(item: Schedule) {
   loading.value = true;
   error.value = "";
   try {
-    await api.cancelSchedule(auth.token(), { scheduleId: toNumber(item.id) });
+    await api.cancelSchedule({ scheduleId: toNumber(item.id) });
     await loadSchedules();
     notice.value = "排班已取消";
   } catch (err) {

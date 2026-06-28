@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { api, displayText, formatApiError, toNumber, useAdminWorkflowStore, useAuthStore, usePagination, type Device, type DeviceSaveRequest, type DeviceUsage, type DeviceUsageSaveRequest } from "@smart-cloud-brain/shared-api";
+import { api, displayText, formatApiError, toNumber, useAdminWorkflowStore, usePagination, type Device, type DeviceSaveRequest, type DeviceUsage, type DeviceUsageSaveRequest } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, FormField, Modal, PaginationBar, StatusTag } from "@smart-cloud-brain/shared-ui";
 
-const auth = useAuthStore();
 const workflow = useAdminWorkflowStore();
 const { departments } = storeToRefs(workflow);
 const rows = ref<Device[]>([]);
@@ -30,7 +29,7 @@ async function refresh() {
   loading.value = true;
   error.value = "";
   try {
-    rows.value = await api.devices(auth.token()) as Device[];
+    rows.value = await api.devices() as Device[];
   } catch (err) {
     error.value = formatApiError(err, "加载设备列表失败");
   } finally {
@@ -57,7 +56,7 @@ async function save() {
   error.value = "";
   notice.value = "";
   try {
-    await api.saveDevice(auth.token(), { ...form, departmentId: toNumber(form.departmentId) || undefined });
+    await api.saveDevice({ ...form, departmentId: toNumber(form.departmentId) || undefined });
     editorOpen.value = false;
     notice.value = "设备已保存";
     await refresh();
@@ -72,7 +71,7 @@ async function changeStatus(item: Device, nextStatus: string) {
   loading.value = true;
   error.value = "";
   try {
-    await api.updateDeviceStatus(auth.token(), { deviceId: toNumber(item.id), status: nextStatus });
+    await api.updateDeviceStatus({ deviceId: toNumber(item.id), status: nextStatus });
     await refresh();
   } catch (err) {
     error.value = formatApiError(err, "更新设备状态失败");
@@ -89,7 +88,7 @@ async function openUsage(item: Device) {
   usageForm.patientId = 0;
   usageForm.resultStatus = "NORMAL";
   usageForm.remark = "";
-  usages.value = await api.deviceUsages(auth.token(), usageForm.deviceId) as DeviceUsage[];
+  usages.value = await api.deviceUsages(usageForm.deviceId) as DeviceUsage[];
   usageOpen.value = true;
 }
 
@@ -97,8 +96,8 @@ async function saveUsage() {
   loading.value = true;
   error.value = "";
   try {
-    await api.saveDeviceUsage(auth.token(), { ...usageForm, patientId: usageForm.patientId ? toNumber(usageForm.patientId) : undefined });
-    usages.value = await api.deviceUsages(auth.token(), usageForm.deviceId) as DeviceUsage[];
+    await api.saveDeviceUsage({ ...usageForm, patientId: usageForm.patientId ? toNumber(usageForm.patientId) : undefined });
+    usages.value = await api.deviceUsages(usageForm.deviceId) as DeviceUsage[];
     await refresh();
   } catch (err) {
     error.value = formatApiError(err, "保存使用记录失败");
