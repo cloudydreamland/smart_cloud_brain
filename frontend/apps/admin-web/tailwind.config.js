@@ -25,6 +25,9 @@ export default {
     "ease-in",
     "ease-out",
   ],
+  corePlugins: {
+    preflight: false, // 禁用 Tailwind 样式重置，避免覆盖项目自定义 CSS
+  },
   theme: {
     extend: {},
   },

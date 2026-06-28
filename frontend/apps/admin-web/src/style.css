@@ -1,6 +1,10 @@
 @import "../../../packages/shared-ui/src/styles/tokens.css";
 @import "../../../packages/shared-ui/src/styles/index.css";
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 .admin-shell {
   min-height: 100vh;
   background: var(--bg);

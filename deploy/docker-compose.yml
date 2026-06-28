@@ -325,9 +325,6 @@ services:
     depends_on:
       db-init:
         condition: service_completed_successfully
-    networks:
-      - default
-      - dify
 
   nginx:
     build:
@@ -351,8 +348,3 @@ volumes:
   kingbase-data:
   rabbitmq-data:
   redis-data:
-
-networks:
-  dify:
-    external: true
-    name: ${DIFY_DOCKER_NETWORK:-docker_default}

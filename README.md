@@ -32,6 +32,27 @@ postman/    接口调试集合
 
 本地工具版本：JDK 17、Node.js 24、Corepack 与 pnpm 9.15、Docker Desktop（含 Docker Compose）。
 
+本地启动依赖项目提供的 KingbaseES Docker 镜像。脚本会按当前架构自动选择镜像：
+
+- x86/AMD64：`kingbase_v009r001c010b0004_single_x86:v1`
+- ARM64：`kingbase_v009r001c010b0004_single_arm:v1`
+
+启动前可先检查本机是否已有镜像：
+
+```powershell
+docker image ls
+docker image ls kingbase_v009r001c010b0004_single_x86
+docker image ls kingbase_v009r001c010b0004_single_arm
+```
+
+如果维护者提供的是镜像 tar 包，先导入再启动：
+
+```powershell
+docker load -i <your-kingbase-image>.tar
+```
+
+仓库不硬编码 Kingbase 镜像 tar 路径；如果本机没有镜像也没有 tar 包，请联系项目维护者获取对应架构的 Kingbase 镜像。
+
 推荐使用脚本：
 
 ```powershell

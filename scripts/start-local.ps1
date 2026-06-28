@@ -46,13 +46,32 @@ function Get-EnvValue {
   if (-not (Test-Path $Path)) {
     return $Default
   }
-  $Line = Get-Content -LiteralPath $Path | Where-Object { $_ -match "^$([regex]::Escape($Name))=" } | Select-Object -First 1
+  $Pattern = "^\s*$([regex]::Escape($Name))\s*="
+  $Line = Get-Content -LiteralPath $Path | Where-Object {
+    $_ -match $Pattern -and $_ -notmatch "^\s*#"
+  } | Select-Object -First 1
   if (-not $Line) {
     return $Default
   }
-  $Value = $Line.Substring($Name.Length + 1).Trim()
+  $Value = ($Line -replace $Pattern, "").Trim()
+  if (($Value.StartsWith('"') -and $Value.EndsWith('"')) -or ($Value.StartsWith("'") -and $Value.EndsWith("'"))) {
+    $Value = $Value.Substring(1, $Value.Length - 2)
+  }
   if ($Value) { return $Value }
   return $Default
+}
+
+function Get-EffectiveEnvValue {
+  param(
+    [string]$Path,
+    [string]$Name,
+    [string]$Default
+  )
+  $ProcessValue = [Environment]::GetEnvironmentVariable($Name, "Process")
+  if (-not [string]::IsNullOrWhiteSpace($ProcessValue)) {
+    return $ProcessValue.Trim()
+  }
+  return Get-EnvValue -Path $Path -Name $Name -Default $Default
 }
 
 function Invoke-DockerBuild {
@@ -88,10 +107,55 @@ $KingbaseImage = if ($Architecture -match "^(Arm64|ARM64)$") {
 $env:KINGBASE_IMAGE = $KingbaseImage
 Write-Host "Using Kingbase image: $KingbaseImage"
 
+& docker image inspect $KingbaseImage *> $null
+if ($LASTEXITCODE -ne 0) {
+  throw @"
+Kingbase image is missing.
+Current architecture: $Architecture
+Required image: $KingbaseImage
+
+Check local Docker images:
+  docker image ls
+  docker image ls $($KingbaseImage.Split(":")[0])
+
+If you have a Kingbase image tar package, import it with:
+  docker load -i <your-kingbase-image>.tar
+
+If you do not have the tar package, contact the project maintainer to obtain the Kingbase image.
+"@
+}
+
 $args = @(
   "--env-file", $EnvFile,
   "-f", $ComposeFile
 )
+$AiProvider = (Get-EffectiveEnvValue -Path $EnvFile -Name "AI_PROVIDER" -Default "dify").ToLowerInvariant()
+$DifyNetwork = $null
+$DifyComposeOverride = $null
+if ($AiProvider -eq "dify") {
+  $DifyNetwork = Get-EffectiveEnvValue -Path $EnvFile -Name "DIFY_DOCKER_NETWORK" -Default "docker_default"
+  & docker network inspect $DifyNetwork *> $null
+  if ($LASTEXITCODE -ne 0) {
+    throw "Dify network '$DifyNetwork' is missing. Start Dify first or set AI_PROVIDER=openai/mock for local startup without Dify."
+  }
+
+  $YamlDifyNetwork = $DifyNetwork.Replace("'", "''")
+  $DifyComposeOverride = Join-Path ([System.IO.Path]::GetTempPath()) "smart-cloud-brain-dify-network-$PID.yml"
+  Set-Content -LiteralPath $DifyComposeOverride -Encoding UTF8 -Value @"
+services:
+  ai-service:
+    networks:
+      - default
+      - dify
+
+networks:
+  dify:
+    external: true
+    name: '$YamlDifyNetwork'
+"@
+  $args += @("-f", $DifyComposeOverride)
+  Write-Host "Dify provider enabled; ai-service will join external network: $DifyNetwork"
+}
 if (-not $NoBuild) {
   $BuildServices = @(
     "gateway-service", "auth-service", "patient-service", "doctor-service",
@@ -131,9 +195,8 @@ if ($LASTEXITCODE -ne 0) {
   throw "Docker Compose startup failed with exit code $LASTEXITCODE."
 }
 
-$AiProviderLine = Get-Content -LiteralPath $EnvFile | Where-Object { $_ -eq "AI_PROVIDER=dify" }
+$AiProviderLine = $AiProvider -eq "dify"
 if ($AiProviderLine) {
-  $DifyNetwork = if ($env:DIFY_DOCKER_NETWORK) { $env:DIFY_DOCKER_NETWORK } else { "docker_default" }
   & docker network inspect $DifyNetwork *> $null
   if ($LASTEXITCODE -ne 0) {
     throw "Dify network '$DifyNetwork' is missing. Start Dify first."
