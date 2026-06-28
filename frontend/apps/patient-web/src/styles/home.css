@@ -1,0 +1,339 @@
+.home-hero {
+  position: relative;
+  display: flex;
+  min-height: 545px;
+  align-items: flex-end;
+  overflow: hidden;
+  background: #050505;
+  color: #fff;
+}
+
+.home-hero::before {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(0,0,0,.84) 0%, rgba(0,0,0,.45) 46%, rgba(0,0,0,.18) 100%),
+    var(--hero-bg, url("https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=1800&q=80")) center / cover;
+  content: "";
+}
+
+.home-play {
+  position: absolute;
+  top: 42px;
+  right: 38px;
+  width: 0;
+  height: 0;
+  border-top: 14px solid transparent;
+  border-bottom: 14px solid transparent;
+  border-left: 25px solid #fff;
+}
+
+.home-hero-content {
+  position: relative;
+  width: min(1180px, calc(100% - 64px));
+  margin: 0 auto;
+  padding: 0 0 54px;
+}
+
+.home-hero h1,
+.portal-page-head h1 {
+  margin: 0 0 28px;
+  font-family: var(--hospital-serif);
+  font-size: clamp(54px, 8vw, 92px);
+  font-weight: 400;
+  line-height: .98;
+}
+
+.home-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 28px;
+  font-weight: 750;
+}
+
+.home-hero-actions > a:first-child::after {
+  margin-left: 10px;
+  content: "›";
+  font-size: 28px;
+  vertical-align: -2px;
+}
+
+.home-pill,
+.patient-primary,
+.portal-service-actions button,
+.portal-link,
+.auth-tabs a,
+.auth-tabs button {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 26px;
+  border: 2px solid currentColor;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.patient-primary {
+  border-color: var(--hospital-blue);
+  background: var(--hospital-blue);
+  color: #fff;
+}
+
+.outline-blue,
+.portal-link {
+  color: var(--hospital-blue);
+}
+
+.home-alert {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 20px max(32px, calc((100vw - 1180px) / 2));
+  background: var(--hospital-gold);
+  color: #1a1a1a;
+  font-size: 15px;
+}
+
+.home-alert strong {
+  display: grid;
+  width: 23px;
+  height: 23px;
+  place-items: center;
+  border: 2px solid #111;
+  border-radius: 50%;
+}
+
+.home-section {
+  width: min(1180px, calc(100% - 64px));
+  margin: 0 auto;
+  padding: 72px 0;
+  border-bottom: 1px solid #e2e7ef;
+}
+
+.home-conditions,
+.home-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 70px;
+  align-items: start;
+}
+
+.home-eyebrow {
+  margin: 0 0 18px;
+  color: #1c2738;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: .06em;
+}
+
+.home-letters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.home-letters a {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border: 1px solid #b8c5da;
+  border-radius: 50%;
+  color: #174d91;
+  font-weight: 800;
+}
+
+.condition-label {
+  display: block;
+  margin-bottom: 12px;
+  font-family: var(--hospital-serif);
+  font-size: 26px;
+}
+
+.home-searchbox {
+  display: flex;
+  min-height: 58px;
+  align-items: center;
+  gap: 12px;
+  padding: 0 22px;
+  border: 1.5px solid #1b2432;
+  border-radius: 999px;
+  background: #fff;
+}
+
+.home-searchbox input {
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  outline: 0;
+  font-size: 20px;
+}
+
+.home-split {
+  align-items: center;
+}
+
+.home-split h2,
+.home-section-head h2,
+.home-donate h2 {
+  margin: 0 0 22px;
+  font-family: var(--hospital-serif);
+  font-size: clamp(38px, 4.5vw, 58px);
+  font-weight: 600;
+  line-height: 1.04;
+}
+
+.home-split h3 {
+  margin: 22px 0 6px;
+  font-size: 20px;
+}
+
+.home-split p,
+.home-section-head p,
+.home-donate p {
+  margin: 0 0 18px;
+  color: var(--hospital-muted);
+  font-size: 19px;
+}
+
+.home-image-panel,
+.home-locations img,
+.home-donate > div:first-child {
+  overflow: hidden;
+  background: #dce5ee;
+}
+
+.home-image-panel {
+  height: 470px;
+}
+
+.home-image-panel img,
+.home-locations img,
+.home-donate img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.home-locations {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+  margin-top: 34px;
+}
+
+.home-locations article {
+  padding-top: 22px;
+  border-top: 1px solid var(--hospital-line);
+}
+
+.home-locations img {
+  height: 190px;
+  margin-bottom: 18px;
+}
+
+.home-locations h3 {
+  margin: 0 0 4px;
+  color: #173b70;
+  font-size: 21px;
+}
+
+.home-locations p {
+  margin: 0;
+  color: var(--hospital-muted);
+}
+
+.home-care-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  column-gap: 42px;
+  row-gap: 14px;
+  margin-top: 26px;
+}
+
+.home-care-grid a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 0;
+  border-bottom: 1px solid #dfe5ef;
+  color: #173b70;
+  font-weight: 760;
+}
+
+.home-donate {
+  display: grid;
+  grid-template-columns: .95fr 1.05fr;
+  gap: 70px;
+  align-items: center;
+  padding: 72px max(32px, calc((100vw - 1180px) / 2));
+  background: #071528;
+  color: #fff;
+}
+
+.home-donate > div:first-child {
+  height: 360px;
+}
+
+.home-donate p {
+  color: #c7d4e8;
+}
+
+.home-footer {
+  padding: 54px max(32px, calc((100vw - 1180px) / 2)) 38px;
+  background: #f4f6fa;
+  color: #172033;
+}
+
+.home-footer-links {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-bottom: 34px;
+}
+
+.home-footer-links a {
+  display: block;
+  padding: 18px 20px;
+  border: 1px solid var(--hospital-line);
+  background: #fff;
+  color: #173b70;
+  font-weight: 800;
+}
+
+.home-footer p {
+  margin: 0;
+  color: #66728a;
+  font-size: 13px;
+}
+
+.home-search-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  padding: 100px 32px;
+  background: rgba(7, 14, 25, .72);
+}
+
+.home-search-panel {
+  width: min(860px, 100%);
+  margin: 0 auto;
+  padding: 30px;
+  background: #fff;
+  box-shadow: 0 30px 90px rgba(0,0,0,.3);
+}
+
+.home-search-panel > button {
+  float: right;
+  border: 0;
+  background: transparent;
+  font-size: 30px;
+  cursor: pointer;
+}

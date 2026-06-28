@@ -1,0 +1,40 @@
+.static-info-page {
+  background: #fff;
+}
+
+.static-primary {
+  width: fit-content;
+  margin-top: 24px;
+}
+
+.static-info-grid {
+  display: grid;
+  width: min(1180px, calc(100% - 64px));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  margin: 0 auto;
+  padding: 44px 0 82px;
+}
+
+.static-info-grid article {
+  min-height: 230px;
+  padding: 28px;
+  border: 1px solid var(--hospital-line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.static-info-grid h2 {
+  margin: 0 0 14px;
+  color: #173b70;
+  font-family: var(--hospital-serif);
+  font-size: 26px;
+  line-height: 1.14;
+}
+
+.static-info-grid p {
+  margin: 0;
+  color: var(--hospital-muted);
+  font-size: 16px;
+  line-height: 1.75;
+}

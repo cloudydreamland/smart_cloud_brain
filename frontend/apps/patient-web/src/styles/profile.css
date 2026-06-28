@@ -1,0 +1,46 @@
+.profile-section-title {
+  margin-top: 6px;
+  color: var(--hospital-ink);
+  font-size: 15px;
+  font-weight: 850;
+}
+
+.visitor-list {
+  display: grid;
+  gap: 14px;
+}
+
+.visitor-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: start;
+  padding: 20px 22px;
+  border: 1px solid var(--hospital-line);
+  background: #fff;
+}
+
+.visitor-row-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.visitor-row-title strong {
+  color: var(--hospital-ink);
+  font-size: 20px;
+}
+
+.visitor-row p {
+  margin: 8px 0 0;
+  color: var(--hospital-muted);
+  font-size: 14px;
+}
+
+.visitor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}

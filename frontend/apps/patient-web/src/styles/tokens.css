@@ -1,0 +1,40 @@
+:root {
+  /* 匹配 patient-web.html 原型的 shadcn 蓝色主题 */
+  --hospital-ink: #0f172a;
+  --hospital-muted: #64748b;
+  --hospital-line: #e2e8f0;
+  --hospital-blue: #2563eb;
+  --hospital-navy: #0f172a;
+  --hospital-gold: #f59e0b;
+  --hospital-bg: #ffffff;
+  --hospital-sans: "HarmonyOS Sans SC", "MiSans", "Source Han Sans SC", "Noto Sans CJK SC", "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei UI", sans-serif;
+  --hospital-serif: "Source Han Serif SC", "Noto Serif CJK SC", "Noto Serif SC", "Songti SC", "STSong", "SimSun", serif;
+  --site-nav-font: var(--hospital-sans);
+
+  /* 覆盖共享组件的 CSS 变量，让 Button/Badge/Alert 等自动变蓝 */
+  --primary: #2563eb;
+  --primary-strong: #1d4ed8;
+  --primary-soft: #eff6ff;
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-alt: #f8fafc;
+  --ink: #0f172a;
+  --muted: #64748b;
+  --subtle: #94a3b8;
+  --line: #e2e8f0;
+  --line-strong: #cbd5e1;
+  --radius: 16px;
+  --radius-sm: 8px;
+  --focus: 0 0 0 3px rgba(37, 99, 235, 0.2);
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --success: #16a34a;
+  --success-soft: #f0fdf4;
+  --warning: #f59e0b;
+  --warning-soft: #fffbeb;
+  --danger: #ef4444;
+  --danger-soft: #fef2f2;
+  --info: #7c3aed;
+  --info-soft: #f5f3ff;
+  --accent: #2563eb;
+  --accent-soft: #eff6ff;
+}

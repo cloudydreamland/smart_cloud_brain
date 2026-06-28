@@ -1,0 +1,72 @@
+.patient-page :where(
+  .home-hero h1,
+  .portal-page-head h1,
+  .home-split h2,
+  .home-section-head h2,
+  .home-donate h2,
+  .resource-header h1,
+  .resource-block h2,
+  .resource-related h2,
+  .resource-section-head h2,
+  .auth-visual h1,
+  .portal-feature-card h2,
+  .patient-portal-page .panel-title h2,
+  .static-info-grid h2
+) {
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.patient-page :where(
+  strong,
+  .home-eyebrow,
+  .resource-label,
+  .portal-status,
+  .portal-metrics span,
+  .patient-summary-card span,
+  .profile-section-title,
+  .record-kicker,
+  .record-meta,
+  .auth-form label span
+) {
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.patient-page :where(
+  .home-pill,
+  .patient-primary,
+  .portal-service-actions button,
+  .portal-link,
+  .auth-tabs a,
+  .auth-tabs button,
+  .home-letters a,
+  .home-care-grid a,
+  .home-footer-links a,
+  .resource-header nav a,
+  .resource-toc a,
+  .resource-links a,
+  .resource-related a,
+  .search-result-card > a,
+  .resource-search-form button
+) {
+  font-weight: 520;
+  letter-spacing: 0;
+}
+
+.patient-page :where(.portal-metrics strong, .patient-summary-card strong) {
+  font-weight: 420;
+  letter-spacing: 0;
+}
+
+button.secondary {
+  border-color: var(--hospital-line);
+  background: #fff;
+  color: var(--hospital-ink);
+}
+
+button.danger-text {
+  border-color: #fecaca;
+  background: #fff;
+  color: var(--danger);
+}

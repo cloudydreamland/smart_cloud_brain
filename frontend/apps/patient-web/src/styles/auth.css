@@ -1,0 +1,119 @@
+.patient-auth-page {
+  display: grid;
+  grid-template-columns: minmax(0, .98fr) minmax(0, .82fr);
+  min-height: 100vh;
+  background: #fff;
+}
+
+.auth-visual {
+  position: relative;
+  overflow: hidden;
+  background: #071528;
+}
+
+.auth-visual::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, rgba(0,0,0,.65), rgba(0,0,0,.12));
+  content: "";
+}
+
+.auth-visual img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.auth-visual > div {
+  position: absolute;
+  right: 44px;
+  bottom: 46px;
+  left: 44px;
+  z-index: 1;
+  color: #fff;
+}
+
+.auth-visual h1 {
+  margin: 0 0 14px;
+  font-family: var(--hospital-serif);
+  font-size: clamp(42px, 4vw, 70px);
+  font-weight: 500;
+  line-height: 1.05;
+}
+
+.auth-visual p {
+  max-width: 620px;
+  margin: 0;
+  color: #dbe6f6;
+  font-size: 19px;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 18px;
+  padding: 64px;
+  background: linear-gradient(180deg, rgba(255,255,255,.94), #fff), linear-gradient(135deg, rgba(0,87,184,.07), rgba(255,255,255,0));
+}
+
+.auth-tabs {
+  display: inline-flex;
+  width: fit-content;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--hospital-line);
+  border-radius: 999px;
+  background: #fff;
+}
+
+.auth-tabs a,
+.auth-tabs button {
+  min-height: 38px;
+  border-color: transparent;
+  color: var(--hospital-muted);
+}
+
+.auth-tabs .active {
+  background: var(--hospital-navy);
+  color: #fff;
+}
+
+.auth-form label {
+  display: grid;
+  gap: 8px;
+}
+
+.auth-form label span {
+  color: #66728a;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.auth-form input,
+.auth-form textarea,
+.auth-form select {
+  width: 100%;
+  min-height: 54px;
+  padding: 12px 14px;
+  border: 1px solid #cbd5e5;
+  background: #fff;
+  outline: none;
+  font-size: 16px;
+}
+
+.auth-form textarea {
+  resize: vertical;
+}
+
+.auth-form p {
+  margin: 0;
+  color: var(--hospital-muted);
+  font-size: 13px;
+}
+
+.auth-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}

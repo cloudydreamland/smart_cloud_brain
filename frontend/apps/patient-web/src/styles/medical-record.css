@@ -1,0 +1,43 @@
+.record-list {
+  display: grid;
+  gap: 16px;
+}
+
+.record-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 22px;
+  align-items: center;
+  padding: 24px 26px;
+  border: 1px solid var(--hospital-line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.record-card h3 {
+  margin: 7px 0 8px;
+  color: #10233f;
+  font-size: 22px;
+  line-height: 1.25;
+}
+
+.record-card p {
+  margin: 0;
+  color: var(--hospital-muted);
+  line-height: 1.65;
+}
+
+.record-kicker,
+.record-meta {
+  color: #174d91;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.record-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 14px;
+  color: #64748b;
+}

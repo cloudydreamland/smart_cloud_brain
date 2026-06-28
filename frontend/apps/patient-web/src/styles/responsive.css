@@ -1,0 +1,296 @@
+@media (max-width: 980px) {
+  .site-header-inner {
+    width: min(100% - 28px, 1180px);
+    min-height: 72px;
+    gap: 14px;
+  }
+
+  .site-header .scb-brand {
+    width: 126px;
+    font-size: 16px;
+  }
+
+  .site-nav {
+    position: fixed;
+    inset: 72px 0 auto;
+    display: none;
+    max-height: calc(100vh - 72px);
+    overflow: auto;
+    align-items: stretch;
+    flex-direction: column;
+    padding: 12px 20px 24px;
+    border-bottom: 1px solid #dfe7f2;
+    background: #fff;
+  }
+
+  .site-nav.open {
+    display: flex;
+  }
+
+  .site-nav-item,
+  .site-nav-item > button {
+    width: 100%;
+    height: auto;
+  }
+
+  .site-nav-item > button {
+    min-height: 48px;
+    justify-content: space-between;
+    padding: 0;
+  }
+
+  .site-nav-item.is-open > button::after {
+    display: none;
+  }
+
+  .site-mega {
+    position: static;
+    grid-template-columns: 1fr;
+    gap: 18px;
+    padding: 12px 0 20px;
+    border: 0;
+    box-shadow: none;
+  }
+
+  .site-mega-links,
+  .site-footer-grid,
+  .static-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .site-mega-feature {
+    min-height: 190px;
+  }
+
+  .site-login-link,
+  .site-user-menu > button {
+    padding: 0 10px;
+    font-size: 13px;
+  }
+
+  .site-actions {
+    gap: 10px;
+  }
+
+  .site-appointment-link {
+    font-size: 13px;
+  }
+
+  .site-search-button {
+    width: 36px;
+    height: 36px;
+  }
+
+  .site-menu-button {
+    display: grid;
+  }
+
+  .site-footer {
+    padding-right: 18px;
+    padding-left: 18px;
+  }
+
+  .home-topbar {
+    height: 74px;
+    padding: 0 18px;
+    gap: 18px;
+  }
+
+  .home-nav {
+    position: fixed;
+    inset: 74px 0 auto 0;
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: 12px 24px 24px;
+    border-bottom: 1px solid var(--hospital-line);
+    background: #fff;
+  }
+
+  .home-nav.open {
+    display: flex;
+  }
+
+  .home-nav-item {
+    padding: 15px 0;
+    border-bottom: 1px solid #edf1f6;
+  }
+
+  .home-nav-item.is-open > button::after {
+    display: none;
+  }
+
+  .home-mega {
+    position: static;
+    width: 100%;
+    grid-template-columns: 1fr;
+    padding: 14px 0;
+    border: 0;
+    box-shadow: none;
+  }
+
+  .home-appointment {
+    margin-left: auto;
+    font-size: 0;
+  }
+
+  .home-appointment::after {
+    content: "预约";
+    font-size: 14px;
+  }
+
+  .home-menu-button {
+    display: grid;
+  }
+
+  .home-hero-content,
+  .home-section {
+    width: min(100% - 36px, 1180px);
+  }
+
+  .home-conditions,
+  .home-split,
+  .home-donate,
+  .patient-auth-page,
+  .portal-two-column,
+  .patient-portal-page .portal-grid,
+  .patient-portal-page .patient-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .home-locations,
+  .home-care-grid,
+  .home-footer-links,
+  .resource-metrics,
+  .resource-layout,
+  .resource-columns,
+  .resource-feature-grid,
+  .resource-related > div,
+  .search-result-card,
+  .update-featured,
+  .update-topic-grid,
+  .doctor-team-toolbar,
+  .doctor-team-grid,
+  .update-list,
+  .portal-guide-grid,
+  .report-grid,
+  .invoice-row,
+  .portal-metrics,
+  .patient-portal-page .patient-card-grid,
+  .auth-form-grid,
+  .record-card {
+    grid-template-columns: 1fr;
+  }
+
+  .resource-header,
+  .resource-layout,
+  .resource-search-page,
+  .public-section {
+    width: min(100% - 36px, 1180px);
+  }
+
+  .resource-layout {
+    gap: 24px;
+    padding-top: 24px;
+  }
+
+  .resource-toc {
+    position: static;
+  }
+
+  .update-featured aside {
+    border-top: 1px solid var(--hospital-line);
+    border-left: 0;
+  }
+
+  .resource-search-form {
+    align-items: stretch;
+    flex-wrap: wrap;
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  .resource-search-form button {
+    width: 100%;
+  }
+
+  .search-result-card > a {
+    width: fit-content;
+  }
+
+  .auth-visual {
+    min-height: 360px;
+  }
+
+  .auth-form {
+    padding: 34px 24px 90px;
+  }
+
+  .floating-brand {
+    left: 18px;
+    bottom: 14px;
+    width: 58px;
+    font-size: 12px;
+  }
+
+  .portal-servicebar,
+  .portal-page-head {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 22px 18px;
+  }
+
+  .portal-page-head,
+  .portal-metrics,
+  .portal-two-column,
+  .patient-portal-page .portal-grid,
+  .patient-portal-page .patient-dashboard-grid,
+  .patient-portal-page .patient-card-grid,
+  .static-info-grid {
+    width: min(100% - 36px, 1180px);
+  }
+
+  .portal-metrics,
+  .portal-two-column,
+  .patient-portal-page .portal-grid,
+  .patient-portal-page .patient-dashboard-grid,
+  .patient-portal-page .patient-card-grid {
+    padding-right: 18px;
+    padding-left: 18px;
+  }
+
+  .patient-portal-page .panel {
+    margin: 28px 18px 44px;
+  }
+
+  .portal-list-row,
+  .patient-portal-page .list-row,
+  .patient-portal-page .slot-card,
+  .patient-portal-page .record-card,
+  .visitor-row {
+    grid-template-columns: 1fr;
+  }
+
+  .visitor-actions {
+    justify-content: flex-start;
+  }
+
+  .record-card {
+    align-items: start;
+  }
+
+  .patient-portal-page .slot-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .patient-portal-page .slot-date-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .patient-portal-page .doctor-schedule-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
