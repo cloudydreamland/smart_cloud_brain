@@ -220,30 +220,54 @@ public class AdminOperationsService {
   }
 
   public List<Map<String, Object>> trend(String startDate, String endDate) {
-    return jdbcTemplate.queryForList("""
+    String start = blankToNullString(startDate);
+    String end = blankToNullString(endDate);
+    StringBuilder sql = new StringBuilder("""
         SELECT CAST(appointment_time AS DATE) AS day, COUNT(*) AS registrations
         FROM registration
         WHERE appointment_time IS NOT NULL
-          AND (? IS NULL OR appointment_time >= CAST(? AS TIMESTAMP))
-          AND (? IS NULL OR appointment_time < CAST(? AS TIMESTAMP) + INTERVAL '1 day')
+        """);
+    java.util.ArrayList<Object> params = new java.util.ArrayList<>();
+    if (start != null) {
+      sql.append(" AND appointment_time >= CAST(? AS TIMESTAMP)");
+      params.add(start);
+    }
+    if (end != null) {
+      sql.append(" AND appointment_time < CAST(? AS TIMESTAMP) + INTERVAL '1 day'");
+      params.add(end);
+    }
+    sql.append("""
         GROUP BY CAST(appointment_time AS DATE)
         ORDER BY day
-        """, blankToNull(startDate), blankToNull(startDate), blankToNull(endDate), blankToNull(endDate));
+        """);
+    return jdbcTemplate.queryForList(sql.toString(), params.toArray());
   }
 
   public List<Map<String, Object>> doctorWorkload(String startDate, String endDate) {
-    return jdbcTemplate.queryForList("""
+    String start = blankToNullString(startDate);
+    String end = blankToNullString(endDate);
+    StringBuilder sql = new StringBuilder("""
         SELECT d.id AS doctor_id, d.name AS doctor_name, dep.name AS department_name,
                COUNT(r.id) AS registrations,
                SUM(CASE WHEN r.status = 'COMPLETED' THEN 1 ELSE 0 END) AS completed
         FROM doctor d
         LEFT JOIN department dep ON dep.id = d.department_id
         LEFT JOIN registration r ON r.doctor_id = d.id
-          AND (? IS NULL OR r.appointment_time >= CAST(? AS TIMESTAMP))
-          AND (? IS NULL OR r.appointment_time < CAST(? AS TIMESTAMP) + INTERVAL '1 day')
+        """);
+    java.util.ArrayList<Object> params = new java.util.ArrayList<>();
+    if (start != null) {
+      sql.append(" AND r.appointment_time >= CAST(? AS TIMESTAMP)");
+      params.add(start);
+    }
+    if (end != null) {
+      sql.append(" AND r.appointment_time < CAST(? AS TIMESTAMP) + INTERVAL '1 day'");
+      params.add(end);
+    }
+    sql.append("""
         GROUP BY d.id, d.name, dep.name
         ORDER BY registrations DESC, d.id ASC
-        """, blankToNull(startDate), blankToNull(startDate), blankToNull(endDate), blankToNull(endDate));
+        """);
+    return jdbcTemplate.queryForList(sql.toString(), params.toArray());
   }
 
   public Map<String, Object> patientDistribution() {
@@ -447,6 +471,10 @@ public class AdminOperationsService {
   }
 
   private Object blankToNull(String value) {
+    return isBlank(value) ? null : value;
+  }
+
+  private String blankToNullString(String value) {
     return isBlank(value) ? null : value;
   }
 
