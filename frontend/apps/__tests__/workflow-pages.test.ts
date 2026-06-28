@@ -1,17 +1,29 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { shallowMount } from "@vue/test-utils";
+import { flushPromises, shallowMount } from "@vue/test-utils";
 import { createPinia, setActivePinia } from "pinia";
 import PatientLoginPage from "../patient-web/src/pages/LoginPage.vue";
 import TriagePage from "../patient-web/src/pages/TriagePage.vue";
 import ConsultationPage from "../doctor-web/src/pages/ConsultationPage.vue";
+import AdminAnalyticsSection from "../admin-web/src/components/AdminAnalyticsSection.vue";
+import AdminDashboard from "../admin-web/src/pages/AdminDashboard.vue";
 import SchedulePage from "../admin-web/src/pages/SchedulePage.vue";
 import AccountsPage from "../admin-web/src/pages/AccountsPage.vue";
 import DevicesPage from "../admin-web/src/pages/DevicesPage.vue";
 import PatientsPage from "../admin-web/src/pages/PatientsPage.vue";
-import StatisticsPage from "../admin-web/src/pages/StatisticsPage.vue";
 import PermissionsPage from "../admin-web/src/pages/PermissionsPage.vue";
-import { useDoctorWorkflowStore } from "../../packages/shared-api/src/index";
+import { api, useDoctorWorkflowStore } from "../../packages/shared-api/src/index";
+
+vi.mock("../admin-web/src/echarts", () => ({
+  default: {
+    graphic: { LinearGradient: vi.fn(() => ({})) },
+    init: vi.fn(() => ({
+      setOption: vi.fn(),
+      dispose: vi.fn(),
+      resize: vi.fn(),
+    })),
+  },
+}));
 
 vi.mock("vue-router", () => ({
   useRouter: () => ({ push: vi.fn() }),
@@ -22,6 +34,12 @@ describe("closed-loop page smoke tests", () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     localStorage.clear();
+    vi.clearAllMocks();
+    vi.stubGlobal("ResizeObserver", class {
+      observe() {}
+      disconnect() {}
+      unobserve() {}
+    });
   });
 
   it("renders patient login", () => {
@@ -72,10 +90,64 @@ describe("closed-loop page smoke tests", () => {
     expect(wrapper.text()).toContain("搜索");
   });
 
-  it("renders administrator statistics", () => {
-    const wrapper = shallowMount(StatisticsPage);
-    expect(wrapper.text()).toContain("数据统计");
-    expect(wrapper.text()).toContain("CSV");
+  it("renders administrator analytics at the bottom of the dashboard", async () => {
+    vi.spyOn(api, "statisticsOverview").mockResolvedValue({
+      registrations: 18,
+      completedRegistrations: 12,
+      patients: 9,
+      doctors: 3,
+      devices: 5,
+      deviceWarnings: 1,
+    });
+    vi.spyOn(api, "statisticsTrend").mockResolvedValue([{ day: "2026-06-28", registrations: 5 }]);
+    vi.spyOn(api, "doctorWorkload").mockResolvedValue([{ doctor_name: "张医生", registrations: 5 }]);
+    vi.spyOn(api, "patientDistribution").mockResolvedValue({ gender: [{ name: "女", value: 9 }] });
+    vi.spyOn(api, "deviceUsageStatistics").mockResolvedValue([{ name: "CT", usage_count: 4, abnormal_count: 1 }]);
+    vi.spyOn(api, "statisticsReport").mockResolvedValue([{ metric: "registrations", value: 18 }]);
+    Object.defineProperty(URL, "createObjectURL", { configurable: true, value: vi.fn(() => "blob:test") });
+    Object.defineProperty(URL, "revokeObjectURL", { configurable: true, value: vi.fn() });
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+
+    const dashboard = shallowMount(AdminDashboard, { global: { stubs: { RouterLink: true } } });
+    expect(dashboard.findComponent(AdminAnalyticsSection).exists()).toBe(true);
+
+    const wrapper = shallowMount(AdminAnalyticsSection);
+    await flushPromises();
+
+    expect(wrapper.text()).toContain("运营数据概览");
+    expect(wrapper.text()).toContain("就诊趋势");
+    expect(wrapper.text()).toContain("医生工作量");
+    expect(wrapper.text()).toContain("患者分布");
+    expect(wrapper.text()).toContain("设备使用");
+    expect(wrapper.findAll(".analytics-metric-card")).toHaveLength(5);
+    expect(wrapper.findAll(".analytics-metric-head").map((item) => item.text())).not.toContain("医生数");
+    expect(api.statisticsTrend).toHaveBeenCalledWith(expect.objectContaining({
+      startDate: expect.any(String),
+      endDate: expect.any(String),
+    }));
+
+    const exportButton = wrapper.findAll("button").find((button) => button.text().includes("导出 CSV"));
+    await exportButton?.trigger("click");
+    await flushPromises();
+    expect(api.statisticsReport).toHaveBeenCalled();
+    expect(clickSpy).toHaveBeenCalled();
+  });
+
+  it("keeps analytics failures and empty states inside the analytics section", async () => {
+    vi.spyOn(api, "statisticsOverview").mockRejectedValueOnce(new Error("服务异常"));
+    vi.spyOn(api, "statisticsTrend").mockResolvedValue([]);
+    vi.spyOn(api, "doctorWorkload").mockResolvedValue([]);
+    vi.spyOn(api, "patientDistribution").mockResolvedValue({});
+    vi.spyOn(api, "deviceUsageStatistics").mockResolvedValue([]);
+
+    const failed = shallowMount(AdminAnalyticsSection, { global: { stubs: { ErrorState: false } } });
+    await flushPromises();
+    expect(failed.text()).toContain("统计数据暂不可用");
+
+    vi.mocked(api.statisticsOverview).mockResolvedValueOnce({});
+    const empty = shallowMount(AdminAnalyticsSection);
+    await flushPromises();
+    expect(empty.findAll(".analytics-chart-empty")).toHaveLength(4);
   });
 
   it("renders administrator permissions", () => {

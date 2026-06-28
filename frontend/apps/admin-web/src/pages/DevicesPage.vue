@@ -18,6 +18,8 @@ const usageOpen = ref(false);
 const selectedDevice = ref<Device | null>(null);
 const form = reactive<DeviceSaveRequest>({ deviceCode: "", name: "", category: "", departmentId: 0, location: "", status: "AVAILABLE", purchaseDate: "", remark: "" });
 const usageForm = reactive<DeviceUsageSaveRequest>({ deviceId: 0, usageType: "USE", usedBy: "", patientId: 0, resultStatus: "NORMAL", remark: "" });
+const retireTarget = ref<Device | null>(null);
+const retireOpen = ref(false);
 const filtered = computed(() => rows.value.filter((item) => {
   const q = keyword.value.toLowerCase();
   const haystack = `${displayText(item.deviceCode, "")} ${displayText(item.name, "")} ${displayText(item.category, "")} ${displayText(item.location, "")}`.toLowerCase();
@@ -134,6 +136,42 @@ async function saveUsage() {
   }
 }
 
+function deviceActions(item: Device) {
+  const s = String(item.status || "").toUpperCase();
+  const actions: { key: string; label: string; danger?: boolean }[] = [];
+  actions.push({ key: "edit", label: "编辑" });
+  if (s === "RETIRED") return actions;
+  actions.push({ key: "usage", label: "使用记录" });
+  if (s === "MAINTENANCE") {
+    actions.push({ key: "restore", label: "恢复可用" });
+  } else {
+    actions.push({ key: "maintain", label: "维护" });
+  }
+  actions.push({ key: "retire", label: "停用", danger: true });
+  return actions;
+}
+
+function handleAction(key: string, item: Device) {
+  switch (key) {
+    case "edit":    return openEditor(item);
+    case "usage":   return openUsage(item);
+    case "maintain": return changeStatus(item, "MAINTENANCE");
+    case "restore":  return changeStatus(item, "AVAILABLE");
+    case "retire":   return confirmRetire(item);
+  }
+}
+
+function confirmRetire(item: Device) {
+  retireTarget.value = item;
+  retireOpen.value = true;
+}
+
+async function doRetire() {
+  if (!retireTarget.value) return;
+  retireOpen.value = false;
+  await changeStatus(retireTarget.value, "RETIRED");
+}
+
 refresh();
 </script>
 
@@ -162,10 +200,9 @@ refresh();
               <td><StatusTag :status="displayText(item.status)" :tone="statusClass(item.status)" /></td>
               <td>{{ displayText(item.usageCount, "0") }} / 异常 {{ displayText(item.abnormalCount, "0") }}</td>
               <td class="toolbar">
-                <button type="button" class="action-btn" @click="openEditor(item)">编辑</button>
-                <button type="button" class="action-btn" @click="openUsage(item)">使用记录</button>
-                <button type="button" class="action-btn" @click="changeStatus(item, 'MAINTENANCE')">维护</button>
-                <button class="action-btn danger" type="button" @click="changeStatus(item, 'RETIRED')">停用</button>
+                <button v-for="a in deviceActions(item)" :key="a.key"
+                  type="button" :class="['action-btn', { danger: a.danger }]"
+                  @click="handleAction(a.key, item)">{{ a.label }}</button>
               </td>
             </tr>
           </tbody>
@@ -206,6 +243,12 @@ refresh();
           </article>
         </div>
       </div>
+    </Modal>
+    <Modal :open="retireOpen" title="停用确认" :description="`确认停用设备「${displayText(retireTarget?.name)}」？停用后可通过编辑恢复。`" @close="retireOpen = false">
+      <template #footer>
+        <button type="button" @click="retireOpen = false">取消</button>
+        <button class="danger" type="button" @click="doRetire">确认停用</button>
+      </template>
     </Modal>
   </section>
 </template>

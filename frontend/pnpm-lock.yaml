@@ -72,6 +72,9 @@ importers:
       '@smart-cloud-brain/shared-ui':
         specifier: workspace:*
         version: link:../../packages/shared-ui
+      '@tabler/icons-vue':
+        specifier: ^3.34.1
+        version: 3.44.0(vue@3.5.38(typescript@5.9.3))
       echarts:
         specifier: ^5.6.0
         version: 5.6.0
@@ -672,6 +675,14 @@ packages:
     resolution: {integrity: sha512-5L+T1fMX4RIEBoZzT0+sQ0PhTS36NULFmMXtl1TZo44TMAROIMHbZufSOjVWt/Y622BtxgxtaNOokbTDvfsrZA==}
     cpu: [x64]
     os: [win32]
+
+  '@tabler/icons-vue@3.44.0':
+    resolution: {integrity: sha512-mABxdhq3SWo2ZI77w/t0reiOGNim/SEDSlfMT5PeiWA3cZwnZoQUYRiq/X6SgeTaA7LzCTX0IuvQWVf4RWOvsg==}
+    peerDependencies:
+      vue: '>=3.0.1'
+
+  '@tabler/icons@3.44.0':
+    resolution: {integrity: sha512-Wn0AOZG9sg0L+bjfMqq4eNhC6pQjIrk94LvvWYNYkY8KH8wC3YILRzQlrnVJc4FUeMxH/AK97QsYCX35H3LndA==}
 
   '@types/estree@1.0.9':
     resolution: {integrity: sha512-GhdPgy1el4/ImP05X05Uw4cw2/M93BCUmnEvWZNStlCzEKME4Fkk+YpoA5OiHNQmoS7Cafb8Xa3Pya8m1Qrzeg==}
@@ -2138,6 +2149,13 @@ snapshots:
 
   '@rollup/rollup-win32-x64-msvc@4.62.0':
     optional: true
+
+  '@tabler/icons-vue@3.44.0(vue@3.5.38(typescript@5.9.3))':
+    dependencies:
+      '@tabler/icons': 3.44.0
+      vue: 3.5.38(typescript@5.9.3)
+
+  '@tabler/icons@3.44.0': {}
 
   '@types/estree@1.0.9': {}
 

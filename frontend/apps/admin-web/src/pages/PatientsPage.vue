@@ -52,6 +52,7 @@ const genderFormOptions = [
 
 watch([keyword, gender, minAge, maxAge], () => {
   currentPage.value = 1;
+  refresh();
 });
 
 function asRows(value: unknown) {

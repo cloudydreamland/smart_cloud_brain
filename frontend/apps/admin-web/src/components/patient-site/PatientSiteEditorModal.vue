@@ -51,7 +51,7 @@ const homeModuleTypeSelectOptions = computed(() =>
             <label><span>品牌名称</span><input v-model.trim="editingDraft.name" type="text"></label>
             <label>
               <span>首页入口</span>
-              <ScbSelect v-model="editingDraft.homeRoute" :options="routeSelectOptions" />
+              <ScbSelect v-model="editingDraft.homeRoute" :options="routeSelectOptions" close-on-scroll />
             </label>
           </div>
           <OssImageUploadField
@@ -134,7 +134,7 @@ const homeModuleTypeSelectOptions = computed(() =>
           <div class="config-grid four">
             <label>
               <span>{{ patientSiteFieldLabel("type") }}</span>
-              <ScbSelect v-model="editingDraft.type" :options="homeModuleTypeSelectOptions" @update:modelValue="hydrateEditingHomeModuleContent" />
+              <ScbSelect v-model="editingDraft.type" :options="homeModuleTypeSelectOptions" close-on-scroll @update:modelValue="hydrateEditingHomeModuleContent" />
             </label>
             <label><span>{{ patientSiteFieldLabel("key") }}</span><input v-model.trim="editingDraft.key" type="text"></label>
             <label><span>{{ patientSiteFieldLabel("sort") }}</span><input v-model.number="editingDraft.sort" type="number"></label>
@@ -227,7 +227,7 @@ const homeModuleTypeSelectOptions = computed(() =>
           <div class="config-grid four">
             <label>
               <span>{{ patientSiteFieldLabel("routeName") }}</span>
-              <ScbSelect v-model="editingDraft.routeName" :options="routeSelectOptions" />
+              <ScbSelect v-model="editingDraft.routeName" :options="routeSelectOptions" close-on-scroll />
             </label>
             <label><span>{{ patientSiteFieldLabel("sort") }}</span><input v-model.number="editingDraft.sort" type="number"></label>
             <label><span>{{ patientSiteFieldLabel("label") }}</span><input v-model.trim="editingDraft.label" type="text"></label>

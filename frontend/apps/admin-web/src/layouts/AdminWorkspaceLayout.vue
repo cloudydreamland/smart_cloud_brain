@@ -32,7 +32,6 @@ const navGroups = computed(() => [
     { label: "账户权限", to: "/accounts" },
     { label: "权限", to: "/permissions" },
     { label: "设备", to: "/devices" },
-    { label: "统计分析", to: "/statistics" },
   ] },
   { label: "配置", items: [
     { label: "患者端配置", to: "/patient-site" },

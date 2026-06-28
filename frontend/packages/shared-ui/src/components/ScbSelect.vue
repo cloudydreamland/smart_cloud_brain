@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 export interface ScbSelectOption {
   value: string | number;
@@ -13,8 +13,10 @@ const props = withDefaults(
     label?: string;
     placeholder?: string;
     disabled?: boolean;
+    /** 滚动时关闭下拉面板，适用于 Modal 内避免定位漂移 */
+    closeOnScroll?: boolean;
   }>(),
-  { label: "", placeholder: "请选择", disabled: false }
+  { label: "", placeholder: "请选择", disabled: false, closeOnScroll: false }
 );
 
 const emit = defineEmits<{ "update:modelValue": [value: string | number | undefined] }>();
@@ -22,6 +24,38 @@ const emit = defineEmits<{ "update:modelValue": [value: string | number | undefi
 const isOpen = ref(false);
 const triggerRef = ref<HTMLButtonElement | null>(null);
 const menuRef = ref<HTMLDivElement | null>(null);
+const menuStyle = ref<Record<string, string>>({});
+
+/* ---- 祖先滚动监听（修复 Modal 内 overflow:auto 导致下拉面板定位漂移） ---- */
+let scrollAncestor: HTMLElement | null = null;
+
+function findScrollAncestor(el: HTMLElement): HTMLElement | null {
+  let parent = el.parentElement;
+  while (parent && parent !== document.body) {
+    const s = getComputedStyle(parent);
+    if ((s.overflowY === "auto" || s.overflowY === "scroll") && parent.scrollHeight > parent.clientHeight) {
+      return parent;
+    }
+    parent = parent.parentElement;
+  }
+  return null;
+}
+
+function addAncestorScrollListener() {
+  removeAncestorScrollListener();
+  if (!triggerRef.value) return;
+  scrollAncestor = findScrollAncestor(triggerRef.value);
+  if (scrollAncestor) {
+    scrollAncestor.addEventListener("scroll", onReposition, { passive: true });
+  }
+}
+
+function removeAncestorScrollListener() {
+  if (scrollAncestor) {
+    scrollAncestor.removeEventListener("scroll", onReposition);
+    scrollAncestor = null;
+  }
+}
 
 const selectedLabel = computed(() => {
   const found = props.options.find((o) => o.value === props.modelValue);
@@ -30,40 +64,73 @@ const selectedLabel = computed(() => {
 
 const hasLabel = computed(() => Boolean(props.label));
 
+function positionMenu() {
+  const el = triggerRef.value;
+  if (!el) return;
+  const rect = el.getBoundingClientRect();
+  const MENU_MAX_H = 260;
+  const spaceBelow = window.innerHeight - rect.bottom;
+  const openAbove = spaceBelow < MENU_MAX_H + 8 && rect.top > spaceBelow;
+  menuStyle.value = openAbove
+    ? { position: "fixed", left: `${rect.left}px`, top: `${rect.top - 6}px`, transform: "translateY(-100%)", width: `${rect.width}px`, maxHeight: `${MENU_MAX_H}px` }
+    : { position: "fixed", left: `${rect.left}px`, top: `${rect.bottom + 6}px`, width: `${rect.width}px`, maxHeight: `${MENU_MAX_H}px` };
+}
+
 function toggle() {
   if (props.disabled) return;
   isOpen.value = !isOpen.value;
+  if (isOpen.value) {
+    nextTick(() => { positionMenu(); addAncestorScrollListener(); });
+  } else {
+    removeAncestorScrollListener();
+  }
 }
 
 function select(value: string | number | undefined) {
   emit("update:modelValue", value);
   isOpen.value = false;
+  removeAncestorScrollListener();
 }
 
 function onKeydown(e: KeyboardEvent) {
   if (e.key === "Escape" && isOpen.value) {
     isOpen.value = false;
+    removeAncestorScrollListener();
     triggerRef.value?.focus();
   }
 }
 
 function onClickOutside(e: MouseEvent) {
-  if (
-    !triggerRef.value?.contains(e.target as Node) &&
-    !menuRef.value?.contains(e.target as Node)
-  ) {
+  if (!isOpen.value) return;
+  const target = e.target as Node;
+  if (triggerRef.value?.contains(target) || menuRef.value?.contains(target)) return;
+  isOpen.value = false;
+  removeAncestorScrollListener();
+}
+
+function onReposition() {
+  if (!isOpen.value) return;
+  if (props.closeOnScroll) {
     isOpen.value = false;
+    removeAncestorScrollListener();
+  } else {
+    positionMenu();
   }
 }
 
 onMounted(() => {
   document.addEventListener("mousedown", onClickOutside);
   document.addEventListener("keydown", onKeydown);
+  window.addEventListener("scroll", onReposition, true);
+  window.addEventListener("resize", onReposition);
 });
 
 onBeforeUnmount(() => {
+  removeAncestorScrollListener();
   document.removeEventListener("mousedown", onClickOutside);
   document.removeEventListener("keydown", onKeydown);
+  window.removeEventListener("scroll", onReposition, true);
+  window.removeEventListener("resize", onReposition);
 });
 </script>
 
@@ -93,38 +160,46 @@ onBeforeUnmount(() => {
         <path d="m6 9 6 6 6-6" />
       </svg>
     </button>
-    <div v-if="isOpen" ref="menuRef" class="scb-select-menu" role="listbox">
-      <button
-        v-for="option in options"
-        :key="String(option.value)"
-        type="button"
-        role="option"
-        :aria-selected="modelValue === option.value"
-        :class="{ selected: modelValue === option.value }"
-        @click="select(option.value)"
+    <Teleport to="body">
+      <div
+        v-if="isOpen"
+        ref="menuRef"
+        class="scb-select-menu"
+        role="listbox"
+        :style="menuStyle"
       >
-        <span>{{ option.label }}</span>
-        <svg
-          v-if="modelValue === option.value"
-          aria-hidden="true"
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.4"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+        <button
+          v-for="option in options"
+          :key="String(option.value)"
+          type="button"
+          role="option"
+          :aria-selected="modelValue === option.value"
+          :class="{ selected: modelValue === option.value }"
+          @click="select(option.value)"
         >
-          <path d="m20 6-11 11-5-5" />
-        </svg>
-      </button>
-    </div>
+          <span>{{ option.label }}</span>
+          <svg
+            v-if="modelValue === option.value"
+            aria-hidden="true"
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.4"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="m20 6-11 11-5-5" />
+          </svg>
+        </button>
+      </div>
+    </Teleport>
   </div>
 </template>
 
 <style>
-/* ===== ScbSelect — 自定义下拉框，复用通知中心风格 ===== */
+/* ===== ScbSelect — 自定义下拉框，Teleport 到 body 避免 overflow/z-index 问题 ===== */
 .scb-select {
   position: relative;
   min-width: 160px;
@@ -174,17 +249,12 @@ onBeforeUnmount(() => {
 }
 
 .scb-select-menu {
-  position: absolute;
-  z-index: 30;
-  top: calc(100% + 6px);
-  right: 0;
-  left: 0;
-  min-width: 100%;
-  overflow: hidden;
+  z-index: 9999;
+  overflow-y: auto;
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--surface);
-  box-shadow: var(--shadow-lg, var(--shadow));
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.18);
   padding: 5px;
 }
 

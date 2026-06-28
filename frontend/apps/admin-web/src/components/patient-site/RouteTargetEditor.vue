@@ -37,7 +37,7 @@ function targetLabel(prefix: string) {
   <label><span>{{ targetLabel(prefix) }}{{ patientSiteFieldLabel("label") }}</span><input v-model.trim="model.label" type="text"></label>
   <label>
     <span>{{ targetLabel(prefix) }}{{ patientSiteFieldLabel("routeName") }}</span>
-    <ScbSelect v-model="model.routeName" :options="routeSelectOptions" />
+    <ScbSelect v-model="model.routeName" :options="routeSelectOptions" close-on-scroll />
   </label>
   <label v-if="model.routeName === 'cms-page'"><span>{{ targetLabel(prefix) }}{{ patientSiteFieldLabel("slug") }}</span><input v-model.trim="model.slug" type="text" placeholder="例如：hospital-guide"></label>
   <label v-if="includeSort"><span>{{ targetLabel(prefix) }}{{ patientSiteFieldLabel("sort") }}</span><input v-model.number="model.sort" type="number"></label>

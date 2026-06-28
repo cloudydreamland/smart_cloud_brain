@@ -35,8 +35,9 @@ export function displayText(value: unknown, fallback = "-") {
 export function statusClass(status: unknown) {
   const value = String(status || "").toUpperCase();
   if (["CREATED", "CONFIRMED", "COMPLETED", "AVAILABLE", "ENABLED", "PUBLISHED", "AI_RECOMMENDED", "LOW", "READ"].includes(value)) return "success";
-  if (["CANCELLED", "FAILED", "DISABLED", "HIGH", "CLOSED", "FULL"].includes(value)) return "danger";
-  if (["PENDING", "DRAFT", "UNPUBLISHED", "UNREVIEWED", "MEDIUM", "MANUAL_REQUIRED", "UNREAD"].includes(value)) return "warning";
+  if (["CANCELLED", "FAILED", "DISABLED", "HIGH", "CLOSED", "FULL", "RETIRED"].includes(value)) return "danger";
+  if (["PENDING", "DRAFT", "UNPUBLISHED", "UNREVIEWED", "MEDIUM", "MANUAL_REQUIRED", "UNREAD", "MAINTENANCE"].includes(value)) return "warning";
+  if (["IN_USE"].includes(value)) return "info";
   return "info";
 }
 
@@ -54,6 +55,7 @@ export function statusText(status: unknown, fallback = "-") {
     /* 医生端 workflow 状态 */
     INFO: "提示", DRAFT_READY: "草稿就绪", GENERATING: "生成中",
     IDLE: "空闲", OPEN: "进行中", ACTIVE: "生效",
+    IN_USE: "使用中", MAINTENANCE: "维修中", RETIRED: "已停用",
   };
   return labels[raw.toUpperCase()] ?? raw;
 }

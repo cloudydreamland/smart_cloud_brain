@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartcloudbrain.admin.dto.admin.PatientSiteConfigSaveRequest;
+import com.smartcloudbrain.admin.dto.admin.PatientSiteConfigHistoryResponse;
 import com.smartcloudbrain.admin.entity.PatientSiteConfig;
 import com.smartcloudbrain.admin.repository.PatientSiteConfigRepository;
 import com.smartcloudbrain.common.exception.BusinessException;
@@ -136,16 +137,13 @@ class PatientSiteConfigServiceTest {
     when(repository.findByConfigKeyOrderByVersionDesc(eq("patient_pages"), any(Pageable.class)))
         .thenReturn(new PageImpl<>(List.of(published, archived), PageRequest.of(1, 2), 5));
 
-    Map<String, Object> result = service.history("patient_pages", 2, 2);
+    PatientSiteConfigHistoryResponse result = service.history("patient_pages", 2, 2);
 
-    assertEquals(2, result.get("page"));
-    assertEquals(2, result.get("pageSize"));
-    assertEquals(5L, result.get("total"));
-    assertEquals(3, result.get("totalPages"));
-    @SuppressWarnings("unchecked")
-    List<Map<String, Object>> items = (List<Map<String, Object>>) result.get("items");
-    assertEquals(2, items.size());
-    assertEquals(5, items.get(0).get("version"));
+    assertEquals(2, result.page());
+    assertEquals(2, result.pageSize());
+    assertEquals(5L, result.total());
+    assertEquals(3, result.totalPages());
+    assertEquals(2, result.items().size());
   }
 
   @Test

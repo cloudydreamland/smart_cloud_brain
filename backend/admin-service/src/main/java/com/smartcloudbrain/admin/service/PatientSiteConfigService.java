@@ -3,6 +3,7 @@ package com.smartcloudbrain.admin.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartcloudbrain.admin.dto.admin.PatientSiteConfigSaveRequest;
+import com.smartcloudbrain.admin.dto.admin.PatientSiteConfigHistoryResponse;
 import com.smartcloudbrain.admin.entity.PatientSiteConfig;
 import com.smartcloudbrain.admin.repository.PatientSiteConfigRepository;
 import com.smartcloudbrain.common.exception.BusinessException;
@@ -82,7 +83,7 @@ public class PatientSiteConfigService {
   }
 
   @Transactional
-  public Map<String, Object> history(String configKey, int page, int pageSize) {
+  public PatientSiteConfigHistoryResponse history(String configKey, int page, int pageSize) {
     requireConfigKey(configKey);
     ensurePublishedDefault(configKey);
     int normalizedPage = normalizePage(page);
@@ -91,13 +92,13 @@ public class PatientSiteConfigService {
         configKey,
         PageRequest.of(normalizedPage - 1, normalizedPageSize)
     );
-    Map<String, Object> result = new LinkedHashMap<>();
-    result.put("items", rows.getContent().stream().map(this::view).toList());
-    result.put("page", normalizedPage);
-    result.put("pageSize", normalizedPageSize);
-    result.put("total", rows.getTotalElements());
-    result.put("totalPages", Math.max(1, rows.getTotalPages()));
-    return result;
+    return new PatientSiteConfigHistoryResponse(
+        rows.getContent().stream().map(this::view).toList(),
+        normalizedPage,
+        normalizedPageSize,
+        rows.getTotalElements(),
+        Math.max(1, rows.getTotalPages())
+    );
   }
 
   @Transactional

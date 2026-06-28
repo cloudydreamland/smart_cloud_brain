@@ -302,10 +302,10 @@ export function usePatientSiteConfigEditor() {
     historyLoading.value = true;
     try {
       const result = await loadHistory(key, page, historyPageSize);
-      histories[key] = result.items;
+      histories[key] = result.items ?? [];
       historyPages[key] = result;
       if (syncLatest) {
-        latest[key] = result.items.find((row) => row.status === "PUBLISHED") || latest[key] || null;
+        latest[key] = (result.items ?? []).find((row) => row.status === "PUBLISHED") || latest[key] || null;
       }
     } finally {
       historyLoading.value = false;
@@ -670,9 +670,19 @@ async function loadEffectiveSection(key: ConfigKey) {
   return isRow(section) ? section : {};
 }
 
-async function loadHistory(key: ConfigKey, page: number, pageSize: number) {
+async function loadHistory(key: ConfigKey, page: number, pageSize: number): Promise<PatientSiteConfigHistoryPage> {
   try {
-    return await api.patientSiteConfigHistory(key, page, pageSize);
+    const raw = await api.patientSiteConfigHistory(key, page, pageSize);
+    // 后端 history() 返回 Map 但 Jackson 序列化可能将 data 展平为裸数组
+    // 容错：如果是数组则包装为标准分页结构
+    if (Array.isArray(raw)) {
+      return { items: raw as PatientSiteConfigRecord[], page, pageSize, total: raw.length, totalPages: Math.max(1, Math.ceil(raw.length / pageSize)) };
+    }
+    const r = raw as Record<string, unknown>;
+    if (r && typeof r === "object" && Array.isArray(r.items)) {
+      return raw as PatientSiteConfigHistoryPage;
+    }
+    return emptyHistoryPage();
   } catch {
     return emptyHistoryPage();
   }

@@ -14,7 +14,6 @@ const SearchPage = () => import("../pages/SearchPage.vue");
 const AccountsPage = () => import("../pages/AccountsPage.vue");
 const DevicesPage = () => import("../pages/DevicesPage.vue");
 const PatientsPage = () => import("../pages/PatientsPage.vue");
-const StatisticsPage = () => import("../pages/StatisticsPage.vue");
 const PermissionsPage = () => import("../pages/PermissionsPage.vue");
 const PatientSiteConfigPage = () => import("../pages/PatientSiteConfigPage.vue");
 const NotFound = () => import("../pages/NotFound.vue");
@@ -36,7 +35,6 @@ const router = createRouter({
         { path: "triage-desk", name: "admin-triage", component: TriageDeskPage },
         { path: "devices", name: "admin-devices", component: DevicesPage },
         { path: "patients", name: "admin-patients", component: PatientsPage },
-        { path: "statistics", name: "admin-statistics", component: StatisticsPage },
         { path: "accounts", name: "admin-accounts", component: AccountsPage },
         { path: "permissions", name: "admin-permissions", component: PermissionsPage },
         { path: "patient-site", name: "admin-patient-site", component: PatientSiteConfigPage },

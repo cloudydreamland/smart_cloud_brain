@@ -3,6 +3,7 @@ import { computed } from "vue";
 import { storeToRefs } from "pinia";
 import { displayText, statusClass, statusText, useAdminWorkflowStore } from "@smart-cloud-brain/shared-api";
 import { StatusTag } from "@smart-cloud-brain/shared-ui";
+import AdminAnalyticsSection from "../components/AdminAnalyticsSection.vue";
 
 const workflow = useAdminWorkflowStore();
 const { departments, doctors, drugs, schedules, triageDesk, aiLogs } = storeToRefs(workflow);
@@ -134,6 +135,8 @@ const highRisk = computed(() => triageDesk.value.filter((item) => ["MANUAL_REQUI
           </table>
         </div>
       </div>
+
+      <AdminAnalyticsSection />
     </div>
   </section>
 </template>
