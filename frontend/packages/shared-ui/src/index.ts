@@ -28,3 +28,5 @@ export { default as ExpandableTabs } from "./components/ExpandableTabs.vue";
 export { default as Popover } from "./components/Popover.vue";
 export { default as StatCard } from "./components/StatCard.vue";
 export { default as Tooltip } from "./components/Tooltip.vue";
+export { default as ScbSelect } from "./components/ScbSelect.vue";
+export type { ScbSelectOption } from "./components/ScbSelect.vue";

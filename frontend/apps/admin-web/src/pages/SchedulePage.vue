@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { reactive, ref } from "vue";
+import { computed, reactive, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { aiSourceLabel, aiSourceTone, api, displayText, formatApiError, toNumber, useAdminWorkflowStore, usePagination, type Schedule, type ScheduleSaveRequest } from "@smart-cloud-brain/shared-api";
-import { EmptyState, ErrorState, FormField, LoadingState, Modal, PaginationBar, StatusTag } from "@smart-cloud-brain/shared-ui";
+import { aiSourceLabel, aiSourceTone, api, displayText, formatApiError, toNumber, useAdminWorkflowStore, useAuthStore, usePagination, type Schedule, type ScheduleSaveRequest } from "@smart-cloud-brain/shared-api";
+import { EmptyState, ErrorState, FormField, LoadingState, Modal, PaginationBar, ScbSelect, StatusTag } from "@smart-cloud-brain/shared-ui";
 
 const emit = defineEmits<{ refresh: [] }>();
 const workflow = useAdminWorkflowStore();
@@ -16,6 +16,27 @@ const notice = ref("");
 const editorOpen = ref(false);
 const { currentPage: schedulePage, pageSize: schedulePageSize, total: scheduleTotal, pageRows: pagedSchedules } = usePagination(schedules, 8);
 const { currentPage: suggestionPage, pageSize: suggestionPageSize, total: suggestionTotal, pageRows: pagedSuggestions } = usePagination(suggestions, 5);
+
+const departmentOptions = computed(() => [
+  { value: 0, label: "全部科室" },
+  ...departments.value.map((d) => ({ value: toNumber(d.id), label: displayText(d.name) })),
+]);
+const doctorOptions = computed(() => [
+  { value: 0, label: "全部医生" },
+  ...doctors.value.map((d) => ({ value: toNumber(d.id), label: `${displayText(d.name)} / ${displayText((d as Record<string, unknown>).departmentName)}` })),
+]);
+const doctorOptionsNoAll = computed(() =>
+  doctors.value.map((d) => ({ value: toNumber(d.id), label: `${displayText(d.name)} / ${displayText((d as Record<string, unknown>).departmentName)}` }))
+);
+const filterStatusOptions = [
+  { value: "", label: "全部状态" },
+  { value: "PUBLISHED", label: "已发布" },
+  { value: "CANCELLED", label: "已取消" },
+];
+const formStatusOptions = [
+  { value: "PUBLISHED", label: "已发布" },
+  { value: "CANCELLED", label: "已取消" },
+];
 
 async function loadSchedules() {
   loading.value = true;
@@ -127,9 +148,9 @@ loadSchedules();
         <div class="admin-filter-row">
           <input v-model="filter.startDate" type="date" />
           <input v-model="filter.endDate" type="date" />
-          <select v-model.number="filter.departmentId"><option :value="0">全部科室</option><option v-for="department in departments" :key="String(department.id)" :value="toNumber(department.id)">{{ displayText(department.name) }}</option></select>
-          <select v-model.number="filter.doctorId"><option :value="0">全部医生</option><option v-for="doctor in doctors" :key="String(doctor.id)" :value="toNumber(doctor.id)">{{ displayText(doctor.name) }}</option></select>
-          <select v-model="filter.status"><option value="">全部状态</option><option value="PUBLISHED">已发布</option><option value="CANCELLED">已取消</option></select>
+          <ScbSelect v-model="filter.departmentId" :options="departmentOptions" />
+          <ScbSelect v-model="filter.doctorId" :options="doctorOptions" />
+          <ScbSelect v-model="filter.status" :options="filterStatusOptions" />
           <button type="button" :disabled="loading" @click="loadSchedules">搜索</button>
         </div>
         <LoadingState v-if="loading" />
@@ -172,12 +193,12 @@ loadSchedules();
     <Modal :open="editorOpen" title="排班编辑" description="创建或修改医生排班及预约时段。" @close="editorOpen = false">
       <div class="stack">
         <div class="form-grid">
-          <FormField label="医生"><select v-model.number="form.doctorId" @change="syncDoctorDepartment"><option v-for="doctor in doctors" :key="String(doctor.id)" :value="toNumber(doctor.id)">{{ displayText(doctor.name) }} / {{ displayText(doctor.departmentName) }}</option></select></FormField>
-          <FormField label="科室"><select v-model.number="form.departmentId" disabled><option v-for="department in departments" :key="String(department.id)" :value="toNumber(department.id)">{{ displayText(department.name) }}</option></select></FormField>
+          <FormField label="医生"><ScbSelect v-model="form.doctorId" :options="doctorOptionsNoAll" @update:modelValue="syncDoctorDepartment" /></FormField>
+          <FormField label="科室"><ScbSelect v-model="form.departmentId" :options="departmentOptions" :disabled="true" /></FormField>
           <FormField label="日期"><input v-model="form.workDate" type="date" /></FormField>
           <FormField label="时段"><input v-model.trim="form.timeRange" placeholder="09:00-12:00" /></FormField>
           <FormField label="容量"><input v-model.number="form.capacity" type="number" min="1" max="100" /></FormField>
-          <FormField label="状态"><select v-model="form.status"><option value="PUBLISHED">已发布</option><option value="CANCELLED">已取消</option></select></FormField>
+          <FormField label="状态"><ScbSelect v-model="form.status" :options="formStatusOptions" /></FormField>
         </div>
       </div>
       <template #footer><button type="button" @click="editorOpen = false">取消</button><button class="primary" type="button" :disabled="loading" @click="saveSchedule">保存</button></template>

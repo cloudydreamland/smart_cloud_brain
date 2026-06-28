@@ -39,6 +39,18 @@ const form = reactive<PatientSaveRequest>({
 const filtered = computed(() => rows.value);
 const { currentPage, pageSize, total, pageRows } = usePagination(filtered, 8);
 
+const genderFilterOptions = [
+  { value: "", label: "全部性别" },
+  { value: "MALE", label: "男" },
+  { value: "FEMALE", label: "女" },
+  { value: "UNKNOWN", label: "未知" },
+];
+const genderFormOptions = [
+  { value: "", label: "未知" },
+  { value: "MALE", label: "男" },
+  { value: "FEMALE", label: "女" },
+];
+
 watch([keyword, gender, minAge, maxAge], () => {
   currentPage.value = 1;
 });
@@ -135,12 +147,7 @@ onMounted(refresh);
 
       <div class="admin-filter-row">
         <input v-model.trim="keyword" placeholder="搜索姓名或手机号" @keyup.enter="refresh" />
-        <select v-model="gender">
-          <option value="">全部性别</option>
-          <option value="MALE">男</option>
-          <option value="FEMALE">女</option>
-          <option value="UNKNOWN">未知</option>
-        </select>
+        <ScbSelect v-model="gender" :options="genderFilterOptions" />
         <input v-model.number="minAge" type="number" min="0" placeholder="最小年龄" />
         <input v-model.number="maxAge" type="number" min="0" placeholder="最大年龄" />
         <button type="button" :disabled="loading" @click="refresh">搜索</button>
@@ -149,7 +156,7 @@ onMounted(refresh);
       <DataTable :rows="filtered" :loading="loading" :error="error" :breakout="true" empty-title="暂无患者">
         <thead>
           <tr>
-            <th>ID</th>
+            <th>编号</th>
             <th>姓名</th>
             <th>手机号</th>
             <th>性别</th>
@@ -181,11 +188,7 @@ onMounted(refresh);
         <div class="form-grid">
           <FormField label="姓名"><input v-model.trim="form.name" /></FormField>
           <FormField label="性别">
-            <select v-model="form.gender">
-              <option value="">未知</option>
-              <option value="MALE">男</option>
-              <option value="FEMALE">女</option>
-            </select>
+            <ScbSelect v-model="form.gender" :options="genderFormOptions" />
           </FormField>
           <FormField label="年龄"><input v-model.number="form.age" type="number" min="0" /></FormField>
         </div>

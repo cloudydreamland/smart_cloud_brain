@@ -2,7 +2,7 @@
 import { computed, reactive, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { api, displayText, formatApiError, statusClass, toNumber, useAdminWorkflowStore, usePagination, type TriageRecord } from "@smart-cloud-brain/shared-api";
-import { EmptyState, ErrorState, FormField, PaginationBar, StatusTag } from "@smart-cloud-brain/shared-ui";
+import { EmptyState, ErrorState, FormField, PaginationBar, ScbSelect, StatusTag } from "@smart-cloud-brain/shared-ui";
 import TriageDetailModal from "../components/TriageDetailModal.vue";
 import AssignDoctorModal from "../components/AssignDoctorModal.vue";
 import CloseTriageConfirmModal from "../components/CloseTriageConfirmModal.vue";
@@ -27,6 +27,17 @@ const rows = computed(() => triageDesk.value.filter((item) => {
     && (!filter.status || displayText(item.status) === filter.status);
 }));
 const { currentPage, pageSize, total, pageRows } = usePagination(rows, 8);
+
+const triageStatusOptions = [
+  { value: "", label: "全部状态" },
+  { value: "MANUAL_REQUIRED", label: "待人工处理" },
+  { value: "AI_RECOMMENDED", label: "智能推荐" },
+  { value: "CLOSED", label: "已关闭" },
+];
+const triageDoctorOptions = computed(() => [
+  { value: 0, label: "请选择" },
+  ...doctors.value.map((d) => ({ value: toNumber(d.id), label: `${d.name} / ${d.departmentName}` })),
+]);
 
 async function detail(item: TriageRecord) {
   loading.value = true;
@@ -94,7 +105,7 @@ async function closeTriage() {
         <div class="admin-filter-row">
           <input v-model.trim="filter.keyword" placeholder="搜索主诉或原因" />
           <input v-model.trim="filter.department" placeholder="推荐科室" />
-          <select v-model="filter.status"><option value="">全部状态</option><option value="MANUAL_REQUIRED">待人工处理</option><option value="AI_RECOMMENDED">智能推荐</option><option value="CLOSED">已关闭</option></select>
+          <ScbSelect v-model="filter.status" :options="triageStatusOptions" />
         </div>
         <div v-if="rows.length" class="table-scroll table-breakout">
           <table class="data-table">
@@ -130,10 +141,7 @@ async function closeTriage() {
       <div class="stack">
         <FormField label="分诊记录 ID"><input v-model.number="assignForm.triageRecordId" type="number" /></FormField>
         <FormField label="医生">
-          <select v-model.number="assignForm.doctorId">
-            <option :value="0">请选择</option>
-            <option v-for="doctor in doctors" :key="String(doctor.id)" :value="toNumber(doctor.id)">{{ doctor.name }} / {{ doctor.departmentName }}</option>
-          </select>
+          <ScbSelect v-model="assignForm.doctorId" :options="triageDoctorOptions" />
         </FormField>
       </div>
     </AssignDoctorModal>

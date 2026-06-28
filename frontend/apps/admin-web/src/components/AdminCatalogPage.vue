@@ -112,6 +112,7 @@ const configs: Record<Entity, {
   rows: () => CatalogRow[];
   keys: string[];
   columns: string[];
+  columnLabels: Record<string, string>;
   fields: FieldConfig[];
 }> = {
   department: {
@@ -120,6 +121,7 @@ const configs: Record<Entity, {
     rows: () => departments.value,
     keys: ["code", "name", "description"],
     columns: ["id", "code", "name", "description"],
+    columnLabels: { id: "编号", code: "科室编码", name: "科室名称", description: "说明" },
     fields: [["code", "科室编码", "text"], ["name", "科室名称", "text"], ["description", "说明", "textarea"]],
   },
   doctor: {
@@ -128,6 +130,7 @@ const configs: Record<Entity, {
     rows: () => doctors.value,
     keys: ["name", "phone", "departmentName", "title", "specialty"],
     columns: ["id", "name", "phone", "departmentName", "title", "status"],
+    columnLabels: { id: "编号", name: "姓名", phone: "手机号", departmentName: "科室", title: "职称", status: "状态" },
     fields: [["name", "姓名", "text"], ["phone", "手机号", "text"], ["password", "新密码", "password"], ["departmentId", "科室", "department-select"], ["title", "职称", "text"], ["specialty", "专长", "textarea"], ["status", "状态", "text"]],
   },
   drug: {
@@ -136,6 +139,7 @@ const configs: Record<Entity, {
     rows: () => drugs.value,
     keys: ["name", "specification", "contraindication", "status"],
     columns: ["id", "name", "specification", "status"],
+    columnLabels: { id: "编号", name: "药品名称", specification: "规格", status: "状态" },
     fields: [["name", "药品名称", "text"], ["specification", "规格", "text"], ["contraindication", "禁忌", "textarea"], ["interactionRule", "相互作用规则", "textarea"], ["status", "状态", "text"]],
   },
   knowledge: {
@@ -144,6 +148,7 @@ const configs: Record<Entity, {
     rows: () => knowledge.value,
     keys: ["title", "symptoms", "riskSignals", "departmentCode"],
     columns: ["id", "title", "departmentCode", "status"],
+    columnLabels: { id: "编号", title: "标题", departmentCode: "科室编码", status: "状态" },
     fields: [["title", "标题", "text"], ["symptoms", "症状", "textarea"], ["riskSignals", "风险信号", "textarea"], ["advice", "建议", "textarea"], ["departmentCode", "科室编码", "text"], ["status", "状态", "text"]],
   },
   prompt: {
@@ -152,6 +157,7 @@ const configs: Record<Entity, {
     rows: () => prompts.value,
     keys: ["taskType", "templateName", "departmentCode", "version"],
     columns: ["id", "taskType", "templateName", "departmentCode", "version", "enabled"],
+    columnLabels: { id: "编号", taskType: "任务类型", templateName: "模板名称", departmentCode: "科室编码", version: "版本", enabled: "启用" },
     fields: [["taskType", "任务类型", "text"], ["departmentCode", "科室编码", "text"], ["templateName", "模板名称", "text"], ["templateContent", "模板内容", "textarea"], ["outputSchema", "输出结构定义", "textarea"], ["version", "版本", "text"], ["enabled", "启用", "checkbox"]],
   },
   dict: {
@@ -160,6 +166,7 @@ const configs: Record<Entity, {
     rows: () => dicts.value,
     keys: ["dictType", "dictKey", "dictValue", "status"],
     columns: ["id", "dictType", "dictKey", "dictValue", "sort", "status"],
+    columnLabels: { id: "编号", dictType: "字典类型", dictKey: "字典键", dictValue: "字典值", sort: "排序", status: "状态" },
     fields: [["dictType", "字典类型", "text"], ["dictKey", "字典键", "text"], ["dictValue", "字典值", "text"], ["sort", "排序", "number"], ["status", "状态", "text"]],
   },
 };
@@ -427,7 +434,7 @@ refresh();
         <div v-if="notice" class="notice success">{{ notice }}</div>
         <div class="admin-filter-row"><input v-model.trim="keyword" placeholder="搜索当前表" /></div>
         <DataTable :rows="rows" :loading="loading" :error="error" :breakout="true" empty-title="暂无数据" empty-message="当前筛选条件下没有记录。">
-          <thead><tr><th v-for="column in config.columns" :key="column">{{ column }}</th><th class="actions-cell">操作</th></tr></thead>
+          <thead><tr><th v-for="column in config.columns" :key="column">{{ config.columnLabels[column] ?? column }}</th><th class="actions-cell">操作</th></tr></thead>
           <tbody>
             <tr v-for="item in pageRows" :key="String(item.id)">
               <td v-for="column in config.columns" :key="column">

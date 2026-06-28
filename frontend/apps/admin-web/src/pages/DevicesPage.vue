@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { api, displayText, formatApiError, toNumber, useAdminWorkflowStore, usePagination, type Device, type DeviceSaveRequest, type DeviceUsage, type DeviceUsageSaveRequest } from "@smart-cloud-brain/shared-api";
-import { EmptyState, ErrorState, FormField, Modal, PaginationBar, StatusTag } from "@smart-cloud-brain/shared-ui";
+import { api, displayText, formatApiError, toNumber, useAdminWorkflowStore, useAuthStore, usePagination, type Device, type DeviceSaveRequest, type DeviceUsage, type DeviceUsageSaveRequest } from "@smart-cloud-brain/shared-api";
+import { EmptyState, ErrorState, FormField, Modal, PaginationBar, ScbSelect, StatusTag } from "@smart-cloud-brain/shared-ui";
 
 const workflow = useAdminWorkflowStore();
 const { departments } = storeToRefs(workflow);
@@ -24,6 +24,34 @@ const filtered = computed(() => rows.value.filter((item) => {
   return (!q || haystack.includes(q)) && (!status.value || displayText(item.status) === status.value);
 }));
 const { currentPage, pageSize, total, pageRows } = usePagination(filtered, 8);
+
+const deviceStatusFilterOptions = [
+  { value: "", label: "全部状态" },
+  { value: "AVAILABLE", label: "可用" },
+  { value: "IN_USE", label: "使用中" },
+  { value: "MAINTENANCE", label: "维修中" },
+  { value: "RETIRED", label: "已停用" },
+];
+const deviceDeptOptions = computed(() => [
+  { value: 0, label: "无" },
+  ...departments.value.map((d) => ({ value: toNumber(d.id), label: displayText(d.name) })),
+]);
+const deviceFormStatusOptions = [
+  { value: "AVAILABLE", label: "可用" },
+  { value: "IN_USE", label: "使用中" },
+  { value: "MAINTENANCE", label: "维修中" },
+  { value: "RETIRED", label: "已停用" },
+];
+const usageTypeOptions = [
+  { value: "USE", label: "使用" },
+  { value: "MAINTENANCE", label: "维修" },
+  { value: "REPAIR", label: "修理" },
+];
+const resultStatusOptions = [
+  { value: "NORMAL", label: "正常" },
+  { value: "ABNORMAL", label: "异常" },
+  { value: "FAILED", label: "失败" },
+];
 
 async function refresh() {
   loading.value = true;
@@ -120,7 +148,7 @@ refresh();
       <div v-if="notice" class="notice success">{{ notice }}</div>
       <div class="admin-filter-row">
         <input v-model.trim="keyword" placeholder="搜索编号、名称、类别、位置" />
-        <select v-model="status"><option value="">全部状态</option><option value="AVAILABLE">可用</option><option value="IN_USE">使用中</option><option value="MAINTENANCE">维修中</option><option value="RETIRED">已停用</option></select>
+        <ScbSelect v-model="status" :options="deviceStatusFilterOptions" />
       </div>
       <div v-if="filtered.length" class="table-scroll table-breakout">
         <table class="data-table">
@@ -152,9 +180,9 @@ refresh();
           <FormField label="编号"><input v-model.trim="form.deviceCode" /></FormField>
           <FormField label="名称"><input v-model.trim="form.name" /></FormField>
           <FormField label="类别"><input v-model.trim="form.category" /></FormField>
-          <FormField label="科室"><select v-model.number="form.departmentId"><option :value="0">无</option><option v-for="department in departments" :key="String(department.id)" :value="toNumber(department.id)">{{ displayText(department.name) }}</option></select></FormField>
+          <FormField label="科室"><ScbSelect v-model="form.departmentId" :options="deviceDeptOptions" /></FormField>
           <FormField label="位置"><input v-model.trim="form.location" /></FormField>
-          <FormField label="状态"><select v-model="form.status"><option value="AVAILABLE">可用</option><option value="IN_USE">使用中</option><option value="MAINTENANCE">维修中</option><option value="RETIRED">已停用</option></select></FormField>
+          <FormField label="状态"><ScbSelect v-model="form.status" :options="deviceFormStatusOptions" /></FormField>
           <FormField label="采购日期"><input v-model="form.purchaseDate" type="date" /></FormField>
         </div>
         <FormField label="备注"><textarea v-model.trim="form.remark" /></FormField>
@@ -165,10 +193,10 @@ refresh();
       <div class="stack">
         <strong>{{ displayText(selectedDevice?.name) }}</strong>
         <div class="form-grid">
-          <FormField label="类型"><select v-model="usageForm.usageType"><option value="USE">使用</option><option value="MAINTENANCE">维修</option><option value="REPAIR">修理</option></select></FormField>
+          <FormField label="类型"><ScbSelect v-model="usageForm.usageType" :options="usageTypeOptions" /></FormField>
           <FormField label="操作人"><input v-model.trim="usageForm.usedBy" /></FormField>
           <FormField label="患者 ID"><input v-model.number="usageForm.patientId" type="number" /></FormField>
-          <FormField label="结果"><select v-model="usageForm.resultStatus"><option value="NORMAL">正常</option><option value="ABNORMAL">异常</option><option value="FAILED">失败</option></select></FormField>
+          <FormField label="结果"><ScbSelect v-model="usageForm.resultStatus" :options="resultStatusOptions" /></FormField>
         </div>
         <FormField label="备注"><textarea v-model.trim="usageForm.remark" /></FormField>
         <button class="primary" type="button" :disabled="loading" @click="saveUsage">保存使用记录</button>

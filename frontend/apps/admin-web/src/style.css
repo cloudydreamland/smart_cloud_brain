@@ -105,7 +105,8 @@
 }
 
 .admin-filter-row input,
-.admin-filter-row select {
+.admin-filter-row select,
+.admin-filter-row .scb-select {
   max-width: 240px;
 }
 
@@ -1027,7 +1028,6 @@ button.status-pill:hover {
 
 /* ── Dashboard layout ── */
 .dashboard {
-  max-width: 1200px;
   display: grid;
   gap: 20px;
 }
@@ -1155,7 +1155,6 @@ button.status-pill:hover {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
-  align-items: start;
 }
 
 .content-grid table {
@@ -1211,7 +1210,19 @@ button.status-pill:hover {
   }
 
   .admin-filter-row input,
-  .admin-filter-row select {
+  .admin-filter-row select,
+  .admin-filter-row .scb-select {
     max-width: none;
+  }
+}
+
+/* ── Dashboard responsive (desktop) ── */
+@media (max-width: 1099px) {
+  .metrics {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .content-grid {
+    grid-template-columns: 1fr;
   }
 }

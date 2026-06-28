@@ -11,18 +11,46 @@ const saving = ref(false);
 const error = ref("");
 const notice = ref("");
 
+const permissionLabels: Record<string, string> = {
+  "dashboard:view": "工作台", "department:manage": "科室管理", "doctor:manage": "医生管理",
+  "drug:manage": "药品管理", "schedule:manage": "排班管理", "triage:manage": "分诊台",
+  "device:manage": "设备管理", "patient:manage": "患者管理", "account:manage": "账户管理",
+  "permission:manage": "权限管理", "statistics:view": "统计分析", "ai-log:view": "AI日志",
+  "notification:manage": "通知管理", "medical-record:manage": "病历管理", "prescription:manage": "处方管理",
+  "registration:manage": "挂号管理", "knowledge:manage": "知识库", "prompt:manage": "提示词管理",
+  "statistics:export": "报表导出", "dict:manage": "字典管理", "patient-site:manage": "患者端配置",
+  "search:view": "搜索",
+};
+const permissionDescriptions: Record<string, string> = {
+  "dashboard:view": "查看管理端工作台", "department:manage": "维护科室信息",
+  "doctor:manage": "维护医生账号和信息", "drug:manage": "维护药品和规格信息",
+  "schedule:manage": "管理排班和预约号源", "triage:manage": "分配和关闭分诊记录",
+  "device:manage": "管理医疗设备和使用记录", "patient:manage": "查看和管理患者资料",
+  "account:manage": "管理系统用户账号", "permission:manage": "配置角色权限",
+  "statistics:view": "查看统计分析数据", "ai-log:view": "查看AI调用日志",
+  "notification:manage": "管理系统通知", "medical-record:manage": "管理患者病历",
+  "prescription:manage": "管理处方和审核", "registration:manage": "管理挂号记录",
+  "knowledge:manage": "维护知识库条目", "prompt:manage": "维护AI提示词模板",
+  "statistics:export": "导出统计数据为CSV", "dict:manage": "管理系统字典数据",
+  "patient-site:manage": "管理患者端导航和内容", "search:view": "使用管理端搜索",
+};
 const catalog = computed<PermissionCatalogItem[]>(() => (payload.value?.catalog ?? []).map((item) => ({
   key: displayText(item.key),
-  label: displayText(item.label),
-  description: displayText(item.description),
+  label: permissionLabels[item.key] ?? displayText(item.label),
+  description: permissionDescriptions[item.key] ?? displayText(item.description),
 })).filter((item) => item.key));
 
 const roles = computed(() => {
   const values = payload.value?.roles ?? ["ADMIN", "DOCTOR", "PATIENT"];
-  return values.map((role) => ({ value: role, label: role }));
+  const roleLabels: Record<string, string> = { ADMIN: "管理员", DOCTOR: "医生", PATIENT: "患者" };
+  return values.map((role) => ({ value: role, label: roleLabels[role] ?? role }));
 });
 
 const enabledCount = computed(() => selectedKeys.value.length);
+const roleLabel = computed(() => {
+  const roleLabels: Record<string, string> = { ADMIN: "管理员", DOCTOR: "医生", PATIENT: "患者" };
+  return roleLabels[activeRole.value] ?? activeRole.value;
+});
 
 watch([activeRole, catalog, payload], syncSelectedKeys);
 
@@ -52,7 +80,7 @@ async function refresh() {
     payload.value = await api.permissions() as PermissionPayload;
     syncSelectedKeys();
   } catch (err) {
-    error.value = formatApiError(err, "Permission list failed");
+    error.value = formatApiError(err, "权限列表加载失败");
   } finally {
     loading.value = false;
   }
@@ -67,10 +95,10 @@ async function save() {
       role: activeRole.value,
       permissionKeys: selectedKeys.value,
     }) as PermissionPayload;
-    notice.value = "Role permissions saved";
+    notice.value = "角色权限已保存";
     syncSelectedKeys();
   } catch (err) {
-    error.value = formatApiError(err, "Permission save failed");
+    error.value = formatApiError(err, "权限保存失败");
   } finally {
     saving.value = false;
   }
@@ -98,8 +126,8 @@ onMounted(refresh);
       <div class="account-role-bar">
         <SegmentedControl v-model="activeRole" :options="roles" />
         <div class="account-role-summary">
-          <strong>{{ activeRole }}</strong>
-          <span>{{ enabledCount }} / {{ catalog.length }} permissions enabled</span>
+          <strong>{{ roleLabel }}</strong>
+          <span>{{ enabledCount }} / {{ catalog.length }} 项权限已启用</span>
         </div>
       </div>
 

@@ -14,7 +14,7 @@ import {
   type Role,
   type RoleInfo,
 } from "@smart-cloud-brain/shared-api";
-import { DataTable, ErrorState, FormField, Modal, PaginationBar, SegmentedControl, StatusTag } from "@smart-cloud-brain/shared-ui";
+import { DataTable, ErrorState, FormField, Modal, PaginationBar, ScbSelect, SegmentedControl, StatusTag } from "@smart-cloud-brain/shared-ui";
 
 const workflow = useAdminWorkflowStore();
 const { departments } = storeToRefs(workflow);
@@ -69,6 +69,19 @@ const roleOptions = computed(() => {
     label: `${item.label} ${accountsByRole(item.value).length}`,
   }));
 });
+
+const accountRoleFormOptions = [
+  { value: "ADMIN", label: "系统管理员" },
+  { value: "DOCTOR", label: "医生" },
+];
+const accountDeptOptions = computed(() => [
+  { value: 0, label: "请选择科室" },
+  ...departments.value.map((d) => ({ value: toNumber(d.id), label: displayText(d.name) })),
+]);
+const accountStatusOptions = [
+  { value: "ENABLED", label: "启用" },
+  { value: "DISABLED", label: "停用" },
+];
 
 const currentRoleLabel = computed(() => roleLabel(activeRole.value));
 const currentRoleTemplate = computed(() => roles.value.find((item) => item.role === activeRole.value));
@@ -301,10 +314,7 @@ onMounted(refresh);
     <Modal :open="editorOpen" title="账户与权限" description="选择角色并维护登录账号、状态和访问范围。" @close="editorOpen = false">
       <div class="stack">
         <FormField label="角色">
-          <select v-model="form.role" :disabled="Boolean(form.id)" @change="onRoleChange">
-            <option value="ADMIN">系统管理员</option>
-            <option value="DOCTOR">医生</option>
-          </select>
+          <ScbSelect v-model="form.role" :options="accountRoleFormOptions" :disabled="Boolean(form.id)" @update:modelValue="onRoleChange" />
         </FormField>
         <FormField :label="form.role === 'ADMIN' ? '管理员账号' : '医生手机号'">
           <input v-model="form.account" :placeholder="form.role === 'ADMIN' ? 'admin2' : '13800000002'" />
@@ -316,12 +326,7 @@ onMounted(refresh);
           <input v-model="form.password" type="password" autocomplete="new-password" />
         </FormField>
         <FormField v-if="form.role === 'DOCTOR'" label="所属科室">
-          <select v-model.number="form.departmentId">
-            <option :value="0" disabled>请选择科室</option>
-            <option v-for="department in departments" :key="String(department.id)" :value="toNumber(department.id)">
-              {{ displayText(department.name) }}
-            </option>
-          </select>
+          <ScbSelect v-model="form.departmentId" :options="accountDeptOptions" />
         </FormField>
         <FormField v-if="form.role === 'DOCTOR'" label="职称">
           <input v-model="form.title" />
@@ -330,10 +335,7 @@ onMounted(refresh);
           <textarea v-model="form.specialty" />
         </FormField>
         <FormField label="状态">
-          <select v-model="form.status">
-            <option value="ENABLED">启用</option>
-            <option value="DISABLED">停用</option>
-          </select>
+          <ScbSelect v-model="form.status" :options="accountStatusOptions" />
         </FormField>
         <div class="notice warning">{{ rolePermissionText(form.role) }}</div>
       </div>
