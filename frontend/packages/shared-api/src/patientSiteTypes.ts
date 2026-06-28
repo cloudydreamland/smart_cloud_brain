@@ -22,7 +22,13 @@ export type PatientNavMenu = {
 };
 
 export type PatientNavConfig = {
-  brand: { name: string; homeRoute: string };
+  brand: {
+    name: string;
+    homeRoute: string;
+    logoUrl?: string;
+    logoAlt?: string;
+    logoObjectKey?: string;
+  };
   menus: PatientNavMenu[];
   userLinks: RouteTargetConfig[];
 };
@@ -34,6 +40,9 @@ export type PatientHomeConfig = {
     primaryAction?: RouteTargetConfig;
     secondaryAction?: RouteTargetConfig;
     enabled?: boolean;
+    backgroundImageUrl?: string;
+    backgroundImageAlt?: string;
+    backgroundObjectKey?: string;
   };
   modules: PatientHomeModule[];
 };

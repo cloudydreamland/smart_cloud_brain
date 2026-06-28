@@ -2,13 +2,10 @@ package com.smartcloudbrain.admin.controller;
 
 import com.smartcloudbrain.admin.dto.admin.PatientSiteConfigPublishRequest;
 import com.smartcloudbrain.admin.dto.admin.PatientSiteConfigSaveRequest;
-import com.smartcloudbrain.admin.service.AdminOperationsService;
+import com.smartcloudbrain.admin.service.AdminPermissionGuard;
 import com.smartcloudbrain.admin.service.PatientSiteConfigService;
-import com.smartcloudbrain.common.exception.BusinessException;
 import com.smartcloudbrain.common.result.Result;
 import com.smartcloudbrain.common.security.AuthenticatedUser;
-import com.smartcloudbrain.common.security.CurrentUserService;
-import com.smartcloudbrain.common.security.RoleType;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,17 +17,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class PatientSiteConfigController {
 
   private final PatientSiteConfigService patientSiteConfigService;
-  private final AdminOperationsService adminOperationsService;
-  private final CurrentUserService currentUserService;
+  private final AdminPermissionGuard adminPermissionGuard;
 
   public PatientSiteConfigController(
       PatientSiteConfigService patientSiteConfigService,
-      AdminOperationsService adminOperationsService,
-      CurrentUserService currentUserService
+      AdminPermissionGuard adminPermissionGuard
   ) {
     this.patientSiteConfigService = patientSiteConfigService;
-    this.adminOperationsService = adminOperationsService;
-    this.currentUserService = currentUserService;
+    this.adminPermissionGuard = adminPermissionGuard;
   }
 
   @GetMapping("/api/admin/patient-site/config")
@@ -87,10 +81,6 @@ public class PatientSiteConfigController {
   }
 
   private AuthenticatedUser requireManagePermission() {
-    AuthenticatedUser user = currentUserService.require(RoleType.ADMIN);
-    if (!adminOperationsService.hasPermission(user.role(), "patient-site:manage")) {
-      throw new BusinessException(403, "Permission denied: patient-site:manage");
-    }
-    return user;
+    return adminPermissionGuard.requirePermission("patient-site:manage");
   }
 }

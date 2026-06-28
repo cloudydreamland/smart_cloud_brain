@@ -68,6 +68,7 @@ export type PatientSiteCard = {
 export type PatientSiteImage = {
   url: string;
   alt: string;
+  objectKey?: string;
 };
 
 export type FaqSection = BaseSection & {

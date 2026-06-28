@@ -20,6 +20,10 @@ const conditionQuery = ref("");
 const { config, load: loadSiteConfig } = usePatientSiteConfig();
 
 const hero = computed(() => config.value.home.hero);
+const heroStyle = computed(() => {
+  const imageUrl = hero.value.backgroundImageUrl?.trim();
+  return imageUrl ? { "--hero-bg": `url("${imageUrl.replace(/"/g, '\\"')}")` } : undefined;
+});
 const homeModules = computed(() => config.value.home.modules);
 const notice = computed(() => homeModules.value.find((module) => module.type === "notice"));
 const introModule = computed(() => moduleByType("intro"));
@@ -149,7 +153,7 @@ onMounted(async () => {
 
 <template>
   <main class="home-page">
-    <section v-if="hero.enabled !== false" class="home-hero">
+    <section v-if="hero.enabled !== false" class="home-hero" :style="heroStyle">
       <div class="home-hero-content">
         <p class="home-eyebrow">{{ hero.eyebrow }}</p>
         <h1>{{ hero.title }}</h1>

@@ -2,6 +2,8 @@ import {
   ApiError,
   type AccountSaveRequest,
   type ApiResult,
+  type AssetUploadPolicyRequest,
+  type AssetUploadPolicyResponse,
   type CurrentUser,
   type DataRow,
   type DepartmentSaveRequest,
@@ -225,6 +227,7 @@ export const adminApi = {
   savePatientSiteConfig: (body: PatientSiteConfigSaveRequest) => post<PatientSiteConfigRecord>("/admin/patient-site/save", body),
   savePublishedPatientSiteConfig: (body: PatientSiteConfigSaveRequest) => post<PatientSiteConfigRecord>("/admin/patient-site/save-published", body),
   publishPatientSiteConfig: (body: PatientSiteConfigPublishRequest) => post<PatientSiteConfigRecord>("/admin/patient-site/publish", body),
+  assetUploadPolicy: (body: AssetUploadPolicyRequest) => post<AssetUploadPolicyResponse>("/admin/assets/upload-policy", body),
   patientSiteConfigHistory: (configKey: string, page = 1, pageSize = 10) =>
     get<PatientSiteConfigHistoryPage>(`/admin/patient-site/history${query({ configKey, page, pageSize })}`),
   patientSitePreviewToken: (configKey: string, version?: number) =>

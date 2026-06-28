@@ -576,7 +576,7 @@ export function usePatientSiteConfigEditor() {
     addEditingLink: () => editingArray("links").push({ label: "新链接", routeName: "patient-home", description: "", enabled: true, sort: nextSort(editingArray("links")) }),
     addEditingQuickAction: () => editingContentItems().push({ label: "新快捷入口", routeName: "patient-home", enabled: true, sort: nextSort(editingContentItems()) }),
     addEditingPoint: () => editingArray("points").push({ title: "新要点", text: "" }),
-    addEditingLocationItem: () => ensureObjectArray("items").push({ title: "新院区", meta: "", imageUrl: "", alt: "" }),
+    addEditingLocationItem: () => ensureObjectArray("items").push({ title: "新院区", meta: "", imageUrl: "", alt: "", imageObjectKey: "" }),
     addEditingDepartmentLink: () => ensureObjectArray("items").push({ label: "新诊疗领域", routeName: "public-search", enabled: true, sort: nextSort(ensureObjectArray("items")) }),
     addEditingFallbackName: () => ensureStringArray("fallbackNames").push("新科室"),
     addMenu,

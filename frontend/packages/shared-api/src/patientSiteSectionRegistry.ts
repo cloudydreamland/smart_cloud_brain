@@ -253,7 +253,8 @@ function normalizeImage(source: unknown) {
   const row = isRecord(source) ? source : {};
   const url = text(row.url, "");
   const alt = text(row.alt, "");
-  return url && alt ? { url, alt } : undefined;
+  const objectKey = text(row.objectKey, "");
+  return url || alt || objectKey ? { url, alt, objectKey: objectKey || undefined } : undefined;
 }
 
 function normalizeRouteTarget(source: unknown): RouteTargetConfig | undefined {

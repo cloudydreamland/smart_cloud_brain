@@ -6,6 +6,7 @@ import {
   formatApiError,
   gatewayBase,
   medicalRecordStreamUrl,
+  normalizePatientSiteConfig,
   normalizePatientSitePagesConfig,
   notificationWebSocketUrl,
   patientSiteSectionTypes,
@@ -142,6 +143,68 @@ describe("shared api business logic", () => {
     expect(linkGrid?.type === "link_grid" && linkGrid.links).toHaveLength(2);
     expect(linkGrid?.type === "link_grid" && linkGrid.links[1].slug).toBe("hospital-intro");
     expect(validatePatientSitePagesConfig(config)).toEqual([]);
+  });
+
+  it("preserves uploaded patient site image fields while normalizing", () => {
+    const config = normalizePatientSiteConfig({
+      nav: {
+        brand: {
+          name: "智慧云脑",
+          homeRoute: "patient-home",
+          logoUrl: "https://cdn.example.com/logo.png",
+          logoAlt: "平台 Logo",
+          logoObjectKey: "patient-site/brand/logo.png",
+        },
+      },
+      home: {
+        hero: {
+          enabled: true,
+          title: "首页标题",
+          backgroundImageUrl: "https://cdn.example.com/hero.jpg",
+          backgroundImageAlt: "首页背景",
+          backgroundObjectKey: "patient-site/home/hero.jpg",
+        },
+      },
+    }, { preserveDisabled: true });
+
+    expect(config.nav.brand.logoUrl).toBe("https://cdn.example.com/logo.png");
+    expect(config.nav.brand.logoAlt).toBe("平台 Logo");
+    expect(config.nav.brand.logoObjectKey).toBe("patient-site/brand/logo.png");
+    expect(config.home.hero.backgroundImageUrl).toBe("https://cdn.example.com/hero.jpg");
+    expect(config.home.hero.backgroundImageAlt).toBe("首页背景");
+    expect(config.home.hero.backgroundObjectKey).toBe("patient-site/home/hero.jpg");
+  });
+
+  it("preserves CMS card image object keys while normalizing", () => {
+    const config = normalizePatientSitePagesConfig({
+      pages: [
+        {
+          routeName: "about-hospital",
+          label: "关于医院",
+          title: "医院介绍",
+          intro: "",
+          sections: [
+            {
+              type: "card_grid",
+              cards: [
+                {
+                  title: "服务",
+                  text: "说明",
+                  image: {
+                    url: "https://cdn.example.com/card.webp",
+                    alt: "服务图",
+                    objectKey: "patient-site/card.webp",
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    const cardGrid = config.pages[0].sections.find((section) => section.type === "card_grid");
+    expect(cardGrid?.type === "card_grid" && cardGrid.cards[0].image?.objectKey).toBe("patient-site/card.webp");
   });
 
   it("returns validation errors for incomplete patient site pages", () => {

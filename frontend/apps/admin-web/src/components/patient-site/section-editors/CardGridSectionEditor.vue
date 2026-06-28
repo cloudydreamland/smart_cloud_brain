@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { CardGridSection, RouteTargetConfig } from "@smart-cloud-brain/shared-api";
+import OssImageUploadField from "../OssImageUploadField.vue";
 import RouteTargetEditor from "../RouteTargetEditor.vue";
 
 defineProps<{
@@ -31,10 +32,16 @@ function addCard(section: CardGridSection) {
         <button v-if="!card.image" type="button" class="topbar-refresh" @click="card.image = { url: '', alt: '' }">添加图片</button>
         <button v-else type="button" class="danger-link" @click="card.image = undefined">移除图片</button>
       </div>
-      <div v-if="card.image" class="config-grid two">
-        <label><span>图片 URL</span><input v-model.trim="card.image.url" type="text"></label>
-        <label><span>图片说明</span><input v-model.trim="card.image.alt" type="text"></label>
-      </div>
+      <OssImageUploadField
+        v-if="card.image"
+        :image-url="card.image.url"
+        :image-alt="card.image.alt"
+        :object-key="card.image.objectKey"
+        label="卡片图片"
+        @uploaded="({ url, objectKey }) => { if (card.image) { card.image.url = url; card.image.objectKey = objectKey; } }"
+        @update:image-alt="(value) => { if (card.image) card.image.alt = value; }"
+        @cleared="() => { if (card.image) { card.image.url = ''; card.image.alt = ''; card.image.objectKey = ''; } }"
+      />
       <div class="nested-list-head">
         <strong>跳转目标</strong>
         <button v-if="!card.target" type="button" class="topbar-refresh" @click="card.target = emptyLink()">添加目标</button>

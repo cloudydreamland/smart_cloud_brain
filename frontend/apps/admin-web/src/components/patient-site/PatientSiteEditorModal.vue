@@ -4,6 +4,7 @@ import type { RouteTargetConfig } from "@smart-cloud-brain/shared-api";
 import type { EditingTarget, homeModuleTypeOptions } from "../../composables/usePatientSiteConfigEditor";
 import { ScbSelect } from "@smart-cloud-brain/shared-ui";
 import { patientSiteFieldLabel } from "../../patientSitePresentation";
+import OssImageUploadField from "./OssImageUploadField.vue";
 import RouteTargetEditor from "./RouteTargetEditor.vue";
 
 type Draft = any;
@@ -53,6 +54,16 @@ const homeModuleTypeSelectOptions = computed(() =>
               <ScbSelect v-model="editingDraft.homeRoute" :options="routeSelectOptions" />
             </label>
           </div>
+          <OssImageUploadField
+            :image-url="editingDraft.logoUrl"
+            :image-alt="editingDraft.logoAlt"
+            :object-key="editingDraft.logoObjectKey"
+            label="品牌 Logo"
+            alt-label="Logo 说明"
+            @uploaded="({ url, objectKey }) => { editingDraft.logoUrl = url; editingDraft.logoObjectKey = objectKey; }"
+            @update:image-alt="editingDraft.logoAlt = $event"
+            @cleared="() => { editingDraft.logoUrl = ''; editingDraft.logoObjectKey = ''; editingDraft.logoAlt = ''; }"
+          />
         </template>
 
         <template v-else-if="editingTarget.type === 'nav-menu'">
@@ -107,6 +118,16 @@ const homeModuleTypeSelectOptions = computed(() =>
             <RouteTargetEditor :model="editingDraft.primaryAction" prefix="primaryAction" :patient-route-options="patientRouteOptions" />
             <RouteTargetEditor :model="editingDraft.secondaryAction" prefix="secondaryAction" :patient-route-options="patientRouteOptions" />
           </div>
+          <OssImageUploadField
+            :image-url="editingDraft.backgroundImageUrl"
+            :image-alt="editingDraft.backgroundImageAlt"
+            :object-key="editingDraft.backgroundObjectKey"
+            label="首页 Hero 背景图"
+            alt-label="背景图说明"
+            @uploaded="({ url, objectKey }) => { editingDraft.backgroundImageUrl = url; editingDraft.backgroundObjectKey = objectKey; }"
+            @update:image-alt="editingDraft.backgroundImageAlt = $event"
+            @cleared="() => { editingDraft.backgroundImageUrl = ''; editingDraft.backgroundObjectKey = ''; editingDraft.backgroundImageAlt = ''; }"
+          />
         </template>
 
         <template v-else-if="editingTarget.type === 'home-module'">
@@ -140,9 +161,17 @@ const homeModuleTypeSelectOptions = computed(() =>
               <label><span>内容标题</span><input v-model.trim="editingDraft.content.title" type="text"></label>
               <label><span>内容说明</span><input v-model.trim="editingDraft.content.description" type="text"></label>
               <label><span>正文内容</span><input v-model.trim="editingDraft.content.text" type="text"></label>
-              <label><span>图片 URL</span><input v-model.trim="editingDraft.content.imageUrl" type="text"></label>
-              <label><span>图片说明</span><input v-model.trim="editingDraft.content.imageAlt" type="text"></label>
             </div>
+            <OssImageUploadField
+              v-if="editingDraft.type === 'intro' || editingDraft.type === 'static_content'"
+              :image-url="editingDraft.content.imageUrl"
+              :image-alt="editingDraft.content.imageAlt"
+              :object-key="editingDraft.content.imageObjectKey"
+              label="模块图片"
+              @uploaded="({ url, objectKey }) => { editingDraft.content.imageUrl = url; editingDraft.content.imageObjectKey = objectKey; }"
+              @update:image-alt="editingDraft.content.imageAlt = $event"
+              @cleared="() => { editingDraft.content.imageUrl = ''; editingDraft.content.imageObjectKey = ''; editingDraft.content.imageAlt = ''; }"
+            />
             <div v-if="editingDraft.content.action" class="nested-list">
               <div class="nested-list-head"><strong>操作入口</strong></div>
               <div class="config-grid two">
@@ -155,12 +184,19 @@ const homeModuleTypeSelectOptions = computed(() =>
                 <button type="button" class="topbar-refresh" @click="addEditingLocationItem">新增院区</button>
               </div>
               <div v-for="(item, itemIndex) in editingDraft.content.items" :key="`editing-location-${itemIndex}`" class="config-row-card">
-                <div class="config-grid four">
+                <div class="config-grid two">
                   <label><span>院区名称</span><input v-model.trim="item.title" type="text"></label>
                   <label><span>辅助信息</span><input v-model.trim="item.meta" type="text"></label>
-                  <label><span>图片 URL</span><input v-model.trim="item.imageUrl" type="text"></label>
-                  <label><span>图片说明</span><input v-model.trim="item.alt" type="text"></label>
                 </div>
+                <OssImageUploadField
+                  :image-url="item.imageUrl"
+                  :image-alt="item.alt"
+                  :object-key="item.imageObjectKey"
+                  label="院区图片"
+                  @uploaded="({ url, objectKey }) => { item.imageUrl = url; item.imageObjectKey = objectKey; }"
+                  @update:image-alt="item.alt = $event"
+                  @cleared="() => { item.imageUrl = ''; item.imageObjectKey = ''; item.alt = ''; }"
+                />
                 <button type="button" class="danger-link" @click="editingDraft.content.items.splice(itemIndex, 1)">删除</button>
               </div>
             </div>

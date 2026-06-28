@@ -84,6 +84,23 @@ export type StatisticsQuery = { startDate?: string; endDate?: string };
 export type StatisticsReportRow = { metric: string; value: number | string };
 export type PatientSiteConfigSaveRequest = { configKey: string; configJson: string; remark?: string };
 export type PatientSiteConfigPublishRequest = { configKey: string; remark: string };
+export type AssetUploadPolicyRequest = {
+  scene: "patient-site";
+  fileName: string;
+  contentType: string;
+  size: number;
+};
+export type AssetUploadPolicyResponse = {
+  provider: string;
+  bucket: string;
+  objectKey: string;
+  uploadMethod: "PUT" | "POST";
+  uploadUrl: string;
+  headers?: Record<string, string>;
+  formData?: Record<string, string>;
+  publicUrl: string;
+  expiresAt: number;
+};
 export type PatientSiteConfigRecord = {
   id?: number;
   configKey?: string;

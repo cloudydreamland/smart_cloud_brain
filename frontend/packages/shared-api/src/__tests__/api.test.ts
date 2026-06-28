@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { api, setTokenProvider } from "../index";
+import { adminApi, api, setTokenProvider } from "../index";
 
 describe("shared api", () => {
   afterEach(() => {
@@ -61,5 +61,39 @@ describe("shared api", () => {
       prescriptionId: 11,
     });
     expect(String(fetch.mock.calls[0][0])).toContain("/prescription/detail?id=11");
+  });
+
+  it("creates admin asset upload policy with token provider auth", async () => {
+    const fetch = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        code: 0,
+        message: "success",
+        data: {
+          provider: "aliyun-oss",
+          bucket: "bucket",
+          objectKey: "patient-site/2026/06/a.png",
+          uploadMethod: "POST",
+          uploadUrl: "https://bucket.oss-cn.example.com",
+          formData: {},
+          publicUrl: "https://cdn.example.com/patient-site/2026/06/a.png",
+          expiresAt: 1782620000000,
+        },
+      }),
+    }));
+    vi.stubGlobal("fetch", fetch);
+    setTokenProvider(() => "jwt.admin.token");
+
+    await expect(adminApi.assetUploadPolicy({
+      scene: "patient-site",
+      fileName: "logo.png",
+      contentType: "image/png",
+      size: 1024,
+    })).resolves.toMatchObject({
+      uploadMethod: "POST",
+      objectKey: "patient-site/2026/06/a.png",
+    });
+    expect(String(fetch.mock.calls[0][0])).toContain("/admin/assets/upload-policy");
+    expect(fetch.mock.calls[0][1].headers.get("Authorization")).toBe("Bearer jwt.admin.token");
   });
 });

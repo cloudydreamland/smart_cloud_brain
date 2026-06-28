@@ -48,4 +48,18 @@ services:
   ai:
     base-url: ${AI_SERVICE_BASE_URL:http://localhost:8081}
 
+scb:
+  object-storage:
+    provider: ${SCB_OBJECT_STORAGE_PROVIDER:aliyun-oss}
+    endpoint: ${SCB_OBJECT_STORAGE_ENDPOINT:}
+    region: ${SCB_OBJECT_STORAGE_REGION:}
+    bucket: ${SCB_OBJECT_STORAGE_BUCKET:}
+    public-base-url: ${SCB_OBJECT_STORAGE_PUBLIC_BASE_URL:}
+    access-key-id: ${SCB_OBJECT_STORAGE_ACCESS_KEY_ID:}
+    access-key-secret: ${SCB_OBJECT_STORAGE_ACCESS_KEY_SECRET:}
+    upload-prefix: ${SCB_OBJECT_STORAGE_UPLOAD_PREFIX:patient-site}
+    max-size-bytes: ${SCB_OBJECT_STORAGE_MAX_SIZE_BYTES:5242880}
+    policy-expires-seconds: ${SCB_OBJECT_STORAGE_POLICY_EXPIRES_SECONDS:600}
+    force-path-style: ${SCB_OBJECT_STORAGE_FORCE_PATH_STYLE:false}
+
 

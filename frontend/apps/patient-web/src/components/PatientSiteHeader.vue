@@ -37,6 +37,7 @@ const navMenus = computed<PatientNavMenu[]>(() =>
 );
 const userLinks = computed(() => visibleLinks(nav.value.userLinks));
 const brandRoute = computed(() => ({ name: nav.value.brand.homeRoute || "patient-home" }));
+const brandLogoAlt = computed(() => nav.value.brand.logoAlt || nav.value.brand.name);
 
 function isVisibleLink(link: RouteTargetConfig | undefined): link is RouteTargetConfig {
   return Boolean(
@@ -90,8 +91,11 @@ async function logout() {
   <header class="site-header" @mouseleave="activeMenu = null">
     <div class="site-header-inner">
       <RouterLink class="scb-brand" :to="brandRoute" :aria-label="`${nav.brand.name}首页`" @click="closeMenus">
+        <img v-if="nav.brand.logoUrl" class="site-brand-logo" :src="nav.brand.logoUrl" :alt="brandLogoAlt">
+        <template v-else>
+          <i></i><i></i>
+        </template>
         <span>{{ nav.brand.name }}</span>
-        <i></i><i></i>
       </RouterLink>
 
       <nav class="site-nav" :class="{ open: mobileOpen }" aria-label="主导航">

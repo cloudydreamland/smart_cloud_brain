@@ -68,6 +68,9 @@ function normalizeNav(source: unknown, options: ResolveOptions): PatientNavConfi
     brand: {
       name: text(brand.name, ""),
       homeRoute: routeName(brand.homeRoute, "patient-home"),
+      logoUrl: optionalText(brand.logoUrl),
+      logoAlt: optionalText(brand.logoAlt),
+      logoObjectKey: optionalText(brand.logoObjectKey),
     },
     menus: normalizeArray(row.menus, (item, index) => normalizeMenu(item, index, options)),
     userLinks: normalizeArray(row.userLinks, (item, index) => normalizeLink(item, index, options)),
@@ -109,6 +112,9 @@ function normalizeHome(source: unknown, options: ResolveOptions): PatientHomeCon
       primaryAction: normalizeLink(hero.primaryAction, 0, options),
       secondaryAction: normalizeLink(hero.secondaryAction, 0, options),
       enabled: hasHero && hero.enabled !== false ? true : false,
+      backgroundImageUrl: optionalText(hero.backgroundImageUrl),
+      backgroundImageAlt: optionalText(hero.backgroundImageAlt),
+      backgroundObjectKey: optionalText(hero.backgroundObjectKey),
     },
     modules: normalizeArray(row.modules, (item, index) => normalizeModule(item, index, options)),
   };
@@ -248,6 +254,10 @@ function isStringRecord(value: unknown): value is Record<string, string> {
 
 function text(value: unknown, fallback: string) {
   return typeof value === "string" && value.trim() ? value.trim() : fallback;
+}
+
+function optionalText(value: unknown) {
+  return typeof value === "string" && value.trim() ? value.trim() : undefined;
 }
 
 function slugValue(value: unknown) {
