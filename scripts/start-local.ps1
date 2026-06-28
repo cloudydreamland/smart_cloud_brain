@@ -79,6 +79,38 @@ function Invoke-DockerBuild {
   & docker build @DockerArgs
 }
 
+function Invoke-BackendPackage {
+  param([string[]]$Services)
+  $ServiceList = $Services -join ","
+  $BackendPom = Join-Path $Root "backend\pom.xml"
+
+  Write-Host "Building backend Maven artifacts once: $ServiceList"
+  if (Get-Command mvn -ErrorAction SilentlyContinue) {
+    & mvn -f $BackendPom -pl $ServiceList -am clean package -DskipTests
+  } else {
+    Write-Host "Local Maven is unavailable; using maven:3.9.10-eclipse-temurin-17 in Docker."
+    & docker run --rm `
+      -v "$($Root):/workspace" `
+      -v "smart-cloud-brain-m2:/root/.m2" `
+      -w /workspace `
+      maven:3.9.10-eclipse-temurin-17 `
+      mvn -f backend/pom.xml -pl $ServiceList -am clean package -DskipTests
+  }
+  if ($LASTEXITCODE -ne 0) {
+    throw "Backend Maven package failed."
+  }
+}
+
+function Assert-BackendArtifacts {
+  param([string[]]$Services)
+  foreach ($Service in $Services) {
+    $JarPath = Join-Path $Root "backend\$Service\target\$Service.jar"
+    if (-not (Test-Path -LiteralPath $JarPath)) {
+      throw "Backend artifact is missing: $JarPath. Re-run without -NoBuild so start-local.ps1 can package backend services first."
+    }
+  }
+}
+
 if (-not (Test-Path $EnvFile)) {
   Copy-Item -LiteralPath $EnvExample -Destination $EnvFile
   Write-Host "Created local environment file: $EnvFile"
@@ -162,6 +194,9 @@ if (-not $NoBuild) {
     "registration-service", "triage-service", "medical-record-service",
     "prescription-service", "notification-service", "admin-service", "ai-service"
   )
+  Invoke-BackendPackage -Services $BuildServices
+  Assert-BackendArtifacts -Services $BuildServices
+
   foreach ($Service in $BuildServices) {
     Invoke-DockerBuild @(
       "-f", (Join-Path $Root "backend\Dockerfile.service"),
