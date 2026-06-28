@@ -3,8 +3,6 @@
 .vscode
 target
 **/target
-!backend/*/target/
-!backend/*/target/*.jar
 **/.mvn
 node_modules
 dist
