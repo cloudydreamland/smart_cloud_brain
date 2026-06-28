@@ -173,7 +173,10 @@ services:
       DB_NAME: ${DB_NAME:-smart_cloud_brain}
       DB_USERNAME: ${DB_USERNAME:-scb}
       DB_PASSWORD: ${DB_PASSWORD:-scb_password}
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: ${DB_POOL_MAX_SIZE:-4}
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: ${DB_POOL_MIN_IDLE:-1}
       JWT_SECRET: ${JWT_SECRET:-smart-cloud-brain-local-secret-please-change}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-smart-cloud-brain-internal-local-token-change}
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-scb}
@@ -315,6 +318,13 @@ services:
     environment:
       SERVER_PORT: 8081
       DB_HOST: ${DB_SERVICE_HOST:-kingbase}
+      DB_PORT: ${DB_SERVICE_PORT:-54321}
+      DB_NAME: ${DB_NAME:-smart_cloud_brain}
+      DB_USERNAME: ${DB_USERNAME:-scb}
+      DB_PASSWORD: ${DB_PASSWORD:-scb_password}
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: ${DB_POOL_MAX_SIZE:-4}
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: ${DB_POOL_MIN_IDLE:-1}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-smart-cloud-brain-internal-local-token-change}
       AI_TIMEOUT_MS: ${AI_TIMEOUT_MS:-8000}
       OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.deepseek.com}
       OPENAI_MODEL: ${OPENAI_MODEL:-}
@@ -326,6 +336,15 @@ services:
     depends_on:
       db-init:
         condition: service_completed_successfully
+    networks:
+      - default
+      - dify
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8081/actuator/health >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
 
   nginx:
     build:
@@ -349,3 +368,8 @@ volumes:
   kingbase-data:
   rabbitmq-data:
   redis-data:
+
+networks:
+  dify:
+    external: true
+    name: ${DIFY_DOCKER_NETWORK:-docker_default}
