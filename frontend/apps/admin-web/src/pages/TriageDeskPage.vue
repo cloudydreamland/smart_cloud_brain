@@ -36,7 +36,7 @@ const triageStatusOptions = [
 ];
 const triageDoctorOptions = computed(() => [
   { value: 0, label: "请选择" },
-  ...doctors.value.map((d) => ({ value: toNumber(d.id), label: `${d.name} / ${d.departmentName}` })),
+  ...doctors.value.map((d) => ({ value: toNumber(d.id), label: `${displayText(d.name)} / ${displayText(d.departmentName)}` })),
 ]);
 
 async function detail(item: TriageRecord) {

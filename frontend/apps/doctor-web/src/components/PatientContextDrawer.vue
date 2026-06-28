@@ -106,7 +106,6 @@ const triageRisk = computed(() => displayText(props.triage?.riskLevel, displayTe
   font-size: 0.75rem;
   font-weight: 500;
   color: var(--text-secondary, #6b7280);
-  text-transform: uppercase;
   letter-spacing: 0.03em;
 }
 .info-value {

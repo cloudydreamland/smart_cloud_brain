@@ -84,7 +84,6 @@
 }
 
 .catalog-layout,
-.account-layout,
 .schedule-layout,
 .triage-layout,
 .search-results {
@@ -92,6 +91,11 @@
   grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.85fr);
   gap: 16px;
 }
+
+.account-layout {
+  display: block;
+}
+
 
 .catalog-layout {
   grid-template-columns: 1fr;
@@ -118,24 +122,25 @@
   gap: 10px;
 }
 
-.account-role-summary {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-  color: var(--muted);
-  font-size: 13px;
-}
-
-.account-role-summary strong {
+.account-role-bar input {
+  max-width: 280px;
+  flex: 1 1 200px;
+  padding: 8px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  font-size: 14px;
   color: var(--ink);
+  background: var(--surface);
 }
 
-.account-role-summary span {
-  padding: 3px 8px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: var(--surface-alt);
+.account-role-bar input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: var(--focus);
+}
+
+.account-role-bar input::placeholder {
+  color: var(--muted);
 }
 
 .prompt-test-result {
@@ -263,7 +268,8 @@
 
 .patient-site-editor input,
 .patient-site-editor textarea,
-.patient-site-editor select {
+.patient-site-editor select,
+.patient-site-editor .scb-select {
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -272,7 +278,8 @@
 }
 
 .patient-site-editor input,
-.patient-site-editor select {
+.patient-site-editor select,
+.patient-site-editor .scb-select {
   height: 36px;
   padding: 0 10px;
 }
@@ -856,7 +863,8 @@ button.status-pill:hover {
 }
 
 .patient-config-modal input,
-.patient-config-modal select {
+.patient-config-modal select,
+.patient-config-modal .scb-select {
   width: 100%;
   height: 36px;
   padding: 0 10px;
@@ -874,60 +882,11 @@ button.status-pill:hover {
 
 .patient-config-modal-footer {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
   gap: 10px;
 }
 
-.role-template-list {
-  display: grid;
-  gap: 10px;
-}
-
-.role-template {
-  display: grid;
-  gap: 8px;
-  padding: 12px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--color-slate-50);
-}
-
-.role-template-active {
-  border-color: var(--line-strong);
-  background: var(--color-white);
-}
-
-.role-switch-list {
-  display: grid;
-  gap: 8px;
-}
-
-.role-switch-card {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 10px;
-  align-items: center;
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--color-white);
-  color: var(--ink);
-  text-align: left;
-}
-
-.role-switch-card.active {
-  border-color: var(--primary);
-  background: var(--surface-alt);
-  color: var(--primary-strong);
-}
-
-.role-switch-card strong {
-  min-width: 28px;
-  text-align: right;
-}
-
-.role-template p,
 .permission-cell {
   max-width: 360px;
   color: var(--muted);
@@ -1106,6 +1065,15 @@ button.status-pill:hover {
   border: 1px solid rgba(229, 231, 235, 0.8);
   border-radius: 14px;
   overflow: hidden;
+  margin-left: 8px;
+}
+
+/* ── Table action cells ── */
+td.actions-cell .toolbar {
+  width: 100%;
+}
+.actions-cell {
+  width: 150px !important;
 }
 
 .panel-header {
@@ -1202,7 +1170,6 @@ button.status-pill:hover {
 
 @media (max-width: 980px) {
   .catalog-layout,
-  .account-layout,
   .schedule-layout,
   .triage-layout,
   .search-results {

@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { storeToRefs } from "pinia";
-import { displayText, statusClass, useAdminWorkflowStore } from "@smart-cloud-brain/shared-api";
+import { displayText, statusClass, statusText, useAdminWorkflowStore } from "@smart-cloud-brain/shared-api";
+import { StatusTag } from "@smart-cloud-brain/shared-ui";
 
 const workflow = useAdminWorkflowStore();
 const { departments, doctors, drugs, schedules, triageDesk, aiLogs } = storeToRefs(workflow);
@@ -93,12 +94,12 @@ const highRisk = computed(() => triageDesk.value.filter((item) => ["MANUAL_REQUI
             </thead>
             <tbody>
               <tr v-for="item in schedules.slice(0, 5)" :key="String(item.id)">
-                <td>{{ item.departmentName }}</td>
-                <td>{{ item.doctorName }}</td>
-                <td>{{ item.workDate }}</td>
-                <td>{{ item.timeRange }}</td>
+                <td>{{ displayText(item.departmentName) }}</td>
+                <td>{{ displayText(item.doctorName) }}</td>
+                <td>{{ displayText(item.workDate) }}</td>
+                <td>{{ displayText(item.timeRange) }}</td>
                 <td>
-                  <span class="status-tag active">可预约</span>
+                  <StatusTag :status="displayText(item.status)" :tone="statusClass(item.status)" />
                 </td>
               </tr>
               <tr v-if="!schedules.length">
@@ -123,9 +124,7 @@ const highRisk = computed(() => triageDesk.value.filter((item) => ["MANUAL_REQUI
                 <td>{{ displayText(item.provider) }}</td>
                 <td>{{ displayText(item.latencyMs, "0") }}ms</td>
                 <td>
-                  <span class="status-tag" :class="statusClass(item.status) === 'success' ? 'done' : statusClass(item.status) === 'danger' ? 'cancelled' : 'pending'">
-                    {{ statusClass(item.status) === "success" ? "成功" : statusClass(item.status) === "danger" ? "失败" : "处理中" }}
-                  </span>
+                  <StatusTag :status="displayText(item.status)" :tone="statusClass(item.status)" />
                 </td>
               </tr>
               <tr v-if="!aiLogs.length">

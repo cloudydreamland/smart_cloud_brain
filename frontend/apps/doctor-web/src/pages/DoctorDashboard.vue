@@ -25,9 +25,9 @@ const highRisk = computed(() => displayPrescriptions.value.filter((item) => disp
 const queueTotal = computed(() => Math.max(rows.value.length, 1));
 const completionRate = computed(() => Math.round((completed.value / queueTotal.value) * 100));
 const workloadBars = computed(() => [
-  { label: "待接诊", value: activeRegistrations.value.length, width: `${Math.max(8, Math.round((activeRegistrations.value.length / queueTotal.value) * 100))}%` },
-  { label: "已完成", value: completed.value, width: `${Math.max(8, completionRate.value)}%` },
-  { label: "高风险", value: highRisk.value, width: `${Math.max(8, Math.min(100, highRisk.value * 18))}%` },
+  { key: "pending", label: "待接诊", tone: "teal", value: activeRegistrations.value.length, width: `${Math.max(8, Math.round((activeRegistrations.value.length / queueTotal.value) * 100))}%` },
+  { key: "completed", label: "已完成", tone: "green", value: completed.value, width: `${Math.max(8, completionRate.value)}%` },
+  { key: "high-risk", label: "高风险", tone: "orange", value: highRisk.value, width: `${Math.max(8, Math.min(100, highRisk.value * 18))}%` },
 ]);
 </script>
 
@@ -141,7 +141,7 @@ const workloadBars = computed(() => [
           <div class="workload-rows">
             <div v-for="item in workloadBars" :key="item.label" class="workload-row">
               <span>{{ item.label }}</span>
-              <div class="bar-track"><div class="bar-fill" :class="item.label === '高风险' ? 'orange' : item.label === '已完成' ? 'green' : 'teal'" :style="{ width: item.width }"></div></div>
+              <div class="bar-track"><div class="bar-fill" :class="item.tone" :style="{ width: item.width }"></div></div>
               <strong>{{ item.value }}</strong>
             </div>
           </div>

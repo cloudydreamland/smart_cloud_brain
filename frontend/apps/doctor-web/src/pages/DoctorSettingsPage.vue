@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject, onMounted, ref, watch } from "vue";
+import { computed, inject, onMounted, ref, type Ref, watch } from "vue";
 import { useAuthStore } from "@smart-cloud-brain/shared-api";
 import { statusLabel } from "../doctorPresentation";
 

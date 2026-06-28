@@ -159,6 +159,25 @@ docker exec scb-auth-service env | grep JWT_SECRET
 
 **排查方法**：检查服务启动顺序和健康状态，`docker compose ps` 查看各服务状态。
 
+### 14. 前端开发模式（推荐）
+
+开发期间用 Vite dev server 而不是 Docker nginx，改代码后浏览器自动热更新，无需每次 build + recreate。
+
+**启动方式：**
+1. `docker stop scb-nginx`（释放 5173-5175 端口）
+2. 三个终端分别启动：
+   ```bash
+   cd frontend/apps/patient-web  && VITE_GATEWAY_MODE=docker npx vite --port 5173
+   cd frontend/apps/doctor-web   && VITE_GATEWAY_MODE=docker npx vite --port 5174
+   cd frontend/apps/admin-web    && VITE_GATEWAY_MODE=docker npx vite --port 5175
+   ```
+
+**效果：** 改代码 → HMR 自动刷新，直接看效果。后端 API 仍走 Docker（localhost:18080）。
+
+**验证完后：** `docker start scb-nginx` 恢复，或直接 commit + push。
+
+**AI 改代码流程：** 改完源码即可，dev server 会自动热更新，不需要手动 build。
+
 ## 前端代码规范（Agent 必读）
 
 以下规则基于历史屎山代码审查总结，**违反任何一条都会被驳回**。

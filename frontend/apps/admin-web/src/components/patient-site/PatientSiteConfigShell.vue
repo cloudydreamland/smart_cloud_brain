@@ -17,13 +17,13 @@ const {
   activeTab,
   activeRecord,
   activeErrors,
-  histories,
+  activeHistories,
   loading,
   saving,
   status,
   error,
   remarks,
-  historyPages,
+  activeHistoryPage,
   historyLoading,
   navDraft,
   homeDraft,
@@ -86,8 +86,8 @@ onMounted(editor.loadAll);
             <button type="button" class="quick-btn publish" :disabled="saving" @click="editor.saveAndApply">保存并生效</button>
           </div>
           <PatientSiteHistoryPanel
-            :records="histories[activeKey]"
-            :page-info="historyPages[activeKey]"
+            :records="activeHistories"
+            :page-info="activeHistoryPage"
             :history-loading="historyLoading"
             :saving="saving"
             :load-history-page="editor.loadHistoryPage"

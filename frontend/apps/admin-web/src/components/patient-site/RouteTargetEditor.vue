@@ -1,14 +1,20 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import type { RouteTargetConfig } from "@smart-cloud-brain/shared-api";
+import { ScbSelect } from "@smart-cloud-brain/shared-ui";
 import { patientSiteFieldLabel } from "../../patientSitePresentation";
 
-defineProps<{
+const props = defineProps<{
   model: RouteTargetConfig;
   prefix: string;
   patientRouteOptions: readonly { name: string; label: string }[];
   includeSort?: boolean;
   includeEnabled?: boolean;
 }>();
+
+const routeSelectOptions = computed(() =>
+  props.patientRouteOptions.map((r) => ({ value: r.name, label: r.label }))
+);
 
 function targetLabel(prefix: string) {
   const labels: Record<string, string> = {
@@ -31,11 +37,9 @@ function targetLabel(prefix: string) {
   <label><span>{{ targetLabel(prefix) }}{{ patientSiteFieldLabel("label") }}</span><input v-model.trim="model.label" type="text"></label>
   <label>
     <span>{{ targetLabel(prefix) }}{{ patientSiteFieldLabel("routeName") }}</span>
-    <select v-model="model.routeName">
-      <option v-for="route in patientRouteOptions" :key="route.name" :value="route.name">{{ route.label }}</option>
-    </select>
+    <ScbSelect v-model="model.routeName" :options="routeSelectOptions" />
   </label>
-  <label v-if="model.routeName === 'cms-page'"><span>{{ targetLabel(prefix) }}{{ patientSiteFieldLabel("slug") }}</span><input v-model.trim="model.slug" type="text" placeholder="hospital-guide"></label>
+  <label v-if="model.routeName === 'cms-page'"><span>{{ targetLabel(prefix) }}{{ patientSiteFieldLabel("slug") }}</span><input v-model.trim="model.slug" type="text" placeholder="例如：hospital-guide"></label>
   <label v-if="includeSort"><span>{{ targetLabel(prefix) }}{{ patientSiteFieldLabel("sort") }}</span><input v-model.number="model.sort" type="number"></label>
   <label v-if="includeEnabled" class="check-field"><input v-model="model.enabled" type="checkbox"><span>启用</span></label>
 </template>

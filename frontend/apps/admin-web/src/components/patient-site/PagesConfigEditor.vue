@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import type { PatientSitePagesConfig, PatientSiteSectionType } from "@smart-cloud-brain/shared-api";
+import { ScbSelect } from "@smart-cloud-brain/shared-ui";
 import { patientSiteFieldLabel } from "../../patientSitePresentation";
 import PageSectionFieldsEditor from "./PageSectionFieldsEditor.vue";
 
@@ -17,6 +18,10 @@ const props = defineProps<{
   reorderCmsPage: (fromIndex: number, toIndex: number) => void;
   reorderPageSection: (pageIndex: number, fromIndex: number, toIndex: number) => void;
 }>();
+
+const routeSelectOptions = computed(() =>
+  props.patientRouteOptions.map((r) => ({ value: r.name, label: r.label }))
+);
 
 const draggedPageIndex = ref<number | null>(null);
 const draggedSection = ref<{ pageIndex: number; sectionIndex: number } | null>(null);
@@ -85,11 +90,9 @@ function sectionTypeLabel(type: PatientSiteSectionType) {
         <div class="config-grid four">
           <label>
             <span>{{ patientSiteFieldLabel("routeName") }}</span>
-            <select v-model="page.routeName">
-              <option v-for="route in patientRouteOptions" :key="route.name" :value="route.name">{{ route.label }}</option>
-            </select>
+            <ScbSelect v-model="page.routeName" :options="routeSelectOptions" />
           </label>
-          <label><span>{{ patientSiteFieldLabel("slug") }}</span><input v-model.trim="page.slug" type="text" placeholder="hospital-guide"></label>
+          <label><span>{{ patientSiteFieldLabel("slug") }}</span><input v-model.trim="page.slug" type="text" placeholder="例如：hospital-guide"></label>
           <label><span>{{ patientSiteFieldLabel("sort") }}</span><input v-model.number="page.sort" type="number"></label>
           <label class="check-field"><input v-model="page.enabled" type="checkbox"><span>启用</span></label>
         </div>

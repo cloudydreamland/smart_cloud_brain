@@ -11,9 +11,8 @@ import {
   type PatientDetail,
   type PatientSaveRequest,
 } from "@smart-cloud-brain/shared-api";
-import { DataTable, ErrorState, FormField, Modal, PaginationBar, StatusTag } from "@smart-cloud-brain/shared-ui";
+import { DataTable, ErrorState, FormField, Modal, PaginationBar, ScbSelect, StatusTag } from "@smart-cloud-brain/shared-ui";
 
-type PatientDetailRow = Record<string, unknown>;
 const rows = ref<Patient[]>([]);
 const detail = ref<PatientDetail | null>(null);
 const keyword = ref("");
@@ -55,8 +54,8 @@ watch([keyword, gender, minAge, maxAge], () => {
   currentPage.value = 1;
 });
 
-function asRows(value: unknown): PatientDetailRow[] {
-  return Array.isArray(value) ? value.filter((item): item is PatientDetailRow => item !== null && typeof item === "object") : [];
+function asRows(value: unknown) {
+  return Array.isArray(value) ? value : [];
 }
 
 async function refresh() {
@@ -173,9 +172,11 @@ onMounted(refresh);
             <td><StatusTag :status="displayText(item.gender, 'UNKNOWN')" /></td>
             <td>{{ displayText(item.age) }}</td>
             <td>{{ displayText(item.registrationCount, "0") }}</td>
-            <td class="toolbar">
-              <button type="button" class="action-btn" @click="openDetail(item)">详情</button>
-              <button type="button" class="action-btn" @click="openEditor(item)">编辑</button>
+            <td class="actions-cell">
+              <div class="toolbar">
+                <button type="button" class="action-btn" @click="openDetail(item)">详情</button>
+                <button type="button" class="action-btn" @click="openEditor(item)">编辑</button>
+              </div>
             </td>
           </tr>
         </tbody>

@@ -84,9 +84,6 @@ const accountStatusOptions = [
 ];
 
 const currentRoleLabel = computed(() => roleLabel(activeRole.value));
-const currentRoleTemplate = computed(() => roles.value.find((item) => item.role === activeRole.value));
-const currentRoleTotal = computed(() => accountsByRole(activeRole.value).length);
-const currentRoleEnabled = computed(() => accountsByRole(activeRole.value).filter((item) => displayText(item.status, "ENABLED") !== "DISABLED").length);
 
 const currentRoleAccounts = computed(() => {
   const q = keyword.value.trim().toLowerCase();
@@ -248,13 +245,6 @@ onMounted(refresh);
         <div v-if="notice" class="notice success">{{ notice }}</div>
         <div class="account-role-bar">
           <SegmentedControl v-model="activeRole" :options="roleOptions" />
-          <div class="account-role-summary">
-            <strong>{{ currentRoleLabel }}</strong>
-            <span>{{ currentRoleTotal }} 个账户</span>
-            <span>{{ currentRoleEnabled }} 个启用</span>
-          </div>
-        </div>
-        <div class="admin-filter-row">
           <input v-model.trim="keyword" :placeholder="`搜索${currentRoleLabel}账号、姓名或权限`" />
         </div>
         <DataTable :rows="currentRoleAccounts" :loading="loading" :error="error" :breakout="true" :empty-title="`${currentRoleLabel}暂无账户`" empty-message="当前角色下还没有可管理账户。">
@@ -282,34 +272,6 @@ onMounted(refresh);
         <PaginationBar v-model="currentPage" :total="total" :page-size="pageSize" />
       </div>
     </section>
-
-    <aside class="panel">
-      <header class="panel-header">
-        <div class="panel-title">
-          <h2>当前角色权限</h2>
-        </div>
-      </header>
-      <div class="panel-body role-template-list">
-        <article class="role-template role-template-active">
-          <strong>{{ currentRoleLabel }}</strong>
-          <span class="tag">{{ activeRole }}</span>
-          <p>{{ displayText(currentRoleTemplate?.permissions, "暂无权限说明") }}</p>
-        </article>
-        <div class="role-switch-list">
-          <button
-            v-for="role in roleOptions"
-            :key="role.value"
-            type="button"
-            class="role-switch-card"
-            :class="{ active: role.value === activeRole }"
-            @click="activeRole = role.value"
-          >
-            <span>{{ roleLabel(role.value) }}</span>
-            <strong>{{ accountsByRole(role.value).length }}</strong>
-          </button>
-        </div>
-      </div>
-    </aside>
 
     <Modal :open="editorOpen" title="账户与权限" description="选择角色并维护登录账号、状态和访问范围。" @close="editorOpen = false">
       <div class="stack">

@@ -19,7 +19,7 @@ import {
   type PromptTemplate,
   type SystemDict,
 } from "@smart-cloud-brain/shared-api";
-import { DataTable, ErrorState, FormField, Modal, PaginationBar, StatusTag } from "@smart-cloud-brain/shared-ui";
+import { DataTable, ErrorState, FormField, Modal, PaginationBar, ScbSelect, StatusTag } from "@smart-cloud-brain/shared-ui";
 
 type Entity = "department" | "doctor" | "drug" | "knowledge" | "prompt" | "dict";
 type FieldType = "text" | "password" | "number" | "textarea" | "checkbox" | "department-select";
@@ -193,6 +193,11 @@ const { currentPage, pageSize, total, pageRows } = usePagination(rows, 8);
 function getCatalogValue(row: CatalogRow, key: string) {
   return (row as Record<string, unknown>)[key];
 }
+
+const catalogDeptOptions = computed(() => [
+  { value: 0, label: "请选择科室" },
+  ...departments.value.map((d) => ({ value: toNumber(d.id), label: displayText(d.name) })),
+]);
 
 function dictionaryOptions(dictType: string): DictOption[] {
   const options = dicts.value
@@ -454,18 +459,9 @@ refresh();
         <FormField v-for="[key, label, type] in config.fields" :key="key" :label="label" :hint="fieldHint(key)">
           <textarea v-if="type === 'textarea'" v-model="form[key]" />
           <input v-else-if="type === 'checkbox'" v-model="form[key]" type="checkbox" />
-          <select v-else-if="shouldUseDictionarySelect(key)" v-model="form[key]" @change="key === 'taskType' && onPromptTaskChange()">
-            <option v-for="option in dictionaryOptions(fieldDictType(key))" :key="option.value" :value="option.value">{{ option.label }}（{{ option.value }}）</option>
-          </select>
-          <select v-else-if="type === 'department-select'" v-model.number="form[key]">
-            <option :value="0" disabled>请选择科室</option>
-            <option v-for="department in departments" :key="String(department.id)" :value="toNumber(department.id)">
-              {{ displayText(department.name) }}
-            </option>
-          </select>
-          <select v-else-if="key === 'departmentCode'" v-model="form[key]">
-            <option v-for="department in departmentCodeOptions()" :key="department.value" :value="department.value">{{ department.label }}</option>
-          </select>
+          <ScbSelect v-else-if="shouldUseDictionarySelect(key)" v-model="form[key]" :options="dictionaryOptions(fieldDictType(key))" @update:modelValue="key === 'taskType' && onPromptTaskChange()" />
+          <ScbSelect v-else-if="type === 'department-select'" v-model="form[key]" :options="catalogDeptOptions" />
+          <ScbSelect v-else-if="key === 'departmentCode'" v-model="form[key]" :options="departmentCodeOptions()" />
           <input v-else-if="type === 'number'" v-model.number="form[key]" type="number" />
           <input v-else v-model="form[key]" :type="type" />
         </FormField>

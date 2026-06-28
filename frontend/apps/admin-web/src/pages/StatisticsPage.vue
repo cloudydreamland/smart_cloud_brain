@@ -49,7 +49,7 @@ async function refresh() {
     await nextTick();
     renderCharts();
   } catch (err) {
-    error.value = formatApiError(err, "Statistics failed");
+    error.value = formatApiError(err, "统计数据加载失败");
   } finally {
     loading.value = false;
   }

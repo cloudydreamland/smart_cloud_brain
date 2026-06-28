@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { aiSourceLabel, aiSourceTone, api, displayText, formatApiError, toNumber, useAdminWorkflowStore, useAuthStore, usePagination, type Schedule, type ScheduleSaveRequest } from "@smart-cloud-brain/shared-api";
+import { aiSourceLabel, aiSourceTone, api, displayText, formatApiError, statusClass, toNumber, useAdminWorkflowStore, useAuthStore, usePagination, type Schedule, type ScheduleSaveRequest } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, FormField, LoadingState, Modal, PaginationBar, ScbSelect, StatusTag } from "@smart-cloud-brain/shared-ui";
 
 const emit = defineEmits<{ refresh: [] }>();
@@ -23,10 +23,10 @@ const departmentOptions = computed(() => [
 ]);
 const doctorOptions = computed(() => [
   { value: 0, label: "全部医生" },
-  ...doctors.value.map((d) => ({ value: toNumber(d.id), label: `${displayText(d.name)} / ${displayText((d as Record<string, unknown>).departmentName)}` })),
+  ...doctors.value.map((d) => ({ value: toNumber(d.id), label: `${displayText(d.name)} / ${displayText(d.departmentName)}` })),
 ]);
 const doctorOptionsNoAll = computed(() =>
-  doctors.value.map((d) => ({ value: toNumber(d.id), label: `${displayText(d.name)} / ${displayText((d as Record<string, unknown>).departmentName)}` }))
+  doctors.value.map((d) => ({ value: toNumber(d.id), label: `${displayText(d.name)} / ${displayText(d.departmentName)}` }))
 );
 const filterStatusOptions = [
   { value: "", label: "全部状态" },
@@ -165,7 +165,7 @@ loadSchedules();
                 <td>{{ displayText(item.departmentName) }}</td>
                 <td>{{ displayText(item.capacity) }}</td>
                 <td>{{ displayText(item.booked, "0") }}</td>
-                <td><StatusTag :status="displayText(item.status)" /></td>
+                <td><StatusTag :status="displayText(item.status)" :tone="statusClass(item.status)" /></td>
                 <td class="toolbar"><button type="button" class="action-btn" @click="openEditor(item)">编辑</button><button class="action-btn danger" type="button" :disabled="displayText(item.status) === 'CANCELLED'" @click="cancelSchedule(item)">取消排班</button></td>
               </tr>
             </tbody>

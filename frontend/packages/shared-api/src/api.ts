@@ -93,8 +93,8 @@ async function parsePayload<T>(response: Response): Promise<ApiResult<T>> {
   }
 }
 
-export async function request<T>(path: string, options: RequestInit = {}, token = ""): Promise<T> {
-  const resolvedToken = token || _tokenProvider();
+export async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const resolvedToken = _tokenProvider();
   const headers = new Headers(options.headers ?? {});
   if (!headers.has("Content-Type") && options.body !== undefined) headers.set("Content-Type", "application/json");
   if (resolvedToken) headers.set("Authorization", `Bearer ${resolvedToken}`);
@@ -118,8 +118,8 @@ export async function request<T>(path: string, options: RequestInit = {}, token 
   return payload.data;
 }
 
-const get = <T>(path: string, token = "") => request<T>(path, jsonOptions("GET"), token);
-const post = <T>(path: string, body?: unknown, token = "") => request<T>(path, jsonOptions("POST", body), token);
+const get = <T>(path: string) => request<T>(path, jsonOptions("GET"));
+const post = <T>(path: string, body?: unknown) => request<T>(path, jsonOptions("POST", body));
 
 export const authApi = {
   registerPatient: (body: PatientRegisterRequest) => post<DataRow>("/patient/register", body),

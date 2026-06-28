@@ -38,7 +38,7 @@
             </div>
           </div>
           <button
-            class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-[var(--muted)] transition-colors hover:bg-[var(--surface-alt)] hover:text-[var(--ink)]"
+            class="toast-close flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full transition-colors hover:bg-[var(--surface-alt)]"
             @click="remove(toast.id)"
           >
             <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -96,3 +96,15 @@ function info(title: string, message?: string) { return add(title, message, 'def
 
 defineExpose({ add, remove, success, error, warning, info })
 </script>
+
+<style>
+.toast-close {
+  color: var(--muted);
+}
+.toast-close:hover {
+  color: var(--ink);
+}
+.toast-close svg {
+  stroke: currentColor;
+}
+</style>

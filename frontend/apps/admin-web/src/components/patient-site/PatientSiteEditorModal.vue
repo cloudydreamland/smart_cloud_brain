@@ -1,12 +1,14 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import type { RouteTargetConfig } from "@smart-cloud-brain/shared-api";
 import type { EditingTarget, homeModuleTypeOptions } from "../../composables/usePatientSiteConfigEditor";
+import { ScbSelect } from "@smart-cloud-brain/shared-ui";
 import { patientSiteFieldLabel } from "../../patientSitePresentation";
 import RouteTargetEditor from "./RouteTargetEditor.vue";
 
 type Draft = any;
 
-defineProps<{
+const props = defineProps<{
   title: string;
   description: string;
   editingTarget: EditingTarget;
@@ -24,6 +26,13 @@ defineProps<{
   addEditingDepartmentLink: () => void;
   addEditingFallbackName: () => void;
 }>();
+
+const routeSelectOptions = computed(() =>
+  props.patientRouteOptions.map((r) => ({ value: r.name, label: r.label }))
+);
+const homeModuleTypeSelectOptions = computed(() =>
+  props.homeModuleTypeOptions.map((t) => ({ value: t.value, label: t.label }))
+);
 </script>
 
 <template>
@@ -41,9 +50,7 @@ defineProps<{
             <label><span>品牌名称</span><input v-model.trim="editingDraft.name" type="text"></label>
             <label>
               <span>首页入口</span>
-              <select v-model="editingDraft.homeRoute">
-                <option v-for="route in patientRouteOptions" :key="route.name" :value="route.name">{{ route.label }}</option>
-              </select>
+              <ScbSelect v-model="editingDraft.homeRoute" :options="routeSelectOptions" />
             </label>
           </div>
         </template>
@@ -106,9 +113,7 @@ defineProps<{
           <div class="config-grid four">
             <label>
               <span>{{ patientSiteFieldLabel("type") }}</span>
-              <select v-model="editingDraft.type" @change="hydrateEditingHomeModuleContent">
-                <option v-for="type in homeModuleTypeOptions" :key="type.value" :value="type.value">{{ type.label }}</option>
-              </select>
+              <ScbSelect v-model="editingDraft.type" :options="homeModuleTypeSelectOptions" @update:modelValue="hydrateEditingHomeModuleContent" />
             </label>
             <label><span>{{ patientSiteFieldLabel("key") }}</span><input v-model.trim="editingDraft.key" type="text"></label>
             <label><span>{{ patientSiteFieldLabel("sort") }}</span><input v-model.number="editingDraft.sort" type="number"></label>
@@ -186,9 +191,7 @@ defineProps<{
           <div class="config-grid four">
             <label>
               <span>{{ patientSiteFieldLabel("routeName") }}</span>
-              <select v-model="editingDraft.routeName">
-                <option v-for="route in patientRouteOptions" :key="route.name" :value="route.name">{{ route.label }}</option>
-              </select>
+              <ScbSelect v-model="editingDraft.routeName" :options="routeSelectOptions" />
             </label>
             <label><span>{{ patientSiteFieldLabel("sort") }}</span><input v-model.number="editingDraft.sort" type="number"></label>
             <label><span>{{ patientSiteFieldLabel("label") }}</span><input v-model.trim="editingDraft.label" type="text"></label>

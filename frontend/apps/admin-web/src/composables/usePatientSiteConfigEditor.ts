@@ -102,6 +102,8 @@ export function usePatientSiteConfigEditor() {
   const activeTab = computed(() => configTabs.find((tab) => tab.key === activeKey.value) || configTabs[0]);
   const activeRecord = computed(() => latest[activeKey.value]);
   const activeErrors = computed(() => validationErrors[activeKey.value]);
+  const activeHistories = computed(() => histories[activeKey.value] || []);
+  const activeHistoryPage = computed(() => historyPages[activeKey.value]);
   const navDraft = computed(() => drafts.patient_nav);
   const homeDraft = computed(() => drafts.patient_home);
   const staticDraft = computed(() => drafts.patient_static_pages);
@@ -532,13 +534,13 @@ export function usePatientSiteConfigEditor() {
     activeTab,
     activeRecord,
     activeErrors,
-    histories,
+    activeHistories,
     loading,
     saving,
     status,
     error,
     remarks,
-    historyPages,
+    activeHistoryPage,
     historyLoading,
     navDraft,
     homeDraft,

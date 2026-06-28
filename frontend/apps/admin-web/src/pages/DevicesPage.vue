@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { api, displayText, formatApiError, toNumber, useAdminWorkflowStore, useAuthStore, usePagination, type Device, type DeviceSaveRequest, type DeviceUsage, type DeviceUsageSaveRequest } from "@smart-cloud-brain/shared-api";
+import { api, displayText, formatApiError, statusClass, toNumber, useAdminWorkflowStore, useAuthStore, usePagination, type Device, type DeviceSaveRequest, type DeviceUsage, type DeviceUsageSaveRequest } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, FormField, Modal, PaginationBar, ScbSelect, StatusTag } from "@smart-cloud-brain/shared-ui";
 
 const workflow = useAdminWorkflowStore();
@@ -159,7 +159,7 @@ refresh();
               <td>{{ displayText(item.name) }}</td>
               <td>{{ displayText(item.category) }}</td>
               <td>{{ displayText(item.departmentName) }}</td>
-              <td><StatusTag :status="displayText(item.status)" /></td>
+              <td><StatusTag :status="displayText(item.status)" :tone="statusClass(item.status)" /></td>
               <td>{{ displayText(item.usageCount, "0") }} / 异常 {{ displayText(item.abnormalCount, "0") }}</td>
               <td class="toolbar">
                 <button type="button" class="action-btn" @click="openEditor(item)">编辑</button>

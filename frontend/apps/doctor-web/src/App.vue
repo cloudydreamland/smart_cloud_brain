@@ -28,7 +28,7 @@ onErrorCaptured((err) => {
   display: grid;
   place-items: center;
   min-height: 100vh;
-  font-family: system-ui, sans-serif;
+  font-family: var(--font, system-ui, sans-serif);
 }
 
 .doctor-error-card {
