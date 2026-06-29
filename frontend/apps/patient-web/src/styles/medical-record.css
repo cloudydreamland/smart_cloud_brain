@@ -41,3 +41,46 @@
   margin-top: 14px;
   color: #64748b;
 }
+
+/* ===== Modal 详情列表 ===== */
+.detail-section {
+  margin-bottom: 18px;
+}
+.detail-section:last-child {
+  margin-bottom: 0;
+}
+.detail-section h4 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary);
+}
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+  line-height: 1.6;
+  gap: 16px;
+}
+.detail-row:last-child {
+  border-bottom: 0;
+}
+.detail-row span {
+  flex-shrink: 0;
+  color: var(--muted);
+}
+.detail-row strong {
+  font-weight: 500;
+  color: var(--ink);
+  text-align: right;
+  word-break: break-word;
+}
+.detail-section p {
+  margin: 0;
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.7;
+}

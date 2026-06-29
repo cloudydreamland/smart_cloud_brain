@@ -2,14 +2,14 @@
 import { reactive, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 import { api, fieldText, formatApiError, statusText, toNumber, useAuthStore, usePatientWorkflowStore, type PatientSaveRequest } from "@smart-cloud-brain/shared-api";
-import { EmptyState, ErrorState, FormField, LoadingState } from "@smart-cloud-brain/shared-ui";
+import { EmptyState, ErrorState, FormField, LoadingState, Toast } from "@smart-cloud-brain/shared-ui";
 
 const auth = useAuthStore();
 const workflow = usePatientWorkflowStore();
 const { patient } = storeToRefs(workflow);
 const loading = ref(false);
 const error = ref("");
-const notice = ref("");
+const toast = ref<InstanceType<typeof Toast>>();
 const form = reactive<PatientSaveRequest>({
   name: "",
   gender: "",
@@ -41,11 +41,10 @@ watch(patient, (value) => {
 async function save() {
   loading.value = true;
   error.value = "";
-  notice.value = "";
   try {
     patient.value = await api.saveProfile({ ...form });
     await workflow.refreshAuthenticated();
-    notice.value = "资料已保存";
+    toast.value?.success("保存成功", "资料已保存");
   } catch (err) {
     error.value = formatApiError(err, "保存资料失败");
   } finally {
@@ -61,7 +60,6 @@ async function save() {
       <div class="panel-body stack">
         <ErrorState v-if="error" :message="error" />
         <LoadingState v-if="loading" />
-        <div v-if="notice" class="notice success">{{ notice }}</div>
         <template v-if="patient">
           <div class="profile-section-title">身份信息</div>
           <div class="form-grid">
@@ -112,5 +110,6 @@ async function save() {
         </div>
       </div>
     </aside>
+    <Toast ref="toast" />
   </section>
 </template>

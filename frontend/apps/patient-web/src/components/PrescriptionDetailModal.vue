@@ -10,10 +10,16 @@ defineEmits<{ close: [] }>();
   <Modal :open="open" title="处方详情" description="请按医嘱用药，如有疑问请联系医生。" @close="$emit('close')">
     <div v-if="prescription" class="stack">
       <StatusTag :status="statusText(prescription.riskLevel, '未审核')" :tone="statusClass(prescription.riskLevel)" />
-      <dl class="detail-list">
-        <div><dt>处方号</dt><dd>#{{ fieldText(prescription, "prescriptionId") }}</dd></div>
-        <div><dt>状态</dt><dd>{{ statusText(prescription.status) }}</dd></div>
-      </dl>
+      <div class="detail-section">
+        <div class="detail-row">
+          <span>处方号</span>
+          <strong>#{{ fieldText(prescription, "prescriptionId") }}</strong>
+        </div>
+        <div class="detail-row">
+          <span>状态</span>
+          <strong>{{ statusText(prescription.status) }}</strong>
+        </div>
+      </div>
       <ul>
         <li v-for="(item, index) in ((prescription.items as DataRow[]) || [])" :key="index">
           {{ fieldText(item, "drugName") }} / {{ fieldText(item, "dosage") }} / {{ fieldText(item, "frequency") }} / {{ fieldText(item, "usageMethod") }}

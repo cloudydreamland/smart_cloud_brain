@@ -3,7 +3,7 @@ import { computed, reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { aiSourceLabel, aiSourceTone, api, fieldText, formatApiError, statusClass, statusText, usePagination, usePatientWorkflowStore } from "@smart-cloud-brain/shared-api";
-import { EmptyState, ErrorState, FormField, LoadingState, PaginationBar, StatusTag } from "@smart-cloud-brain/shared-ui";
+import { EmptyState, ErrorState, FormField, LoadingState, PaginationBar, StatusTag, Toast } from "@smart-cloud-brain/shared-ui";
 import TriageResultModal from "../components/TriageResultModal.vue";
 
 const router = useRouter();
@@ -12,7 +12,7 @@ const { triageHistory, triage } = storeToRefs(workflow);
 const form = reactive({ symptoms: "", duration: "", severity: "MEDIUM", extra: "" });
 const loading = ref(false);
 const error = ref("");
-const notice = ref("");
+const toast = ref<InstanceType<typeof Toast>>();
 const resultOpen = ref(false);
 const canSubmit = computed(() => form.symptoms.trim().length > 0);
 const severityLabels: Record<string, string> = { LOW: "轻度", MEDIUM: "中度", HIGH: "重度或明显加重" };
@@ -34,11 +34,10 @@ async function submit() {
   }
   loading.value = true;
   error.value = "";
-  notice.value = "";
   try {
     triage.value = await api.triage({ chiefComplaint: complaint() });
     await workflow.refreshAuthenticated();
-    notice.value = "分诊已提交，请根据推荐科室继续选择号源。";
+    toast.value?.success("分诊已提交", "请根据推荐科室继续选择号源。");
     resultOpen.value = true;
   } catch (err) {
     error.value = formatApiError(err, "分诊提交失败");
@@ -54,7 +53,6 @@ async function submit() {
       <header class="panel-header"><div class="panel-title"><p class="eyebrow">智能分诊</p><h2>填写本次主要症状</h2><p>请描述症状、持续时间和变化情况。</p></div></header>
       <div class="panel-body stack">
         <ErrorState v-if="error" :message="error" />
-        <div v-if="notice" class="notice success">{{ notice }}</div>
         <FormField label="主要症状"><textarea v-model.trim="form.symptoms" rows="5" /></FormField>
         <div class="form-grid">
           <FormField label="持续时间"><input v-model.trim="form.duration" placeholder="例如：2 天" /></FormField>
@@ -94,6 +92,7 @@ async function submit() {
         </div>
       </section>
     </aside>
+    <Toast ref="toast" />
     <TriageResultModal :open="resultOpen" :result="triage" @close="resultOpen = false" @doctors="router.push('/doctors')" />
   </section>
 </template>

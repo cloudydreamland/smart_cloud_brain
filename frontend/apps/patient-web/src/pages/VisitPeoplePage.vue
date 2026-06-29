@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from "vue";
 import { api, fieldText, formatApiError, statusText, toNumber, type DataRow, type PatientVisitorSaveRequest } from "@smart-cloud-brain/shared-api";
-import { EmptyState, ErrorState, FormField, LoadingState } from "@smart-cloud-brain/shared-ui";
+import { EmptyState, ErrorState, FormField, LoadingState, Toast } from "@smart-cloud-brain/shared-ui";
 
 const loading = ref(false);
 const saving = ref(false);
 const error = ref("");
-const notice = ref("");
+const toast = ref<InstanceType<typeof Toast>>();
 const visitors = ref<DataRow[]>([]);
 
 const emptyForm: PatientVisitorSaveRequest = {
@@ -70,12 +70,11 @@ async function saveVisitor() {
   }
   saving.value = true;
   error.value = "";
-  notice.value = "";
   try {
     await api.savePatientVisitor({ ...form, name: form.name.trim() });
     resetForm();
     await loadVisitors();
-    notice.value = "就诊人已保存";
+    toast.value?.success("保存成功", "就诊人已保存");
   } catch (err) {
     error.value = formatApiError(err, "就诊人保存失败");
   } finally {
@@ -88,12 +87,11 @@ async function deleteVisitor(row: DataRow) {
   if (!id) return;
   saving.value = true;
   error.value = "";
-  notice.value = "";
   try {
     await api.deletePatientVisitor(id);
     if (form.id === id) resetForm();
     await loadVisitors();
-    notice.value = "就诊人已删除";
+    toast.value?.success("操作成功", "就诊人已删除");
   } catch (err) {
     error.value = formatApiError(err, "就诊人删除失败");
   } finally {
@@ -117,7 +115,6 @@ onMounted(loadVisitors);
       <div class="panel-body stack">
         <ErrorState v-if="error" :message="error" />
         <LoadingState v-if="loading" />
-        <div v-if="notice" class="notice success">{{ notice }}</div>
 
         <div v-if="visitors.length" class="visitor-list">
           <article v-for="row in visitors" :key="`${fieldText(row, 'visitorType')}-${fieldText(row, 'id')}`" class="visitor-row">
@@ -192,5 +189,6 @@ onMounted(loadVisitors);
         </div>
       </div>
     </aside>
+    <Toast ref="toast" />
   </section>
 </template>
