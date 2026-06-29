@@ -3,12 +3,14 @@ import { nextTick } from "vue";
 import { afterEach, describe, expect, it } from "vitest";
 import ConfirmDialog from "../components/ConfirmDialog.vue";
 import DataTable from "../components/DataTable.vue";
+import DatePicker from "../components/DatePicker.vue";
 import Drawer from "../components/Drawer.vue";
 import EmptyState from "../components/EmptyState.vue";
 import ErrorState from "../components/ErrorState.vue";
 import LoadingState from "../components/LoadingState.vue";
 import Modal from "../components/Modal.vue";
 import StatusTag from "../components/StatusTag.vue";
+import TimeRangePicker from "../components/TimeRangePicker.vue";
 
 describe("shared ui components", () => {
   afterEach(() => {
@@ -76,5 +78,55 @@ describe("shared ui components", () => {
     await buttons[1].trigger("click");
     expect(wrapper.emitted("close")).toHaveLength(1);
     expect(wrapper.emitted("confirm")).toHaveLength(1);
+  });
+
+  it("selects only dates inside the configured range and respects clearable", async () => {
+    const wrapper = mount(DatePicker, {
+      attachTo: document.body,
+      props: {
+        modelValue: "2026-06-22",
+        min: "2026-06-22",
+        max: "2026-06-24",
+        clearable: false,
+      },
+    });
+
+    await wrapper.get(".scb-date-picker-trigger").trigger("click");
+    const beforeRange = document.body.querySelector<HTMLButtonElement>('[aria-label="2026-06-21"]');
+    const validDay = document.body.querySelector<HTMLButtonElement>('[aria-label="2026-06-23"]');
+    expect(beforeRange?.disabled).toBe(true);
+    expect(document.body.textContent).not.toContain("清除");
+    validDay?.click();
+    await nextTick();
+    expect(wrapper.emitted("update:modelValue")?.at(-1)).toEqual(["2026-06-23"]);
+    wrapper.unmount();
+  });
+
+  it("chooses preset and custom time ranges without emitting an invalid order", async () => {
+    const wrapper = mount(TimeRangePicker, {
+      attachTo: document.body,
+      props: { modelValue: "09:00-12:00", stepMinutes: 30 },
+    });
+
+    await wrapper.get(".scb-time-range-trigger").trigger("click");
+    const afternoon = Array.from(document.body.querySelectorAll<HTMLButtonElement>(".scb-time-range-presets button"))
+      .find((button) => button.textContent?.includes("下午门诊"));
+    afternoon?.click();
+    await nextTick();
+    expect(wrapper.emitted("update:modelValue")?.at(-1)).toEqual(["14:00-17:00"]);
+
+    await wrapper.setProps({ modelValue: "09:00-12:00" });
+    await wrapper.get(".scb-time-range-trigger").trigger("click");
+    const start = document.body.querySelector<HTMLSelectElement>('select[aria-label="开始时间"]');
+    await wrapper.vm.$nextTick();
+    if (!start) throw new Error("开始时间选择器未渲染");
+    start.value = "12:00";
+    start.dispatchEvent(new Event("change"));
+    await nextTick();
+    const emitted = String(wrapper.emitted("update:modelValue")?.at(-1)?.[0]);
+    const [startValue, endValue] = emitted.split("-");
+    expect(startValue).toBe("12:00");
+    expect(endValue > startValue).toBe(true);
+    wrapper.unmount();
   });
 });

@@ -64,16 +64,11 @@ const metricCards = computed(() => [
     tone: "violet",
   },
   {
-    label: "设备数",
+    label: "设备",
     value: displayText(overview.value.devices, "0"),
     icon: markRaw(IconStethoscope),
     tone: "cyan",
-  },
-  {
-    label: "设备预警",
-    value: displayText(overview.value.deviceWarnings, "0"),
-    icon: markRaw(IconAlertTriangle),
-    tone: "amber",
+    sub: overview.value.deviceWarnings ? `${overview.value.deviceWarnings} 预警` : "",
   },
 ]);
 
@@ -358,9 +353,7 @@ onBeforeUnmount(() => {
   <section class="analytics-section" aria-labelledby="analytics-title" :aria-busy="loading">
     <header class="analytics-header">
       <div class="analytics-heading">
-        <span class="analytics-eyebrow">DATA INSIGHTS</span>
         <h2 id="analytics-title">运营数据概览</h2>
-        <p>按所选日期范围查看就诊与资源运行情况</p>
       </div>
       <div class="analytics-toolbar">
         <label class="analytics-date-field">
@@ -403,6 +396,7 @@ onBeforeUnmount(() => {
           <span>{{ metric.label }}</span>
         </div>
         <strong>{{ metric.value }}</strong>
+        <span v-if="metric.sub" class="analytics-metric-sub">{{ metric.sub }}</span>
       </article>
     </div>
 

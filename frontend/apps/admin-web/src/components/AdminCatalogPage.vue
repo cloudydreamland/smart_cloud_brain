@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref } from "vue";
+import { computed, inject, reactive, ref, type Ref } from "vue";
 import { storeToRefs } from "pinia";
 import {
   api,
@@ -14,7 +14,7 @@ import {
   type Doctor,
   type Drug,
 } from "@smart-cloud-brain/shared-api";
-import { DataTable, ErrorState, FormField, Modal, PaginationBar, ScbSelect, StatusTag } from "@smart-cloud-brain/shared-ui";
+import { DataTable, ErrorState, FormField, Modal, PaginationBar, ScbSelect, StatusTag, Toast } from "@smart-cloud-brain/shared-ui";
 
 type Entity = "department" | "doctor" | "drug";
 type FieldType = "text" | "password" | "number" | "textarea" | "checkbox" | "department-select";
@@ -28,7 +28,7 @@ const workflow = useAdminWorkflowStore();
 const { departments, doctors, drugs } = storeToRefs(workflow);
 const keyword = ref("");
 const error = ref("");
-const notice = ref("");
+const toast = inject<Ref<InstanceType<typeof Toast>>>("toast");
 const saving = ref(false);
 const loading = ref(false);
 const editorOpen = ref(false);
@@ -182,7 +182,6 @@ async function refresh() {
 }
 
 function openEditor(item?: CatalogRow) {
-  notice.value = "";
   error.value = "";
   Object.keys(form).forEach((key) => delete form[key]);
   if (item) {
@@ -239,11 +238,10 @@ async function save() {
   }
   saving.value = true;
   error.value = "";
-  notice.value = "";
   try {
     await saveHandlers[props.entity]();
     editorOpen.value = false;
-    notice.value = `${config.value.title}已保存。`;
+    toast?.value?.success("保存成功", `${config.value.title}已保存`);
     emit("refresh");
     await refresh();
   } catch (err) {
@@ -268,7 +266,6 @@ refresh();
       </header>
       <div class="panel-body stack">
         <ErrorState v-if="error" :message="error" />
-        <div v-if="notice" class="notice success">{{ notice }}</div>
         <div class="admin-filter-row"><input v-model.trim="keyword" placeholder="搜索当前表" /></div>
         <DataTable :rows="rows" :loading="loading" :error="error" :breakout="true" empty-title="暂无数据" empty-message="当前筛选条件下没有记录。">
           <thead><tr><th v-for="column in config.columns" :key="column">{{ config.columnLabels[column] ?? column }}</th><th class="actions-cell">操作</th></tr></thead>

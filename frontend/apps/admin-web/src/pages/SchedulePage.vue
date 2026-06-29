@@ -1,19 +1,23 @@
 <script setup lang="ts">
-import { computed, reactive, ref } from "vue";
+import { computed, inject, reactive, ref, watch, type Ref } from "vue";
 import { storeToRefs } from "pinia";
-import { aiSourceLabel, aiSourceTone, api, displayText, formatApiError, statusClass, toNumber, useAdminWorkflowStore, useAuthStore, usePagination, type Schedule, type ScheduleSaveRequest } from "@smart-cloud-brain/shared-api";
-import { EmptyState, ErrorState, FormField, LoadingState, Modal, PaginationBar, ScbSelect, StatusTag } from "@smart-cloud-brain/shared-ui";
+import { aiSourceLabel, aiSourceTone, api, displayText, formatApiError, statusClass, toNumber, useAdminWorkflowStore, useAuthStore, usePagination, type Doctor, type Schedule, type ScheduleSaveRequest } from "@smart-cloud-brain/shared-api";
+import { DatePicker, EmptyState, ErrorState, FormField, LoadingState, Modal, PaginationBar, ScbSelect, StatusTag, TimeRangePicker, Toast } from "@smart-cloud-brain/shared-ui";
+import DepartmentDoctorCascader from "../components/DepartmentDoctorCascader.vue";
 
 const emit = defineEmits<{ refresh: [] }>();
 const workflow = useAdminWorkflowStore();
-const { suggestions, schedules, doctors, departments } = storeToRefs(workflow);
+const { suggestions, doctors, departments } = storeToRefs(workflow);
+const schedules = ref<Schedule[]>([]);
+const scheduleDoctorCache = ref<Doctor[]>([]);
 const generateForm = reactive({ startDate: new Date(Date.now() + 86400000).toISOString().slice(0, 10), days: 3 });
 const filter = reactive({ startDate: new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10), endDate: new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10), departmentId: 0, doctorId: 0, status: "" });
 const form = reactive<ScheduleSaveRequest>({ doctorId: 0, departmentId: 0, workDate: new Date(Date.now() + 86400000).toISOString().slice(0, 10), timeRange: "09:00-12:00", capacity: 20, status: "PUBLISHED" });
 const loading = ref(false);
 const error = ref("");
-const notice = ref("");
+const toast = inject<Ref<InstanceType<typeof Toast>>>("toast");
 const editorOpen = ref(false);
+let scheduleRequestId = 0;
 const { currentPage: schedulePage, pageSize: schedulePageSize, total: scheduleTotal, pageRows: pagedSchedules } = usePagination(schedules, 8);
 const { currentPage: suggestionPage, pageSize: suggestionPageSize, total: suggestionTotal, pageRows: pagedSuggestions } = usePagination(suggestions, 5);
 
@@ -21,12 +25,22 @@ const departmentOptions = computed(() => [
   { value: 0, label: "全部科室" },
   ...departments.value.map((d) => ({ value: toNumber(d.id), label: displayText(d.name) })),
 ]);
-const doctorOptions = computed(() => [
-  { value: 0, label: "全部医生" },
-  ...doctors.value.map((d) => ({ value: toNumber(d.id), label: `${displayText(d.name)} / ${displayText(d.departmentName)}` })),
-]);
+const filterDoctors = computed(() => {
+  const merged = new Map<string, Doctor>();
+  scheduleDoctorCache.value.forEach((doctor) => merged.set(`${doctor.id}:${doctor.departmentId}`, doctor));
+  doctors.value.forEach((doctor) => merged.set(`${doctor.id}:${doctor.departmentId}`, doctor));
+  return Array.from(merged.values());
+});
+const editorDoctors = computed(() => {
+  const merged = new Map<number, Doctor>();
+  filterDoctors.value.forEach((doctor) => {
+    if (!merged.has(toNumber(doctor.id))) merged.set(toNumber(doctor.id), doctor);
+  });
+  doctors.value.forEach((doctor) => merged.set(toNumber(doctor.id), doctor));
+  return Array.from(merged.values());
+});
 const doctorOptionsNoAll = computed(() =>
-  doctors.value.map((d) => ({ value: toNumber(d.id), label: `${displayText(d.name)} / ${displayText(d.departmentName)}` }))
+  editorDoctors.value.map((d) => ({ value: toNumber(d.id), label: `${displayText(d.name)} / ${displayText(d.departmentName)}` }))
 );
 const filterStatusOptions = [
   { value: "", label: "全部状态" },
@@ -39,30 +53,55 @@ const formStatusOptions = [
 ];
 
 async function loadSchedules() {
+  const requestId = ++scheduleRequestId;
   loading.value = true;
   error.value = "";
   try {
-    schedules.value = await api.filteredSchedules({
+    const nextSchedules = await api.filteredSchedules({
       startDate: filter.startDate,
       endDate: filter.endDate,
       departmentId: filter.departmentId || undefined,
       doctorId: filter.doctorId || undefined,
       status: filter.status,
     }) as Schedule[];
+    if (requestId === scheduleRequestId) {
+      const discoveredDoctors = nextSchedules
+        .filter((item) => item.doctorId && item.departmentId && item.doctorName)
+        .map((item) => ({
+          id: toNumber(item.doctorId),
+          name: displayText(item.doctorName),
+          phone: "",
+          departmentId: toNumber(item.departmentId),
+          departmentName: displayText(item.departmentName),
+        }));
+      const doctorCache = new Map(scheduleDoctorCache.value.map((doctor) => [`${doctor.id}:${doctor.departmentId}`, doctor]));
+      discoveredDoctors.forEach((doctor) => doctorCache.set(`${doctor.id}:${doctor.departmentId}`, doctor));
+      scheduleDoctorCache.value = Array.from(doctorCache.values());
+      schedules.value = nextSchedules;
+    }
   } catch (err) {
-    error.value = formatApiError(err, "加载排班列表失败");
+    if (requestId === scheduleRequestId) error.value = formatApiError(err, "加载排班列表失败");
   } finally {
-    loading.value = false;
+    if (requestId === scheduleRequestId) loading.value = false;
   }
+}
+
+function updateFilterStartDate(value: string) {
+  filter.startDate = value;
+  if (value && filter.endDate && value > filter.endDate) filter.endDate = value;
+}
+
+function updateFilterEndDate(value: string) {
+  filter.endDate = value;
+  if (value && filter.startDate && value < filter.startDate) filter.startDate = value;
 }
 
 async function generate() {
   loading.value = true;
   error.value = "";
-  notice.value = "";
   try {
     suggestions.value = await api.generateSchedule({ ...generateForm }) as typeof suggestions.value;
-    notice.value = `已生成 ${suggestions.value.length} 条 AI 建议`;
+    toast?.value?.success("AI 建议", `已生成 ${suggestions.value.length} 条 AI 建议`);
   } catch (err) {
     error.value = formatApiError(err, "生成排班建议失败");
   } finally {
@@ -79,7 +118,7 @@ async function publish() {
     suggestions.value = [];
     await loadSchedules();
     emit("refresh");
-    notice.value = "排班已发布";
+    toast?.value?.success("操作成功", "排班已发布");
   } catch (err) {
     error.value = formatApiError(err, "发布排班失败");
   } finally {
@@ -89,8 +128,8 @@ async function publish() {
 
 function openEditor(item?: Schedule) {
   form.id = item ? toNumber(item.id, undefined) : undefined;
-  form.doctorId = toNumber(item?.doctorId, toNumber(doctors.value[0]?.id));
-  form.departmentId = toNumber(item?.departmentId, toNumber(doctors.value.find((doctor) => toNumber(doctor.id) === form.doctorId)?.departmentId, toNumber(departments.value[0]?.id)));
+  form.doctorId = toNumber(item?.doctorId, toNumber(editorDoctors.value[0]?.id));
+  form.departmentId = toNumber(item?.departmentId, toNumber(editorDoctors.value.find((doctor) => toNumber(doctor.id) === form.doctorId)?.departmentId, toNumber(departments.value[0]?.id)));
   form.workDate = displayText(item?.workDate, new Date(Date.now() + 86400000).toISOString().slice(0, 10));
   form.timeRange = displayText(item?.timeRange, "09:00-12:00");
   form.capacity = toNumber(item?.capacity, 20);
@@ -99,7 +138,7 @@ function openEditor(item?: Schedule) {
 }
 
 function syncDoctorDepartment() {
-  const doctor = doctors.value.find((item) => toNumber(item.id) === toNumber(form.doctorId));
+  const doctor = editorDoctors.value.find((item) => toNumber(item.id) === toNumber(form.doctorId));
   if (doctor) form.departmentId = toNumber(doctor.departmentId);
 }
 
@@ -110,7 +149,7 @@ async function saveSchedule() {
     await api.saveSchedule({ ...form, doctorId: toNumber(form.doctorId), departmentId: toNumber(form.departmentId), capacity: toNumber(form.capacity) });
     editorOpen.value = false;
     await loadSchedules();
-    notice.value = "排班已保存";
+    toast?.value?.success("保存成功", "排班已保存");
   } catch (err) {
     error.value = formatApiError(err, "保存排班失败");
   } finally {
@@ -124,7 +163,7 @@ async function cancelSchedule(item: Schedule) {
   try {
     await api.cancelSchedule({ scheduleId: toNumber(item.id) });
     await loadSchedules();
-    notice.value = "排班已取消";
+    toast?.value?.success("操作成功", "排班已取消");
   } catch (err) {
     error.value = formatApiError(err, "取消排班失败");
   } finally {
@@ -132,7 +171,14 @@ async function cancelSchedule(item: Schedule) {
   }
 }
 
-loadSchedules();
+watch(
+  () => [filter.startDate, filter.endDate, filter.departmentId, filter.doctorId, filter.status],
+  () => {
+    schedulePage.value = 1;
+    void loadSchedules();
+  },
+  { immediate: true }
+);
 </script>
 
 <template>
@@ -141,7 +187,7 @@ loadSchedules();
       <header class="panel-header"><div class="panel-title"><h2>AI 排班建议</h2></div></header>
       <div class="panel-body stack">
         <div class="admin-filter-row">
-          <input v-model="generateForm.startDate" type="date" />
+          <DatePicker v-model="generateForm.startDate" aria-label="AI 建议开始日期" :clearable="false" />
           <input v-model.number="generateForm.days" type="number" min="1" max="14" placeholder="天数" />
           <button type="button" :disabled="loading" @click="generate">生成建议</button>
           <button class="primary" type="button" :disabled="loading || !suggestions.length" @click="publish">发布</button>
@@ -160,14 +206,16 @@ loadSchedules();
       </header>
       <div class="panel-body stack">
         <ErrorState v-if="error" :message="error" />
-        <div v-if="notice" class="notice success">{{ notice }}</div>
         <div class="admin-filter-row">
-          <input v-model="filter.startDate" type="date" />
-          <input v-model="filter.endDate" type="date" />
-          <ScbSelect v-model="filter.departmentId" :options="departmentOptions" />
-          <ScbSelect v-model="filter.doctorId" :options="doctorOptions" />
+          <DatePicker :model-value="filter.startDate" aria-label="筛选开始日期" :clearable="false" @update:model-value="updateFilterStartDate" />
+          <DatePicker :model-value="filter.endDate" aria-label="筛选结束日期" :clearable="false" @update:model-value="updateFilterEndDate" />
+          <DepartmentDoctorCascader
+            v-model:department-id="filter.departmentId"
+            v-model:doctor-id="filter.doctorId"
+            :departments="departments"
+            :doctors="filterDoctors"
+          />
           <ScbSelect v-model="filter.status" :options="filterStatusOptions" />
-          <button type="button" :disabled="loading" @click="loadSchedules">搜索</button>
         </div>
         <LoadingState v-if="loading" />
         <template v-if="schedules.length">
@@ -198,8 +246,8 @@ loadSchedules();
         <div class="form-grid">
           <FormField label="医生"><ScbSelect v-model="form.doctorId" :options="doctorOptionsNoAll" @update:modelValue="syncDoctorDepartment" /></FormField>
           <FormField label="科室"><ScbSelect v-model="form.departmentId" :options="departmentOptions" :disabled="true" /></FormField>
-          <FormField label="日期"><input v-model="form.workDate" type="date" /></FormField>
-          <FormField label="时段"><input v-model.trim="form.timeRange" placeholder="09:00-12:00" /></FormField>
+          <FormField label="日期"><DatePicker v-model="form.workDate" aria-label="排班日期" :clearable="false" /></FormField>
+          <FormField label="时段"><TimeRangePicker v-model="form.timeRange" /></FormField>
           <FormField label="容量"><input v-model.number="form.capacity" type="number" min="1" max="100" /></FormField>
           <FormField label="状态"><ScbSelect v-model="form.status" :options="formStatusOptions" /></FormField>
         </div>

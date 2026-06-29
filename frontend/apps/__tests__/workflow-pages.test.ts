@@ -70,6 +70,7 @@ describe("closed-loop page smoke tests", () => {
     const wrapper = shallowMount(SchedulePage);
     expect(wrapper.text()).toContain("排班管理");
     expect(wrapper.text()).toContain("生成建议");
+    expect(wrapper.text()).not.toContain("搜索");
   });
 
   it("renders administrator account permissions", () => {

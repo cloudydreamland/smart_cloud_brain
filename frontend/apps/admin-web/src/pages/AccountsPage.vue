@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from "vue";
+import { computed, inject, onMounted, reactive, ref, watch, type Ref } from "vue";
 import { storeToRefs } from "pinia";
 import {
   api,
@@ -14,7 +14,7 @@ import {
   type Role,
   type RoleInfo,
 } from "@smart-cloud-brain/shared-api";
-import { DataTable, ErrorState, FormField, Modal, PaginationBar, ScbSelect, SegmentedControl, StatusTag } from "@smart-cloud-brain/shared-ui";
+import { DataTable, ErrorState, FormField, Modal, PaginationBar, ScbSelect, SegmentedControl, StatusTag, Toast } from "@smart-cloud-brain/shared-ui";
 
 const workflow = useAdminWorkflowStore();
 const { departments } = storeToRefs(workflow);
@@ -23,7 +23,7 @@ const roles = ref<RoleInfo[]>([]);
 const activeRole = ref("ADMIN");
 const keyword = ref("");
 const error = ref("");
-const notice = ref("");
+const toast = inject<Ref<InstanceType<typeof Toast>>>("toast");
 const loading = ref(false);
 const saving = ref(false);
 const editorOpen = ref(false);
@@ -149,7 +149,6 @@ async function refresh() {
 
 function openEditor(item?: Account) {
   error.value = "";
-  notice.value = "";
   form.id = item ? toNumber(item.id, undefined) : undefined;
   form.role = item ? ((displayText(item.role, "ADMIN") as Role) || "ADMIN") : defaultCreateRole();
   form.account = displayText(item?.account);
@@ -212,11 +211,10 @@ async function save() {
   }
   saving.value = true;
   error.value = "";
-  notice.value = "";
   try {
     await api.saveAccount(saveBody());
     editorOpen.value = false;
-    notice.value = "账户与权限已保存。";
+    toast?.value?.success("保存成功", "账户与权限已保存");
     await refresh();
   } catch (err) {
     error.value = formatApiError(err, "账户保存失败");
@@ -242,7 +240,6 @@ onMounted(refresh);
       </header>
       <div class="panel-body stack">
         <ErrorState v-if="error" :message="error" />
-        <div v-if="notice" class="notice success">{{ notice }}</div>
         <div class="account-role-bar">
           <SegmentedControl v-model="activeRole" :options="roleOptions" />
           <input v-model.trim="keyword" :placeholder="`搜索${currentRoleLabel}账号、姓名或权限`" />

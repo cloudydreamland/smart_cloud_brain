@@ -51,31 +51,56 @@
 .admin-topline-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-shrink: 0;
 }
 .topbar-btn {
-  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 32px;
   padding: 0 12px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 6px;
   background: var(--surface);
   color: var(--ink);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  white-space: nowrap;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 .topbar-btn:hover {
   background: var(--surface-alt, #f3f5f8);
 }
-.topbar-btn.danger {
-  color: var(--danger);
-  border-color: var(--danger-soft, #fbe5e2);
+.topbar-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
-.topbar-btn.danger:hover {
+.topbar-btn.ghost {
+  background: transparent;
+  border-color: var(--line);
+  color: var(--muted, #6b7280);
+}
+.topbar-btn.ghost:hover {
+  background: var(--surface-alt, #f3f5f8);
+  color: var(--ink);
+  border-color: var(--line-strong, #d1d5db);
+}
+.topbar-btn.text-danger {
+  background: transparent;
+  border: none;
+  color: var(--danger, #b42318);
+  padding: 0 8px;
+}
+.topbar-btn.text-danger:hover {
   background: var(--danger-soft, #fbe5e2);
 }
+.topbar-btn svg {
+  flex-shrink: 0;
+}
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.topbar-btn .spin { animation: spin 0.8s linear infinite; }
 
 .admin-notices {
   display: grid;
@@ -147,7 +172,8 @@
 
 .admin-filter-row input,
 .admin-filter-row select,
-.admin-filter-row .scb-select {
+.admin-filter-row .scb-select,
+.admin-filter-row .scb-date-picker {
   max-width: 240px;
 }
 
@@ -1404,7 +1430,7 @@ td.actions-cell .toolbar {
 
 .analytics-metric-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(150px, 1fr));
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
   gap: 14px;
 }
 
@@ -1456,6 +1482,13 @@ td.actions-cell .toolbar {
   font-weight: 800;
   letter-spacing: -0.045em;
   line-height: 1;
+}
+
+.analytics-metric-sub {
+  color: var(--danger, #b42318);
+  font-size: 12px;
+  font-weight: 500;
+  margin-top: 2px;
 }
 
 .analytics-chart-grid {
@@ -1556,7 +1589,8 @@ td.actions-cell .toolbar {
 
   .admin-filter-row input,
   .admin-filter-row select,
-  .admin-filter-row .scb-select {
+  .admin-filter-row .scb-select,
+  .admin-filter-row .scb-date-picker {
     max-width: none;
   }
 }

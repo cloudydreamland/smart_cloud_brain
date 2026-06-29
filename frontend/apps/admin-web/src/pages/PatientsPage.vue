@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from "vue";
+import { computed, inject, onMounted, reactive, ref, watch, type Ref } from "vue";
 import {
   api,
   displayText,
@@ -11,7 +11,7 @@ import {
   type PatientDetail,
   type PatientSaveRequest,
 } from "@smart-cloud-brain/shared-api";
-import { DataTable, ErrorState, FormField, Modal, PaginationBar, ScbSelect, StatusTag } from "@smart-cloud-brain/shared-ui";
+import { DataTable, ErrorState, FormField, Modal, PaginationBar, ScbSelect, StatusTag, Toast } from "@smart-cloud-brain/shared-ui";
 
 const rows = ref<Patient[]>([]);
 const detail = ref<PatientDetail | null>(null);
@@ -22,7 +22,7 @@ const maxAge = ref<number | undefined>();
 const loading = ref(false);
 const saving = ref(false);
 const error = ref("");
-const notice = ref("");
+const toast = inject<Ref<InstanceType<typeof Toast>>>("toast");
 const editorOpen = ref(false);
 const detailOpen = ref(false);
 
@@ -97,7 +97,6 @@ function openEditor(item: Patient) {
   form.allergyHistory = displayText(item.allergyHistory);
   form.pastHistory = displayText(item.pastHistory);
   editorOpen.value = true;
-  notice.value = "";
 }
 
 async function save() {
@@ -107,7 +106,6 @@ async function save() {
   }
   saving.value = true;
   error.value = "";
-  notice.value = "";
   try {
     await api.savePatient({
       id: form.id,
@@ -118,7 +116,7 @@ async function save() {
       pastHistory: form.pastHistory || undefined,
     });
     editorOpen.value = false;
-    notice.value = "患者档案已保存";
+    toast?.value?.success("保存成功", "患者档案已保存");
     await refresh();
   } catch (err) {
     error.value = formatApiError(err, "保存患者档案失败");
@@ -144,7 +142,6 @@ onMounted(refresh);
 
     <div class="panel-body stack">
       <ErrorState v-if="error" :message="error" />
-      <div v-if="notice" class="notice success">{{ notice }}</div>
 
       <div class="admin-filter-row">
         <input v-model.trim="keyword" placeholder="搜索姓名或手机号" @keyup.enter="refresh" />

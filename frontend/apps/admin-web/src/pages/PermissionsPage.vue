@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, inject, onMounted, ref, watch, type Ref } from "vue";
 import { api, displayText, formatApiError, type PermissionCatalogItem, type PermissionPayload, type Role } from "@smart-cloud-brain/shared-api";
-import { DataTable, ErrorState, SegmentedControl, StatusTag } from "@smart-cloud-brain/shared-ui";
+import { DataTable, ErrorState, SegmentedControl, StatusTag, Toast } from "@smart-cloud-brain/shared-ui";
 
 const payload = ref<PermissionPayload | null>(null);
 const activeRole = ref<Role>("ADMIN");
@@ -9,7 +9,7 @@ const selectedKeys = ref<string[]>([]);
 const loading = ref(false);
 const saving = ref(false);
 const error = ref("");
-const notice = ref("");
+const toast = inject<Ref<InstanceType<typeof Toast>>>("toast");
 
 const permissionLabels: Record<string, string> = {
   "dashboard:view": "工作台", "department:manage": "科室管理", "doctor:manage": "医生管理",
@@ -87,13 +87,12 @@ async function refresh() {
 async function save() {
   saving.value = true;
   error.value = "";
-  notice.value = "";
   try {
     payload.value = await api.saveRolePermissions({
       role: activeRole.value,
       permissionKeys: selectedKeys.value,
     }) as PermissionPayload;
-    notice.value = "角色权限已保存";
+    toast?.value?.success("保存成功", "角色权限已保存");
     syncSelectedKeys();
   } catch (err) {
     error.value = formatApiError(err, "权限保存失败");
@@ -120,7 +119,6 @@ onMounted(refresh);
 
     <div class="panel-body stack">
       <ErrorState v-if="error" :message="error" />
-      <div v-if="notice" class="notice success">{{ notice }}</div>
 
       <div class="account-role-bar">
         <SegmentedControl v-model="activeRole" :options="roles" />

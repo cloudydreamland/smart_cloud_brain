@@ -24,6 +24,8 @@ export { default as Alert } from "./components/Alert.vue";
 export { default as Badge } from "./components/Badge.vue";
 export { default as Toast } from "./components/Toast.vue";
 export { default as DatePicker } from "./components/DatePicker.vue";
+export { default as TimeRangePicker } from "./components/TimeRangePicker.vue";
+export type { TimeRangePreset } from "./components/TimeRangePicker.vue";
 export { default as ExpandableTabs } from "./components/ExpandableTabs.vue";
 export { default as Popover } from "./components/Popover.vue";
 export { default as StatCard } from "./components/StatCard.vue";

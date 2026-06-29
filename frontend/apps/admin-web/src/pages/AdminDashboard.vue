@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { storeToRefs } from "pinia";
-import { displayText, statusClass, statusText, useAdminWorkflowStore } from "@smart-cloud-brain/shared-api";
+import { aiTaskLabel, displayText, statusClass, statusText, useAdminWorkflowStore } from "@smart-cloud-brain/shared-api";
 import { StatusTag } from "@smart-cloud-brain/shared-ui";
 import AdminAnalyticsSection from "../components/AdminAnalyticsSection.vue";
 
@@ -120,7 +120,7 @@ const highRisk = computed(() => triageDesk.value.filter((item) => ["MANUAL_REQUI
             </thead>
             <tbody>
               <tr v-for="item in aiLogs.slice(0, 5)" :key="String(item.requestId || item.createdAt)">
-                <td><strong>{{ displayText(item.taskType, "UNKNOWN") }}</strong></td>
+                <td><strong>{{ aiTaskLabel(item.taskType) }}</strong></td>
                 <td>{{ displayText(item.provider) }}</td>
                 <td>{{ displayText(item.latencyMs, "0") }}ms</td>
                 <td>

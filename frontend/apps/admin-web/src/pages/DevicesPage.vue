@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { computed, reactive, ref } from "vue";
+import { computed, inject, reactive, ref, type Ref } from "vue";
 import { storeToRefs } from "pinia";
 import { api, displayText, formatApiError, statusClass, toNumber, useAdminWorkflowStore, useAuthStore, usePagination, type Device, type DeviceSaveRequest, type DeviceUsage, type DeviceUsageSaveRequest } from "@smart-cloud-brain/shared-api";
-import { EmptyState, ErrorState, FormField, Modal, PaginationBar, ScbSelect, StatusTag } from "@smart-cloud-brain/shared-ui";
+import { EmptyState, ErrorState, FormField, Modal, PaginationBar, ScbSelect, StatusTag, Toast } from "@smart-cloud-brain/shared-ui";
 
 const workflow = useAdminWorkflowStore();
 const { departments } = storeToRefs(workflow);
@@ -12,7 +12,7 @@ const keyword = ref("");
 const status = ref("");
 const loading = ref(false);
 const error = ref("");
-const notice = ref("");
+const toast = inject<Ref<InstanceType<typeof Toast>>>("toast");
 const editorOpen = ref(false);
 const usageOpen = ref(false);
 const selectedDevice = ref<Device | null>(null);
@@ -84,11 +84,10 @@ function openEditor(item?: Device) {
 async function save() {
   loading.value = true;
   error.value = "";
-  notice.value = "";
   try {
     await api.saveDevice({ ...form, departmentId: toNumber(form.departmentId) || undefined });
     editorOpen.value = false;
-    notice.value = "设备已保存";
+    toast?.value?.success("保存成功", "设备已保存");
     await refresh();
   } catch (err) {
     error.value = formatApiError(err, "保存设备失败");
@@ -184,7 +183,6 @@ refresh();
     </header>
     <div class="panel-body stack">
       <ErrorState v-if="error" :message="error" />
-      <div v-if="notice" class="notice success">{{ notice }}</div>
       <div class="admin-filter-row">
         <input v-model.trim="keyword" placeholder="搜索编号、名称、类别、位置" />
         <ScbSelect v-model="status" :options="deviceStatusFilterOptions" />

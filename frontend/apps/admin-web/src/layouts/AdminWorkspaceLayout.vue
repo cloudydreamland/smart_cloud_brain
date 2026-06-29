@@ -82,9 +82,15 @@ onBeforeUnmount(() => unbind?.());
           <span>管理员 #{{ session?.userId || '-' }}</span>
         </div>
         <div class="admin-topline-actions">
-          <a :href="difyUrl" target="_blank" rel="noopener" type="button" class="topbar-btn" v-if="difyUrl">Dify 管理</a>
-          <button type="button" class="topbar-btn" :disabled="loading" @click="refresh">刷新</button>
-          <button type="button" class="topbar-btn danger" @click="logout">退出</button>
+          <a :href="difyUrl" target="_blank" rel="noopener" type="button" class="topbar-btn ghost" v-if="difyUrl">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            Dify
+          </a>
+          <button type="button" class="topbar-btn ghost" :disabled="loading" @click="refresh">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="{ 'spin': loading }"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            刷新
+          </button>
+          <button type="button" class="topbar-btn text-danger" @click="logout">退出</button>
         </div>
       </header>
 

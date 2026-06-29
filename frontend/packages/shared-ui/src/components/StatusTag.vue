@@ -35,6 +35,8 @@ const label = computed(() => {
     IN_USE: "使用中",
     MAINTENANCE: "维修中",
     RETIRED: "已停用",
+    ASSIGNED: "已分配",
+    SUCCESS: "成功",
     PATIENT: "患者",
     DOCTOR: "医生",
     ADMIN: "管理员",
