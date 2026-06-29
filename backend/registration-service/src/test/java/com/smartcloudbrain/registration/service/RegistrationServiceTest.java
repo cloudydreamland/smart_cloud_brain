@@ -149,7 +149,7 @@ class RegistrationServiceTest {
     assertEquals(1, registrationService.list().size());
 
     AppointmentSlot available = slot(4L, 2L, 3L, 1, "AVAILABLE");
-    when(appointmentSlotRepository.findByStatusAndStartTimeGreaterThanEqualOrderByStartTimeAscDoctorIdAsc(
+    when(appointmentSlotRepository.findByStatusAndEndTimeGreaterThanEqualOrderByStartTimeAscDoctorIdAsc(
         any(), any())).thenReturn(List.of(available, slot(5L, 2L, 3L, 0, "AVAILABLE")));
     when(doctorRepository.findById(2L)).thenReturn(Optional.of(doctor(2L)));
     when(departmentRepository.findById(3L)).thenReturn(Optional.of(department(3L)));

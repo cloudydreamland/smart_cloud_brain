@@ -177,6 +177,7 @@ services:
       SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: ${DB_POOL_MIN_IDLE:-1}
       JWT_SECRET: ${JWT_SECRET:-smart-cloud-brain-local-secret-please-change}
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-smart-cloud-brain-internal-local-token-change}
+      AUTH_ENABLE_DEMO_ACCOUNT: ${AUTH_ENABLE_DEMO_ACCOUNT:-true}
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-scb}
