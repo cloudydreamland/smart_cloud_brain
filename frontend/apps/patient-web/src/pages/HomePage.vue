@@ -70,7 +70,7 @@ const locationItems = computed(() => {
       };
     })
     .filter((item) => item.title && item.imageUrl);
-  return items.length ? items : defaultLocations;
+  return items.length ? items : [];
 });
 
 const featuredDepartmentLimit = computed(() => numberValue(featuredDepartmentsContent.value.limit, 12));
@@ -83,31 +83,8 @@ const fallbackDepartmentNames = computed(() => {
   const names = contentArray(featuredDepartmentsModule.value, "fallbackNames")
     .filter((item): item is string => typeof item === "string" && item.trim().length > 0)
     .map((item) => item.trim());
-  return names.length ? names : defaultDepartmentNames;
+  return names.length ? names : [];
 });
-
-const defaultLocations: HomeLocation[] = [
-  {
-    imageUrl: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=900&q=80",
-    alt: "现代化医院建筑",
-    title: "智慧云脑北京中心",
-    meta: "北京 · 海淀",
-  },
-  {
-    imageUrl: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=900&q=80",
-    alt: "医院走廊",
-    title: "智慧云脑上海中心",
-    meta: "上海 · 浦东",
-  },
-  {
-    imageUrl: "https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&w=900&q=80",
-    alt: "临床团队工作场景",
-    title: "智慧云脑深圳中心",
-    meta: "深圳 · 南山",
-  },
-];
-
-const defaultDepartmentNames = ["神经内科", "心血管内科", "呼吸内科", "消化内科", "骨科", "妇科", "儿科", "肿瘤科", "康复医学科"];
 
 function moduleByType(type: string): PatientHomeModule | undefined {
   return homeModules.value.find((module) => module.type === type);

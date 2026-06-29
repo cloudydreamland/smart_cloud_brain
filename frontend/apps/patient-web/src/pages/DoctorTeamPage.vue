@@ -13,15 +13,6 @@ type DoctorCard = {
   tags: string[];
 };
 
-const fallbackDoctors: DoctorCard[] = [
-  { id: "fallback-1", name: "周明远", title: "主任医师", department: "神经内科", specialty: "脑血管病、头痛眩晕、认知障碍", profile: "长期参与卒中绿色通道和复杂神经系统疾病多学科会诊，强调症状时间线和影像资料联合判断。", tags: ["脑血管病", "头痛", "认知障碍"] },
-  { id: "fallback-2", name: "林若华", title: "主任医师", department: "心血管内科", specialty: "冠心病、高血压、心律失常", profile: "关注慢病指标趋势和长期用药安全，适合胸闷胸痛、心悸和复诊调药患者。", tags: ["冠心病", "高血压", "心律失常"] },
-  { id: "fallback-3", name: "陈启航", title: "副主任医师", department: "呼吸内科", specialty: "慢阻肺、哮喘、肺部感染", profile: "擅长围绕咳嗽、气短、肺部影像异常梳理诊疗线索，重视吸烟史和过敏史采集。", tags: ["咳嗽", "哮喘", "肺部感染"] },
-  { id: "fallback-4", name: "沈知微", title: "主任医师", department: "消化内科", specialty: "胃肠疾病、肝胆胰疾病、内镜评估", profile: "从腹痛、反酸、排便变化和检查结果切入，帮助患者做好胃肠镜和复诊准备。", tags: ["腹痛", "胃肠镜", "肝胆胰"] },
-  { id: "fallback-5", name: "赵闻舟", title: "副主任医师", department: "骨科", specialty: "脊柱关节、运动损伤、术后康复", profile: "结合影像、疼痛部位和功能受限情况评估骨科问题，衔接康复医学科持续管理。", tags: ["关节痛", "运动损伤", "康复"] },
-  { id: "fallback-6", name: "许安宁", title: "主任医师", department: "儿科", specialty: "儿童发热、过敏、生长发育", profile: "强调儿童精神状态、进食睡眠和体温趋势，帮助监护人准备清晰病情描述。", tags: ["儿童发热", "过敏", "生长发育"] },
-];
-
 const doctors = ref<DataRow[]>([]);
 const departments = ref<DataRow[]>([]);
 const recommendedDoctors = ref<PatientRecommendation[]>([]);
@@ -33,7 +24,7 @@ const selected = ref<DoctorCard | null>(null);
 
 const cards = computed<DoctorCard[]>(() => {
   if (recommendedDoctors.value.length) return recommendedDoctors.value.map(recommendationCard);
-  if (!doctors.value.length) return fallbackDoctors;
+  if (!doctors.value.length) return [];
   return doctors.value.map((row, index) => ({
     id: String(row.doctorId || row.id || index),
     name: fieldText(row, "name", fieldText(row, "doctorName", "未命名医生")),
@@ -45,7 +36,7 @@ const cards = computed<DoctorCard[]>(() => {
   }));
 });
 const departmentOptions = computed(() => {
-  const names = new Set(["全部科室", ...fallbackDoctors.map((item) => item.department)]);
+  const names = new Set(["全部科室"]);
   departments.value.forEach((row) => names.add(fieldText(row, "name", fieldText(row, "departmentName", "未定科室"))));
   cards.value.forEach((item) => names.add(item.department));
   return [...names].filter(Boolean);

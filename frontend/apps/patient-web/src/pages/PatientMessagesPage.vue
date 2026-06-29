@@ -27,13 +27,8 @@ const options = [
   { label: "已读", value: "READ" },
 ];
 
-const fallbackRows: MessageRow[] = [
-  { id: 0, type: "系统通知", title: "患者服务已整合分诊、挂号和诊后资料", content: "你可以从患者服务台查看当前就诊旅程，或进入我的预约、病历、处方继续处理。", time: "持续有效", read: false },
-  { id: -1, type: "预约提醒", title: "预约后请核对就诊人和到院时间", content: "无法按时到院时，请提前取消预约，避免影响后续号源使用。", time: "就诊前", read: false },
-  { id: -2, type: "诊后通知", title: "病历和处方生成后将归档到个人服务", content: "复诊前建议回看诊断、医嘱、处方药品和风险审核提示。", time: "诊后", read: true },
-];
 const messages = computed<MessageRow[]>(() => {
-  const normalized = rows.value.map((row, index) => ({
+  return rows.value.map((row, index) => ({
     id: toNumber(row.notificationId ?? row.id, index + 1),
     type: normalizeType(fieldText(row, "type", fieldText(row, "category", ""))),
     title: fieldText(row, "title", "系统通知"),
@@ -42,7 +37,6 @@ const messages = computed<MessageRow[]>(() => {
     read: fieldText(row, "readStatus", fieldText(row, "status", "")).toUpperCase() === "READ" || row.read === true,
     source: row,
   }));
-  return normalized.length ? normalized : fallbackRows;
 });
 const filteredMessages = computed(() => messages.value.filter((item) => {
   if (filter.value === "READ") return item.read;
