@@ -12,7 +12,6 @@ import {
   type DeviceUsageSaveRequest,
   type DoctorSaveRequest,
   type DrugSaveRequest,
-  type KnowledgeEntrySaveRequest,
   type MedicalRecordGenerateRequest,
   type MedicalRecordSaveRequest,
   type PatientNotice,
@@ -34,8 +33,6 @@ import {
   type PatientSitePreviewToken,
   type PrescriptionCheckRequest,
   type PrescriptionCreateRequest,
-  type PromptTestRequest,
-  type PromptTemplateSaveRequest,
   type RegistrationCreateRequest,
   type RolePermissionSaveRequest,
   type ScheduleCancelRequest,
@@ -44,7 +41,6 @@ import {
   type ScheduleSaveRequest,
   type StatisticsQuery,
   type Session,
-  type SystemDictSaveRequest,
   type TriageAssignRequest,
   type TriageRequest,
 } from "./types";
@@ -181,7 +177,6 @@ export const doctorApi = {
   createPrescription: (body: PrescriptionCreateRequest) => post<DataRow>("/prescription/create", body),
   prescriptions: () => get<DataRow[]>("/prescription/list"),
   prescriptionDetail: patientApi.prescriptionDetail,
-  searchDrugs: (q = "") => get<DataRow[]>(`/search/drugs${query({ q })}`),
   notifications: (params?: string | NotificationQuery) => get<DataRow[]>(`/notification/list${query(typeof params === "string" ? { readStatus: params } : params ?? {})}`),
   markNotificationRead: (notificationId: number) => post<DataRow>("/notification/read", { notificationId }),
   handleNotification: (notificationId: number, handleStatus: "HANDLED" | "IGNORED") => post<DataRow>("/notification/handle", { notificationId, handleStatus }),
@@ -199,14 +194,7 @@ export const adminApi = {
   saveDoctor: (body: DoctorSaveRequest) => post<DataRow>("/admin/doctor/save", body),
   drugs: () => get<DataRow[]>("/admin/drug/list"),
   saveDrug: (body: DrugSaveRequest) => post<DataRow>("/admin/drug/save", body),
-  prompts: () => get<DataRow[]>("/admin/prompt-template/list"),
-  savePrompt: (body: PromptTemplateSaveRequest) => post<DataRow>("/admin/prompt-template/save", body),
-  testPrompt: (body: PromptTestRequest) => post<DataRow>("/admin/prompt-template/test", body),
   aiLogs: () => get<DataRow[]>("/admin/ai-log/list"),
-  knowledgeEntries: () => get<DataRow[]>("/admin/knowledge/list"),
-  saveKnowledgeEntry: (body: KnowledgeEntrySaveRequest) => post<DataRow>("/admin/knowledge/save", body),
-  dicts: (dictType = "") => get<DataRow[]>(`/admin/dict/list${query({ dictType })}`),
-  saveDict: (body: SystemDictSaveRequest) => post<DataRow>("/admin/dict/save", body),
   generateSchedule: (body: ScheduleGenerateRequest) => post<DataRow[]>("/admin/schedule/generate", body),
   publishSchedule: (body: SchedulePublishRequest) => post<DataRow[]>("/admin/schedule/publish", body),
   schedules: () => get<DataRow[]>("/admin/schedule/list"),
@@ -254,9 +242,6 @@ export const adminApi = {
   deletePatientSiteRecommendation: (id: number) => post<PatientRecommendation>("/admin/patient-site/recommendations/delete", { id }),
   updatePatientSiteRecommendationStatus: (body: PatientRecommendationStatusRequest) => post<PatientRecommendation>("/admin/patient-site/recommendations/status", body),
   sortPatientSiteRecommendations: (body: PatientRecommendationSortRequest) => post<PatientRecommendation[]>("/admin/patient-site/recommendations/sort", body),
-  searchKnowledge: (q: string, departmentCode = "") => get<DataRow[]>(`/search/knowledge${query({ q, departmentCode })}`),
-  searchDrugs: (q: string) => get<DataRow[]>(`/search/drugs${query({ q })}`),
-  searchPrompts: (q: string) => get<DataRow[]>(`/admin/search/prompts${query({ q })}`),
 };
 
 export const api = {
@@ -274,9 +259,7 @@ export const api = {
   notifications: doctorApi.notifications, markNotificationRead: doctorApi.markNotificationRead, handleNotification: doctorApi.handleNotification,
   saveDepartment: adminApi.saveDepartment, adminDepartments: adminApi.departments,
   accounts: adminApi.accounts, roles: adminApi.roles, saveAccount: adminApi.saveAccount,
-  saveDoctor: adminApi.saveDoctor, saveDrug: adminApi.saveDrug, prompts: adminApi.prompts,
-  savePrompt: adminApi.savePrompt, testPrompt: adminApi.testPrompt, aiLogs: adminApi.aiLogs, knowledgeEntries: adminApi.knowledgeEntries,
-  saveKnowledgeEntry: adminApi.saveKnowledgeEntry, dicts: adminApi.dicts, saveDict: adminApi.saveDict,
+  saveDoctor: adminApi.saveDoctor, saveDrug: adminApi.saveDrug, aiLogs: adminApi.aiLogs,
   generateSchedule: adminApi.generateSchedule, publishSchedule: adminApi.publishSchedule,
   schedules: adminApi.schedules, scheduleSuggestionDetail: adminApi.scheduleSuggestionDetail,
   triageDesk: adminApi.triageDesk, triageDetail: adminApi.triageDetail,
@@ -303,7 +286,6 @@ export const api = {
   publishPatientSiteConfig: adminApi.publishPatientSiteConfig,
   patientSiteConfigHistory: adminApi.patientSiteConfigHistory,
   patientSitePreviewToken: adminApi.patientSitePreviewToken,
-  searchKnowledge: adminApi.searchKnowledge, searchDrugs: adminApi.searchDrugs, searchPrompts: adminApi.searchPrompts,
 };
 
 export function gatewayBase() {

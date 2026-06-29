@@ -8,24 +8,17 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartcloudbrain.admin.client.InternalAiClient;
 import com.smartcloudbrain.admin.client.InternalDoctorClient;
 import com.smartcloudbrain.admin.client.InternalTriageClient;
 import com.smartcloudbrain.admin.config.AdminRedisCacheConfig;
 import com.smartcloudbrain.admin.dto.admin.DrugSaveRequest;
-import com.smartcloudbrain.admin.dto.admin.SystemDictSaveRequest;
 import com.smartcloudbrain.admin.entity.Drug;
-import com.smartcloudbrain.admin.entity.KnowledgeEntry;
-import com.smartcloudbrain.admin.entity.SystemDict;
 import com.smartcloudbrain.admin.repository.AiScheduleSuggestionRepository;
 import com.smartcloudbrain.admin.repository.AdminUserRepository;
 import com.smartcloudbrain.admin.repository.DepartmentRepository;
 import com.smartcloudbrain.admin.repository.DoctorRepository;
 import com.smartcloudbrain.admin.repository.DrugRepository;
-import com.smartcloudbrain.admin.repository.KnowledgeEntryRepository;
-import com.smartcloudbrain.admin.repository.PromptTemplateRepository;
-import com.smartcloudbrain.admin.repository.SystemDictRepository;
 import com.smartcloudbrain.common.security.PasswordHashService;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,13 +41,11 @@ class AdminCatalogServiceCacheTest {
 
   @Autowired private AdminCatalogService adminCatalogService;
   @Autowired private DrugRepository drugRepository;
-  @Autowired private KnowledgeEntryRepository knowledgeEntryRepository;
-  @Autowired private SystemDictRepository systemDictRepository;
   @Autowired private CacheManager cacheManager;
 
   @BeforeEach
   void resetMocksAndCache() {
-    reset(drugRepository, knowledgeEntryRepository, systemDictRepository);
+    reset(drugRepository);
     Cache cache = cacheManager.getCache("adminCatalog");
     if (cache != null) {
       cache.clear();
@@ -64,19 +55,11 @@ class AdminCatalogServiceCacheTest {
   @Test
   void repeatedCatalogReadsUseCache() {
     when(drugRepository.findAll()).thenReturn(List.of(drug("aspirin")));
-    when(knowledgeEntryRepository.findByStatus("ENABLED")).thenReturn(List.of(knowledge("cold")));
-    when(systemDictRepository.findAll()).thenReturn(List.of(dict("TRIAGE_STATUS", "CREATED")));
 
     adminCatalogService.drugs();
     adminCatalogService.drugs();
-    adminCatalogService.searchKnowledge("cold", "");
-    adminCatalogService.searchKnowledge("cold", "");
-    adminCatalogService.dicts(null);
-    adminCatalogService.dicts(null);
 
     verify(drugRepository, times(1)).findAll();
-    verify(knowledgeEntryRepository, times(1)).findByStatus("ENABLED");
-    verify(systemDictRepository, times(1)).findAll();
   }
 
   @Test
@@ -93,22 +76,6 @@ class AdminCatalogServiceCacheTest {
     adminCatalogService.drugs();
 
     verify(drugRepository, times(2)).findAll();
-  }
-
-  @Test
-  void dictWritesEvictCatalogCache() {
-    when(systemDictRepository.findAll()).thenReturn(List.of(dict("TRIAGE_STATUS", "CREATED")));
-    when(systemDictRepository.save(any(SystemDict.class))).thenAnswer(invocation -> {
-      SystemDict dict = invocation.getArgument(0);
-      dict.setId(11L);
-      return dict;
-    });
-
-    adminCatalogService.dicts(null);
-    adminCatalogService.saveDict(new SystemDictSaveRequest(null, "TRIAGE_STATUS", "CLOSED", "closed", 2, "ENABLED"));
-    adminCatalogService.dicts(null);
-
-    verify(systemDictRepository, times(2)).findAll();
   }
 
   @Test
@@ -134,29 +101,6 @@ class AdminCatalogServiceCacheTest {
     return drug;
   }
 
-  private static KnowledgeEntry knowledge(String title) {
-    KnowledgeEntry entry = new KnowledgeEntry();
-    entry.setId(2L);
-    entry.setTitle(title);
-    entry.setSymptoms(title);
-    entry.setRiskSignals("");
-    entry.setAdvice("rest");
-    entry.setDepartmentCode("GENERAL");
-    entry.setStatus("ENABLED");
-    return entry;
-  }
-
-  private static SystemDict dict(String type, String key) {
-    SystemDict dict = new SystemDict();
-    dict.setId(3L);
-    dict.setDictType(type);
-    dict.setDictKey(key);
-    dict.setDictValue(key);
-    dict.setSort(1);
-    dict.setStatus("ENABLED");
-    return dict;
-  }
-
   @Configuration
   @EnableCaching
   static class CacheTestConfig {
@@ -171,9 +115,6 @@ class AdminCatalogServiceCacheTest {
         DepartmentRepository departmentRepository,
         DoctorRepository doctorRepository,
         DrugRepository drugRepository,
-        PromptTemplateRepository promptTemplateRepository,
-        KnowledgeEntryRepository knowledgeEntryRepository,
-        SystemDictRepository systemDictRepository,
         AiScheduleSuggestionRepository aiScheduleSuggestionRepository,
         AdminUserRepository adminUserRepository,
         InternalDoctorClient internalDoctorClient,
@@ -185,25 +126,18 @@ class AdminCatalogServiceCacheTest {
           departmentRepository,
           doctorRepository,
           drugRepository,
-          promptTemplateRepository,
-          knowledgeEntryRepository,
-          systemDictRepository,
           aiScheduleSuggestionRepository,
           adminUserRepository,
           internalDoctorClient,
           internalAiClient,
           internalTriageClient,
-          passwordHashService,
-          new ObjectMapper()
+          passwordHashService
       );
     }
 
     @Bean DepartmentRepository departmentRepository() { return mock(DepartmentRepository.class); }
     @Bean DoctorRepository doctorRepository() { return mock(DoctorRepository.class); }
     @Bean DrugRepository drugRepository() { return mock(DrugRepository.class); }
-    @Bean PromptTemplateRepository promptTemplateRepository() { return mock(PromptTemplateRepository.class); }
-    @Bean KnowledgeEntryRepository knowledgeEntryRepository() { return mock(KnowledgeEntryRepository.class); }
-    @Bean SystemDictRepository systemDictRepository() { return mock(SystemDictRepository.class); }
     @Bean AiScheduleSuggestionRepository aiScheduleSuggestionRepository() { return mock(AiScheduleSuggestionRepository.class); }
     @Bean AdminUserRepository adminUserRepository() { return mock(AdminUserRepository.class); }
     @Bean InternalDoctorClient internalDoctorClient() { return mock(InternalDoctorClient.class); }

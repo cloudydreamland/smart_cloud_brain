@@ -113,7 +113,6 @@ const highRisk = computed(() => triageDesk.value.filter((item) => ["MANUAL_REQUI
         <div class="panel">
           <div class="panel-header">
             <strong>AI 日志</strong>
-            <RouterLink to="/prompts">查看全部 →</RouterLink>
           </div>
           <table>
             <thead>

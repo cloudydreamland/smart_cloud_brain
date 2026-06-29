@@ -176,6 +176,7 @@ refresh();
 </script>
 
 <template>
+  <section class="catalog-layout">
   <section class="panel">
     <header class="panel-header">
       <div class="panel-title"><h2>设备管理</h2></div>
@@ -188,7 +189,8 @@ refresh();
         <input v-model.trim="keyword" placeholder="搜索编号、名称、类别、位置" />
         <ScbSelect v-model="status" :options="deviceStatusFilterOptions" />
       </div>
-      <div v-if="filtered.length" class="table-scroll table-breakout">
+      <template v-if="filtered.length">
+      <div class="table-scroll table-breakout">
         <table class="data-table">
           <thead><tr><th>编号</th><th>名称</th><th>类别</th><th>科室</th><th>状态</th><th>使用量</th><th class="actions-cell">操作</th></tr></thead>
           <tbody>
@@ -207,8 +209,9 @@ refresh();
             </tr>
           </tbody>
         </table>
-        <PaginationBar v-model="currentPage" :total="total" :page-size="pageSize" />
       </div>
+      <PaginationBar v-model="currentPage" :total="total" :page-size="pageSize" />
+      </template>
       <EmptyState v-else title="暂无设备" />
     </div>
     <Modal :open="editorOpen" title="设备编辑" description="填写或修改设备信息。" @close="editorOpen = false">
@@ -250,5 +253,6 @@ refresh();
         <button class="danger" type="button" @click="doRetire">确认停用</button>
       </template>
     </Modal>
+  </section>
   </section>
 </template>

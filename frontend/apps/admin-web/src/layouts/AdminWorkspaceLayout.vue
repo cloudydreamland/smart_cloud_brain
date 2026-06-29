@@ -35,7 +35,6 @@ const navGroups = computed(() => [
   ] },
   { label: "配置", items: [
     { label: "患者端配置", to: "/patient-site" },
-    { label: "搜索", to: "/search" },
   ] },
 ]);
 

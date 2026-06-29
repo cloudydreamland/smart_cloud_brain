@@ -13,70 +13,32 @@ import {
   type Department,
   type Doctor,
   type Drug,
-  type KnowledgeEntry,
-  type PromptTemplateSaveRequest,
-  type PromptTestRequest,
-  type PromptTemplate,
-  type SystemDict,
 } from "@smart-cloud-brain/shared-api";
 import { DataTable, ErrorState, FormField, Modal, PaginationBar, ScbSelect, StatusTag } from "@smart-cloud-brain/shared-ui";
 
-type Entity = "department" | "doctor" | "drug" | "knowledge" | "prompt" | "dict";
+type Entity = "department" | "doctor" | "drug";
 type FieldType = "text" | "password" | "number" | "textarea" | "checkbox" | "department-select";
 type FieldConfig = [key: string, label: string, type: FieldType];
 type DictOption = { value: string; label: string };
-type CatalogRow = Department | Doctor | Drug | KnowledgeEntry | PromptTemplate | SystemDict;
+type CatalogRow = Department | Doctor | Drug;
 
 const props = defineProps<{ entity: Entity }>();
 const emit = defineEmits<{ refresh: [] }>();
 const workflow = useAdminWorkflowStore();
-const { departments, doctors, drugs, knowledge, prompts, dicts } = storeToRefs(workflow);
+const { departments, doctors, drugs } = storeToRefs(workflow);
 const keyword = ref("");
 const error = ref("");
 const notice = ref("");
 const saving = ref(false);
-const testing = ref(false);
 const loading = ref(false);
 const editorOpen = ref(false);
-const testResult = ref("");
 const form = reactive<Record<string, string | number | boolean | undefined>>({});
 
-const promptTasks = [
-  {
-    value: "TRIAGE",
-    label: "智能分诊",
-    required: ["recommendedDepartment", "departmentCode", "recommendedDoctorDirection", "urgencyLevel", "confidence", "recommendedDoctorIds", "reason"],
-    sample: "胸痛、气短两天，活动后加重",
-  },
-  {
-    value: "MEDICAL_RECORD",
-    label: "病历生成",
-    required: ["chiefComplaint", "presentIllness", "pastHistory", "physicalExam", "diagnosis", "treatmentAdvice", "soapContent"],
-    sample: "患者胸痛、气短两天，活动后加重，休息后稍缓解。",
-  },
-  {
-    value: "PRESCRIPTION_CHECK",
-    label: "处方审核",
-    required: ["riskLevel", "riskDescription", "suggestions", "interactions", "contraindications", "adjustmentSuggestions"],
-    sample: "诊断：胸痛待查，高血压；药品：aspirin 100mg once daily oral",
-  },
-];
-
 const fallbackDicts: Record<string, DictOption[]> = {
-  DICT_TYPE: [
-    { value: "SYSTEM_STATUS", label: "系统状态" },
-    { value: "PROMPT_TASK_TYPE", label: "AI 任务类型" },
-    { value: "REGISTRATION_STATUS", label: "挂号状态" },
-    { value: "TRIAGE_STATUS", label: "分诊状态" },
-    { value: "RISK_LEVEL", label: "风险等级" },
-    { value: "READ_STATUS", label: "阅读状态" },
-    { value: "GENDER", label: "性别" },
-  ],
   SYSTEM_STATUS: [
     { value: "ENABLED", label: "启用" },
     { value: "DISABLED", label: "停用" },
   ],
-  PROMPT_TASK_TYPE: promptTasks.map((task) => ({ value: task.value, label: task.label })),
   REGISTRATION_STATUS: [
     { value: "CREATED", label: "待接诊" },
     { value: "CONFIRMED", label: "已确认" },
@@ -142,33 +104,6 @@ const configs: Record<Entity, {
     columnLabels: { id: "编号", name: "药品名称", specification: "规格", status: "状态" },
     fields: [["name", "药品名称", "text"], ["specification", "规格", "text"], ["contraindication", "禁忌", "textarea"], ["interactionRule", "相互作用规则", "textarea"], ["status", "状态", "text"]],
   },
-  knowledge: {
-    title: "知识库维护",
-    description: "维护症状、风险信号、建议和科室编码。",
-    rows: () => knowledge.value,
-    keys: ["title", "symptoms", "riskSignals", "departmentCode"],
-    columns: ["id", "title", "departmentCode", "status"],
-    columnLabels: { id: "编号", title: "标题", departmentCode: "科室编码", status: "状态" },
-    fields: [["title", "标题", "text"], ["symptoms", "症状", "textarea"], ["riskSignals", "风险信号", "textarea"], ["advice", "建议", "textarea"], ["departmentCode", "科室编码", "text"], ["status", "状态", "text"]],
-  },
-  prompt: {
-    title: "提示词维护",
-    description: "维护智能任务模板、输出结构定义和版本。",
-    rows: () => prompts.value,
-    keys: ["taskType", "templateName", "departmentCode", "version"],
-    columns: ["id", "taskType", "templateName", "departmentCode", "version", "enabled"],
-    columnLabels: { id: "编号", taskType: "任务类型", templateName: "模板名称", departmentCode: "科室编码", version: "版本", enabled: "启用" },
-    fields: [["taskType", "任务类型", "text"], ["departmentCode", "科室编码", "text"], ["templateName", "模板名称", "text"], ["templateContent", "模板内容", "textarea"], ["outputSchema", "输出结构定义", "textarea"], ["version", "版本", "text"], ["enabled", "启用", "checkbox"]],
-  },
-  dict: {
-    title: "字典维护",
-    description: "维护系统字典类型、键值和排序。",
-    rows: () => dicts.value,
-    keys: ["dictType", "dictKey", "dictValue", "status"],
-    columns: ["id", "dictType", "dictKey", "dictValue", "sort", "status"],
-    columnLabels: { id: "编号", dictType: "字典类型", dictKey: "字典键", dictValue: "字典值", sort: "排序", status: "状态" },
-    fields: [["dictType", "字典类型", "text"], ["dictKey", "字典键", "text"], ["dictValue", "字典值", "text"], ["sort", "排序", "number"], ["status", "状态", "text"]],
-  },
 };
 
 const config = computed(() => configs[props.entity]);
@@ -178,9 +113,6 @@ const saveHandlers: Record<Entity, () => Promise<void>> = {
   department: () => api.saveDepartment(form as never),
   doctor:     () => api.saveDoctor(form as never),
   drug:       () => api.saveDrug(form as never),
-  knowledge:  () => api.saveKnowledgeEntry(form as never),
-  prompt:     () => api.savePrompt(promptSaveBody()),
-  dict:       () => api.saveDict(form as never),
 };
 const rows = computed(() => {
   const q = keyword.value.trim().toLowerCase();
@@ -200,12 +132,7 @@ const catalogDeptOptions = computed(() => [
 ]);
 
 function dictionaryOptions(dictType: string): DictOption[] {
-  const options = dicts.value
-    .filter((item) => item.dictType === dictType && displayText(item.status, "ENABLED") !== "DISABLED")
-    .sort((left, right) => toNumber(left.sort) - toNumber(right.sort) || toNumber(left.id) - toNumber(right.id))
-    .map((item) => ({ value: displayText(item.dictKey), label: displayText(item.dictValue) }))
-    .filter((item) => item.value);
-  return options.length ? options : fallbackDicts[dictType] ?? [];
+  return fallbackDicts[dictType] ?? [];
 }
 
 function firstDictValue(dictType: string, fallback: string) {
@@ -214,8 +141,6 @@ function firstDictValue(dictType: string, fallback: string) {
 
 function fieldDictType(key: string) {
   if (key === "status") return "SYSTEM_STATUS";
-  if (key === "taskType") return "PROMPT_TASK_TYPE";
-  if (key === "dictType") return "DICT_TYPE";
   return "";
 }
 
@@ -240,8 +165,6 @@ function departmentCodeOptions() {
 
 function displayCell(column: string, value: unknown) {
   if (column === "status") return dictionaryLabel("SYSTEM_STATUS", value);
-  if (column === "taskType") return dictionaryLabel("PROMPT_TASK_TYPE", value);
-  if (column === "dictType") return dictionaryLabel("DICT_TYPE", value);
   if (column === "departmentCode") return departmentCodeOptions().find((item) => item.value === String(value ?? ""))?.label ?? String(value ?? "");
   return String(value ?? "");
 }
@@ -271,7 +194,6 @@ function openEditor(item?: CatalogRow) {
     });
     initEntityDefaults();
   }
-  ensurePromptFields();
   editorOpen.value = true;
 }
 
@@ -279,21 +201,6 @@ function openEditor(item?: CatalogRow) {
 function initEntityDefaults() {
   if (props.entity === "doctor") form.departmentId = toNumber(departments.value[0]?.id);
   if ("status" in form) form.status = firstDictValue("SYSTEM_STATUS", "ENABLED");
-  if (props.entity === "dict") form.dictType = firstDictValue("DICT_TYPE", "SYSTEM_STATUS");
-  if (props.entity === "knowledge" || props.entity === "prompt") form.departmentCode = departmentCodeOptions()[0]?.value ?? "GENERAL";
-  if (props.entity === "prompt") {
-    form.taskType = firstDictValue("PROMPT_TASK_TYPE", "MEDICAL_RECORD");
-    form.outputSchema = defaultPromptSchema(String(form.taskType));
-    form.version = "v1";
-    form.sampleInput = promptTaskConfig(String(form.taskType)).sample;
-  }
-}
-
-/** prompt 实体编辑器打开后，确保 sampleInput / outputSchema 有值 */
-function ensurePromptFields() {
-  if (props.entity !== "prompt") return;
-  if (!form.sampleInput) form.sampleInput = promptTaskConfig(String(form.taskType)).sample;
-  if (!form.outputSchema) form.outputSchema = defaultPromptSchema(String(form.taskType));
 }
 
 function requireFields() {
@@ -301,9 +208,6 @@ function requireFields() {
     department: ["code", "name"],
     doctor: ["name", "phone", "departmentId"],
     drug: ["name"],
-    knowledge: ["title", "symptoms", "advice"],
-    prompt: ["taskType", "templateName", "templateContent"],
-    dict: ["dictType", "dictKey", "dictValue"],
   };
   const missing = required[props.entity].find((key) => form[key] === undefined || form[key] === "" || form[key] === 0);
   return missing ? `请填写 ${fieldLabel(missing)}` : "";
@@ -328,7 +232,7 @@ function fieldHint(key: string) {
 }
 
 async function save() {
-  const invalid = requireFields() || validateDoctorForm() || validatePromptForm();
+  const invalid = requireFields() || validateDoctorForm();
   if (invalid) {
     error.value = invalid;
     return;
@@ -346,78 +250,6 @@ async function save() {
     error.value = formatApiError(err, "保存失败");
   } finally {
     saving.value = false;
-  }
-}
-
-function promptTaskConfig(taskType: string) {
-  return promptTasks.find((item) => item.value === String(taskType || "").toUpperCase()) ?? promptTasks[1];
-}
-
-function defaultPromptSchema(taskType: string) {
-  const required = promptTaskConfig(taskType).required;
-  return JSON.stringify({ type: "object", required }, null, 2);
-}
-
-function onPromptTaskChange() {
-  if (props.entity !== "prompt") return;
-  const task = promptTaskConfig(String(form.taskType));
-  if (!form.templateName) form.templateName = `${task.value}_v1`;
-  form.outputSchema = defaultPromptSchema(task.value);
-  form.sampleInput = task.sample;
-  testResult.value = "";
-}
-
-function validatePromptForm() {
-  if (props.entity !== "prompt") return "";
-  const task = promptTaskConfig(String(form.taskType));
-  let schema: { required?: unknown; properties?: Record<string, unknown> };
-  try {
-    schema = JSON.parse(String(form.outputSchema || "{}"));
-  } catch {
-    return "输出结构定义必须是合法 JSON。";
-  }
-  const required = Array.isArray(schema.required) ? schema.required.map(String) : [];
-  const properties = schema.properties && typeof schema.properties === "object" ? Object.keys(schema.properties) : [];
-  const missing = task.required.filter((field) => !required.includes(field) && !properties.includes(field));
-  return missing.length ? `输出结构缺少字段：${missing.join(", ")}` : "";
-}
-
-function promptSaveBody(): PromptTemplateSaveRequest {
-  return {
-    id: typeof form.id === "number" ? form.id : undefined,
-    taskType: String(form.taskType || ""),
-    departmentCode: String(form.departmentCode || ""),
-    templateName: String(form.templateName || ""),
-    templateContent: String(form.templateContent || ""),
-    outputSchema: String(form.outputSchema || ""),
-    version: String(form.version || ""),
-    enabled: Boolean(form.enabled),
-  };
-}
-
-function promptTestBody(): PromptTestRequest {
-  return {
-    ...promptSaveBody(),
-    sampleInput: String(form.sampleInput || ""),
-  };
-}
-
-async function testPrompt() {
-  const invalid = requireFields() || validatePromptForm();
-  if (invalid) {
-    error.value = invalid;
-    return;
-  }
-  testing.value = true;
-  error.value = "";
-  testResult.value = "";
-  try {
-    const result = await api.testPrompt(promptTestBody());
-    testResult.value = JSON.stringify(result, null, 2);
-  } catch (err) {
-    error.value = formatApiError(err, "提示词试运行失败");
-  } finally {
-    testing.value = false;
   }
 }
 
@@ -459,21 +291,16 @@ refresh();
         <FormField v-for="[key, label, type] in config.fields" :key="key" :label="label" :hint="fieldHint(key)">
           <textarea v-if="type === 'textarea'" v-model="form[key]" />
           <input v-else-if="type === 'checkbox'" v-model="form[key]" type="checkbox" />
-          <ScbSelect v-else-if="shouldUseDictionarySelect(key)" v-model="form[key]" :options="dictionaryOptions(fieldDictType(key))" @update:modelValue="key === 'taskType' && onPromptTaskChange()" />
+          <ScbSelect v-else-if="shouldUseDictionarySelect(key)" v-model="form[key]" :options="dictionaryOptions(fieldDictType(key))" />
           <ScbSelect v-else-if="type === 'department-select'" v-model="form[key]" :options="catalogDeptOptions" />
           <ScbSelect v-else-if="key === 'departmentCode'" v-model="form[key]" :options="departmentCodeOptions()" />
           <input v-else-if="type === 'number'" v-model.number="form[key]" type="number" />
           <input v-else v-model="form[key]" :type="type" />
         </FormField>
-        <FormField v-if="props.entity === 'prompt'" label="试运行样例">
-          <textarea v-model="form.sampleInput" />
-        </FormField>
-        <pre v-if="testResult" class="prompt-test-result">{{ testResult }}</pre>
       </div>
       <template #footer>
         <button type="button" :disabled="saving" @click="editorOpen = false">取消</button>
-        <button v-if="props.entity === 'prompt'" type="button" :disabled="saving || testing" @click="testPrompt">{{ testing ? "试运行中..." : "试运行" }}</button>
-        <button type="button" class="primary" :disabled="saving || testing" @click="save">{{ saving ? "保存中..." : "保存" }}</button>
+        <button type="button" class="primary" :disabled="saving" @click="save">{{ saving ? "保存中..." : "保存" }}</button>
       </template>
     </Modal>
   </section>

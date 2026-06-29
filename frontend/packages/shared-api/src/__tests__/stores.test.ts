@@ -31,9 +31,6 @@ function routeData(url: string) {
   if (url.includes("/notification/list")) return [{ id: 9 }];
   if (url.includes("/admin/department/list")) return [{ id: 10 }];
   if (url.includes("/admin/drug/list")) return [{ id: 11 }];
-  if (url.includes("/admin/prompt-template/list")) return [{ id: 12 }];
-  if (url.includes("/admin/knowledge/list")) return [{ id: 13 }];
-  if (url.includes("/admin/dict/list")) return [{ id: 14 }];
   if (url.includes("/admin/schedule/list")) return [{ id: 15 }];
   if (url.includes("/admin/triage-desk/list")) return [{ id: 16 }];
   return {};
@@ -114,28 +111,5 @@ describe("workflow stores", () => {
     expect(store.registrations).toHaveLength(1);
     expect(store.drugs).toHaveLength(1);
     expect(store.notifications).toHaveLength(1);
-  });
-
-  it("refreshes admin data and preserves a list when one request fails", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (input: string | URL | Request) => {
-      const url = String(input);
-      if (url.includes("/admin/prompt-template/list")) {
-        return {
-          ok: true,
-          status: 200,
-          statusText: "OK",
-          json: async () => ({ code: 500, message: "prompt failed", data: null }),
-        };
-      }
-      return ok(routeData(url));
-    }));
-    const store = useAdminWorkflowStore();
-    store.prompts = [{ id: "kept" }];
-    await store.refresh();
-
-    expect(store.departments).toHaveLength(1);
-    expect(store.prompts[0].id).toBe("kept");
-    expect(store.refreshErrors.prompts).toBe("prompt failed");
-    expect(store.triageDesk).toHaveLength(1);
   });
 });

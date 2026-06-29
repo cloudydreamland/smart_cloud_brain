@@ -170,7 +170,8 @@ loadSchedules();
           <button type="button" :disabled="loading" @click="loadSchedules">搜索</button>
         </div>
         <LoadingState v-if="loading" />
-        <div v-if="schedules.length" class="table-scroll table-breakout">
+        <template v-if="schedules.length">
+        <div class="table-scroll table-breakout">
           <table class="data-table">
             <thead><tr><th>日期</th><th>时间</th><th>医生</th><th>科室</th><th>容量</th><th>已预约</th><th>状态</th><th class="actions-cell">操作</th></tr></thead>
             <tbody>
@@ -186,8 +187,9 @@ loadSchedules();
               </tr>
             </tbody>
           </table>
-          <PaginationBar v-model="schedulePage" :total="scheduleTotal" :page-size="schedulePageSize" />
         </div>
+        <PaginationBar v-model="schedulePage" :total="scheduleTotal" :page-size="schedulePageSize" />
+        </template>
         <EmptyState v-else title="暂无排班" />
       </div>
     </section>

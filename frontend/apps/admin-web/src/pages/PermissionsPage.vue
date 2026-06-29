@@ -17,9 +17,8 @@ const permissionLabels: Record<string, string> = {
   "device:manage": "设备管理", "patient:manage": "患者管理", "account:manage": "账户管理",
   "permission:manage": "权限管理", "statistics:view": "统计分析", "ai-log:view": "AI日志",
   "notification:manage": "通知管理", "medical-record:manage": "病历管理", "prescription:manage": "处方管理",
-  "registration:manage": "挂号管理", "knowledge:manage": "知识库", "prompt:manage": "提示词管理",
-  "statistics:export": "报表导出", "dict:manage": "字典管理", "patient-site:manage": "患者端配置",
-  "search:view": "搜索",
+  "registration:manage": "挂号管理",
+  "statistics:export": "报表导出", "patient-site:manage": "患者端配置",
 };
 const permissionDescriptions: Record<string, string> = {
   "dashboard:view": "查看管理端工作台", "department:manage": "维护科室信息",
@@ -30,9 +29,8 @@ const permissionDescriptions: Record<string, string> = {
   "statistics:view": "查看统计分析数据", "ai-log:view": "查看AI调用日志",
   "notification:manage": "管理系统通知", "medical-record:manage": "管理患者病历",
   "prescription:manage": "管理处方和审核", "registration:manage": "管理挂号记录",
-  "knowledge:manage": "维护知识库条目", "prompt:manage": "维护AI提示词模板",
-  "statistics:export": "导出统计数据为CSV", "dict:manage": "管理系统字典数据",
-  "patient-site:manage": "管理患者端导航和内容", "search:view": "使用管理端搜索",
+  "statistics:export": "导出统计数据为CSV",
+  "patient-site:manage": "管理患者端导航和内容",
 };
 const catalog = computed<PermissionCatalogItem[]>(() => (payload.value?.catalog ?? []).map((item) => ({
   key: displayText(item.key),
@@ -108,6 +106,7 @@ onMounted(refresh);
 </script>
 
 <template>
+  <section class="catalog-layout">
   <section class="panel">
     <header class="panel-header">
       <div class="panel-title">
@@ -156,5 +155,6 @@ onMounted(refresh);
         </tbody>
       </DataTable>
     </div>
+  </section>
   </section>
 </template>

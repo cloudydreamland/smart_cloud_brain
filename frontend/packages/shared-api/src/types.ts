@@ -41,18 +41,6 @@ export type DrugSaveRequest = {
   id?: number; name: string; specification?: string; contraindication?: string;
   interactionRule?: string; status?: string;
 };
-export type KnowledgeEntrySaveRequest = {
-  id?: number; title: string; symptoms: string; riskSignals?: string; advice: string;
-  departmentCode?: string; status?: string;
-};
-export type PromptTemplateSaveRequest = {
-  id?: number; taskType: string; departmentCode?: string; templateName: string;
-  templateContent: string; outputSchema?: string; version?: string; enabled?: boolean;
-};
-export type PromptTestRequest = PromptTemplateSaveRequest & { sampleInput?: string };
-export type SystemDictSaveRequest = {
-  id?: number; dictType: string; dictKey: string; dictValue: string; sort?: number; status?: string;
-};
 export type ScheduleGenerateRequest = { startDate?: string; days?: number };
 export type SchedulePublishRequest = { suggestionIds?: number[] };
 export type TriageAssignRequest = { triageRecordId: number; doctorId: number };
@@ -204,36 +192,6 @@ export interface Drug {
   specification?: string;
   contraindication?: string;
   interactionRule?: string;
-  status?: string;
-}
-
-export interface KnowledgeEntry {
-  id: number;
-  title: string;
-  symptoms: string;
-  riskSignals?: string;
-  advice: string;
-  departmentCode?: string;
-  status?: string;
-}
-
-export interface PromptTemplate {
-  id: number;
-  taskType: string;
-  departmentCode?: string;
-  templateName: string;
-  templateContent: string;
-  outputSchema?: string;
-  version?: string;
-  enabled?: boolean;
-}
-
-export interface SystemDict {
-  id: number;
-  dictType: string;
-  dictKey: string;
-  dictValue: string;
-  sort?: number;
   status?: string;
 }
 

@@ -33,18 +33,6 @@ describe("shared api request handling", () => {
     vi.restoreAllMocks();
   });
 
-  it("sends json requests with authorization and query parameters", async () => {
-    const fetch = vi.fn(async () => ok([{ id: 1 }]));
-    vi.stubGlobal("fetch", fetch);
-    setTokenProvider(() => "jwt");
-
-    await expect(api.searchKnowledge("cold", "CARD")).resolves.toEqual([{ id: 1 }]);
-
-    expect(String(fetch.mock.calls[0][0])).toContain("/search/knowledge?q=cold&departmentCode=CARD");
-    const init = fetch.mock.calls[0][1] as RequestInit;
-    expect((init.headers as Headers).get("Authorization")).toBe("Bearer jwt");
-  });
-
   it("covers patient doctor and admin api wrapper routes", async () => {
     const fetch = vi.fn(async () => ok([]));
     vi.stubGlobal("fetch", fetch);
@@ -76,13 +64,6 @@ describe("shared api request handling", () => {
       api.saveDoctor({ name: "doctor", phone: "13900000001", departmentId: 1 }),
       api.drugs(),
       api.saveDrug({ name: "aspirin" }),
-      api.prompts(),
-      api.savePrompt({ taskType: "TRIAGE", templateName: "default", templateContent: "content" }),
-      api.testPrompt({ taskType: "TRIAGE", templateContent: "content", outputSchema: "{\"type\":\"object\"}" }),
-      api.knowledgeEntries(),
-      api.saveKnowledgeEntry({ title: "cold", symptoms: "cough", advice: "rest" }),
-      api.dicts("gender"),
-      api.saveDict({ dictType: "gender", dictKey: "MALE", dictValue: "male" }),
       api.generateSchedule({ days: 3 }),
       api.publishSchedule({ suggestionIds: [1] }),
       api.schedules(),
@@ -91,13 +72,10 @@ describe("shared api request handling", () => {
       api.triageDetail(1),
       api.assignTriage({ triageRecordId: 1, doctorId: 2 }),
       api.closeTriage(1),
-      api.searchDrugs("aspirin"),
-      api.searchPrompts("triage"),
     ]);
 
-    expect(fetch.mock.calls.length).toBeGreaterThan(30);
+    expect(fetch.mock.calls.length).toBeGreaterThan(20);
     expect(fetch.mock.calls.map((call) => String(call[0])).join("\n")).toContain("/admin/schedule/publish");
-    expect(fetch.mock.calls.map((call) => String(call[0])).join("\n")).toContain("/admin/prompt-template/test");
     expect(fetch.mock.calls.map((call) => String(call[0])).join("\n")).toContain("/admin/account/list");
   });
 
@@ -178,7 +156,6 @@ describe("shared api utilities and stores", () => {
       if (url.includes("/registration/list")) return ok([{ registrationId: 1 }]);
       if (url.includes("/medical-record/list")) return ok([{ medicalRecordId: 1 }]);
       if (url.includes("/prescription/list")) return ok([{ prescriptionId: 1 }]);
-      if (url.includes("/search/drugs")) return ok([{ drugName: "aspirin" }]);
       if (url.includes("/notification/list")) return ok([{ notificationId: 1 }]);
       return ok([]);
     }));

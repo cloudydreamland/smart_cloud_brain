@@ -1,7 +1,5 @@
 package com.smartcloudbrain.admin.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartcloudbrain.admin.client.InternalAiClient;
 import com.smartcloudbrain.admin.client.InternalDoctorClient;
 import com.smartcloudbrain.admin.client.InternalTriageClient;
@@ -9,28 +7,18 @@ import com.smartcloudbrain.admin.dto.admin.AccountSaveRequest;
 import com.smartcloudbrain.admin.dto.admin.DepartmentSaveRequest;
 import com.smartcloudbrain.admin.dto.admin.DoctorSaveRequest;
 import com.smartcloudbrain.admin.dto.admin.DrugSaveRequest;
-import com.smartcloudbrain.admin.dto.admin.KnowledgeEntrySaveRequest;
-import com.smartcloudbrain.admin.dto.admin.PromptTemplateSaveRequest;
 import com.smartcloudbrain.admin.dto.admin.ScheduleGenerateRequest;
 import com.smartcloudbrain.admin.dto.admin.SchedulePublishRequest;
-import com.smartcloudbrain.admin.dto.admin.SystemDictSaveRequest;
 import com.smartcloudbrain.admin.entity.AdminUser;
 import com.smartcloudbrain.admin.entity.Department;
 import com.smartcloudbrain.admin.entity.AiScheduleSuggestion;
 import com.smartcloudbrain.admin.entity.Doctor;
 import com.smartcloudbrain.admin.entity.Drug;
-import com.smartcloudbrain.admin.entity.KnowledgeEntry;
-import com.smartcloudbrain.admin.entity.PromptTemplate;
-import com.smartcloudbrain.admin.entity.SystemDict;
 import com.smartcloudbrain.admin.repository.AdminUserRepository;
 import com.smartcloudbrain.admin.repository.AiScheduleSuggestionRepository;
 import com.smartcloudbrain.admin.repository.DepartmentRepository;
 import com.smartcloudbrain.admin.repository.DoctorRepository;
 import com.smartcloudbrain.admin.repository.DrugRepository;
-import com.smartcloudbrain.admin.repository.KnowledgeEntryRepository;
-import com.smartcloudbrain.admin.repository.PromptTemplateRepository;
-import com.smartcloudbrain.admin.repository.SystemDictRepository;
-import com.smartcloudbrain.aiapi.dto.PromptTestRequest;
 import com.smartcloudbrain.common.error.ErrorCode;
 import com.smartcloudbrain.common.exception.BusinessException;
 import com.smartcloudbrain.common.security.PasswordHashService;
@@ -50,7 +38,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -62,45 +49,33 @@ public class AdminCatalogService {
   private final DepartmentRepository departmentRepository;
   private final DoctorRepository doctorRepository;
   private final DrugRepository drugRepository;
-  private final PromptTemplateRepository promptTemplateRepository;
-  private final KnowledgeEntryRepository knowledgeEntryRepository;
-  private final SystemDictRepository systemDictRepository;
   private final AiScheduleSuggestionRepository aiScheduleSuggestionRepository;
   private final AdminUserRepository adminUserRepository;
   private final InternalDoctorClient internalDoctorClient;
   private final InternalAiClient internalAiClient;
   private final InternalTriageClient internalTriageClient;
   private final PasswordHashService passwordHashService;
-  private final ObjectMapper objectMapper;
 
   public AdminCatalogService(
       DepartmentRepository departmentRepository,
       DoctorRepository doctorRepository,
       DrugRepository drugRepository,
-      PromptTemplateRepository promptTemplateRepository,
-      KnowledgeEntryRepository knowledgeEntryRepository,
-      SystemDictRepository systemDictRepository,
       AiScheduleSuggestionRepository aiScheduleSuggestionRepository,
       AdminUserRepository adminUserRepository,
       InternalDoctorClient internalDoctorClient,
       InternalAiClient internalAiClient,
       InternalTriageClient internalTriageClient,
-      PasswordHashService passwordHashService,
-      ObjectMapper objectMapper
+      PasswordHashService passwordHashService
   ) {
     this.departmentRepository = departmentRepository;
     this.doctorRepository = doctorRepository;
     this.drugRepository = drugRepository;
-    this.promptTemplateRepository = promptTemplateRepository;
-    this.knowledgeEntryRepository = knowledgeEntryRepository;
-    this.systemDictRepository = systemDictRepository;
     this.aiScheduleSuggestionRepository = aiScheduleSuggestionRepository;
     this.adminUserRepository = adminUserRepository;
     this.internalDoctorClient = internalDoctorClient;
     this.internalAiClient = internalAiClient;
     this.internalTriageClient = internalTriageClient;
     this.passwordHashService = passwordHashService;
-    this.objectMapper = objectMapper;
   }
 
   public List<Map<String, Object>> departments() {
@@ -206,128 +181,8 @@ public class AdminCatalogService {
     return drugView(saved);
   }
 
-  public List<Map<String, Object>> prompts() {
-    return promptTemplateRepository.findAll().stream().map(this::promptView).toList();
-  }
-
-  @CacheEvict(cacheNames = "adminCatalog", allEntries = true)
-  @Transactional
-  public Map<String, Object> savePrompt(PromptTemplateSaveRequest request) {
-    requireSupportedPromptTask(request.taskType());
-    String outputSchema = normalizeOutputSchema(request.taskType(), request.outputSchema());
-    validatePromptOutputSchema(request.taskType(), outputSchema);
-    PromptTemplate prompt = request.id() == null ? new PromptTemplate() : promptTemplateRepository.findById(request.id()).orElseGet(PromptTemplate::new);
-    prompt.setTaskType(request.taskType());
-    prompt.setDepartmentCode(request.departmentCode());
-    prompt.setTemplateName(request.templateName());
-    prompt.setTemplateContent(request.templateContent());
-    prompt.setOutputSchema(outputSchema);
-    prompt.setVersion(request.version() == null ? "v1" : request.version());
-    prompt.setEnabled(request.enabled() == null || request.enabled());
-    prompt.setUpdatedAt(LocalDateTime.now());
-    PromptTemplate saved = promptTemplateRepository.save(prompt);
-    return promptView(saved);
-  }
-
-  public Object testPrompt(PromptTestRequest request) {
-    requireSupportedPromptTask(request.taskType());
-    String outputSchema = normalizeOutputSchema(request.taskType(), request.outputSchema());
-    validatePromptOutputSchema(request.taskType(), outputSchema);
-    return internalAiClient.testPrompt(new PromptTestRequest(
-        request.taskType(),
-        request.departmentCode(),
-        request.templateName(),
-        request.templateContent(),
-        outputSchema,
-        request.sampleInput()
-    ));
-  }
-
   public Object aiLogs() {
     return internalAiClient.recentLogs();
-  }
-
-  public List<Map<String, Object>> knowledgeEntries() {
-    return knowledgeEntryRepository.findAll().stream().map(this::knowledgeView).toList();
-  }
-
-  @CacheEvict(cacheNames = "adminCatalog", allEntries = true)
-  @Transactional
-  public Map<String, Object> saveKnowledgeEntry(KnowledgeEntrySaveRequest request) {
-    KnowledgeEntry entry = request.id() == null ? new KnowledgeEntry() : knowledgeEntryRepository.findById(request.id()).orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
-    entry.setTitle(request.title());
-    entry.setSymptoms(request.symptoms());
-    entry.setRiskSignals(request.riskSignals());
-    entry.setAdvice(request.advice());
-    entry.setDepartmentCode(request.departmentCode());
-    entry.setStatus(request.status() == null ? "ENABLED" : request.status());
-    entry.setUpdatedAt(LocalDateTime.now());
-    KnowledgeEntry saved = knowledgeEntryRepository.save(entry);
-    return knowledgeView(saved);
-  }
-
-  @Cacheable(cacheNames = "adminCatalog", key = "'knowledge:' + #q + ':' + #departmentCode")
-  public List<Map<String, Object>> searchKnowledge(String q, String departmentCode) {
-    String query = normalize(q);
-    String department = normalize(departmentCode);
-    return knowledgeEntryRepository.findByStatus("ENABLED").stream()
-        .filter(entry -> department.isBlank() || normalize(entry.getDepartmentCode()).equals(department))
-        .filter(entry -> query.isBlank()
-            || contains(entry.getTitle(), query)
-            || contains(entry.getSymptoms(), query)
-            || contains(entry.getRiskSignals(), query)
-            || contains(entry.getAdvice(), query))
-        .map(this::knowledgeView)
-        .toList();
-  }
-
-  public List<Map<String, Object>> searchDrugs(String q) {
-    String query = normalize(q);
-    return drugRepository.findAll().stream()
-        .filter(drug -> "ENABLED".equalsIgnoreCase(drug.getStatus()))
-        .filter(drug -> query.isBlank()
-            || contains(drug.getName(), query)
-            || contains(drug.getSpecification(), query)
-            || contains(drug.getContraindication(), query)
-            || contains(drug.getInteractionRule(), query))
-        .map(this::drugView)
-        .toList();
-  }
-
-  public List<Map<String, Object>> searchPrompts(String q) {
-    String query = normalize(q);
-    return promptTemplateRepository.findAll().stream()
-        .filter(prompt -> query.isBlank()
-            || contains(prompt.getTaskType(), query)
-            || contains(prompt.getDepartmentCode(), query)
-            || contains(prompt.getTemplateName(), query)
-            || contains(prompt.getTemplateContent(), query)
-            || contains(prompt.getVersion(), query))
-        .map(this::promptView)
-        .toList();
-  }
-
-  @Cacheable(cacheNames = "adminCatalog", key = "'dicts:' + #dictType")
-  public List<Map<String, Object>> dicts(String dictType) {
-    List<SystemDict> dicts = normalize(dictType).isBlank()
-        ? systemDictRepository.findAll()
-        : systemDictRepository.findByDictTypeOrderBySortAscIdAsc(dictType);
-    return dicts.stream().map(this::dictView).toList();
-  }
-
-  @CacheEvict(cacheNames = "adminCatalog", allEntries = true)
-  @Transactional
-  public Map<String, Object> saveDict(SystemDictSaveRequest request) {
-    SystemDict dict = request.id() == null
-        ? new SystemDict()
-        : systemDictRepository.findById(request.id()).orElseGet(SystemDict::new);
-    dict.setDictType(request.dictType());
-    dict.setDictKey(request.dictKey());
-    dict.setDictValue(request.dictValue());
-    dict.setSort(request.sort() == null ? 0 : request.sort());
-    dict.setStatus(request.status() == null ? "ENABLED" : request.status());
-    dict.setUpdatedAt(LocalDateTime.now());
-    return dictView(systemDictRepository.save(dict));
   }
 
   @Transactional
@@ -502,100 +357,6 @@ public class AdminCatalogService {
     return enrichTriageView(internalTriageClient.close(triageRecordId));
   }
 
-  private boolean contains(String value, String query) {
-    return normalize(value).contains(query);
-  }
-
-  private void validatePromptOutputSchema(String taskType, String outputSchema) {
-    JsonNode schema;
-    try {
-      schema = objectMapper.readTree(outputSchema);
-    } catch (Exception ex) {
-      throw new BusinessException(400, "outputSchema must be valid JSON");
-    }
-    Set<String> required = requiredFieldsForTask(taskType);
-    if (required.isEmpty()) {
-      return;
-    }
-    for (String field : required) {
-      if (!schemaMentionsField(schema, field)) {
-        throw new BusinessException(400, "outputSchema missing required field: " + field);
-      }
-    }
-  }
-
-  private void requireSupportedPromptTask(String taskType) {
-    if (requiredFieldsForTask(taskType).isEmpty()) {
-      throw new BusinessException(400, "Unsupported prompt task type: " + taskType);
-    }
-  }
-
-  private String normalizeOutputSchema(String taskType, String outputSchema) {
-    if (outputSchema != null && !outputSchema.isBlank()) {
-      return outputSchema;
-    }
-    return defaultOutputSchema(taskType);
-  }
-
-  private String defaultOutputSchema(String taskType) {
-    return switch (normalize(taskType).toUpperCase(Locale.ROOT)) {
-      case "TRIAGE" -> """
-          {"type":"object","required":["recommendedDepartment","departmentCode","recommendedDoctorDirection","urgencyLevel","confidence","recommendedDoctorIds","reason"]}
-          """.trim();
-      case "MEDICAL_RECORD" -> """
-          {"type":"object","required":["chiefComplaint","presentIllness","pastHistory","physicalExam","diagnosis","treatmentAdvice","soapContent"]}
-          """.trim();
-      case "PRESCRIPTION_CHECK" -> """
-          {"type":"object","required":["riskLevel","riskDescription","suggestions","interactions","contraindications","adjustmentSuggestions"]}
-          """.trim();
-      default -> "{\"type\":\"object\"}";
-    };
-  }
-
-  private Set<String> requiredFieldsForTask(String taskType) {
-    return switch (normalize(taskType).toUpperCase(Locale.ROOT)) {
-      case "TRIAGE" -> Set.of(
-          "recommendedDepartment",
-          "departmentCode",
-          "recommendedDoctorDirection",
-          "urgencyLevel",
-          "confidence",
-          "recommendedDoctorIds",
-          "reason"
-      );
-      case "MEDICAL_RECORD" -> Set.of(
-          "chiefComplaint",
-          "presentIllness",
-          "pastHistory",
-          "physicalExam",
-          "diagnosis",
-          "treatmentAdvice",
-          "soapContent"
-      );
-      case "PRESCRIPTION_CHECK" -> Set.of(
-          "riskLevel",
-          "riskDescription",
-          "suggestions",
-          "interactions",
-          "contraindications",
-          "adjustmentSuggestions"
-      );
-      default -> Set.of();
-    };
-  }
-
-  private boolean schemaMentionsField(JsonNode schema, String field) {
-    JsonNode required = schema.path("required");
-    if (required.isArray()) {
-      for (JsonNode item : required) {
-        if (field.equals(item.asText())) {
-          return true;
-        }
-      }
-    }
-    return schema.path("properties").has(field);
-  }
-
   private String normalize(String value) {
     return value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
   }
@@ -629,42 +390,6 @@ public class AdminCatalogService {
         "contraindication", drug.getContraindication() == null ? "" : drug.getContraindication(),
         "interactionRule", drug.getInteractionRule() == null ? "" : drug.getInteractionRule(),
         "status", drug.getStatus() == null ? "ENABLED" : drug.getStatus()
-    );
-  }
-
-  private Map<String, Object> promptView(PromptTemplate prompt) {
-    return Map.of(
-        "id", prompt.getId(),
-        "taskType", prompt.getTaskType(),
-        "departmentCode", prompt.getDepartmentCode() == null ? "" : prompt.getDepartmentCode(),
-        "templateName", prompt.getTemplateName(),
-        "templateContent", prompt.getTemplateContent(),
-        "outputSchema", prompt.getOutputSchema() == null ? "" : prompt.getOutputSchema(),
-        "version", prompt.getVersion() == null ? "v1" : prompt.getVersion(),
-        "enabled", Boolean.TRUE.equals(prompt.getEnabled())
-    );
-  }
-
-  private Map<String, Object> knowledgeView(KnowledgeEntry entry) {
-    return Map.of(
-        "id", entry.getId(),
-        "title", entry.getTitle(),
-        "symptoms", entry.getSymptoms(),
-        "riskSignals", entry.getRiskSignals() == null ? "" : entry.getRiskSignals(),
-        "advice", entry.getAdvice(),
-        "departmentCode", entry.getDepartmentCode() == null ? "" : entry.getDepartmentCode(),
-        "status", entry.getStatus() == null ? "ENABLED" : entry.getStatus()
-    );
-  }
-
-  private Map<String, Object> dictView(SystemDict dict) {
-    return Map.of(
-        "id", dict.getId(),
-        "dictType", dict.getDictType(),
-        "dictKey", dict.getDictKey(),
-        "dictValue", dict.getDictValue(),
-        "sort", dict.getSort() == null ? 0 : dict.getSort(),
-        "status", dict.getStatus() == null ? "ENABLED" : dict.getStatus()
     );
   }
 
