@@ -1,15 +1,17 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { inject, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { displayText, formatApiError, formatDateTime, useDoctorWorkflowStore, usePagination, type MedicalRecord } from "@smart-cloud-brain/shared-api";
-import { ErrorState, LoadingState, Modal, PaginationBar } from "@smart-cloud-brain/shared-ui";
+import { ErrorState, LoadingState, Modal, PaginationBar, Toast } from "@smart-cloud-brain/shared-ui";
 import { liveRows } from "../doctorPresentation";
 
 const workflow = useDoctorWorkflowStore();
 const { records } = storeToRefs(workflow);
 const displayRecords = liveRows(records);
 const loading = ref(false);
+const loaded = ref(false);
 const error = ref("");
+const toast = inject<Ref<InstanceType<typeof Toast>>>("toast");
 const viewMode = ref<"grid" | "list">("grid");
 const selectedRecord = ref<MedicalRecord | null>(null);
 const { currentPage, pageSize, total, pageRows } = usePagination(displayRecords, 8);
@@ -19,8 +21,11 @@ async function refresh() {
   error.value = "";
   try {
     await workflow.refresh();
+    loaded.value = true;
+    toast?.value?.success("数据已刷新", "病历数据已同步最新状态。");
   } catch (err) {
     error.value = formatApiError(err, "病历列表加载失败，请稍后重试。");
+    toast?.value?.error("刷新失败", "请检查网络后重试。");
   } finally {
     loading.value = false;
   }
@@ -55,12 +60,15 @@ refresh();
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
           </button>
         </div>
-        <button class="refresh-btn" type="button" :disabled="loading" @click="refresh">{{ loading ? "刷新中" : "刷新" }}</button>
+        <button class="refresh-btn" type="button" :disabled="loading" @click="refresh">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="{ 'spin': loading }"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          刷新
+        </button>
       </div>
     </header>
     <div class="panel-body stack">
       <ErrorState v-if="error" :message="error" />
-      <LoadingState v-if="loading" title="正在同步病历" />
+      <LoadingState v-if="!loaded && loading" title="正在同步病历" />
       <div class="card-grid" :class="{ 'list-view': viewMode === 'list' }">
         <article v-for="item in pageRows" :key="String(item.medicalRecordId)" class="record-card">
           <template v-if="viewMode === 'grid'">

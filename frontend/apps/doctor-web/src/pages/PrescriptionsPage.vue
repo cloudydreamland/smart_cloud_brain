@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { inject, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { displayText, formatApiError, formatDateTime, useDoctorWorkflowStore, usePagination, type Prescription } from "@smart-cloud-brain/shared-api";
-import { ErrorState, LoadingState, PaginationBar } from "@smart-cloud-brain/shared-ui";
+import { ErrorState, LoadingState, PaginationBar, Toast } from "@smart-cloud-brain/shared-ui";
 import PrescriptionRiskModal from "../components/PrescriptionRiskModal.vue";
 import { liveRows, statusLabel, statusTone } from "../doctorPresentation";
 
@@ -10,7 +10,9 @@ const workflow = useDoctorWorkflowStore();
 const { prescriptions } = storeToRefs(workflow);
 const displayPrescriptions = liveRows(prescriptions);
 const loading = ref(false);
+const loaded = ref(false);
 const error = ref("");
+const toast = inject<Ref<InstanceType<typeof Toast>>>("toast");
 const selected = ref<Prescription | null>(null);
 const { currentPage, pageSize, total, pageRows } = usePagination(displayPrescriptions, 8);
 
@@ -19,8 +21,11 @@ async function refresh() {
   error.value = "";
   try {
     await workflow.refresh();
+    loaded.value = true;
+    toast?.value?.success("数据已刷新", "处方数据已同步最新状态。");
   } catch (err) {
     error.value = formatApiError(err, "处方列表加载失败，请稍后重试。");
+    toast?.value?.error("刷新失败", "请检查网络后重试。");
   } finally {
     loading.value = false;
   }
@@ -36,11 +41,14 @@ refresh();
         <p class="eyebrow">处方记录</p>
         <h2>处方审核结果</h2>
       </div>
-      <button class="refresh-btn" type="button" :disabled="loading" @click="refresh">{{ loading ? "刷新中" : "刷新" }}</button>
+      <button class="refresh-btn" type="button" :disabled="loading" @click="refresh">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="{ 'spin': loading }"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        刷新
+      </button>
     </header>
     <div class="panel-body stack">
       <ErrorState v-if="error" :message="error" />
-      <LoadingState v-if="loading" title="正在同步处方" />
+      <LoadingState v-if="!loaded && loading" title="正在同步处方" />
       <div class="table-wrap table-breakout">
         <table class="data-table">
           <thead>

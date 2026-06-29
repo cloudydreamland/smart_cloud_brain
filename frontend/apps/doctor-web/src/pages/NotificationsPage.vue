@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, inject, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import {
@@ -15,11 +15,6 @@ import { EmptyState, ErrorState, LoadingState, PaginationBar, Toast } from "@sma
 import NotificationDetailModal from "../components/NotificationDetailModal.vue";
 import { formatTime, liveRows, statusLabel, statusTone } from "../doctorPresentation";
 
-type ToastHandle = {
-  success: (title: string, message?: string) => number;
-  error: (title: string, message?: string) => number;
-  info: (title: string, message?: string) => number;
-};
 type FilterKey = "read" | "type" | "risk" | "sort";
 
 const emit = defineEmits<{ refresh: [] }>();
@@ -32,6 +27,7 @@ const allRows = ref<Notification[]>([]);
 const selected = ref<Notification | null>(null);
 const error = ref("");
 const loading = ref(false);
+const loaded = ref(false);
 const search = ref("");
 const readFilter = ref("ALL");
 const handleFilter = ref("ALL");
@@ -40,7 +36,7 @@ const riskFilter = ref("ALL");
 const sortBy = ref("DEFAULT");
 const openFilter = ref<FilterKey | null>(null);
 const openActionMenu = ref("");
-const toastRef = ref<ToastHandle | null>(null);
+const toast = inject<Ref<InstanceType<typeof Toast>>>("toast");
 
 const handleOptions = [
   { value: "ALL", label: "全部" },
@@ -290,8 +286,11 @@ async function refresh() {
   try {
     await workflow.refresh();
     allRows.value = [...displayNotifications.value];
+    loaded.value = true;
+    toast?.value?.success("数据已刷新", "通知数据已同步最新状态。");
   } catch (err) {
     error.value = formatApiError(err, "通知列表加载失败，请稍后重试。");
+    toast?.value?.error("刷新失败", "请检查网络后重试。");
   } finally {
     loading.value = false;
   }
@@ -306,11 +305,11 @@ async function markRead(item = selected.value) {
     selected.value = null;
     emit("refresh");
     await refresh();
-    toastRef.value?.success("已标记为已读", displayText(item.title));
+    toast?.value?.success("已标记为已读", displayText(item.title));
   } catch (err) {
     selected.value = null;
     error.value = formatApiError(err, "标记通知失败，请刷新后重试。");
-    toastRef.value?.error("操作失败", error.value);
+    toast?.value?.error("操作失败", error.value);
   } finally {
     loading.value = false;
   }
@@ -325,11 +324,11 @@ async function handleNotification(item: Notification | null, handleStatus: "HAND
     selected.value = null;
     emit("refresh");
     await refresh();
-    toastRef.value?.success(handleStatus === "HANDLED" ? "已标记为已处理" : "已忽略通知", displayText(item.title));
+    toast?.value?.success(handleStatus === "HANDLED" ? "已标记为已处理" : "已忽略通知", displayText(item.title));
   } catch (err) {
     selected.value = null;
     error.value = formatApiError(err, "处理通知失败，请刷新后重试。");
-    toastRef.value?.error("操作失败", error.value);
+    toast?.value?.error("操作失败", error.value);
   } finally {
     loading.value = false;
   }
@@ -390,12 +389,15 @@ refresh();
         <p class="eyebrow">待办与通知</p>
         <h2>通知中心</h2>
       </div>
-      <button class="refresh-btn" type="button" :class="{ loading }" :disabled="loading" @click="refresh">刷新</button>
+      <button class="refresh-btn" type="button" :disabled="loading" @click="refresh">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="{ 'spin': loading }"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        刷新
+      </button>
     </header>
 
     <div class="notification-body">
       <ErrorState v-if="error" :message="error" />
-      <LoadingState v-if="loading && !allRows.length" title="正在同步通知" />
+      <LoadingState v-if="!loaded && loading && !allRows.length" title="正在同步通知" />
 
       <div class="notification-stats" aria-label="通知统计">
         <div v-for="item in stats" :key="item.label" class="notification-stat" :class="item.tone">
@@ -556,6 +558,5 @@ refresh();
       @handle="(status) => handleNotification(selected, status)"
       @process="selected && goProcess(selected)"
     />
-    <Toast ref="toastRef" />
   </section>
 </template>

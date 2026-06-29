@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, provide, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import {
@@ -7,7 +7,7 @@ import {
   useAuthStore,
   useDoctorWorkflowStore,
 } from "@smart-cloud-brain/shared-api";
-import { CollapsibleSidebar } from "@smart-cloud-brain/shared-ui";
+import { CollapsibleSidebar, Toast } from "@smart-cloud-brain/shared-ui";
 import {
   liveRows,
   statusLabel,
@@ -23,6 +23,8 @@ const displayRegistrations = liveRows(registrations);
 const displayNotifications = liveRows(notifications);
 const loading = ref(false);
 const socketStatus = ref("未连接");
+const toastRef = ref<InstanceType<typeof Toast> | null>(null);
+provide("toast", toastRef);
 let socket: WebSocket | null = null;
 let pollTimer: number | null = null;
 let reconnectTimer: number | null = null;
@@ -63,8 +65,10 @@ async function refresh() {
   loading.value = true;
   try {
     await workflow.refresh();
+    toastRef.value?.success("数据已刷新", "所有模块数据已同步最新状态。");
   } catch {
     socketStatus.value = "同步失败";
+    toastRef.value?.error("刷新失败", "请检查网络后重试。");
   } finally {
     loading.value = false;
   }
@@ -146,7 +150,10 @@ onBeforeUnmount(() => {
           <span class="status-pill"><i class="dot"></i>{{ socketStatus }}</span>
           <span class="status-pill">队列 {{ activeQueue }}</span>
           <span v-if="unread" class="status-pill">未读 {{ unread }}</span>
-          <button type="button" class="topbar-btn" :disabled="loading" @click="refresh">{{ loading ? "同步中" : "同步" }}</button>
+          <button type="button" class="topbar-btn" :disabled="loading" @click="refresh">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="{ 'spin': loading }"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            {{ loading ? "同步中" : "同步" }}
+          </button>
           <button type="button" class="topbar-btn danger" @click="logout">退出</button>
         </div>
       </header>
@@ -156,5 +163,6 @@ onBeforeUnmount(() => {
         <RouterView @refresh="refresh" />
       </main>
     </div>
+    <Toast ref="toastRef" />
   </div>
 </template>

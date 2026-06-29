@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, inject, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { storeToRefs } from "pinia";
 import { displayText, formatApiError, useDoctorWorkflowStore, usePagination } from "@smart-cloud-brain/shared-api";
-import { ErrorState, LoadingState, PaginationBar } from "@smart-cloud-brain/shared-ui";
+import { ErrorState, LoadingState, PaginationBar, Toast } from "@smart-cloud-brain/shared-ui";
 import { formatTime, liveRows, patientName, riskText, statusLabel, statusTone } from "../doctorPresentation";
 
 const workflow = useDoctorWorkflowStore();
@@ -13,7 +13,9 @@ const sourceRows = liveRows(registrations);
 const filter = ref("");
 const keyword = ref(displayText(route.query.patientId ?? route.query.triageRecordId, ""));
 const loading = ref(false);
+const loaded = ref(false);
 const error = ref("");
+const toast = inject<Ref<InstanceType<typeof Toast>>>("toast");
 const options = [
   { label: "全部", value: "" },
   { label: "待接诊", value: "CREATED" },
@@ -32,8 +34,11 @@ async function refresh() {
   error.value = "";
   try {
     await workflow.refresh();
+    loaded.value = true;
+    toast?.value?.success("数据已刷新", "队列数据已同步最新状态。");
   } catch (err) {
     error.value = formatApiError(err, "队列加载失败，请稍后重试。");
+    toast?.value?.error("刷新失败", "请检查网络后重试。");
   } finally {
     loading.value = false;
   }
@@ -72,11 +77,14 @@ watch(() => [route.query.patientId, route.query.triageRecordId], ([patientId, tr
           <p class="eyebrow">接诊队列</p>
           <h2>患者队列筛选</h2>
         </div>
-        <button class="refresh-btn" type="button" :disabled="loading" @click="refresh">{{ loading ? "刷新中" : "刷新" }}</button>
+        <button class="refresh-btn" type="button" :disabled="loading" @click="refresh">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="{ 'spin': loading }"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          刷新
+        </button>
       </header>
       <div class="panel-body stack">
         <ErrorState v-if="error" :message="error" />
-        <LoadingState v-if="loading" title="正在同步队列" />
+        <LoadingState v-if="!loaded && loading" title="正在同步队列" />
         <div v-else class="table-wrap table-breakout">
           <table class="data-table">
             <thead>
