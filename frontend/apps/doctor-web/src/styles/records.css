@@ -1,0 +1,61 @@
+/* ── Card Grid ── */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+  padding: 16px;
+}
+.record-card {
+  background: var(--surface);
+  border: 1px solid rgba(229,231,235,0.8);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: grid;
+  gap: 6px;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+.record-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+.record-card .tag { margin-bottom: 4px; }
+.record-card strong { font-size: 14px; }
+.record-card p { font-size: 12px; color: var(--muted); margin: 0; line-height: 1.6; }
+.record-card button {
+  margin-top: 8px;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  background: var(--surface);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.record-card button:hover {
+  background: var(--primary-soft);
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+/* ── Records View Toggle ── */
+.view-segmented { display: inline-flex; border: 1px solid var(--line); border-radius: var(--radius-xs); overflow: hidden; background: var(--surface); }
+.seg-btn { height: 30px; width: 32px; padding: 0; border: 0; background: transparent; color: var(--muted); display: grid; place-items: center; cursor: pointer; transition: all 0.15s ease; }
+.seg-btn:hover { color: var(--ink); background: var(--surface-alt); }
+.seg-btn.active { color: var(--primary); background: var(--primary-soft); }
+
+/* ── Records List View ── */
+.card-grid.list-view { grid-template-columns: 1fr; gap: 10px; }
+.card-grid.list-view .record-card {
+  display: grid; grid-template-columns: 1fr auto; gap: 0;
+  padding: 14px 18px; align-items: start;
+}
+.card-grid.list-view .record-card:hover { box-shadow: var(--shadow); }
+.list-left { min-width: 0; }
+.list-title-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.list-title-row .tag { flex-shrink: 0; }
+.list-title-row strong { font-size: 14px; white-space: nowrap; }
+.list-left p { font-size: 13px; color: var(--muted); margin: 0; line-height: 1.7; }
+.list-detail { align-self: center; flex-shrink: 0; margin-left: 16px; }
+.list-detail button { height: 32px; padding: 0 14px; }

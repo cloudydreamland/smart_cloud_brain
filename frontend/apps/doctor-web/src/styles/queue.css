@@ -1,0 +1,108 @@
+.queue-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+}
+
+.search-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.search-row input {
+  flex: 1;
+  min-width: 240px;
+  height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0 14px;
+  font-size: 13px;
+  background: var(--surface);
+  color: var(--ink);
+  transition: border-color 160ms ease;
+}
+.search-row input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(11, 95, 120, 0.1); }
+.search-row input::placeholder { color: var(--weak); }
+
+.queue-filter-group,
+.queue-actions,
+.encounter-actions,
+.area-actions,
+.inline-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.queue-filter-group {
+  flex: 1 1 520px;
+  min-width: 0;
+}
+
+.queue-search {
+  flex: 1 1 var(--consult-panel-w);
+  max-width: 420px;
+}
+
+.queue-actions {
+  margin-left: auto;
+}
+
+.queue-count,
+.muted-line {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.segmented {
+  display: flex;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--surface);
+}
+.segmented button {
+  height: 34px;
+  padding: 0 14px;
+  border: 0;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  transition: all 160ms ease;
+  cursor: pointer;
+}
+.segmented button:hover { background: var(--surface-2, var(--surface-alt)); color: var(--ink); }
+.segmented button.active { background: var(--primary); color: var(--color-white); }
+
+.workload-row {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) minmax(0, 1fr) 34px;
+  gap: 8px;
+  align-items: center;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.workload-row strong {
+  color: var(--ink);
+  text-align: right;
+}
+
+.bar-track {
+  height: 8px;
+  border: 1px solid var(--line);
+  background: var(--color-cyan-100);
+}
+
+.bar-track i {
+  display: block;
+  height: 100%;
+  background: var(--primary);
+}

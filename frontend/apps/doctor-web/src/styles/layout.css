@@ -1,0 +1,170 @@
+.doctor-main {
+  min-width: 0;
+  padding: 24px clamp(28px, 3vw, 44px) 36px;
+}
+
+.clinical-page {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.clinical-section,
+.clinical-statusbar,
+.queue-toolbar,
+.patient-context-bar {
+  min-width: 0;
+  border: 1px solid var(--line);
+  background: var(--color-white);
+}
+
+.section-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--line);
+  background: var(--color-gray-50-cool);
+}
+
+.section-toolbar h2 {
+  min-width: 0;
+  margin: 0 auto 0 0;
+  font-size: 15px;
+  line-height: 1.2;
+}
+
+.compact-action {
+  min-height: 28px;
+  padding: 0 8px;
+  font-size: 12px;
+}
+
+.clinical-statusbar {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  border-right: 0;
+}
+
+.status-cell {
+  min-width: 0;
+  padding: 8px 10px;
+  border-right: 1px solid var(--line);
+  background: var(--color-white);
+}
+
+.status-cell span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.status-cell strong {
+  display: block;
+  margin-top: 1px;
+  font-size: 18px;
+  line-height: 1.1;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--right-panel-w);
+  gap: 10px;
+  align-items: start;
+}
+
+.dashboard-queue {
+  grid-row: span 2;
+}
+
+.dashboard-side {
+  min-height: 0;
+}
+
+.table-scroll {
+  width: 100%;
+  overflow: auto;
+}
+
+/* 通栏模式 */
+.table-scroll.table-breakout,
+.table-wrap.table-breakout {
+  margin-left: -24px;
+  margin-right: -24px;
+  width: calc(100% + 48px);
+}
+
+.clinical-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.clinical-table th,
+.clinical-table td {
+  min-width: 0;
+  padding: 7px 9px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: middle;
+  transition: background 0.15s ease;
+}
+
+.clinical-table th {
+  background: var(--surface-alt);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.clinical-table td {
+  background: var(--surface);
+}
+
+.clinical-table tbody tr:hover td {
+  background: var(--surface-alt);
+}
+
+.actions-cell {
+  width: 1%;
+  white-space: nowrap;
+  text-align: right;
+}
+
+/* ── Consultation grid layout ── */
+.consult-grid {
+  display: grid;
+  grid-template-columns: var(--consult-panel-w) minmax(0, 1fr) var(--right-panel-w);
+  gap: 16px;
+  align-items: start;
+}
+
+.consult-grid > .panel {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--color-white);
+  overflow: hidden;
+}
+
+.consult-grid > .panel.sticky-rail {
+  position: sticky;
+  top: 60px;
+  max-height: calc(100vh - var(--panel-height-offset));
+  overflow-y: auto;
+}
+
+.consult-grid > main.panel {
+  min-height: 0;
+}
+
+@media (max-width: 1100px) {
+  .consult-grid {
+    grid-template-columns: 1fr;
+  }
+  .consult-grid > .panel.sticky-rail {
+    position: static;
+    max-height: none;
+  }
+}

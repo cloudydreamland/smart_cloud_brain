@@ -1,0 +1,245 @@
+.clinical-feed {
+  display: grid;
+}
+
+.feed-row {
+  min-width: 0;
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.feed-row strong {
+  display: block;
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.feed-row span {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.patient-context-bar {
+  position: sticky;
+  top: 48px;
+  z-index: 30;
+  display: grid;
+  grid-template-columns: minmax(150px, 0.28fr) minmax(0, 1fr) auto;
+  align-items: stretch;
+}
+
+.patient-name-block {
+  min-width: 0;
+  padding: 8px 10px;
+  border-right: 1px solid var(--line);
+  background: var(--color-gray-50-cool);
+}
+
+.patient-name-block span,
+.patient-context-grid b,
+.clinical-dl dt,
+.clinical-field span {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.patient-name-block strong {
+  display: block;
+  overflow: hidden;
+  font-size: 18px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.patient-context-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.patient-context-grid span {
+  min-width: 0;
+  padding: 7px 9px;
+  border-right: 1px solid var(--line);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.encounter-actions {
+  justify-content: flex-end;
+  padding: 8px 10px;
+}
+
+.encounter-layout {
+  display: grid;
+  grid-template-columns: minmax(210px, 0.58fr) minmax(420px, 1.2fr) minmax(360px, 0.86fr);
+  gap: 10px;
+  align-items: start;
+}
+
+.patient-rail,
+.prescription-rail {
+  position: sticky;
+  top: var(--sticky-rail-top);
+}
+
+.clinical-dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+}
+
+.clinical-dl div {
+  min-width: 0;
+  padding: 8px 10px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.clinical-dl .span {
+  grid-column: 1 / -1;
+}
+
+.clinical-dl dd {
+  min-width: 0;
+  margin: 1px 0 0;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+}
+
+.record-editor-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.clinical-field {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 9px 10px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.clinical-field.full,
+.ai-draft-pane.full {
+  grid-column: 1 / -1;
+}
+
+.clinical-field textarea {
+  min-height: 98px;
+}
+
+.consultation-textarea {
+  min-height: 108px;
+}
+
+.ai-draft-pane {
+  min-width: 0;
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.inline-toolbar {
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.stream-box {
+  max-height: var(--stream-max-h);
+  margin: 0;
+  overflow: auto;
+  padding: 8px;
+  border: 1px solid var(--line);
+  background: var(--color-gray-50-cool);
+  color: var(--color-ink-muted);
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.area-actions {
+  justify-content: flex-end;
+  padding: 8px 10px;
+  border-top: 1px solid var(--line);
+  background: var(--color-gray-50-cool);
+}
+
+.prescription-scroll {
+  max-height: calc(100vh - var(--prescription-scroll-offset));
+}
+
+.risk-result {
+  padding: 9px 10px;
+  border-top: 1px solid var(--line);
+  background: var(--warning-soft);
+  color: var(--warning);
+  font-size: 12px;
+}
+
+.prescription-actions {
+  position: sticky;
+  bottom: 0;
+}
+
+@media (max-width: 1280px) {
+  .dashboard-grid,
+  .encounter-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .patient-rail,
+  .prescription-rail {
+    position: static;
+  }
+
+  .patient-context-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .patient-name-block,
+  .patient-context-grid span {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+}
+
+@media (max-width: 860px) {
+  .doctor-app {
+    margin-left: 0;
+  }
+
+  .doctor-topline {
+    top: 46px;
+    align-items: stretch;
+    flex-direction: column;
+    padding: 8px 10px;
+  }
+
+  .doctor-topline-status {
+    justify-content: flex-start;
+  }
+
+  .patient-context-bar {
+    top: 102px;
+  }
+
+  .clinical-statusbar,
+  .patient-context-grid,
+  .record-editor-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .queue-search {
+    max-width: none;
+  }
+}

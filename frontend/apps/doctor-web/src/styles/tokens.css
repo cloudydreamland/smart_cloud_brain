@@ -1,0 +1,10 @@
+:root {
+  /* 布局尺寸（doctor-web 专用，不与 shared-ui 冲突） */
+  --sidebar-w: 56px;
+  --right-panel-w: 320px;
+  --consult-panel-w: 260px;
+  --stream-max-h: 180px;
+  --prescription-scroll-offset: 285px;
+  --sticky-rail-top: 106px;
+  --panel-height-offset: 80px;
+}

@@ -1,0 +1,245 @@
+/* ===== Settings Page ===== */
+.summary-strip {
+  display: flex;
+  gap: 24px;
+  padding: 14px 18px;
+  background: var(--surface-2, var(--color-gray-100));
+  border-radius: 10px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+  border: none;
+}
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0;
+  background: transparent;
+}
+.summary-item span {
+  display: block;
+  font-size: 11px;
+  color: var(--weak, var(--weak));
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.summary-item strong {
+  display: block;
+  margin-top: 0;
+  font-size: 14px;
+  color: var(--ink);
+}
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 14px;
+}
+.setting-tile {
+  background: var(--surface);
+  border: 1px solid rgba(229, 231, 235, 0.8);
+  border-radius: 12px;
+  padding: 18px;
+  display: grid;
+  gap: 6px;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+.setting-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+.setting-tile strong {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.setting-tile span {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* ── 设置页：纵向堆叠布局 ── */
+.settings-page {
+  width: 100%;
+}
+.settings-page .panel-body.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.settings-stack {
+  display: flex;
+  flex-direction: column;
+}
+.setting-row {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+}
+.setting-row:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+.setting-row:first-child {
+  padding-top: 0;
+}
+.setting-row-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.setting-row-header strong {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.setting-row-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* 部门选择网格 */
+.dept-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+}
+
+/* Choicebox 选项卡片（基于 choicebox-1 参考） */
+.choicebox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+.choicebox-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.choicebox-item:hover {
+  border-color: var(--line-strong);
+  background: var(--surface-alt, var(--surface-alt));
+}
+.choicebox-item.selected {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+.choicebox-indicator {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--line-strong);
+  display: grid;
+  place-items: center;
+  margin-top: 1px;
+  transition: border-color 0.15s ease;
+}
+.choicebox-item.selected .choicebox-indicator {
+  border-color: var(--primary);
+}
+.radio-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+  transform: scale(0);
+  transition: transform 0.15s ease;
+}
+.choicebox-item.selected .radio-dot {
+  transform: scale(1);
+}
+.choicebox-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.choicebox-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.choicebox-desc {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+/* Toggle 开关 */
+.toggle-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.toggle-switch {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  border: 0;
+  background: var(--line-strong);
+  cursor: pointer;
+  transition: background 0.2s ease;
+  padding: 0;
+  flex-shrink: 0;
+}
+.toggle-switch.on {
+  background: var(--primary);
+}
+.toggle-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-white);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  transition: transform 0.2s ease;
+}
+.toggle-switch.on .toggle-knob {
+  transform: translateX(20px);
+}
+
+/* Segmented Control */
+.segmented-control {
+  display: inline-flex;
+  gap: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  margin-top: 6px;
+}
+.segmented-control button {
+  flex: 1;
+  height: 34px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+}
+.segmented-control button + button {
+  border-left: 1px solid var(--line);
+}
+.segmented-control button:hover {
+  background: var(--surface-alt, var(--surface-alt));
+}
+.segmented-control button.active {
+  background: var(--primary);
+  color: var(--color-white);
+}

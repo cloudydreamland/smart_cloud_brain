@@ -1,0 +1,165 @@
+/* ── TopBar buttons ── */
+.topbar-btn {
+  height: 32px; padding: 0 12px; border: 1px solid var(--line); border-radius: var(--radius-xs);
+  background: var(--surface); font-size: 12px; font-weight: 600; color: var(--ink);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.topbar-btn:hover { background: var(--surface-alt); border-color: var(--primary); }
+.topbar-btn.danger { color: var(--red); border-color: var(--color-red-200); }
+.topbar-btn.danger:hover { background: var(--red-soft); }
+
+@media (max-width: 980px) {
+  .notification-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .notification-toolbar-row.primary {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .notification-segment {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .notification-segment button {
+    flex: 1 0 86px;
+  }
+
+  .notification-toolbar-row.filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .notification-list-head {
+    display: none;
+  }
+
+  .notification-task-row {
+    grid-template-columns: minmax(0, 1fr) 128px;
+    align-items: start;
+    gap: 10px 12px;
+  }
+
+  .notification-main-cell {
+    grid-column: 1 / -1;
+  }
+
+  .notification-chip-cell {
+    grid-column: 1 / 2;
+  }
+
+  .notification-time {
+    grid-column: 2 / 3;
+    justify-self: end;
+    padding-top: 2px;
+  }
+
+  .notification-row-actions {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 560px) {
+  .doctor-main {
+    padding: 8px;
+  }
+
+  .clinical-statusbar,
+  .patient-context-grid,
+  .clinical-dl,
+  .record-editor-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .queue-filter-group,
+  .queue-actions,
+  .area-actions,
+  .encounter-actions {
+    align-items: stretch;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .queue-actions {
+    margin-left: 0;
+  }
+
+  .queue-filter-group .segmented,
+  .queue-filter-group input,
+  .area-actions button,
+  .encounter-actions button {
+    width: 100%;
+  }
+
+  .notification-body {
+    padding: 12px;
+  }
+
+  .notification-stats {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .notification-toolbar {
+    padding: 10px;
+  }
+
+  .notification-toolbar-row.filters,
+  .notification-search,
+  .notification-segment {
+    width: 100%;
+    grid-template-columns: 1fr;
+  }
+
+  .notification-stat {
+    padding: 14px;
+  }
+
+  .notification-filter-menu {
+    position: relative;
+    top: 4px;
+    right: auto;
+    left: auto;
+    width: 100%;
+    box-shadow: var(--shadow);
+  }
+
+  .notification-task-row {
+    grid-template-columns: 1fr;
+    padding: 12px;
+  }
+
+  .notification-main-cell,
+  .notification-chip-cell,
+  .notification-time,
+  .notification-row-actions {
+    grid-column: auto;
+  }
+
+  .notification-time {
+    justify-self: start;
+  }
+
+  .notification-row-actions {
+    justify-content: stretch;
+  }
+
+  .notification-row-actions .action-btn {
+    flex: 1 1 0;
+  }
+
+  .notification-main-cell p,
+  .notification-main-cell > span {
+    white-space: normal;
+  }
+
+  .notification-action-menu,
+  .notification-action-menu .action-btn {
+    flex: 1 1 0;
+  }
+
+  .notification-detail dl {
+    grid-template-columns: 1fr;
+  }
+}

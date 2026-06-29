@@ -1,0 +1,77 @@
+html,
+body,
+#app {
+  min-height: 100%;
+  background: var(--bg);
+}
+
+body {
+  color: var(--ink);
+  font-size: 14px;
+}
+
+button,
+.button,
+input,
+textarea,
+select {
+  border-radius: var(--radius-sm);
+}
+
+.doctor-app button,
+.doctor-app .button {
+  min-height: 30px;
+  max-width: 100%;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-xs);
+  background: var(--color-white);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.doctor-app button:hover,
+.doctor-app .button:hover {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.doctor-app button.primary,
+.doctor-app .button.primary {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--color-white);
+}
+
+.doctor-app button.danger,
+.doctor-app .button.danger {
+  border-color: var(--color-red-border-soft);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+input,
+textarea,
+select {
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-xs);
+  background: var(--color-white);
+  color: var(--ink);
+  font-size: 13px;
+}
+
+input,
+select {
+  height: 30px;
+  padding: 0 8px;
+}
+
+textarea {
+  min-height: 84px;
+  padding: 7px 8px;
+  resize: vertical;
+}
