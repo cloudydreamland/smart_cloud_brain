@@ -123,7 +123,9 @@ async function setOpen(next: boolean) {
     syncView();
     await nextTick();
     positionPopover();
+    const scrollY = window.scrollY;
     focusInitialDay();
+    if (window.scrollY !== scrollY) window.scrollTo({ top: scrollY, behavior: "instant" });
   }
 }
 
