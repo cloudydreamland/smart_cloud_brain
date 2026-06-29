@@ -167,6 +167,20 @@ public class AdminCatalogService {
     return drugRepository.findAll().stream().map(this::drugView).toList();
   }
 
+  public List<Map<String, Object>> searchDrugs(String keyword) {
+    String normalizedKeyword = normalize(keyword);
+    if (normalizedKeyword.isBlank()) {
+      return drugs();
+    }
+    return drugRepository.findAll().stream()
+        .filter(drug -> containsKeyword(drug.getName(), normalizedKeyword)
+            || containsKeyword(drug.getSpecification(), normalizedKeyword)
+            || containsKeyword(drug.getContraindication(), normalizedKeyword)
+            || containsKeyword(drug.getInteractionRule(), normalizedKeyword))
+        .map(this::drugView)
+        .toList();
+  }
+
   @CacheEvict(cacheNames = "adminCatalog", allEntries = true)
   @Transactional
   public Map<String, Object> saveDrug(DrugSaveRequest request) {
@@ -359,6 +373,10 @@ public class AdminCatalogService {
 
   private String normalize(String value) {
     return value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
+  }
+
+  private boolean containsKeyword(String value, String keyword) {
+    return normalize(value).contains(keyword);
   }
 
   private Map<String, Object> departmentView(Department department) {
