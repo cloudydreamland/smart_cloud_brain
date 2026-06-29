@@ -1,19 +1,42 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, onMounted, provide } from "vue";
 import { storeToRefs } from "pinia";
-import { aiTaskLabel, displayText, statusClass, statusText, useAdminWorkflowStore } from "@smart-cloud-brain/shared-api";
+import {
+  aiTaskLabel,
+  displayText,
+  statusClass,
+  statusText,
+  useAdminWorkflowStore,
+} from "@smart-cloud-brain/shared-api";
 import { StatusTag } from "@smart-cloud-brain/shared-ui";
+import { useAdminAnalytics } from "../composables/useAdminAnalytics";
+import AdminAnalyticsOverview from "../components/AdminAnalyticsOverview.vue";
 import AdminAnalyticsSection from "../components/AdminAnalyticsSection.vue";
 
 const workflow = useAdminWorkflowStore();
-const { departments, doctors, drugs, schedules, triageDesk, aiLogs } = storeToRefs(workflow);
-const highRisk = computed(() => triageDesk.value.filter((item) => ["MANUAL_REQUIRED", "HIGH"].includes(String(item.status))).length);
+const { departments, doctors, drugs, schedules, triageDesk, aiLogs } =
+  storeToRefs(workflow);
+const highRisk = computed(() =>
+  triageDesk.value.filter((item) =>
+    ["MANUAL_REQUIRED", "HIGH"].includes(String(item.status)),
+  ).length,
+);
+
+const analytics = useAdminAnalytics();
+provide("adminAnalytics", analytics);
+
+onMounted(() => {
+  analytics.refresh();
+});
 </script>
 
 <template>
   <section>
     <div class="dashboard">
-      <!-- Metric Cards -->
+      <!-- 1. 运营数据概览：标题 + 日期筛选 + 指标卡 -->
+      <AdminAnalyticsOverview />
+
+      <!-- 2. 系统概览卡片 -->
       <div class="metrics">
         <div class="metric-card">
           <div class="metric-card-head">
@@ -53,7 +76,7 @@ const highRisk = computed(() => triageDesk.value.filter((item) => ["MANUAL_REQUI
         </div>
       </div>
 
-      <!-- Quick Actions -->
+      <!-- 3. 运营入口 + 最近号源 + AI日志 -->
       <div class="panel">
         <div class="panel-header">
           <strong>运营入口</strong>
@@ -82,7 +105,6 @@ const highRisk = computed(() => triageDesk.value.filter((item) => ["MANUAL_REQUI
         </div>
       </div>
 
-      <!-- Two column tables -->
       <div class="content-grid">
         <div class="panel">
           <div class="panel-header">
@@ -91,20 +113,34 @@ const highRisk = computed(() => triageDesk.value.filter((item) => ["MANUAL_REQUI
           </div>
           <table>
             <thead>
-              <tr><th>科室</th><th>医生</th><th>日期</th><th>时段</th><th>状态</th></tr>
+              <tr>
+                <th>科室</th>
+                <th>医生</th>
+                <th>日期</th>
+                <th>时段</th>
+                <th>状态</th>
+              </tr>
             </thead>
             <tbody>
-              <tr v-for="item in schedules.slice(0, 5)" :key="String(item.id)">
+              <tr
+                v-for="item in schedules.slice(0, 5)"
+                :key="String(item.id)"
+              >
                 <td>{{ displayText(item.departmentName) }}</td>
                 <td>{{ displayText(item.doctorName) }}</td>
                 <td>{{ displayText(item.workDate) }}</td>
                 <td>{{ displayText(item.timeRange) }}</td>
                 <td>
-                  <StatusTag :status="displayText(item.status)" :tone="statusClass(item.status)" />
+                  <StatusTag
+                    :status="displayText(item.status)"
+                    :tone="statusClass(item.status)"
+                  />
                 </td>
               </tr>
               <tr v-if="!schedules.length">
-                <td class="admin-empty-table-cell" colspan="5">暂无排班数据</td>
+                <td class="admin-empty-table-cell" colspan="5">
+                  暂无排班数据
+                </td>
               </tr>
             </tbody>
           </table>
@@ -116,25 +152,43 @@ const highRisk = computed(() => triageDesk.value.filter((item) => ["MANUAL_REQUI
           </div>
           <table>
             <thead>
-              <tr><th>任务类型</th><th>Provider</th><th>耗时</th><th>状态</th></tr>
+              <tr>
+                <th>任务类型</th>
+                <th>Provider</th>
+                <th>耗时</th>
+                <th>状态</th>
+              </tr>
             </thead>
             <tbody>
-              <tr v-for="item in aiLogs.slice(0, 5)" :key="String(item.requestId || item.createdAt)">
-                <td><strong>{{ aiTaskLabel(item.taskType) }}</strong></td>
-                <td>{{ displayText(item.provider) }}</td>
-                <td>{{ displayText(item.latencyMs, "0") }}ms</td>
+              <tr
+                v-for="item in aiLogs.slice(0, 5)"
+                :key="String(item.requestId || item.createdAt)"
+              >
                 <td>
-                  <StatusTag :status="displayText(item.status)" :tone="statusClass(item.status)" />
+                  <strong>{{ aiTaskLabel(item.taskType) }}</strong>
+                </td>
+                <td>{{ displayText(item.provider) }}</td>
+                <td>
+                  {{ displayText(item.latencyMs, "0") }}ms
+                </td>
+                <td>
+                  <StatusTag
+                    :status="displayText(item.status)"
+                    :tone="statusClass(item.status)"
+                  />
                 </td>
               </tr>
               <tr v-if="!aiLogs.length">
-                <td class="admin-empty-table-cell" colspan="4">暂无 AI 日志</td>
+                <td class="admin-empty-table-cell" colspan="4">
+                  暂无 AI 日志
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
 
+      <!-- 4. 图表区域 -->
       <AdminAnalyticsSection />
     </div>
   </section>
