@@ -8,4 +8,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface DoctorScheduleRepository extends JpaRepository<DoctorSchedule, Long> {
   List<DoctorSchedule> findByWorkDateGreaterThanEqualOrderByWorkDateAscDoctorIdAsc(LocalDate workDate);
   List<DoctorSchedule> findByWorkDateGreaterThanEqualAndWorkDateLessThanEqualOrderByWorkDateAscDoctorIdAsc(LocalDate startDate, LocalDate endDate);
+  List<DoctorSchedule> findByDoctorIdAndWorkDate(Long doctorId, LocalDate workDate);
 }

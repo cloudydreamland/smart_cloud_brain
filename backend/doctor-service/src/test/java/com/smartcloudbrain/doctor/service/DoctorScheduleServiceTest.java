@@ -2,11 +2,13 @@ package com.smartcloudbrain.doctor.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.smartcloudbrain.doctor.dto.internal.InternalSchedulePublishRequest;
+import com.smartcloudbrain.doctor.dto.internal.InternalScheduleSaveRequest;
 import com.smartcloudbrain.doctor.entity.AppointmentSlot;
 import com.smartcloudbrain.doctor.entity.DoctorSchedule;
 import com.smartcloudbrain.doctor.entity.Doctor;
@@ -39,6 +41,11 @@ class DoctorScheduleServiceTest {
 
   @Test
   void publishSchedulesCreatesPublishedScheduleAndBookableSlot() {
+    Doctor doctor = new Doctor();
+    doctor.setId(2L);
+    doctor.setDepartmentId(3L);
+    when(doctorRepository.findById(2L)).thenReturn(Optional.of(doctor));
+    when(doctorScheduleRepository.findByDoctorIdAndWorkDate(2L, LocalDate.of(2026, 6, 17))).thenReturn(List.of());
     when(doctorScheduleRepository.save(any(DoctorSchedule.class))).thenAnswer(invocation -> {
       DoctorSchedule schedule = invocation.getArgument(0);
       schedule.setId(20L);
@@ -128,5 +135,86 @@ class DoctorScheduleServiceTest {
     when(doctorScheduleRepository.findByWorkDateGreaterThanEqualOrderByWorkDateAscDoctorIdAsc(any())).thenReturn(List.of(invalidForView));
     assertEquals("", doctorScheduleService.schedules().get(0).get("doctorName"));
     assertEquals("", doctorScheduleService.schedules().get(0).get("departmentName"));
+  }
+
+  @Test
+  void rejectsReversedEqualAndOverlappingScheduleRanges() {
+    LocalDate workDate = LocalDate.of(2026, 6, 22);
+    Doctor doctor = new Doctor();
+    doctor.setId(2L);
+    doctor.setDepartmentId(3L);
+    when(doctorRepository.findById(2L)).thenReturn(Optional.of(doctor));
+    when(doctorScheduleRepository.findByDoctorIdAndWorkDate(2L, workDate)).thenReturn(List.of());
+
+    assertThrows(RuntimeException.class, () -> doctorScheduleService.saveSchedule(
+        new InternalScheduleSaveRequest(null, 2L, 3L, workDate, "12:00-09:00", 20, "PUBLISHED")));
+    assertThrows(RuntimeException.class, () -> doctorScheduleService.saveSchedule(
+        new InternalScheduleSaveRequest(null, 2L, 3L, workDate, "12:00-12:00", 20, "PUBLISHED")));
+
+    DoctorSchedule occupied = schedule(9L, 2L, 3L, workDate, "09:00-12:00", "PUBLISHED");
+    when(doctorScheduleRepository.findByDoctorIdAndWorkDate(2L, workDate)).thenReturn(List.of(occupied));
+    assertThrows(RuntimeException.class, () -> doctorScheduleService.saveSchedule(
+        new InternalScheduleSaveRequest(null, 2L, 3L, workDate, "11:30-14:00", 20, "PUBLISHED")));
+  }
+
+  @Test
+  void allowsAdjacentCancelledAndSelfEditedScheduleRanges() {
+    LocalDate workDate = LocalDate.of(2026, 6, 22);
+    Doctor doctor = new Doctor();
+    doctor.setId(2L);
+    doctor.setDepartmentId(3L);
+    when(doctorRepository.findById(2L)).thenReturn(Optional.of(doctor));
+    when(appointmentSlotRepository.findByScheduleId(any())).thenReturn(Optional.empty());
+    when(doctorScheduleRepository.save(any(DoctorSchedule.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+    DoctorSchedule occupied = schedule(9L, 2L, 3L, workDate, "09:00-12:00", "PUBLISHED");
+    when(doctorScheduleRepository.findByDoctorIdAndWorkDate(2L, workDate)).thenReturn(List.of(occupied));
+    doctorScheduleService.saveSchedule(
+        new InternalScheduleSaveRequest(null, 2L, 3L, workDate, "12:00-14:00", 20, "PUBLISHED"));
+
+    DoctorSchedule cancelled = schedule(10L, 2L, 3L, workDate, "14:00-17:00", "CANCELLED");
+    when(doctorScheduleRepository.findByDoctorIdAndWorkDate(2L, workDate)).thenReturn(List.of(cancelled));
+    doctorScheduleService.saveSchedule(
+        new InternalScheduleSaveRequest(null, 2L, 3L, workDate, "14:30-16:00", 20, "PUBLISHED"));
+
+    when(doctorScheduleRepository.findByDoctorIdAndWorkDate(2L, workDate)).thenReturn(List.of(occupied));
+    when(doctorScheduleRepository.findById(9L)).thenReturn(Optional.of(occupied));
+    doctorScheduleService.saveSchedule(
+        new InternalScheduleSaveRequest(9L, 2L, 3L, workDate, "10:00-12:30", 20, "PUBLISHED"));
+  }
+
+  @Test
+  void rejectsOverlapsInsidePublishedAiBatch() {
+    LocalDate workDate = LocalDate.of(2026, 6, 22);
+    Doctor doctor = new Doctor();
+    doctor.setId(2L);
+    doctor.setDepartmentId(3L);
+    when(doctorRepository.findById(2L)).thenReturn(Optional.of(doctor));
+    when(doctorScheduleRepository.findByDoctorIdAndWorkDate(2L, workDate)).thenReturn(List.of());
+
+    assertThrows(RuntimeException.class, () -> doctorScheduleService.publishSchedules(
+        new InternalSchedulePublishRequest(List.of(
+            new InternalSchedulePublishRequest.ScheduleItem(2L, 3L, workDate, "09:00-12:00", 20),
+            new InternalSchedulePublishRequest.ScheduleItem(2L, 3L, workDate, "11:30-14:00", 20)
+        ))));
+  }
+
+  private DoctorSchedule schedule(
+      Long id,
+      Long doctorId,
+      Long departmentId,
+      LocalDate workDate,
+      String timeRange,
+      String status
+  ) {
+    DoctorSchedule schedule = new DoctorSchedule();
+    schedule.setId(id);
+    schedule.setDoctorId(doctorId);
+    schedule.setDepartmentId(departmentId);
+    schedule.setWorkDate(workDate);
+    schedule.setTimeRange(timeRange);
+    schedule.setCapacity(20);
+    schedule.setStatus(status);
+    return schedule;
   }
 }

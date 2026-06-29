@@ -16,6 +16,9 @@ import com.smartcloudbrain.common.error.ErrorCode;
 import com.smartcloudbrain.common.exception.BusinessException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,6 +54,27 @@ public class DoctorScheduleService {
     List<InternalSchedulePublishRequest.ScheduleItem> items = request == null || request.schedules() == null
         ? List.of()
         : request.schedules();
+    List<DoctorSchedule> pendingSchedules = new ArrayList<>();
+    for (InternalSchedulePublishRequest.ScheduleItem item : items) {
+      validateScheduleValues(
+          item == null ? null : item.doctorId(),
+          item == null ? null : item.departmentId(),
+          item == null ? null : item.workDate(),
+          item == null ? null : item.timeRange(),
+          item == null ? null : item.capacity(),
+          "PUBLISHED",
+          null,
+          pendingSchedules
+      );
+      DoctorSchedule pending = new DoctorSchedule();
+      pending.setDoctorId(item.doctorId());
+      pending.setDepartmentId(item.departmentId());
+      pending.setWorkDate(item.workDate());
+      pending.setTimeRange(item.timeRange());
+      pending.setCapacity(item.capacity());
+      pending.setStatus("PUBLISHED");
+      pendingSchedules.add(pending);
+    }
     for (InternalSchedulePublishRequest.ScheduleItem item : items) {
       DoctorSchedule schedule = new DoctorSchedule();
       schedule.setDoctorId(item.doctorId());
@@ -159,21 +183,81 @@ public class DoctorScheduleService {
   }
 
   private void validateScheduleRequest(InternalScheduleSaveRequest request) {
-    if (request == null || request.doctorId() == null || request.departmentId() == null || request.workDate() == null) {
+    if (request == null) {
       throw new BusinessException(400, "doctorId, departmentId and workDate are required");
     }
-    Doctor doctor = doctorRepository.findById(request.doctorId()).orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
-    if (!request.departmentId().equals(doctor.getDepartmentId())) {
+    validateScheduleValues(
+        request.doctorId(),
+        request.departmentId(),
+        request.workDate(),
+        request.timeRange(),
+        request.capacity(),
+        request.status(),
+        request.id(),
+        List.of()
+    );
+  }
+
+  private void validateScheduleValues(
+      Long doctorId,
+      Long departmentId,
+      LocalDate workDate,
+      String timeRange,
+      Integer capacity,
+      String status,
+      Long currentScheduleId,
+      List<DoctorSchedule> pendingSchedules
+  ) {
+    if (doctorId == null || departmentId == null || workDate == null) {
+      throw new BusinessException(400, "doctorId, departmentId and workDate are required");
+    }
+    Doctor doctor = doctorRepository.findById(doctorId).orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+    if (!departmentId.equals(doctor.getDepartmentId())) {
       throw new BusinessException(400, "Doctor does not belong to selected department");
     }
-    if (request.capacity() == null || request.capacity() < 1 || request.capacity() > 100) {
+    if (capacity == null || capacity < 1 || capacity > 100) {
       throw new BusinessException(400, "capacity must be between 1 and 100");
     }
-    String range = request.timeRange();
-    if (range == null || !range.matches("^([01]\\d|2[0-3]):[0-5]\\d-([01]\\d|2[0-3]):[0-5]\\d$")) {
-      throw new BusinessException(400, "timeRange must be HH:mm-HH:mm");
+    TimeRange candidate = parseTimeRange(timeRange);
+    if ("CANCELLED".equalsIgnoreCase(status)) {
+      return;
+    }
+
+    List<DoctorSchedule> occupiedSchedules = new ArrayList<>(
+        doctorScheduleRepository.findByDoctorIdAndWorkDate(doctorId, workDate)
+    );
+    occupiedSchedules.addAll(pendingSchedules);
+    boolean overlaps = occupiedSchedules.stream()
+        .filter(existing -> existing != null
+            && doctorId.equals(existing.getDoctorId())
+            && workDate.equals(existing.getWorkDate())
+            && !"CANCELLED".equalsIgnoreCase(existing.getStatus())
+            && (currentScheduleId == null || !currentScheduleId.equals(existing.getId())))
+        .map(existing -> parseTimeRange(existing.getTimeRange()))
+        .anyMatch(existing -> candidate.start().isBefore(existing.end()) && existing.start().isBefore(candidate.end()));
+    if (overlaps) {
+      throw new BusinessException(400, "该医生在所选日期已有重叠排班");
     }
   }
+
+  private TimeRange parseTimeRange(String value) {
+    if (value == null || !value.matches("^([01]\\d|2[0-3]):[0-5]\\d-([01]\\d|2[0-3]):[0-5]\\d$")) {
+      throw new BusinessException(400, "排班时段格式必须为 HH:mm-HH:mm");
+    }
+    String[] parts = value.split("-", -1);
+    try {
+      LocalTime start = LocalTime.parse(parts[0]);
+      LocalTime end = LocalTime.parse(parts[1]);
+      if (!start.isBefore(end)) {
+        throw new BusinessException(400, "排班结束时间必须晚于开始时间");
+      }
+      return new TimeRange(start, end);
+    } catch (DateTimeParseException exception) {
+      throw new BusinessException(400, "排班时段格式必须为 HH:mm-HH:mm");
+    }
+  }
+
+  private record TimeRange(LocalTime start, LocalTime end) {}
 
   private void upsertSlot(DoctorSchedule schedule) {
     AppointmentSlot slot = appointmentSlotRepository.findByScheduleId(schedule.getId()).orElseGet(AppointmentSlot::new);
