@@ -14,6 +14,14 @@
       </picker>
       <input v-model.number="form.age" type="number" placeholder="年龄" />
       <input v-model.trim="form.phone" placeholder="手机号" />
+      <input v-model.trim="form.address" placeholder="常住地址或通信地址" />
+      <input v-model.trim="form.emergencyContact" placeholder="紧急联系人" />
+      <input v-model.trim="form.emergencyPhone" placeholder="紧急联系电话" />
+      <picker mode="selector" :range="bloodTypeLabels" :value="bloodTypeIndex" @change="onBloodTypeChange">
+        <view class="picker">{{ bloodTypeLabels[bloodTypeIndex] }}</view>
+      </picker>
+      <input v-model.number="form.heightCm" type="number" placeholder="身高（cm）" />
+      <input v-model.number="form.weightKg" type="number" placeholder="体重（kg）" />
       <textarea v-model="form.allergyHistory" placeholder="过敏史" />
       <textarea v-model="form.pastHistory" placeholder="既往史" />
       <button :disabled="busy || !form.name" @click="saveProfile">保存资料</button>
@@ -33,10 +41,13 @@ import { getApiBase, requireLogin, saveApiBase } from "../../common/session.js";
 export default {
   data() {
     return {
-      form: { name: "", gender: "MALE", age: "", phone: "", allergyHistory: "", pastHistory: "" },
+      form: { name: "", gender: "MALE", age: "", phone: "", address: "", emergencyContact: "", emergencyPhone: "", bloodType: "", heightCm: "", weightKg: "", allergyHistory: "", pastHistory: "" },
       genders: ["MALE", "FEMALE"],
       genderLabels: ["男", "女"],
       genderIndex: 0,
+      bloodTypes: ["", "A", "B", "AB", "O"],
+      bloodTypeLabels: ["血型未说明", "A 型", "B 型", "AB 型", "O 型"],
+      bloodTypeIndex: 0,
       apiBase: getApiBase(),
       busy: false,
       error: "",
@@ -46,6 +57,7 @@ export default {
   onShow() { if (requireLogin()) this.refresh(); },
   methods: {
     onGenderChange(event) { this.genderIndex = Number(event.detail.value); this.form.gender = this.genders[this.genderIndex]; },
+    onBloodTypeChange(event) { this.bloodTypeIndex = Number(event.detail.value); this.form.bloodType = this.bloodTypes[this.bloodTypeIndex]; },
     saveBase() {
       this.apiBase = saveApiBase(this.apiBase);
       this.message = "连接设置已保存";
@@ -56,10 +68,17 @@ export default {
         gender: patient.gender || "MALE",
         age: patient.age || "",
         phone: patient.phone || "",
+        address: patient.address || "",
+        emergencyContact: patient.emergencyContact || "",
+        emergencyPhone: patient.emergencyPhone || "",
+        bloodType: patient.bloodType || "",
+        heightCm: patient.heightCm || "",
+        weightKg: patient.weightKg || "",
         allergyHistory: patient.allergyHistory || "",
         pastHistory: patient.pastHistory || ""
       };
       this.genderIndex = this.form.gender === "FEMALE" ? 1 : 0;
+      this.bloodTypeIndex = Math.max(0, this.bloodTypes.indexOf(this.form.bloodType));
     },
     async refresh() {
       this.error = "";
@@ -71,7 +90,7 @@ export default {
       this.error = "";
       this.message = "";
       try {
-        const saved = await api.saveProfile({ ...this.form, age: Number(this.form.age) || 0 });
+        const saved = await api.saveProfile({ ...this.form, age: Number(this.form.age) || 0, heightCm: Number(this.form.heightCm) || 0, weightKg: Number(this.form.weightKg) || 0 });
         this.applyProfile(saved || this.form);
         this.message = "资料已保存";
       } catch (error) {

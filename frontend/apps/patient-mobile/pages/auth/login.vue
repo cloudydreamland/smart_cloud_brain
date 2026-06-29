@@ -8,6 +8,10 @@
     <view class="error" v-if="error">{{ error }}</view>
     <view class="panel form">
       <input v-model="apiBase" placeholder="API 地址，例如 http://localhost:18080/api" @blur="saveBase" />
+      <text class="muted">DevEco 模拟器无法访问时，优先尝试 Docker 网关 http://localhost:18080/api。</text>
+      <view class="segmented">
+        <button v-for="item in apiBaseOptions" :key="item" class="segment" @click="useApiBase(item)">{{ item }}</button>
+      </view>
       <input v-model.trim="account" placeholder="手机号" />
       <input v-model="password" password placeholder="密码" />
       <button :disabled="busy || !account || !password" @click="login">{{ busy ? "登录中" : "登录" }}</button>
@@ -25,13 +29,14 @@ import { getApiBase, isLoggedIn, saveApiBase, saveSession } from "../../common/s
 
 export default {
   data() {
-    return { apiBase: getApiBase(), account: "", password: "", busy: false, error: "" };
+    return { apiBase: getApiBase(), apiBaseOptions: ["/api", "http://localhost:18080/api", "http://127.0.0.1:18080/api"], account: "", password: "", busy: false, error: "" };
   },
   onShow() {
     if (isLoggedIn()) uni.switchTab({ url: "/pages/index/index" });
   },
   methods: {
     saveBase() { this.apiBase = saveApiBase(this.apiBase); },
+    useApiBase(value) { this.apiBase = saveApiBase(value); },
     fillDemo() { this.account = "13800000001"; this.password = "123456"; },
     goRegister() { uni.navigateTo({ url: "/pages/auth/register" }); },
     async login() {

@@ -1,12 +1,42 @@
 # 患者移动端
 
-`patient-mobile` 是 uni-app 患者端入口。它没有接入当前 Vite Web 构建流程，也不会包含在根目录 `corepack pnpm test` 或 Web 构建命令中。
+`patient-mobile` 是 uni-app 患者端入口，面向 DevEco Studio / 鸿蒙手机模拟器演示。它不接入当前 Vite Web 构建流程，也不会包含在根目录 `corepack pnpm test` 或 Web 构建命令中。
+
+## DevEco 运行
+
+1. 用 DevEco Studio 或 HBuilderX 打开 `frontend/apps/patient-mobile`。
+2. 选择鸿蒙手机模拟器运行。
+3. 首次进入登录页后，在 API 地址输入框填写网关地址。
+4. 使用患者种子账号登录：`13800000001 / 123456`。
+
+## API 地址
 
 运行时接口地址按以下顺序读取：
 
 1. 用户输入并存储在 `patient-mobile-api-base` 下的值。
-2. `globalThis.SMART_CLOUD_BRAIN_API_BASE`.
+2. `globalThis.SMART_CLOUD_BRAIN_API_BASE`。
 3. `UNI_APP_API_BASE` 或 `VUE_APP_API_BASE`。
 4. 相对路径 `/api`。
 
-本地网关使用 `http://localhost:8080/api`。Docker 网关使用 `http://localhost:18080/api`。
+推荐先试 Docker 网关：`http://localhost:18080/api`。如果模拟器无法访问宿主机 `localhost`，请按 DevEco 网络映射规则改成本机可达地址，再在登录页或“我的 / 个人资料”里保存。
+
+接口不通时按这个顺序排查：
+
+1. 在登录页快捷填入 `/api`，尝试登录。
+2. 切换为 `http://localhost:18080/api`，再次尝试登录。
+3. 切换为 `http://127.0.0.1:18080/api`，再次尝试登录。
+4. 登录后进入“我的”，点击“连接自检”，截图自检结果。
+5. 如果三种地址都失败，确认 Docker 网关是否在宿主机可访问，再把失败截图和 `SIMULATOR_TEST_REPORT_TEMPLATE.md` 内容发回。
+
+## 验收路径
+
+1. 登录后确认底部 `首页 / 分诊 / 预约 / 我的` 四个 tab 可切换。
+2. 进入“我的”，点击“连接自检”，确认 API 地址、登录态、患者资料、号源、分诊列表结果。
+3. 首页点击医院首页、搜索资料、科室资料、医生团队、AI 分诊、医生号源等快捷入口，确认都能打开。
+4. 医院首页、科室、医生、搜索、公告资讯、CMS 专题页可打开；接口失败时应显示默认资料或空状态，不白屏。
+5. 提交 AI 分诊，查看推荐科室和历史分诊。
+6. 进入医生号源，刷新号源，按日期/医生/时段查看，选择余号充足的号源并确认预约。
+7. 在我的预约里查看新预约，并测试取消预约。
+8. 打开病历、处方、报告、发票、消息页面，确认有数据、无数据、接口失败时都不白屏。
+9. 在个人资料和家庭成员里保存完整字段，刷新后确认回显。
+10. 退出登录后重新进入业务页，应回到登录页。

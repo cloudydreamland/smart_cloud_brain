@@ -239,3 +239,18 @@ button[disabled] {
   background: #eaf8f2;
   color: #116044;
 }
+
+.status-ok,
+.status-bad {
+  align-self: flex-start;
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.status-ok {
+  color: #116044;
+}
+
+.status-bad {
+  color: #b33a3a;
+}

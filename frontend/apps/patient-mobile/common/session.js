@@ -1,6 +1,7 @@
 const DEFAULT_API_BASE = "/api";
 const API_BASE_KEY = "patient-mobile-api-base";
 const SESSION_KEY = "patient-session";
+const TAB_PAGES = ["/pages/index/index", "/pages/triage/triage", "/pages/appointments/appointments", "/pages/mine/mine"];
 
 export function normalizeApiBase(value) {
   return String(value || DEFAULT_API_BASE).replace(/\/+$/, "");
@@ -45,4 +46,12 @@ export function requireLogin() {
 export function logoutToLogin() {
   clearSession();
   uni.reLaunch({ url: "/pages/auth/login" });
+}
+
+export function goPage(url) {
+  if (TAB_PAGES.includes(url)) {
+    uni.switchTab({ url });
+    return;
+  }
+  uni.navigateTo({ url });
 }

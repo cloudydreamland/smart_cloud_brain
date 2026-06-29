@@ -1,8 +1,8 @@
-import { clearSession, getApiBase, getSession, normalizeApiBase } from "./session.js";
+import { getApiBase, getSession, logoutToLogin, normalizeApiBase } from "./session.js";
 
 function parseError(response, body) {
-  if (body && body.message) return body.message;
   if (response && response.statusCode === 401) return "登录已过期，请重新登录";
+  if (body && body.message) return body.message;
   return "请求失败，请稍后重试";
 }
 
@@ -26,8 +26,8 @@ export function request(path, method = "GET", data = null, options = {}) {
           resolve(body.data === undefined ? body : body.data);
           return;
         }
-        if (response.statusCode === 401 || body.code === 401) {
-          clearSession();
+        if ((response.statusCode === 401 || body.code === 401) && !options.skipAuthRedirect) {
+          logoutToLogin();
         }
         reject(new Error(parseError(response, body)));
       },
@@ -44,9 +44,15 @@ export const api = {
   registerPatient: (body) => request("/patient/register", "POST", body, { token: "" }),
   loginPatient: (account, password, apiBase) => request("/patient/login", "POST", { account, password }, { token: "", apiBase }),
   patientInfo: () => request("/patient/info"),
+  homeConfig: () => request("/patient-site/home"),
+  siteConfig: () => request("/patient-site/config"),
+  sitePreviewConfig: (previewToken) => request("/patient-site/preview?token=" + encodeURIComponent(previewToken)),
+  notices: () => request("/patient-site/notices"),
+  recommendations: (type) => request("/patient-site/recommendations?type=" + encodeURIComponent(type)),
   saveProfile: (body) => request("/patient/profile/save", "POST", body),
   departments: () => request("/doctor/department/list"),
   doctors: (departmentId) => request("/doctor/list" + (departmentId ? "?departmentId=" + encodeURIComponent(departmentId) : "")),
+  doctorDetail: (id) => request("/doctor/detail?id=" + encodeURIComponent(id)),
   triage: (chiefComplaint) => request("/triage/consult", "POST", { chiefComplaint }),
   triageList: () => request("/triage/list"),
   slots: () => request("/registration/slots"),

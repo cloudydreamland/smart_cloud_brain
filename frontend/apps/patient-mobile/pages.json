@@ -83,6 +83,42 @@
       "style": {
         "navigationBarTitleText": "个人资料"
       }
+    },
+    {
+      "path": "pages/public/home",
+      "style": {
+        "navigationBarTitleText": "医院首页"
+      }
+    },
+    {
+      "path": "pages/public/departments",
+      "style": {
+        "navigationBarTitleText": "科室"
+      }
+    },
+    {
+      "path": "pages/public/doctors",
+      "style": {
+        "navigationBarTitleText": "医生团队"
+      }
+    },
+    {
+      "path": "pages/public/search",
+      "style": {
+        "navigationBarTitleText": "搜索"
+      }
+    },
+    {
+      "path": "pages/public/updates",
+      "style": {
+        "navigationBarTitleText": "公告资讯"
+      }
+    },
+    {
+      "path": "pages/public/cms",
+      "style": {
+        "navigationBarTitleText": "专题页"
+      }
     }
   ],
   "globalStyle": {

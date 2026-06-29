@@ -16,6 +16,16 @@
       <input v-model.number="form.age" type="number" placeholder="年龄" />
       <input v-model.trim="form.phone" placeholder="手机号" />
       <input v-model.trim="form.relationship" placeholder="关系，例如 本人/父母/子女" />
+      <input v-model.trim="form.address" placeholder="地址" />
+      <input v-model.trim="form.emergencyContact" placeholder="紧急联系人" />
+      <input v-model.trim="form.emergencyPhone" placeholder="紧急联系电话" />
+      <picker mode="selector" :range="bloodTypeLabels" :value="bloodTypeIndex" @change="onBloodTypeChange">
+        <view class="picker">{{ bloodTypeLabels[bloodTypeIndex] }}</view>
+      </picker>
+      <input v-model.number="form.heightCm" type="number" placeholder="身高（cm）" />
+      <input v-model.number="form.weightKg" type="number" placeholder="体重（kg）" />
+      <textarea v-model="form.allergyHistory" placeholder="过敏史" />
+      <textarea v-model="form.pastHistory" placeholder="既往史" />
       <button :disabled="busy || !form.name" @click="save">保存</button>
       <button class="ghost" @click="reset">清空</button>
     </view>
@@ -26,8 +36,10 @@
       </view>
       <view v-for="item in rows" :key="String(item.id || item.visitorId)" class="record">
         <text class="strong">{{ item.name || "未命名" }}</text>
-        <text class="muted">{{ genderText(item.gender) }} · {{ item.age || "-" }} 岁 · {{ item.relationship || "关系未填" }}</text>
-        <view class="actions">
+        <text class="muted">{{ genderText(item.gender) }} · {{ item.age || "-" }} 岁 · {{ relationText(item) }}</text>
+        <text class="muted">紧急联系人：{{ item.emergencyContact || "未填写" }} {{ item.emergencyPhone || "" }}</text>
+        <text class="muted">血型 {{ item.bloodType || "未说明" }} · 身高 {{ item.heightCm || "0" }} cm · 体重 {{ item.weightKg || "0" }} kg</text>
+        <view class="actions" v-if="item.editable !== false">
           <button class="ghost" @click="edit(item)">编辑</button>
           <button class="danger" @click="remove(item)">删除</button>
         </view>
@@ -42,20 +54,38 @@ import { api } from "../../common/api.js";
 import { requireLogin } from "../../common/session.js";
 import { genderText, list, num } from "../../common/formatters.js";
 
-const emptyForm = () => ({ id: null, name: "", gender: "MALE", age: "", phone: "", relationship: "" });
+const emptyForm = () => ({ id: null, name: "", gender: "MALE", age: "", phone: "", relationship: "", address: "", emergencyContact: "", emergencyPhone: "", bloodType: "", heightCm: "", weightKg: "", allergyHistory: "", pastHistory: "" });
 
 export default {
   data() {
-    return { rows: [], form: emptyForm(), genders: ["MALE", "FEMALE"], genderLabels: ["男", "女"], genderIndex: 0, busy: false, error: "", message: "" };
+    return { rows: [], form: emptyForm(), genders: ["MALE", "FEMALE"], genderLabels: ["男", "女"], genderIndex: 0, bloodTypes: ["", "A", "B", "AB", "O"], bloodTypeLabels: ["血型未说明", "A 型", "B 型", "AB 型", "O 型"], bloodTypeIndex: 0, busy: false, error: "", message: "" };
   },
   onShow() { if (requireLogin()) this.refresh(); },
   methods: {
     genderText,
     onGenderChange(event) { this.genderIndex = Number(event.detail.value); this.form.gender = this.genders[this.genderIndex]; },
-    reset() { this.form = emptyForm(); this.genderIndex = 0; },
+    onBloodTypeChange(event) { this.bloodTypeIndex = Number(event.detail.value); this.form.bloodType = this.bloodTypes[this.bloodTypeIndex]; },
+    relationText(item) { return item.visitorType === "ACCOUNT" ? "账户本人" : item.relationship || "关系未填"; },
+    reset() { this.form = emptyForm(); this.genderIndex = 0; this.bloodTypeIndex = 0; },
     edit(item) {
-      this.form = { id: item.id || item.visitorId || null, name: item.name || "", gender: item.gender || "MALE", age: item.age || "", phone: item.phone || "", relationship: item.relationship || "" };
+      this.form = {
+        id: item.id || item.visitorId || null,
+        name: item.name || "",
+        gender: item.gender || "MALE",
+        age: item.age || "",
+        phone: item.phone || "",
+        relationship: item.relationship || "",
+        address: item.address || "",
+        emergencyContact: item.emergencyContact || "",
+        emergencyPhone: item.emergencyPhone || "",
+        bloodType: item.bloodType || "",
+        heightCm: item.heightCm || "",
+        weightKg: item.weightKg || "",
+        allergyHistory: item.allergyHistory || "",
+        pastHistory: item.pastHistory || ""
+      };
       this.genderIndex = this.form.gender === "FEMALE" ? 1 : 0;
+      this.bloodTypeIndex = Math.max(0, this.bloodTypes.indexOf(this.form.bloodType));
     },
     async refresh() {
       this.busy = true;
@@ -69,7 +99,7 @@ export default {
       this.error = "";
       this.message = "";
       try {
-        await api.saveVisitor({ ...this.form, age: Number(this.form.age) || 0 });
+        await api.saveVisitor({ ...this.form, age: Number(this.form.age) || 0, heightCm: Number(this.form.heightCm) || 0, weightKg: Number(this.form.weightKg) || 0 });
         this.message = "就诊人已保存";
         this.reset();
         await this.refresh();
@@ -80,6 +110,7 @@ export default {
       }
     },
     remove(item) {
+      if (item.editable === false) return;
       const id = num(item.id || item.visitorId);
       if (!id) return;
       uni.showModal({
