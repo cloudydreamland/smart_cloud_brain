@@ -3,7 +3,85 @@
     {
       "path": "pages/index/index",
       "style": {
-        "navigationBarTitleText": "智慧云脑患者端"
+        "navigationBarTitleText": "患者服务台"
+      }
+    },
+    {
+      "path": "pages/triage/triage",
+      "style": {
+        "navigationBarTitleText": "AI 智能分诊"
+      }
+    },
+    {
+      "path": "pages/appointments/appointments",
+      "style": {
+        "navigationBarTitleText": "我的预约"
+      }
+    },
+    {
+      "path": "pages/mine/mine",
+      "style": {
+        "navigationBarTitleText": "我的"
+      }
+    },
+    {
+      "path": "pages/auth/login",
+      "style": {
+        "navigationBarTitleText": "患者登录"
+      }
+    },
+    {
+      "path": "pages/auth/register",
+      "style": {
+        "navigationBarTitleText": "创建患者档案"
+      }
+    },
+    {
+      "path": "pages/slots/slots",
+      "style": {
+        "navigationBarTitleText": "医生号源"
+      }
+    },
+    {
+      "path": "pages/records/records",
+      "style": {
+        "navigationBarTitleText": "我的病历"
+      }
+    },
+    {
+      "path": "pages/prescriptions/prescriptions",
+      "style": {
+        "navigationBarTitleText": "我的处方"
+      }
+    },
+    {
+      "path": "pages/reports/reports",
+      "style": {
+        "navigationBarTitleText": "检查报告"
+      }
+    },
+    {
+      "path": "pages/invoices/invoices",
+      "style": {
+        "navigationBarTitleText": "电子发票"
+      }
+    },
+    {
+      "path": "pages/messages/messages",
+      "style": {
+        "navigationBarTitleText": "消息中心"
+      }
+    },
+    {
+      "path": "pages/visitors/visitors",
+      "style": {
+        "navigationBarTitleText": "家庭成员"
+      }
+    },
+    {
+      "path": "pages/profile/profile",
+      "style": {
+        "navigationBarTitleText": "个人资料"
       }
     }
   ],
@@ -12,5 +90,29 @@
     "navigationBarTitleText": "东软智慧云脑诊疗平台",
     "navigationBarBackgroundColor": "#F4FBF7",
     "backgroundColor": "#F4FBF7"
+  },
+  "tabBar": {
+    "color": "#61736c",
+    "selectedColor": "#167255",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/triage/triage",
+        "text": "分诊"
+      },
+      {
+        "pagePath": "pages/appointments/appointments",
+        "text": "预约"
+      },
+      {
+        "pagePath": "pages/mine/mine",
+        "text": "我的"
+      }
+    ]
   }
 }

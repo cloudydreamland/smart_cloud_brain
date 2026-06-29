@@ -5,6 +5,8 @@ export default {
 </script>
 
 <style>
+@import "./common/styles.css";
+
 page {
   background: #f4fbf7;
   color: #16251f;
