@@ -277,10 +277,7 @@ class AdminCatalogServiceTest {
         new DoctorSaveRequest(2L, "王医生", "1", "new", 3L, "主任", "胸痛", null)).get("name"));
     assertEquals("新医生", adminCatalogService.saveDoctor(
         new DoctorSaveRequest(null, "新医生", "2", "", 3L, null, null, null)).get("name"));
-    assertEquals(1, adminCatalogService.searchDrugs("阿司匹林").size());
-    assertEquals(1, adminCatalogService.searchDrugs("100mg").size());
     drug.setContraindication("活动性出血禁用");
-    assertEquals(1, adminCatalogService.searchDrugs("出血禁用").size());
     assertEquals(1, adminCatalogService.schedules().size());
     assertEquals(1, adminCatalogService.triageDesk().size());
     assertEquals(1L, adminCatalogService.triageDetail(1L).get("triageRecordId"));

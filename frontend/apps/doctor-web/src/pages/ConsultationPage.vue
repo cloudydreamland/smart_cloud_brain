@@ -47,13 +47,11 @@ const emit = defineEmits<{ refresh: [] }>();
 const auth = useAuthStore();
 const workflow = useDoctorWorkflowStore();
 const router = useRouter();
-const { registrations, triageRecords, drugs, streamText, streamStatus } = storeToRefs(workflow);
+const { registrations, triageRecords, streamText, streamStatus } = storeToRefs(workflow);
 const displayRegistrations = liveRows(registrations);
 const displayTriage = liveRows(triageRecords);
-const displayDrugs = liveRows(drugs);
 const loading = reactive({ record: false, prescription: false, complete: false });
 const error = ref("");
-const notice = ref("");
 const contextOpen = ref(false);
 const previewOpen = ref(false);
 const saveConfirmOpen = ref(false);
@@ -115,13 +113,12 @@ function applyRegistration() {
 
 function setError(message: string) {
   error.value = message;
-  notice.value = "";
   toastRef.value?.error("操作失败", message);
 }
 
 function setNotice(message: string, variant: "success" | "info" = "success") {
-  notice.value = message;
   error.value = "";
+
   if (variant === "info") {
     toastRef.value?.info("提示", message);
   } else {
@@ -354,10 +351,6 @@ watch(() => props.registrationId, applyRegistration, { immediate: true });
       <div><strong>操作失败：</strong>{{ error }}</div>
       <span>请根据提示复核后重试</span>
     </div>
-    <div v-else-if="notice" class="notice-stack success">
-      <div><strong>状态更新：</strong>{{ notice }}</div>
-      <span>{{ statusLabel(streamStatus) }}</span>
-    </div>
 
     <div class="consult-layout">
       <!-- Left: Triage + Prescription -->
@@ -412,9 +405,7 @@ watch(() => props.registrationId, applyRegistration, { immediate: true });
               </tbody>
             </table>
           </div>
-          <datalist id="drug-options">
-            <option v-for="drug in displayDrugs" :key="String(drug.id)" :value="String(drug.name)" />
-          </datalist>
+          <datalist id="drug-options" />
           <div class="risk-note">
             <strong>{{ checkResult ? "风险审核结果" : "待审方" }}</strong>
             <span>{{ checkResult ? displayText(checkResult.suggestions, "请医生复核用药风险。") : "系统将结合过敏史、诊断、剂量和相互作用进行风险提示。" }}</span>
