@@ -394,6 +394,7 @@ public class AdminCatalogService {
         "name", doctor.getName(),
         "phone", doctor.getPhone() == null ? "" : doctor.getPhone(),
         "departmentId", doctor.getDepartmentId(),
+        "departmentName", departmentName(doctor.getDepartmentId()),
         "title", doctor.getTitle() == null ? "" : doctor.getTitle(),
         "specialty", doctor.getSpecialty() == null ? "" : doctor.getSpecialty(),
         "status", doctor.getStatus() == null ? "ENABLED" : doctor.getStatus()
