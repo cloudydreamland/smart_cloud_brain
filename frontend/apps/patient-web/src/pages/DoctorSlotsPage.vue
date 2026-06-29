@@ -30,9 +30,28 @@ const selectedDate = ref("");
 const selectedSlot = ref<DataRow | null>(null);
 const confirmOpen = ref(false);
 
-const recommendedDepartment = computed(() => fieldText(triageHistory.value[0], "recommendedDepartment", ""));
-const visibleSlots = computed(() => slots.value.filter((slot) => !recommendedDepartment.value || fieldText(slot, "departmentName", "").includes(recommendedDepartment.value)));
-const displaySlots = computed(() => [...(visibleSlots.value.length ? visibleSlots.value : slots.value)].sort((left, right) => slotTimestamp(left) - slotTimestamp(right)));
+const latestTriage = computed(() => triageHistory.value[0] ?? null);
+const assignedDoctorId = computed(() => toNumber(latestTriage.value?.assignedDoctorId, 0));
+const recommendedDepartment = computed(() => fieldText(latestTriage.value, "recommendedDepartment", ""));
+const assignedDoctorSlots = computed(() => slots.value.filter((slot) => assignedDoctorId.value && toNumber(slot.doctorId) === assignedDoctorId.value));
+const recommendedDepartmentSlots = computed(() => slots.value.filter((slot) =>
+  !assignedDoctorId.value && (!recommendedDepartment.value || fieldText(slot, "departmentName", "").includes(recommendedDepartment.value))
+));
+const displaySlots = computed(() => {
+  const source = assignedDoctorSlots.value.length
+    ? assignedDoctorSlots.value
+    : recommendedDepartmentSlots.value.length
+      ? recommendedDepartmentSlots.value
+      : slots.value;
+  return [...source].sort((left, right) => slotTimestamp(left) - slotTimestamp(right));
+});
+const guidanceLabel = computed(() => assignedDoctorId.value ? "已分配医生" : "推荐科室");
+const guidanceValue = computed(() => {
+  if (!assignedDoctorId.value) return recommendedDepartment.value || "暂无";
+  const slotDoctor = slots.value.find((slot) => toNumber(slot.doctorId) === assignedDoctorId.value);
+  const doctor = doctors.value.find((item) => toNumber(item.id) === assignedDoctorId.value);
+  return fieldText(slotDoctor, "doctorName", fieldText(doctor, "name", `医生 #${assignedDoctorId.value}`));
+});
 const dateGroups = computed<DateGroup[]>(() => {
   const groups = new Map<string, DateGroup>();
   displaySlots.value.forEach((slot) => {
@@ -184,7 +203,7 @@ refresh();
       <ErrorState v-if="error" :message="error" />
       <div v-if="notice" class="notice success">{{ notice }}</div>
       <div class="summary-strip">
-        <div class="summary-item"><span>推荐科室</span><strong>{{ recommendedDepartment || "暂无" }}</strong></div>
+        <div class="summary-item"><span>{{ guidanceLabel }}</span><strong>{{ guidanceValue }}</strong></div>
         <div class="summary-item"><span>医生</span><strong>{{ doctors.length }}</strong></div>
         <div class="summary-item"><span>号源</span><strong>{{ displaySlots.length }}</strong></div>
         <div class="summary-item"><span>可约日期</span><strong>{{ dateGroups.length }}</strong></div>

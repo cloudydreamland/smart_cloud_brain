@@ -56,9 +56,17 @@ spring:
           "[/**]":
             allowedOriginPatterns:
               - ${PATIENT_WEB_ORIGIN:http://localhost:5173}
+              - http://localhost:5173
+              - http://127.0.0.1:5173
               - ${DOCTOR_WEB_ORIGIN:http://localhost:5174}
+              - http://localhost:5174
+              - http://127.0.0.1:5174
               - ${ADMIN_WEB_ORIGIN:http://localhost:5175}
+              - http://localhost:5175
+              - http://127.0.0.1:5175
               - ${PUBLIC_WEB_ORIGIN:http://localhost}
+              - http://localhost
+              - http://127.0.0.1
             allowedMethods:
               - GET
               - POST
