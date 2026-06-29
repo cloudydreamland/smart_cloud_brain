@@ -7,6 +7,7 @@ const payload = ref<PermissionPayload | null>(null);
 const activeRole = ref<Role>("ADMIN");
 const selectedKeys = ref<string[]>([]);
 const loading = ref(false);
+const loaded = ref(false);
 const saving = ref(false);
 const error = ref("");
 const toast = inject<Ref<InstanceType<typeof Toast>>>("toast");
@@ -77,6 +78,7 @@ async function refresh() {
   try {
     payload.value = await api.permissions() as PermissionPayload;
     syncSelectedKeys();
+    loaded.value = true;
   } catch (err) {
     error.value = formatApiError(err, "权限列表加载失败");
   } finally {
@@ -112,7 +114,10 @@ onMounted(refresh);
         <h2>角色权限</h2>
       </div>
       <div class="toolbar">
-        <button type="button" :disabled="loading" @click="refresh">刷新</button>
+        <button type="button" :disabled="loading" @click="refresh">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="{ 'spin': loading }"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          刷新
+        </button>
         <button type="button" class="primary" :disabled="saving || loading" @click="save">保存</button>
       </div>
     </header>
@@ -128,7 +133,7 @@ onMounted(refresh);
         </div>
       </div>
 
-      <DataTable :rows="catalog" :loading="loading" :error="error" :breakout="true" empty-title="暂无权限数据">
+      <DataTable :rows="catalog" :loading="!loaded && loading" :error="error" :breakout="true" empty-title="暂无权限数据">
         <thead>
           <tr>
             <th>启用</th>

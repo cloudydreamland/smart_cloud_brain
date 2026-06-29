@@ -31,6 +31,7 @@ const error = ref("");
 const toast = inject<Ref<InstanceType<typeof Toast>>>("toast");
 const saving = ref(false);
 const loading = ref(false);
+const loaded = ref(false);
 const editorOpen = ref(false);
 const form = reactive<Record<string, string | number | boolean | undefined>>({});
 
@@ -174,6 +175,7 @@ async function refresh() {
   error.value = "";
   try {
     await workflow.refresh();
+    loaded.value = true;
   } catch (err) {
     error.value = formatApiError(err, "列表加载失败");
   } finally {
@@ -260,14 +262,17 @@ refresh();
       <header class="panel-header">
         <div class="panel-title"><h2>{{ config.title }}</h2></div>
         <div class="toolbar">
-          <button type="button" :disabled="loading" @click="refresh">刷新</button>
+          <button type="button" :disabled="loading" @click="refresh">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="{ 'spin': loading }"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            刷新
+          </button>
           <button type="button" class="primary" @click="openEditor()">新增</button>
         </div>
       </header>
       <div class="panel-body stack">
         <ErrorState v-if="error" :message="error" />
         <div class="admin-filter-row"><input v-model.trim="keyword" placeholder="搜索当前表" /></div>
-        <DataTable :rows="rows" :loading="loading" :error="error" :breakout="true" empty-title="暂无数据" empty-message="当前筛选条件下没有记录。">
+        <DataTable :rows="rows" :loading="!loaded && loading" :error="error" :breakout="true" empty-title="暂无数据" empty-message="当前筛选条件下没有记录。">
           <thead><tr><th v-for="column in config.columns" :key="column">{{ config.columnLabels[column] ?? column }}</th><th class="actions-cell">操作</th></tr></thead>
           <tbody>
             <tr v-for="item in pageRows" :key="String(item.id)">

@@ -25,6 +25,7 @@ const keyword = ref("");
 const error = ref("");
 const toast = inject<Ref<InstanceType<typeof Toast>>>("toast");
 const loading = ref(false);
+const loaded = ref(false);
 const saving = ref(false);
 const editorOpen = ref(false);
 const form = reactive<{
@@ -140,6 +141,7 @@ async function refresh() {
     if (!departments.value.length) {
       await workflow.refresh();
     }
+    loaded.value = true;
   } catch (err) {
     error.value = formatApiError(err, "账户权限数据加载失败");
   } finally {
@@ -234,7 +236,10 @@ onMounted(refresh);
           <h2>账户与权限管理</h2>
         </div>
         <div class="toolbar">
-          <button type="button" :disabled="loading" @click="refresh">刷新</button>
+          <button type="button" :disabled="loading" @click="refresh">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="{ 'spin': loading }"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            刷新
+          </button>
           <button type="button" class="primary" @click="openEditor()">新增账户</button>
         </div>
       </header>
@@ -244,7 +249,7 @@ onMounted(refresh);
           <SegmentedControl v-model="activeRole" :options="roleOptions" />
           <input v-model.trim="keyword" :placeholder="`搜索${currentRoleLabel}账号、姓名或权限`" />
         </div>
-        <DataTable :rows="currentRoleAccounts" :loading="loading" :error="error" :breakout="true" :empty-title="`${currentRoleLabel}暂无账户`" empty-message="当前角色下还没有可管理账户。">
+        <DataTable :rows="currentRoleAccounts" :loading="!loaded && loading" :error="error" :breakout="true" :empty-title="`${currentRoleLabel}暂无账户`" empty-message="当前角色下还没有可管理账户。">
           <thead>
             <tr>
               <th>账号</th>
