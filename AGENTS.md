@@ -178,6 +178,22 @@ docker exec scb-auth-service env | grep JWT_SECRET
 
 **AI 改代码流程：** 改完源码即可，dev server 会自动热更新，不需要手动 build。
 
+### 15. 容器手动 stop 后不会自动恢复
+
+**问题**：所有后端微服务都设了 `restart: unless-stopped`，但 `unless-stopped` 只在 Docker daemon 重启时自动拉起之前运行的容器。被 `docker stop` 手动停掉的容器，**不会**自动重启。
+
+**表现**：某个服务（如 triage-service）被手动 stop 后，前端报 "xxx-service unavailable"，但 `docker compose ps` 显示容器 Exited。
+
+**恢复方法**：
+```bash
+docker start scb-triage-service          # 单个容器
+docker start scb-patient-service scb-doctor-service  # 多个
+```
+
+**注意**：`docker compose up -d` 也不会重启被手动 stop 的容器（它只处理不存在/需要创建的容器）。要强制重建所有容器用 `--force-recreate`，但这会导致短暂服务中断。
+
+**Mac M5 特殊问题**：`deploy/.env` 需要设置 `KINGBASE_IMAGE=kingbase_v009r001c010b0004_single_arm:v1`，否则 `docker compose up -d` 会试图 pull x86 镜像失败。队友 Windows 不需要此文件（已在 .gitignore 中）。
+
 ## 前端代码规范（Agent 必读）
 
 以下规则基于历史屎山代码审查总结，**违反任何一条都会被驳回**。

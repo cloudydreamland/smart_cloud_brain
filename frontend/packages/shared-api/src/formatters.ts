@@ -37,7 +37,7 @@ export function statusClass(status: unknown) {
   if (["CREATED", "CONFIRMED", "COMPLETED", "AVAILABLE", "ENABLED", "PUBLISHED", "AI_RECOMMENDED", "LOW", "READ"].includes(value)) return "success";
   if (["CANCELLED", "FAILED", "DISABLED", "HIGH", "CLOSED", "FULL", "RETIRED"].includes(value)) return "danger";
   if (["PENDING", "DRAFT", "UNPUBLISHED", "UNREVIEWED", "MEDIUM", "MANUAL_REQUIRED", "UNREAD", "MAINTENANCE"].includes(value)) return "warning";
-  if (["IN_USE"].includes(value)) return "info";
+  if (["IN_USE", "ASSIGNED"].includes(value)) return "info";
   return "info";
 }
 
@@ -50,6 +50,7 @@ export function statusText(status: unknown, fallback = "-") {
     READ: "已读", CANCELLED: "已取消", FAILED: "失败", DISABLED: "停用", HIGH: "高风险",
     CLOSED: "已关闭", FULL: "已约满", PENDING: "待处理", HANDLED: "已处理", IGNORED: "已忽略", DRAFT: "草稿",
     UNPUBLISHED: "未发布", UNREVIEWED: "未审核", MEDIUM: "中风险",
+    ASSIGNED: "已分配",
     MANUAL_REQUIRED: "待人工处理", UNREAD: "未读", PATIENT: "患者", DOCTOR: "医生",
     ADMIN: "管理员", MALE: "男", FEMALE: "女", UNKNOWN: "未说明",
     /* 医生端 workflow 状态 */

@@ -84,16 +84,49 @@
 }
 
 .catalog-layout,
-.schedule-layout,
-.triage-layout,
 .search-results {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.85fr);
   gap: 16px;
 }
 
-.schedule-layout {
+.schedule-layout,
+.triage-layout {
   grid-template-columns: 1fr;
+}
+
+.triage-summary-bar {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--line);
+  margin-bottom: 12px;
+}
+
+.triage-summary-bar .summary-item {
+  padding: 12px 16px;
+  background: var(--surface);
+}
+
+.triage-summary-bar .summary-item span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.triage-summary-bar .summary-item strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 15px;
+}
+
+@media (max-width: 600px) {
+  .triage-summary-bar {
+    grid-template-columns: 1fr;
+  }
 }
 
 .account-layout {
@@ -620,7 +653,7 @@ button.status-pill:hover {
 /* ── Action pill buttons (table rows) ── */
 .action-btn {
   height: 30px;
-  padding: 0 12px;
+  padding: 0 8px;
   border-radius: 999px;
   border: 1px solid var(--line, #e5e7eb);
   background: var(--surface, #fff);
@@ -1079,7 +1112,7 @@ td.actions-cell .toolbar {
   width: 100%;
 }
 .actions-cell {
-  width: 150px !important;
+  width: 190px !important;
 }
 
 .panel-header {
@@ -1426,8 +1459,6 @@ td.actions-cell .toolbar {
 
 @media (max-width: 980px) {
   .catalog-layout,
-  .schedule-layout,
-  .triage-layout,
   .search-results {
     grid-template-columns: 1fr;
   }
