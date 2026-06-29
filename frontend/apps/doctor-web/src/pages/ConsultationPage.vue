@@ -59,7 +59,7 @@ const riskOpen = ref(false);
 const highRiskOpen = ref(false);
 const completeOpen = ref(false);
 const toastRef = ref<ToastHandle | null>(null);
-const dialogueText = ref("患者诉咳嗽、咽痛、发热 3 天，最高体温 38.4°C。夜间咳嗽加重，少量黄痰。既往青霉素过敏。查体咽部充血，双肺呼吸音粗，未闻及明显湿啰音。");
+const dialogueText = ref("");
 const checkResult = ref<PrescriptionCheckResult | null>(null);
 const recordAiProvider = ref("Dify");
 const recordAiModel = ref("medical-record-v2");
@@ -81,12 +81,12 @@ const triageRisk = computed(() => displayText(triage.value?.riskLevel, displayTe
 const isCompleted = computed(() => displayText(registration.value?.status, "").toUpperCase() === "COMPLETED");
 const medicalForm = reactive({
   registrationId: toNumber(props.registrationId),
-  chiefComplaint: "咳嗽、咽痛、发热 3 天",
-  presentIllness: "3 天前无明显诱因出现咳嗽、咽痛、发热，夜间咳嗽加重，伴少量黄痰。",
-  pastHistory: "青霉素过敏史。否认慢性基础疾病。",
-  physicalExam: "咽部充血，双肺呼吸音粗，未闻及明显湿啰音。",
-  diagnosis: "急性上呼吸道感染",
-  treatmentAdvice: "完善血常规及 CRP；对症退热、止咳化痰；注意休息和补液。",
+  chiefComplaint: "",
+  presentIllness: "",
+  pastHistory: "",
+  physicalExam: "",
+  diagnosis: "",
+  treatmentAdvice: "",
   aiGenerated: true,
 });
 const prescription = reactive({
@@ -106,9 +106,38 @@ function insertChip(text: string) {
   dialogueText.value += `${sep}${text}`;
 }
 
+const suggestedChips = computed(() => {
+  const chips: string[] = [];
+  const chief = triage.value?.chiefComplaint || "";
+  const history = triage.value?.pastHistory || "";
+  if (chief) {
+    const symptomPart = chief.replace(/^症状[：:]\s*/, "").split(/[；;]/)[0];
+    symptomPart.split(/[、，,]/).forEach((s) => {
+      const t = s.trim();
+      if (t && t.length <= 8 && !chips.includes(t)) chips.push(t);
+    });
+  }
+  if (history) {
+    history.split(/[。；;]/).forEach((s) => {
+      const t = s.trim().replace(/^[，,\s]+/, "");
+      if (t && t.length <= 8 && !chips.includes(t)) chips.push(t);
+    });
+  }
+  return chips.slice(0, 6);
+});
+
 function applyRegistration() {
   medicalForm.registrationId = toNumber(props.registrationId, toNumber(registration.value?.registrationId));
-  medicalForm.chiefComplaint = displayText(triage.value?.chiefComplaint, medicalForm.chiefComplaint);
+  medicalForm.chiefComplaint = displayText(triage.value?.chiefComplaint, "");
+  medicalForm.pastHistory = displayText(triage.value?.pastHistory, "");
+  if (!dialogueText.value.trim() && triage.value) {
+    const parts: string[] = [];
+    const chief = triage.value.chiefComplaint || "";
+    const history = triage.value.pastHistory || "";
+    if (chief) parts.push(chief);
+    if (history) parts.push(`既往${history}`);
+    dialogueText.value = parts.join("。");
+  }
 }
 
 function setError(message: string) {
@@ -371,9 +400,8 @@ watch(() => props.registrationId, applyRegistration, { immediate: true });
               <span class="tag" :class="statusTone(triageRisk)">需复核</span>
             </div>
             <div class="vitals">
-              <div class="vital"><b>年龄</b><strong>37 岁</strong></div>
-              <div class="vital"><b>性别</b><strong>女</strong></div>
-              <div class="vital"><b>体温</b><strong>38.1°C</strong></div>
+              <div class="vital"><b>年龄</b><strong>{{ registration?.patientAge ? registration.patientAge + ' 岁' : '--' }}</strong></div>
+              <div class="vital"><b>性别</b><strong>{{ registration?.patientGender || '--' }}</strong></div>
             </div>
             <div class="dl-grid">
               <div><b>分诊等级</b><span><span class="tag" :class="statusTone(triageRisk)">{{ statusLabel(triageRisk, "中风险") }}</span></span></div>
@@ -438,9 +466,7 @@ watch(() => props.registrationId, applyRegistration, { immediate: true });
             <div class="prompt-box">
               <textarea v-model.trim="dialogueText" class="consultation-textarea" rows="4" />
               <div class="prompt-actions">
-                <span class="prompt-chip" @click="insertChip('青霉素过敏')">青霉素过敏</span>
-                <span class="prompt-chip" @click="insertChip('发热')">发热</span>
-                <span class="prompt-chip" @click="insertChip('黄痰')">黄痰</span>
+                <span v-for="chip in suggestedChips" :key="chip" class="prompt-chip" @click="insertChip(chip)">{{ chip }}</span>
                 <span class="spacer"></span>
                 <button class="action-btn primary" type="button" :disabled="loading.record" @click="generateRecord">{{ loading.record ? "生成中" : "生成病历" }}</button>
               </div>

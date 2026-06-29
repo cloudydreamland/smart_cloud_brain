@@ -7,7 +7,7 @@ import { ErrorState } from "@smart-cloud-brain/shared-ui";
 const auth = useAuthStore();
 const route = useRoute();
 const router = useRouter();
-const form = reactive({ account: "doctor_chen", password: "123456" });
+const form = reactive({ account: "doctor1", password: "123456" });
 const loading = ref(false);
 const error = ref("");
 
@@ -39,23 +39,6 @@ async function submit() {
       </div>
       <h1>医生接诊工作台</h1>
       <p>把队列、患者上下文、AI 病历草稿、处方风险审核和通知闭环放在同一条临床流程里，减少切换，强化风险提示。</p>
-      <div class="signal-panel">
-        <div class="signal-card">
-          <span>今日队列</span>
-          <strong>18</strong>
-          <div class="pulse-line"></div>
-        </div>
-        <div class="signal-card">
-          <span>AI 病历完成率</span>
-          <strong>92%</strong>
-          <div class="pulse-line"></div>
-        </div>
-        <div class="signal-card">
-          <span>高风险待复核</span>
-          <strong>2</strong>
-          <div class="pulse-line"></div>
-        </div>
-      </div>
     </section>
 
     <section class="login-form-wrap">
