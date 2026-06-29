@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { storeToRefs } from "pinia";
-import { api, fieldText, formatApiError, statusClass, statusText, toNumber, usePagination, usePatientWorkflowStore, type DataRow } from "@smart-cloud-brain/shared-api";
+import { api, fieldText, formatApiError, formatDateTime, statusClass, statusText, toNumber, usePagination, usePatientWorkflowStore, type DataRow } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, LoadingState, PaginationBar, StatusTag } from "@smart-cloud-brain/shared-ui";
 import PrescriptionDetailModal from "../components/PrescriptionDetailModal.vue";
 
@@ -47,7 +47,7 @@ refresh();
       <LoadingState v-if="loading" />
       <div v-else-if="prescriptions.length" class="list">
         <article v-for="item in pageRows" :key="String(item.prescriptionId)" class="list-row">
-          <div class="row-main"><strong>处方 #{{ fieldText(item, "prescriptionId") }}</strong><p>{{ fieldText(item, "createdAt") }} · {{ statusText(item.status) }}</p></div>
+          <div class="row-main"><strong>处方 #{{ fieldText(item, "prescriptionId") }}</strong><p>{{ formatDateTime(fieldText(item, "createdAt")) }} · {{ statusText(item.status) }}</p></div>
           <div class="toolbar">
             <StatusTag :status="statusText(item.riskLevel, '未审核')" :tone="statusClass(item.riskLevel)" />
             <button type="button" @click="openDetail(item)">详情</button>

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
-import { api, fieldText, formatApiError, statusClass, statusText, toNumber, usePagination, usePatientWorkflowStore, type DataRow } from "@smart-cloud-brain/shared-api";
-import { EmptyState, ErrorState, LoadingState, PaginationBar, SegmentedControl, StatusTag } from "@smart-cloud-brain/shared-ui";
+import { api, fieldText, formatApiError, formatDateTime, statusClass, statusText, toNumber, usePagination, usePatientWorkflowStore, type DataRow } from "@smart-cloud-brain/shared-api";
+import { EmptyState, ErrorState, LoadingState, PaginationBar, SegmentedControl, StatusTag, Toast } from "@smart-cloud-brain/shared-ui";
 import CancelAppointmentModal from "../components/CancelAppointmentModal.vue";
 
 const workflow = usePatientWorkflowStore();
@@ -11,7 +11,7 @@ const statusFilter = ref("UNFINISHED");
 const loading = ref(false);
 const saving = ref(false);
 const error = ref("");
-const notice = ref("");
+const toast = ref<InstanceType<typeof Toast>>();
 const selected = ref<DataRow | null>(null);
 const filterOptions = [
   { label: "全部", value: "" },
@@ -60,12 +60,11 @@ async function cancel() {
   if (!selected.value) return;
   saving.value = true;
   error.value = "";
-  notice.value = "";
   try {
     await api.cancelRegistration(toNumber(selected.value.registrationId));
     selected.value = null;
     await refresh();
-    notice.value = "挂号已取消。";
+    toast.value?.success("操作成功", "挂号已取消。");
   } catch (err) {
     error.value = formatApiError(err, "取消挂号失败");
   } finally {
@@ -84,7 +83,6 @@ refresh();
     </header>
     <div class="panel-body stack">
       <ErrorState v-if="error" :message="error" />
-      <div v-if="notice" class="notice success">{{ notice }}</div>
       <div class="toolbar">
         <SegmentedControl v-model="statusFilter" :options="filterOptions" />
         <span class="row-meta">当前 {{ total }} 条 / 全部 {{ registrations.length }} 条</span>
@@ -94,7 +92,7 @@ refresh();
         <article v-for="item in pageRows" :key="String(item.registrationId)" class="list-row">
           <div class="row-main">
             <strong>#{{ fieldText(item, "registrationId") }} {{ fieldText(item, "departmentName") }} · {{ fieldText(item, "doctorName") }}</strong>
-            <p>创建时间：{{ fieldText(item, "createdAt", "暂无") }} · 就诊时间：{{ fieldText(item, "appointmentTime", "待定") }}</p>
+            <p>创建时间：{{ formatDateTime(fieldText(item, "createdAt"), "暂无") }} · 就诊时间：{{ formatDateTime(fieldText(item, "appointmentTime"), "待定") }}</p>
           </div>
           <div class="toolbar">
             <StatusTag :status="statusText(item.status)" :tone="statusClass(item.status)" />
@@ -105,6 +103,7 @@ refresh();
       </div>
       <EmptyState v-else title="暂无挂号记录" message="当前分类下没有挂号记录。" />
     </div>
+    <Toast ref="toast" />
     <CancelAppointmentModal :open="Boolean(selected)" :busy="saving" @close="selected = null" @confirm="cancel" />
   </section>
 </template>

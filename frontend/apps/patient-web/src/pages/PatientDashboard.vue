@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { storeToRefs } from "pinia";
-import { fieldText, statusClass, statusText, useAuthStore, usePatientWorkflowStore } from "@smart-cloud-brain/shared-api";
+import { fieldText, formatDateTime, statusClass, statusText, useAuthStore, usePatientWorkflowStore } from "@smart-cloud-brain/shared-api";
 import { Badge, Button, EmptyState, LoadingState, StatusTag } from "@smart-cloud-brain/shared-ui";
 
 defineProps<{ bootLoading?: boolean }>();
@@ -75,7 +75,7 @@ const nextText = computed(() => latestTriage.value ? "查看推荐号源" : "开
         <div v-if="activeRegistration" class="portal-list-row">
           <div>
             <strong>最近挂号</strong>
-            <p>{{ fieldText(activeRegistration, "departmentName") }} · {{ fieldText(activeRegistration, "doctorName") }} · {{ fieldText(activeRegistration, "appointmentTime", "待定") }}</p>
+            <p>{{ fieldText(activeRegistration, "departmentName") }} · {{ fieldText(activeRegistration, "doctorName") }} · {{ formatDateTime(fieldText(activeRegistration, "appointmentTime"), "待定") }}</p>
           </div>
           <StatusTag :status="statusText(activeRegistration.status)" :tone="statusClass(activeRegistration.status)" />
         </div>

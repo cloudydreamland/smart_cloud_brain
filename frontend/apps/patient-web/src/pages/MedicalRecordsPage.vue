@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { api, fieldText, formatApiError, usePatientWorkflowStore, type DataRow } from "@smart-cloud-brain/shared-api";
+import { api, fieldText, formatApiError, formatDateTime, usePatientWorkflowStore, type DataRow } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, LoadingState } from "@smart-cloud-brain/shared-ui";
 import MedicalRecordDetailModal from "../components/MedicalRecordDetailModal.vue";
 
@@ -70,7 +70,7 @@ onMounted(refresh);
             <p>{{ fieldText(item, "chiefComplaint", "暂无主诉记录") }}</p>
             <div class="record-meta">
               <span>{{ item.aiGenerated ? "AI草稿经医生确认" : "医生录入" }}</span>
-              <span>{{ fieldText(item, "createdAt", "时间待同步") }}</span>
+              <span>{{ formatDateTime(fieldText(item, "createdAt"), "时间待同步") }}</span>
             </div>
           </div>
           <button type="button" @click="open(item)">查看详情</button>

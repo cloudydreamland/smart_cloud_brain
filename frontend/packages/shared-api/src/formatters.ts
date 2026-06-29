@@ -50,7 +50,7 @@ export function statusText(status: unknown, fallback = "-") {
     READ: "已读", CANCELLED: "已取消", FAILED: "失败", DISABLED: "停用", HIGH: "高风险",
     CLOSED: "已关闭", FULL: "已约满", PENDING: "待处理", HANDLED: "已处理", IGNORED: "已忽略", DRAFT: "草稿",
     UNPUBLISHED: "未发布", UNREVIEWED: "未审核", MEDIUM: "中风险",
-    ASSIGNED: "已分配",
+    ASSIGNED: "已分配", SUCCESS: "成功",
     MANUAL_REQUIRED: "待人工处理", UNREAD: "未读", PATIENT: "患者", DOCTOR: "医生",
     ADMIN: "管理员", MALE: "男", FEMALE: "女", UNKNOWN: "未说明",
     /* 医生端 workflow 状态 */
@@ -65,6 +65,18 @@ export function aiSourceLabel(provider: unknown) {
   const value = String(provider ?? "").trim().toLowerCase();
   if (!value) return "AI";
   return value === "mock" ? "本地模拟" : "AI";
+}
+
+const aiTaskLabels: Record<string, string> = {
+  SCHEDULE: "排班",
+  TRIAGE: "分诊",
+  MEDICAL_RECORD: "病历",
+  PRESCRIPTION_CHECK: "处方审核",
+};
+
+export function aiTaskLabel(taskType: unknown) {
+  const raw = String(taskType ?? "").trim().toUpperCase();
+  return aiTaskLabels[raw] ?? raw;
 }
 
 export function aiSourceTone(provider: unknown) {

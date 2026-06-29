@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { fieldText, usePatientWorkflowStore, type DataRow } from "@smart-cloud-brain/shared-api";
+import { fieldText, formatDateTime, usePatientWorkflowStore, type DataRow } from "@smart-cloud-brain/shared-api";
 import { EmptyState, SegmentedControl } from "@smart-cloud-brain/shared-ui";
 
 type ReportRow = {
@@ -35,7 +35,7 @@ const reports = computed<ReportRow[]>(() => records.value.map((record, index) =>
     id: fieldText(record, "medicalRecordId", String(index + 1)),
     type,
     title,
-    date: fieldText(record, "createdAt", "时间待同步"),
+    date: formatDateTime(fieldText(record, "createdAt"), "时间待同步"),
     status: "待复诊解读",
     summary: `关联病历：${diagnosis}。请结合医生病历、处方和线下报告原件解读。`,
     source: record,

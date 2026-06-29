@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
-import { api, fieldText, formatApiError, toNumber, type DataRow } from "@smart-cloud-brain/shared-api";
+import { api, fieldText, formatApiError, formatDateTime, toNumber, type DataRow } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, LoadingState, SegmentedControl } from "@smart-cloud-brain/shared-ui";
 
 type MessageRow = {
@@ -36,7 +36,7 @@ const messages = computed<MessageRow[]>(() => {
     type: normalizeType(fieldText(row, "type", fieldText(row, "category", ""))),
     title: fieldText(row, "title", "系统通知"),
     content: fieldText(row, "content", fieldText(row, "message", "暂无通知正文")),
-    time: fieldText(row, "createdAt", fieldText(row, "time", "时间待同步")),
+    time: formatDateTime(fieldText(row, "createdAt"), fieldText(row, "time", "时间待同步")),
     read: fieldText(row, "readStatus", fieldText(row, "status", "")).toUpperCase() === "READ" || row.read === true,
     source: row,
   }));
