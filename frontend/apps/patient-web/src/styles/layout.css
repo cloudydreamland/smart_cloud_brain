@@ -378,6 +378,11 @@
   font-weight: 460;
 }
 
+.site-mega-links a.link-actionable strong {
+  font-weight: 620;
+  color: var(--hospital-primary, #0b5f78);
+}
+
 .site-mega-feature {
   display: flex;
   min-height: 230px;

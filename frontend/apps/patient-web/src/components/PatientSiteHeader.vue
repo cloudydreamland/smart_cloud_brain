@@ -63,6 +63,10 @@ function isVisibleLink(link: RouteTargetConfig | undefined): link is RouteTarget
   );
 }
 
+function isActionableLink(link: RouteTargetConfig): boolean {
+  return link.routeName.startsWith("patient-") && link.routeName !== "patient-home";
+}
+
 function visibleLinks(links: RouteTargetConfig[] | undefined) {
   return (links || []).filter(isVisibleLink);
 }
@@ -130,7 +134,7 @@ async function logout() {
               <span>{{ menu.description }}</span>
             </section>
             <section class="site-mega-links">
-              <RouterLink v-for="link in menu.links" :key="`${menu.key}-${link.label}`" :to="toPatientRoute(link)" @click="closeMenus">
+              <RouterLink v-for="link in menu.links" :key="`${menu.key}-${link.label}`" :to="toPatientRoute(link)" :class="{ 'link-actionable': isActionableLink(link) }" @click="closeMenus">
                 <strong>{{ link.label }}</strong>
                 <span v-if="link.description">{{ link.description }}</span>
               </RouterLink>
