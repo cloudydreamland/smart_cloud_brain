@@ -3,7 +3,9 @@ package com.smartcloudbrain.triage.service;
 import com.smartcloudbrain.common.error.ErrorCode;
 import com.smartcloudbrain.common.exception.BusinessException;
 import com.smartcloudbrain.triage.client.InternalNotificationClient;
+import com.smartcloudbrain.triage.entity.Doctor;
 import com.smartcloudbrain.triage.entity.TriageRecord;
+import com.smartcloudbrain.triage.repository.DoctorRepository;
 import com.smartcloudbrain.triage.repository.TriageRecordRepository;
 import java.util.List;
 import java.util.Map;
@@ -14,10 +16,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class TriageDeskService {
 
   private final TriageRecordRepository triageRecordRepository;
+  private final DoctorRepository doctorRepository;
   private final InternalNotificationClient notificationClient;
 
-  public TriageDeskService(TriageRecordRepository triageRecordRepository, InternalNotificationClient notificationClient) {
+  public TriageDeskService(TriageRecordRepository triageRecordRepository, DoctorRepository doctorRepository, InternalNotificationClient notificationClient) {
     this.triageRecordRepository = triageRecordRepository;
+    this.doctorRepository = doctorRepository;
     this.notificationClient = notificationClient;
   }
 
@@ -34,6 +38,14 @@ public class TriageDeskService {
   public Map<String, Object> assign(Long triageRecordId, Long doctorId) {
     TriageRecord record = triageRecordRepository.findById(triageRecordId)
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+    
+    // 校验医生有效性
+    Doctor doctor = doctorRepository.findById(doctorId)
+        .orElseThrow(() -> new BusinessException(404, "医生不存在"));
+    if ("DISABLED".equalsIgnoreCase(doctor.getStatus())) {
+      throw new BusinessException(400, "该医生已停用，无法分配");
+    }
+    
     record.setAssignedDoctorId(doctorId);
     record.setStatus("ASSIGNED");
     TriageRecord saved = triageRecordRepository.save(record);

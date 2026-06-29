@@ -43,8 +43,16 @@ public class NotificationService {
       String q,
       String sort
   ) {
-    AuthenticatedUser user = currentUserService.require(RoleType.DOCTOR);
-    return notificationRepository.findByDoctorId(user.userId()).stream()
+    AuthenticatedUser user = currentUserService.get();
+    List<NotificationMessage> messages;
+    if (user.role() == RoleType.PATIENT) {
+      messages = notificationRepository.findByPatientId(user.userId());
+    } else if (user.role() == RoleType.DOCTOR) {
+      messages = notificationRepository.findByDoctorId(user.userId());
+    } else {
+      messages = notificationRepository.findAll();
+    }
+    return messages.stream()
         .filter(message -> matches(message.getReadStatus(), readStatus))
         .filter(message -> matches(message.getHandleStatus(), handleStatus))
         .filter(message -> matches(message.getType(), type))

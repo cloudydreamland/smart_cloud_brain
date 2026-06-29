@@ -116,6 +116,9 @@ public class RegistrationService {
     if ("CANCELLED".equalsIgnoreCase(registration.getStatus())) {
       return registrationView(registration);
     }
+    if ("COMPLETED".equalsIgnoreCase(registration.getStatus())) {
+      throw new BusinessException(400, "已完成的挂号不允许取消");
+    }
     registration.setStatus("CANCELLED");
     registration.setUpdatedAt(LocalDateTime.now());
     Registration saved = registrationRepository.save(registration);
@@ -141,9 +144,9 @@ public class RegistrationService {
 
   public List<Map<String, Object>> slots() {
     currentUserService.get();
-    return appointmentSlotRepository.findByStatusAndStartTimeGreaterThanEqualOrderByStartTimeAscDoctorIdAsc(
+    return appointmentSlotRepository.findByStatusAndEndTimeGreaterThanEqualOrderByStartTimeAscDoctorIdAsc(
             "AVAILABLE",
-            LocalDateTime.now().minusMinutes(1)
+            LocalDateTime.now()
         ).stream()
         .filter(slot -> slot.getRemainingCapacity() != null && slot.getRemainingCapacity() > 0)
         .map(this::slotView)
@@ -158,6 +161,8 @@ public class RegistrationService {
     view.put("registrationId", registration.getId());
     view.put("patientId", registration.getPatientId());
     view.put("patientName", patient == null ? "" : patient.getName());
+    view.put("patientAge", patient == null ? null : patient.getAge());
+    view.put("patientGender", patient == null ? "" : patient.getGender());
     view.put("doctorId", registration.getDoctorId());
     view.put("doctorName", doctor == null ? "" : doctor.getName());
     view.put("departmentId", registration.getDepartmentId());

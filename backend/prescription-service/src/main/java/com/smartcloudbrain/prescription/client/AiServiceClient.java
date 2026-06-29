@@ -9,12 +9,13 @@ import com.smartcloudbrain.aiapi.dto.PromptResolveRequest;
 import com.smartcloudbrain.aiapi.dto.PromptResolveResponse;
 import com.smartcloudbrain.aiapi.dto.TriageRequest;
 import com.smartcloudbrain.aiapi.dto.TriageResponse;
+import com.smartcloudbrain.common.feign.InternalServiceFeignConfig;
 import com.smartcloudbrain.common.result.Result;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@FeignClient(name = "ai-service", url = "${services.ai.base-url}")
+@FeignClient(name = "ai-service", url = "${services.ai.base-url}", configuration = InternalServiceFeignConfig.class)
 public interface AiServiceClient {
 
   @PostMapping(AiInternalApi.TRIAGE)

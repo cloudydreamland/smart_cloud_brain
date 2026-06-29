@@ -11,7 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface AppointmentSlotRepository extends JpaRepository<AppointmentSlot, Long> {
-  List<AppointmentSlot> findByStatusAndStartTimeGreaterThanEqualOrderByStartTimeAscDoctorIdAsc(String status, LocalDateTime startTime);
+  List<AppointmentSlot> findByStatusAndEndTimeGreaterThanEqualOrderByStartTimeAscDoctorIdAsc(String status, LocalDateTime endTime);
 
   @Lock(LockModeType.PESSIMISTIC_WRITE)
   @Query("select slot from AppointmentSlot slot where slot.id = :id")
