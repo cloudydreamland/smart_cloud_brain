@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "@smart-cloud-brain/shared-api";
@@ -14,13 +14,26 @@ const { session } = storeToRefs(auth);
 const activeMenu = ref<string | null>(null);
 const mobileOpen = ref(false);
 const userOpen = ref(false);
+const userMenuRef = ref<HTMLDivElement | null>(null);
 const { config, disabledStaticPageRouteNames, load } = usePatientSiteConfig();
 
 auth.load("patient-session", "PATIENT");
 onMounted(() => {
   void load();
   startPatientSiteConfigAutoRefresh();
+  document.addEventListener("click", onDocumentClick);
 });
+
+onBeforeUnmount(() => {
+  document.removeEventListener("click", onDocumentClick);
+});
+
+function onDocumentClick(e: MouseEvent) {
+  if (!userOpen.value) return;
+  if (userMenuRef.value && !userMenuRef.value.contains(e.target as Node)) {
+    userOpen.value = false;
+  }
+}
 
 const isSignedIn = computed(() => Boolean(session.value && !auth.permissionError));
 const userName = computed(() => session.value?.name || "患者");
@@ -135,7 +148,7 @@ async function logout() {
         <template v-if="!isSignedIn">
           <RouterLink class="site-login-link" :to="{ name: 'patient-login' }" @click="closeMenus">登录/注册</RouterLink>
         </template>
-        <div v-else class="site-user-menu">
+        <div v-else ref="userMenuRef" class="site-user-menu">
           <button type="button" :aria-expanded="userOpen" @click="userOpen = !userOpen">
             {{ userName }}
             <span aria-hidden="true"></span>

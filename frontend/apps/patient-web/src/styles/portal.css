@@ -294,6 +294,23 @@
   box-shadow: 0 0 0 2px rgba(37, 99, 235, .12);
 }
 
+.patient-portal-page .slot-card-grid .slot-card.booked {
+  opacity: .55;
+  pointer-events: none;
+  border-color: #d1d5db;
+  background: #f9fafb;
+}
+
+.patient-portal-page .slot-card-grid .slot-card.booked .booked-label {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  background: #e5e7eb;
+}
+
 .patient-portal-page .slot-schedule {
   display: grid;
   gap: 22px;

@@ -2,7 +2,7 @@
 import { computed, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 import { api, fieldText, formatApiError, statusClass, statusText, toNumber, usePatientWorkflowStore, type DataRow } from "@smart-cloud-brain/shared-api";
-import { EmptyState, ErrorState, LoadingState, StatusTag } from "@smart-cloud-brain/shared-ui";
+import { EmptyState, ErrorState, LoadingState, StatusTag, Toast } from "@smart-cloud-brain/shared-ui";
 import ConfirmAppointmentModal from "../components/ConfirmAppointmentModal.vue";
 
 type DateGroup = {
@@ -21,14 +21,29 @@ type DoctorGroup = {
 };
 
 const workflow = usePatientWorkflowStore();
-const { slots, doctors, triageHistory } = storeToRefs(workflow);
+const { slots, doctors, triageHistory, registrations } = storeToRefs(workflow);
 const loading = ref(false);
 const saving = ref(false);
 const error = ref("");
-const notice = ref("");
+const toast = ref<InstanceType<typeof Toast>>();
 const selectedDate = ref("");
 const selectedSlot = ref<DataRow | null>(null);
 const confirmOpen = ref(false);
+
+const bookedTimes = computed(() => {
+  const times = new Set<string>();
+  registrations.value.forEach((reg) => {
+    const status = fieldText(reg, "status");
+    if (status === "CANCELLED") return;
+    const time = fieldText(reg, "appointmentTime", "");
+    if (time) times.add(time);
+  });
+  return times;
+});
+
+function isSlotBooked(slot: DataRow) {
+  return bookedTimes.value.has(fieldText(slot, "startTime", ""));
+}
 
 const latestTriage = computed(() => triageHistory.value[0] ?? null);
 const assignedDoctorId = computed(() => toNumber(latestTriage.value?.assignedDoctorId, 0));
@@ -110,7 +125,6 @@ watch(dateGroups, (groups) => {
 async function refresh() {
   loading.value = true;
   error.value = "";
-  notice.value = "";
   try {
     await workflow.refreshPublicData();
     await workflow.refreshAuthenticated();
@@ -122,6 +136,7 @@ async function refresh() {
 }
 
 function choose(slot: DataRow) {
+  if (isSlotBooked(slot)) return;
   selectedSlot.value = slot;
   confirmOpen.value = true;
 }
@@ -167,7 +182,6 @@ async function confirmAppointment() {
   if (!selectedSlot.value) return;
   saving.value = true;
   error.value = "";
-  notice.value = "";
   try {
     await api.createRegistration({
       doctorId: toNumber(selectedSlot.value.doctorId),
@@ -178,7 +192,7 @@ async function confirmAppointment() {
     });
     await workflow.refreshAuthenticated();
     confirmOpen.value = false;
-    notice.value = "预约已提交，可在“我的挂号”页面查看或取消。";
+    toast.value?.success("预约已提交", "可在“我的挂号”页面查看或取消。");
   } catch (err) {
     error.value = formatApiError(err, "挂号失败");
   } finally {
@@ -201,7 +215,6 @@ refresh();
     </header>
     <div class="panel-body stack">
       <ErrorState v-if="error" :message="error" />
-      <div v-if="notice" class="notice success">{{ notice }}</div>
       <div class="summary-strip">
         <div class="summary-item"><span>{{ guidanceLabel }}</span><strong>{{ guidanceValue }}</strong></div>
         <div class="summary-item"><span>医生</span><strong>{{ doctors.length }}</strong></div>
@@ -242,14 +255,19 @@ refresh();
                   <span>{{ period.slots.length }} 个可选</span>
                 </div>
                 <div class="slot-card-grid">
-                  <article v-for="slot in period.slots" :key="String(slot.slotId)" class="slot-card" :class="{ selected: selectedSlot?.slotId === slot.slotId }">
+                  <article v-for="slot in period.slots" :key="String(slot.slotId)" class="slot-card" :class="{ selected: selectedSlot?.slotId === slot.slotId, booked: isSlotBooked(slot) }">
                     <div class="row-main">
                       <strong>{{ slotTimeText(slot) }}</strong>
                       <p>余号 {{ fieldText(slot, "remainingCapacity", "0") }}/{{ fieldText(slot, "capacity", "0") }}</p>
                     </div>
                     <div class="toolbar">
-                      <StatusTag :status="statusText(slot.status)" :tone="statusClass(slot.status)" />
-                      <button class="primary" type="button" @click="choose(slot)">选择</button>
+                      <template v-if="isSlotBooked(slot)">
+                        <span class="tag booked-label">已选择</span>
+                      </template>
+                      <template v-else>
+                        <StatusTag :status="statusText(slot.status)" :tone="statusClass(slot.status)" />
+                        <button class="primary" type="button" @click="choose(slot)">选择</button>
+                      </template>
                     </div>
                   </article>
                 </div>
@@ -261,6 +279,7 @@ refresh();
       </div>
       <EmptyState v-else title="暂无号源" message="当前推荐科室暂无可预约号源，请刷新或稍后再试。" />
     </div>
+    <Toast ref="toast" />
     <ConfirmAppointmentModal :open="confirmOpen" :slot="selectedSlot" :busy="saving" @close="confirmOpen = false" @confirm="confirmAppointment" />
   </section>
 </template>
