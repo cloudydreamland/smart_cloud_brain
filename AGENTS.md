@@ -121,13 +121,15 @@ docker exec scb-auth-service env | grep JWT_SECRET
 
 **原因**：前端提前写了 API 调用，但后端 controller 还没实现对应路由。
 
-**当前未实现的接口**：
-- `GET /api/patient/departments` — patient-service 没有
-- `GET /api/patient/doctors` — patient-service 没有
-- `GET /api/admin/dashboard/stats` — admin-service 没有
-- `GET /api/admin/doctor/list` — admin-service 没有
-- `GET /api/doctor/queue` — doctor-service 没有
-- `GET /api/doctor/dashboard` — doctor-service 没有
+**2026-06-29 审计更新**：以下接口在后端审查中确认已实现（AGENTS.md可能未及时更新）：
+- ~~`GET /api/admin/dashboard/stats`~~ — ✅ AdminController 已实现
+- ~~`GET /api/admin/doctor/list`~~ — ✅ AdminController 已实现
+- ~~`GET /api/doctor/queue`~~ — ✅ DoctorController 已实现
+- ~~`GET /api/doctor/dashboard`~~ — ✅ DoctorController 已实现
+
+**仍需运行态验证**：
+- `GET /api/patient/departments` — patient-service 状态待确认
+- `GET /api/patient/doctors` — patient-service 状态待确认
 
 ### 11. 种子数据登录凭据
 
@@ -193,6 +195,47 @@ docker start scb-patient-service scb-doctor-service  # 多个
 **注意**：`docker compose up -d` 也不会重启被手动 stop 的容器（它只处理不存在/需要创建的容器）。要强制重建所有容器用 `--force-recreate`，但这会导致短暂服务中断。
 
 **Mac M5 特殊问题**：`deploy/.env` 需要设置 `KINGBASE_IMAGE=kingbase_v009r001c010b0004_single_arm:v1`，否则 `docker compose up -d` 会试图 pull x86 镜像失败。队友 Windows 不需要此文件（已在 .gitignore 中）。
+
+### 16. 号源查询用 startTime 而非 endTime（致命）
+
+**问题**：`RegistrationService.slots()` 使用 `startTime >= now` 过滤号源，正确应该用 `endTime >= now`。
+
+**表现**：管理端排班管理页面显示已发布的排班（如今天09:00-23:59），但患者端"可预约号源"页面显示号源=0。
+
+**根因**：查询阈值 = now - 1min，09:00-23:59的排班在20:00查询时，startTime=09:00 < 20:00 被排除，虽然 endTime=23:59 > 20:00 实际仍可用。
+
+**修复**：
+1. `AppointmentSlotRepository` 新增：`findByStatusAndEndTimeGreaterThanEqualOrderByStartTimeAscDoctorIdAsc()`
+2. `RegistrationService.slots()` 替换查询方法
+3. 检查 `DoctorScheduleService.slots()` 是否有同样问题
+
+**关键文件**：
+- `backend/registration-service/.../RegistrationService.java:142-151`
+- `backend/registration-service/.../AppointmentSlotRepository.java`
+
+### 17. 医生端硬编码假数据（验收违规）
+
+**问题**：医生端多个页面存在硬编码的测试数据，违反验收标准"不写死业务演示数据"。
+
+**表现**：
+- `DoctorLoginPage.vue:10` — 硬编码测试凭据 `doctor_chen / 123456`（种子账号应为 `13900000001`）
+- `DoctorLoginPage.vue:44-57` — 硬编码假数据：今日队列18、AI完成率92%、高风险2
+- `ConsultationPage.vue:374-376` — 硬编码生命体征：37岁/女/38.1°C
+
+**修复**：
+1. 登录页改为占位符或正确种子账号
+2. 信号面板改为动态数据或移除
+3. 接诊页生命体征从患者信息/分诊记录动态读取
+
+### 18. AuthService调试后门
+
+**问题**：`AuthService.java:115-120` 的 `doctorByDemoAccount()` 允许通过 `doctor1`, `doctor2` 等格式绕过手机号查找直接登录。
+
+**表现**：输入 `doctor1` 会查 doctor 表 id=1 的医生，输入 `doctor2` 查 id=2，以此类推。
+
+**风险**：生产环境安全隐患。
+
+**修复**：用环境变量控制是否启用，或直接移除。
 
 ## 前端代码规范（Agent 必读）
 

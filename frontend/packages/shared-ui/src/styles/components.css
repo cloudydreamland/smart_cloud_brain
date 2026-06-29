@@ -348,21 +348,19 @@
   align-items: center;
   padding: 14px 0;
   border-bottom: 1px solid var(--line);
+  transition: background 150ms ease;
 }
 
 .list-row:last-child {
   border-bottom: 0;
 }
 
-.list-row:hover,
-.list-row.selected {
+.list-row:hover {
   background: var(--surface-alt);
-  margin: 0 -24px;
-  padding-left: 24px;
-  padding-right: 24px;
 }
 
 .list-row.selected {
+  background: var(--surface-alt);
   box-shadow: inset 3px 0 0 var(--primary);
 }
 

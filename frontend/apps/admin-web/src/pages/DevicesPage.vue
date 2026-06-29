@@ -3,6 +3,7 @@ import { computed, inject, reactive, ref, type Ref } from "vue";
 import { storeToRefs } from "pinia";
 import { api, displayText, formatApiError, statusClass, toNumber, useAdminWorkflowStore, useAuthStore, usePagination, type Device, type DeviceSaveRequest, type DeviceUsage, type DeviceUsageSaveRequest } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, FormField, Modal, PaginationBar, ScbSelect, StatusTag, Toast } from "@smart-cloud-brain/shared-ui";
+import RowActionMenu, { type RowActionMenuItem } from "../components/RowActionMenu.vue";
 
 const workflow = useAdminWorkflowStore();
 const { departments } = storeToRefs(workflow);
@@ -135,19 +136,20 @@ async function saveUsage() {
   }
 }
 
-function deviceActions(item: Device) {
+function moreActions(item: Device): RowActionMenuItem[] {
   const s = String(item.status || "").toUpperCase();
-  const actions: { key: string; label: string; danger?: boolean }[] = [];
-  actions.push({ key: "edit", label: "编辑" });
-  if (s === "RETIRED") return actions;
-  actions.push({ key: "usage", label: "使用记录" });
+  if (s === "RETIRED") return [];
   if (s === "MAINTENANCE") {
-    actions.push({ key: "restore", label: "恢复可用" });
+    return [
+      { key: "restore", label: "恢复可用" },
+      { key: "retire", label: "停用设备", danger: true, separatorBefore: true },
+    ];
   } else {
-    actions.push({ key: "maintain", label: "维护" });
+    return [
+      { key: "maintain", label: "设为维修中" },
+      { key: "retire", label: "停用设备", danger: true, separatorBefore: true },
+    ];
   }
-  actions.push({ key: "retire", label: "停用", danger: true });
-  return actions;
 }
 
 function handleAction(key: string, item: Device) {
@@ -190,7 +192,7 @@ refresh();
       <template v-if="filtered.length">
       <div class="table-scroll table-breakout">
         <table class="data-table">
-          <thead><tr><th>编号</th><th>名称</th><th>类别</th><th>科室</th><th>状态</th><th>使用量</th><th class="actions-cell">操作</th></tr></thead>
+          <thead><tr><th>编号</th><th>名称</th><th>类别</th><th>科室</th><th>状态</th><th>使用量</th><th class="actions-cell device-actions-cell">操作</th></tr></thead>
           <tbody>
             <tr v-for="item in pageRows" :key="String(item.id)">
               <td>{{ displayText(item.deviceCode) }}</td>
@@ -199,10 +201,33 @@ refresh();
               <td>{{ displayText(item.departmentName) }}</td>
               <td><StatusTag :status="displayText(item.status)" :tone="statusClass(item.status)" /></td>
               <td>{{ displayText(item.usageCount, "0") }} / 异常 {{ displayText(item.abnormalCount, "0") }}</td>
-              <td class="toolbar">
-                <button v-for="a in deviceActions(item)" :key="a.key"
-                  type="button" :class="['action-btn', { danger: a.danger }]"
-                  @click="handleAction(a.key, item)">{{ a.label }}</button>
+              <td class="actions-cell device-actions-cell">
+                <div class="device-row-actions">
+                  <button
+                    v-if="displayText(item.status).toUpperCase() !== 'RETIRED'"
+                    type="button"
+                    class="device-row-action"
+                    :disabled="loading"
+                    @click="handleAction('usage', item)"
+                  >
+                    使用记录
+                  </button>
+                  <button
+                    type="button"
+                    class="device-row-action"
+                    :disabled="loading"
+                    @click="handleAction('edit', item)"
+                  >
+                    编辑
+                  </button>
+                  <RowActionMenu
+                    v-if="moreActions(item).length"
+                    :items="moreActions(item)"
+                    :aria-label="`${displayText(item.name)}的更多操作`"
+                    :disabled="loading"
+                    @select="handleAction($event, item)"
+                  />
+                </div>
               </td>
             </tr>
           </tbody>

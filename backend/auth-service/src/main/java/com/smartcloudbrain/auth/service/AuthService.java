@@ -16,6 +16,7 @@ import com.smartcloudbrain.common.security.JwtService;
 import com.smartcloudbrain.common.security.RoleType;
 import java.time.LocalDateTime;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +28,9 @@ public class AuthService {
   private final PatientRepository patientRepository;
   private final DoctorRepository doctorRepository;
   private final AdminUserRepository adminUserRepository;
+  
+  @Value("${auth.enable-demo-account:false}")
+  private boolean enableDemoAccount;
 
   public AuthService(
       JwtService jwtService,
@@ -113,6 +117,9 @@ public class AuthService {
   }
 
   private java.util.Optional<Doctor> doctorByDemoAccount(String account) {
+    if (!enableDemoAccount) {
+      return java.util.Optional.empty();
+    }
     if (account == null || !account.matches("doctor\\d+")) {
       return java.util.Optional.empty();
     }

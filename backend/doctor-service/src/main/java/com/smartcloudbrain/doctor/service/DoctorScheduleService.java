@@ -23,6 +23,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -102,20 +104,19 @@ public class DoctorScheduleService {
   }
 
   public List<Map<String, Object>> schedules() {
-    return doctorScheduleRepository.findByWorkDateGreaterThanEqualOrderByWorkDateAscDoctorIdAsc(LocalDate.now()).stream()
-        .map(this::scheduleView)
-        .toList();
+    List<DoctorSchedule> scheduleList = doctorScheduleRepository.findByWorkDateGreaterThanEqualOrderByWorkDateAscDoctorIdAsc(LocalDate.now());
+    return batchScheduleView(scheduleList);
   }
 
   public List<Map<String, Object>> schedules(LocalDate startDate, LocalDate endDate, Long departmentId, Long doctorId, String status) {
     LocalDate start = startDate == null ? LocalDate.now().minusDays(30) : startDate;
     LocalDate end = endDate == null ? LocalDate.now().plusDays(90) : endDate;
-    return doctorScheduleRepository.findByWorkDateGreaterThanEqualAndWorkDateLessThanEqualOrderByWorkDateAscDoctorIdAsc(start, end).stream()
+    List<DoctorSchedule> scheduleList = doctorScheduleRepository.findByWorkDateGreaterThanEqualAndWorkDateLessThanEqualOrderByWorkDateAscDoctorIdAsc(start, end).stream()
         .filter(schedule -> departmentId == null || departmentId.equals(schedule.getDepartmentId()))
         .filter(schedule -> doctorId == null || doctorId.equals(schedule.getDoctorId()))
         .filter(schedule -> status == null || status.isBlank() || status.equalsIgnoreCase(schedule.getStatus()))
-        .map(this::scheduleView)
         .toList();
+    return batchScheduleView(scheduleList);
   }
 
   @Transactional
@@ -158,7 +159,8 @@ public class DoctorScheduleService {
   }
 
   public List<Map<String, Object>> slots() {
-    return appointmentSlotRepository.findByStartTimeGreaterThanEqualOrderByStartTimeAscDoctorIdAsc(LocalDateTime.now()).stream()
+    return appointmentSlotRepository.findByEndTimeGreaterThanEqualOrderByStartTimeAscDoctorIdAsc(LocalDateTime.now()).stream()
+        .filter(slot -> slot.getRemainingCapacity() != null && slot.getRemainingCapacity() > 0)
         .map(this::slotView)
         .toList();
   }
@@ -319,5 +321,44 @@ public class DoctorScheduleService {
     String[] parts = Objects.requireNonNullElse(timeRange, "09:00-12:00").split("-");
     String end = parts.length > 1 ? parts[1] : "12:00";
     return LocalDateTime.parse(workDate + "T" + end + ":00");
+  }
+
+  private List<Map<String, Object>> batchScheduleView(List<DoctorSchedule> schedules) {
+    if (schedules.isEmpty()) {
+      return List.of();
+    }
+
+    // 批量查询医生和科室名称
+    Set<Long> doctorIds = schedules.stream().map(DoctorSchedule::getDoctorId).collect(Collectors.toSet());
+    Set<Long> departmentIds = schedules.stream().map(DoctorSchedule::getDepartmentId).collect(Collectors.toSet());
+    
+    Map<Long, String> doctorNames = doctorRepository.findAllById(doctorIds).stream()
+        .collect(Collectors.toMap(Doctor::getId, Doctor::getName, (a, b) -> a));
+    Map<Long, String> departmentNames = departmentRepository.findAllById(departmentIds).stream()
+        .collect(Collectors.toMap(Department::getId, Department::getName, (a, b) -> a));
+
+    // 批量查询号源
+    Set<Long> scheduleIds = schedules.stream().map(DoctorSchedule::getId).collect(Collectors.toSet());
+    Map<Long, AppointmentSlot> slotMap = appointmentSlotRepository.findByScheduleIdIn(scheduleIds).stream()
+        .collect(Collectors.toMap(AppointmentSlot::getScheduleId, s -> s, (a, b) -> a));
+
+    return schedules.stream().map(schedule -> {
+      AppointmentSlot slot = slotMap.get(schedule.getId());
+      int booked = slot == null ? 0 : Math.max(0, (slot.getCapacity() == null ? 0 : slot.getCapacity()) - (slot.getRemainingCapacity() == null ? 0 : slot.getRemainingCapacity()));
+      Map<String, Object> view = new LinkedHashMap<>();
+      view.put("id", schedule.getId());
+      view.put("doctorId", schedule.getDoctorId());
+      view.put("doctorName", doctorNames.getOrDefault(schedule.getDoctorId(), ""));
+      view.put("departmentId", schedule.getDepartmentId());
+      view.put("departmentName", departmentNames.getOrDefault(schedule.getDepartmentId(), ""));
+      view.put("workDate", schedule.getWorkDate().toString());
+      view.put("timeRange", schedule.getTimeRange());
+      view.put("capacity", schedule.getCapacity());
+      view.put("booked", booked);
+      view.put("remainingCapacity", slot == null ? schedule.getCapacity() : slot.getRemainingCapacity());
+      view.put("slotId", slot == null ? 0L : slot.getId());
+      view.put("status", schedule.getStatus());
+      return view;
+    }).toList();
   }
 }
