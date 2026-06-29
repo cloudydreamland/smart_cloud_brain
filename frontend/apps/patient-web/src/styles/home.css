@@ -268,6 +268,51 @@
   font-weight: 760;
 }
 
+.home-doctor-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-top: 28px;
+}
+
+.home-doctor-grid a {
+  display: flex;
+  min-height: 112px;
+  gap: 16px;
+  align-items: center;
+  padding: 18px;
+  border: 1px solid var(--hospital-line);
+  background: #fff;
+  color: #173b70;
+}
+
+.home-doctor-grid img {
+  width: 64px;
+  height: 64px;
+  flex: 0 0 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #dce5ee;
+}
+
+.home-doctor-grid span {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.home-doctor-grid strong,
+.home-doctor-grid small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-doctor-grid small {
+  color: var(--hospital-muted);
+  font-size: 13px;
+}
+
 .home-donate {
   display: grid;
   grid-template-columns: .95fr 1.05fr;

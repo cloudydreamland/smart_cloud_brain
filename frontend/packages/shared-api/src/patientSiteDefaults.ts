@@ -1,5 +1,13 @@
 import type { PatientSitePagesConfig } from "./patientSitePageTypes";
-import type { PatientHomeConfig, PatientNavConfig, PatientSiteConfig, PatientStaticPagesConfig, StaticPageConfig } from "./patientSiteTypes";
+import type {
+  PatientFooterConfig,
+  PatientHomeConfig,
+  PatientHospitalInfoConfig,
+  PatientNavConfig,
+  PatientSiteConfig,
+  PatientStaticPagesConfig,
+  StaticPageConfig,
+} from "./patientSiteTypes";
 
 export const defaultStaticPages: StaticPageConfig[] = [
   {
@@ -487,6 +495,42 @@ export const defaultPatientSiteConfig: PatientSiteConfig = {
   pages: {
     pages: [],
   },
+  hospitalInfo: {
+    name: "智慧云脑医院",
+    intro: "以医院官网为入口，将患者服务、医生科室、健康资料和 AI 辅助能力整合在同一套专业视觉体系中。",
+    address: "北京市海淀区智慧医疗示范中心",
+    phone: "400-000-0000",
+    workHours: "周一至周日 08:00-18:00",
+    website: "https://smart-cloud-brain.example.com",
+    locations: [
+      {
+        name: "智慧云脑北京中心",
+        address: "北京市海淀区智慧医疗示范中心",
+        phone: "400-000-0000",
+        imageUrl: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=900&q=80",
+        imageObjectKey: "",
+        sort: 10,
+        enabled: true,
+      },
+    ],
+  },
+  footer: {
+    brandName: "智慧云脑",
+    description: "以医院官网为入口，将患者服务、医生科室、健康资料和 AI 辅助能力整合在同一套专业视觉体系中。",
+    copyright: "© 2026 智慧云脑",
+    contactPhone: "400-000-0000",
+    contactAddress: "北京市海淀区智慧医疗示范中心",
+    links: [
+      { label: "在线挂号", routeName: "patient-doctors", sort: 10, enabled: true },
+      { label: "我的预约", routeName: "patient-appointments", sort: 20, enabled: true },
+      { label: "科室导航", routeName: "public-departments", sort: 30, enabled: true },
+      { label: "联系我们", routeName: "about-contact", sort: 40, enabled: true },
+    ],
+    legalLinks: [
+      { label: "隐私政策", routeName: "cms-page", slug: "privacy", sort: 10, enabled: true },
+      { label: "使用条款", routeName: "cms-page", slug: "terms", sort: 20, enabled: true },
+    ],
+  },
 };
 
 export const patientSiteConfigTemplates: {
@@ -494,9 +538,13 @@ export const patientSiteConfigTemplates: {
   patient_home: PatientHomeConfig;
   patient_static_pages: PatientStaticPagesConfig;
   patient_pages: PatientSitePagesConfig;
+  patient_hospital_info: PatientHospitalInfoConfig;
+  patient_footer: PatientFooterConfig;
 } = {
   patient_nav: defaultPatientSiteConfig.nav,
   patient_home: defaultPatientSiteConfig.home,
   patient_static_pages: defaultPatientSiteConfig.staticPages,
   patient_pages: defaultPatientSiteConfig.pages,
+  patient_hospital_info: defaultPatientSiteConfig.hospitalInfo,
+  patient_footer: defaultPatientSiteConfig.footer,
 };

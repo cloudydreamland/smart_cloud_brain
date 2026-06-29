@@ -1,35 +1,46 @@
+<script setup lang="ts">
+import { computed } from "vue";
+import { defaultPatientSiteConfig, type PatientFooterConfig } from "@smart-cloud-brain/shared-api";
+import { toPatientRoute } from "../site-config/routeTarget";
+import { usePatientSiteConfig } from "../site-config/usePatientSiteConfig";
+
+const { config } = usePatientSiteConfig();
+
+const footer = computed<PatientFooterConfig>(() => {
+  const current = config.value.footer;
+  return current.brandName ? current : defaultPatientSiteConfig.footer;
+});
+
+const footerLinks = computed(() => footer.value.links.filter((link) => link.enabled !== false));
+const legalLinks = computed(() => footer.value.legalLinks.filter((link) => link.enabled !== false));
+</script>
+
 <template>
   <footer class="site-footer">
     <div class="site-footer-grid">
       <section>
         <RouterLink class="scb-brand" :to="{ name: 'patient-home' }" aria-label="智慧云脑首页">
-          <span>智慧云脑</span>
+          <span>{{ footer.brandName }}</span>
           <i></i><i></i>
         </RouterLink>
-        <p>以医院官网为入口，将患者服务、医生科室、健康资料和 AI 辅助能力整合在同一套专业视觉体系中。</p>
+        <p>{{ footer.description }}</p>
+        <p v-if="footer.contactPhone || footer.contactAddress" class="site-footer-contact">
+          {{ [footer.contactPhone, footer.contactAddress].filter(Boolean).join(" · ") }}
+        </p>
       </section>
       <nav aria-label="页脚患者服务">
-        <strong>患者服务</strong>
-        <RouterLink :to="{ name: 'patient-doctors' }">在线挂号</RouterLink>
-        <RouterLink :to="{ name: 'patient-appointments' }">我的预约</RouterLink>
-        <RouterLink :to="{ name: 'patient-records' }">我的病历</RouterLink>
-        <RouterLink :to="{ name: 'patient-prescriptions' }">我的处方</RouterLink>
+        <strong>常用入口</strong>
+        <RouterLink v-for="link in footerLinks" :key="`${link.routeName}-${link.slug || link.label}`" :to="toPatientRoute(link)">
+          {{ link.label }}
+        </RouterLink>
       </nav>
-      <nav aria-label="页脚医疗资源">
-        <strong>医疗资源</strong>
-        <RouterLink :to="{ name: 'public-departments' }">科室导航</RouterLink>
-        <RouterLink :to="{ name: 'public-search', query: { q: '医生' } }">查找医生</RouterLink>
-        <RouterLink :to="{ name: 'public-conditions' }">健康资料库</RouterLink>
-        <RouterLink :to="{ name: 'service-emergency' }">急诊指南</RouterLink>
-      </nav>
-      <nav aria-label="页脚关于医院">
-        <strong>关于智慧云脑</strong>
-        <RouterLink :to="{ name: 'about-hospital' }">医院介绍</RouterLink>
-        <RouterLink :to="{ name: 'public-research' }">科研与教育</RouterLink>
-        <RouterLink :to="{ name: 'about-careers' }">招聘信息</RouterLink>
-        <RouterLink :to="{ name: 'about-contact' }">联系我们</RouterLink>
+      <nav v-if="legalLinks.length" aria-label="页脚法律链接">
+        <strong>法律信息</strong>
+        <RouterLink v-for="link in legalLinks" :key="`${link.routeName}-${link.slug || link.label}`" :to="toPatientRoute(link)">
+          {{ link.label }}
+        </RouterLink>
       </nav>
     </div>
-    <p class="site-footer-meta">简体中文 · 使用条款 · 隐私政策 · 数字无障碍声明 · © 2026 智慧云脑</p>
+    <p class="site-footer-meta">简体中文 · 数字无障碍声明 · {{ footer.copyright }}</p>
   </footer>
 </template>

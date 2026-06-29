@@ -70,9 +70,41 @@ export type PatientStaticPagesConfig = {
   pages: StaticPageConfig[];
 };
 
+export type PatientHospitalLocationConfig = {
+  name: string;
+  address: string;
+  phone?: string;
+  imageUrl?: string;
+  imageObjectKey?: string;
+  sort?: number;
+  enabled?: boolean;
+};
+
+export type PatientHospitalInfoConfig = {
+  name: string;
+  intro?: string;
+  address?: string;
+  phone?: string;
+  workHours?: string;
+  website?: string;
+  locations: PatientHospitalLocationConfig[];
+};
+
+export type PatientFooterConfig = {
+  brandName: string;
+  description?: string;
+  copyright?: string;
+  contactPhone?: string;
+  contactAddress?: string;
+  links: RouteTargetConfig[];
+  legalLinks: RouteTargetConfig[];
+};
+
 export type PatientSiteConfig = {
   nav: PatientNavConfig;
   home: PatientHomeConfig;
   staticPages: PatientStaticPagesConfig;
   pages: PatientSitePagesConfig;
+  hospitalInfo: PatientHospitalInfoConfig;
+  footer: PatientFooterConfig;
 };

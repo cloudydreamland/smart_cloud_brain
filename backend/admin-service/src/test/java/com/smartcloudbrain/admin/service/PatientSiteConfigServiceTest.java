@@ -268,9 +268,13 @@ class PatientSiteConfigServiceTest {
     when(repository.findByConfigKeyAndStatusOrderByVersionDesc("patient_home", "PUBLISHED")).thenReturn(List.of(publishedConfig));
     when(repository.findByConfigKeyAndStatusOrderByVersionDesc("patient_static_pages", "PUBLISHED")).thenReturn(List.of());
     when(repository.findByConfigKeyAndStatusOrderByVersionDesc("patient_pages", "PUBLISHED")).thenReturn(List.of());
+    when(repository.findByConfigKeyAndStatusOrderByVersionDesc("patient_hospital_info", "PUBLISHED")).thenReturn(List.of());
+    when(repository.findByConfigKeyAndStatusOrderByVersionDesc("patient_footer", "PUBLISHED")).thenReturn(List.of());
     when(repository.findByConfigKeyOrderByVersionDesc("patient_nav")).thenReturn(List.of());
     when(repository.findByConfigKeyOrderByVersionDesc("patient_static_pages")).thenReturn(List.of());
     when(repository.findByConfigKeyOrderByVersionDesc("patient_pages")).thenReturn(List.of());
+    when(repository.findByConfigKeyOrderByVersionDesc("patient_hospital_info")).thenReturn(List.of());
+    when(repository.findByConfigKeyOrderByVersionDesc("patient_footer")).thenReturn(List.of());
 
     @SuppressWarnings("unchecked")
     Map<String, Object> home = (Map<String, Object>) service.publicConfig().get("home");
@@ -287,9 +291,13 @@ class PatientSiteConfigServiceTest {
     when(repository.findByConfigKeyAndStatusOrderByVersionDesc("patient_home", "PUBLISHED")).thenReturn(List.of(invalid, valid));
     when(repository.findByConfigKeyAndStatusOrderByVersionDesc("patient_static_pages", "PUBLISHED")).thenReturn(List.of());
     when(repository.findByConfigKeyAndStatusOrderByVersionDesc("patient_pages", "PUBLISHED")).thenReturn(List.of());
+    when(repository.findByConfigKeyAndStatusOrderByVersionDesc("patient_hospital_info", "PUBLISHED")).thenReturn(List.of());
+    when(repository.findByConfigKeyAndStatusOrderByVersionDesc("patient_footer", "PUBLISHED")).thenReturn(List.of());
     when(repository.findByConfigKeyOrderByVersionDesc("patient_nav")).thenReturn(List.of());
     when(repository.findByConfigKeyOrderByVersionDesc("patient_static_pages")).thenReturn(List.of());
     when(repository.findByConfigKeyOrderByVersionDesc("patient_pages")).thenReturn(List.of());
+    when(repository.findByConfigKeyOrderByVersionDesc("patient_hospital_info")).thenReturn(List.of());
+    when(repository.findByConfigKeyOrderByVersionDesc("patient_footer")).thenReturn(List.of());
 
     @SuppressWarnings("unchecked")
     Map<String, Object> home = (Map<String, Object>) service.publicConfig().get("home");
@@ -320,13 +328,15 @@ class PatientSiteConfigServiceTest {
 
     Map<String, Object> config = service.publicConfig();
 
-    assertEquals(4, stored.size());
-    assertEquals(4, stored.stream().map(PatientSiteConfig::getConfigKey).distinct().count());
+    assertEquals(6, stored.size());
+    assertEquals(6, stored.stream().map(PatientSiteConfig::getConfigKey).distinct().count());
     assertTrue(stored.stream().allMatch(row -> "PUBLISHED".equals(row.getStatus())));
     assertTrue(((Map<?, ?>) config.get("nav")).containsKey("brand"));
     assertTrue(((Map<?, ?>) config.get("home")).containsKey("hero"));
     assertTrue(((Map<?, ?>) config.get("staticPages")).containsKey("pages"));
     assertTrue(((Map<?, ?>) config.get("pages")).containsKey("pages"));
+    assertTrue(((Map<?, ?>) config.get("hospitalInfo")).containsKey("name"));
+    assertTrue(((Map<?, ?>) config.get("footer")).containsKey("brandName"));
   }
 
   @Test
@@ -339,9 +349,13 @@ class PatientSiteConfigServiceTest {
     when(repository.findByConfigKeyAndStatusOrderByVersionDesc("patient_home", "PUBLISHED")).thenReturn(List.of());
     when(repository.findByConfigKeyAndStatusOrderByVersionDesc("patient_static_pages", "PUBLISHED")).thenReturn(List.of());
     when(repository.findByConfigKeyAndStatusOrderByVersionDesc("patient_pages", "PUBLISHED")).thenReturn(List.of(publishedPages));
+    when(repository.findByConfigKeyAndStatusOrderByVersionDesc("patient_hospital_info", "PUBLISHED")).thenReturn(List.of());
+    when(repository.findByConfigKeyAndStatusOrderByVersionDesc("patient_footer", "PUBLISHED")).thenReturn(List.of());
     when(repository.findByConfigKeyOrderByVersionDesc("patient_nav")).thenReturn(List.of());
     when(repository.findByConfigKeyOrderByVersionDesc("patient_home")).thenReturn(List.of());
     when(repository.findByConfigKeyOrderByVersionDesc("patient_static_pages")).thenReturn(List.of());
+    when(repository.findByConfigKeyOrderByVersionDesc("patient_hospital_info")).thenReturn(List.of());
+    when(repository.findByConfigKeyOrderByVersionDesc("patient_footer")).thenReturn(List.of());
     when(repository.save(any(PatientSiteConfig.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
     Map<String, Object> token = service.createPreviewToken("patient_pages", 2);

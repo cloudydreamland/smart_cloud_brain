@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import { RouterLink } from "vue-router";
-import { api, type DataRow } from "@smart-cloud-brain/shared-api";
+import { api, type DataRow, type PatientRecommendation } from "@smart-cloud-brain/shared-api";
 
 type DepartmentResource = {
   name: string;
@@ -11,6 +11,7 @@ type DepartmentResource = {
 };
 
 const departments = ref<DataRow[]>([]);
+const recommendedDepartments = ref<PatientRecommendation[]>([]);
 const loading = ref(true);
 const failed = ref(false);
 
@@ -71,22 +72,30 @@ const fallbackDepartments: DepartmentResource[] = [
   },
 ];
 
-function normalizeDepartment(row: DataRow): DepartmentResource {
-  const name = String(row.name || row.departmentName || "未命名科室");
+function normalizeDepartment(row: DataRow | PatientRecommendation): DepartmentResource {
+  const name = String(("title" in row && row.title) || ("targetName" in row && row.targetName) || ("name" in row && row.name) || ("departmentName" in row && row.departmentName) || "未命名科室");
   const matched = fallbackDepartments.find((item) => name.includes(item.name) || item.name.includes(name));
   return {
     name,
-    description: String(row.description || row.remark || row.specialty || matched?.description || "提供门诊、复诊和专科评估服务。"),
+    description: String(("description" in row && row.description) || ("remark" in row && row.remark) || ("specialty" in row && row.specialty) || matched?.description || "提供门诊、复诊和专科评估服务。"),
     symptoms: matched?.symptoms ?? ["常见病和慢病复诊", "专科症状评估", "检查结果解读", "治疗方案咨询"],
     preparation: matched?.preparation ?? ["准备既往病历和检查报告", "记录主要症状的时间线", "整理长期用药和过敏史"],
   };
 }
 
-const visibleDepartments = computed(() => (departments.value.length ? departments.value.map(normalizeDepartment) : fallbackDepartments));
+const visibleDepartments = computed(() => {
+  if (recommendedDepartments.value.length) return recommendedDepartments.value.map(normalizeDepartment);
+  return departments.value.length ? departments.value.map(normalizeDepartment) : fallbackDepartments;
+});
 
 onMounted(async () => {
   try {
-    departments.value = await api.departments();
+    const [recommendationRows, departmentRows] = await Promise.all([
+      api.patientSiteRecommendations("DEPARTMENT").catch(() => []),
+      api.departments(),
+    ]);
+    recommendedDepartments.value = recommendationRows;
+    departments.value = departmentRows;
   } catch {
     failed.value = true;
     departments.value = [];
@@ -121,7 +130,7 @@ onMounted(async () => {
 
       <section class="resource-content">
         <div class="resource-alert subtle">
-          <strong>{{ loading ? "正在同步科室数据" : failed || !departments.length ? "当前显示默认重点专科" : "数据来自后端科室接口" }}</strong>
+          <strong>{{ loading ? "正在同步科室数据" : recommendedDepartments.length ? "数据来自患者端推荐配置" : failed || !departments.length ? "当前显示默认重点专科" : "数据来自后端科室接口" }}</strong>
           <p v-if="loading">请稍候，正在读取可用科室。</p>
           <p v-else-if="failed">科室接口暂不可用，以下资料用于就诊方向参考。</p>
           <p v-else-if="!departments.length">后端暂无科室数据，以下资料用于就诊方向参考。</p>

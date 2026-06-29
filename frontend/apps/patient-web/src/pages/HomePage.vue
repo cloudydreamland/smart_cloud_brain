@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
-import { api, type DataRow } from "@smart-cloud-brain/shared-api";
+import { api, type DataRow, type PatientNotice, type PatientRecommendation } from "@smart-cloud-brain/shared-api";
 import { toPatientRoute } from "../site-config/routeTarget";
 import { usePatientSiteConfig } from "../site-config/usePatientSiteConfig";
 import type { PatientHomeModule, RouteTargetConfig } from "../site-config/types";
@@ -16,8 +16,11 @@ type HomeLocation = {
 const router = useRouter();
 const departments = ref<DataRow[]>([]);
 const doctors = ref<DataRow[]>([]);
+const portalNotices = ref<PatientNotice[]>([]);
+const hotDepartments = ref<PatientRecommendation[]>([]);
+const recommendedDoctors = ref<PatientRecommendation[]>([]);
 const conditionQuery = ref("");
-const { config, load: loadSiteConfig } = usePatientSiteConfig();
+const { config, loadHome } = usePatientSiteConfig();
 
 const hero = computed(() => config.value.home.hero);
 const heroStyle = computed(() => {
@@ -26,6 +29,11 @@ const heroStyle = computed(() => {
 });
 const homeModules = computed(() => config.value.home.modules);
 const notice = computed(() => homeModules.value.find((module) => module.type === "notice"));
+const noticeText = computed(() => {
+  const firstNotice = portalNotices.value[0];
+  if (firstNotice) return `${firstNotice.title}：${firstNotice.content}`;
+  return String(notice.value?.content?.text || "");
+});
 const introModule = computed(() => moduleByType("intro"));
 const locationsModule = computed(() => moduleByType("locations"));
 const featuredDepartmentsModule = computed(() => moduleByType("featured_departments"));
@@ -66,7 +74,10 @@ const locationItems = computed(() => {
 });
 
 const featuredDepartmentLimit = computed(() => numberValue(featuredDepartmentsContent.value.limit, 12));
-const featuredDepartments = computed(() => departments.value.slice(0, featuredDepartmentLimit.value));
+const featuredDepartments = computed(() => {
+  if (hotDepartments.value.length) return hotDepartments.value.slice(0, featuredDepartmentLimit.value);
+  return departments.value.slice(0, featuredDepartmentLimit.value);
+});
 const configuredDepartmentLinks = computed(() => contentArray(featuredDepartmentsModule.value, "items").filter(isRouteAction));
 const fallbackDepartmentNames = computed(() => {
   const names = contentArray(featuredDepartmentsModule.value, "fallbackNames")
@@ -138,8 +149,29 @@ function goSearch(q = "") {
   router.push({ name: "public-search", query: queryText ? { q: queryText } : {} });
 }
 
+function recommendationTitle(item: PatientRecommendation | DataRow) {
+  return String(("title" in item && item.title) || ("targetName" in item && item.targetName) || ("name" in item && item.name) || ("departmentName" in item && item.departmentName) || "科室");
+}
+
+function recommendationDescription(item: PatientRecommendation) {
+  return item.description || item.departmentName || item.specialty || "";
+}
+
+function recommendationKey(item: PatientRecommendation | DataRow) {
+  return String(("id" in item && item.id) || ("targetId" in item && item.targetId) || ("departmentId" in item && item.departmentId) || ("name" in item && item.name) || recommendationTitle(item));
+}
+
+function onImageError(event: Event) {
+  const image = event.target instanceof HTMLImageElement ? event.target : null;
+  if (image) image.hidden = true;
+}
+
 onMounted(async () => {
-  await loadSiteConfig();
+  const homeConfig = await loadHome();
+  const homeRow = record(homeConfig);
+  portalNotices.value = Array.isArray(homeRow.notices) ? homeRow.notices as PatientNotice[] : [];
+  hotDepartments.value = Array.isArray(homeRow.hotDepartments) ? homeRow.hotDepartments as PatientRecommendation[] : [];
+  recommendedDoctors.value = Array.isArray(homeRow.recommendedDoctors) ? homeRow.recommendedDoctors as PatientRecommendation[] : [];
   try {
     const [departmentRows, doctorRows] = await Promise.all([api.departments(), api.doctors()]);
     departments.value = departmentRows;
@@ -166,9 +198,9 @@ onMounted(async () => {
       </div>
     </section>
 
-    <div v-if="notice" class="home-alert">
+    <div v-if="noticeText" class="home-alert">
       <strong>!</strong>
-      <span>{{ String(notice.content?.text || "") }}</span>
+      <span>{{ noticeText }}</span>
     </div>
 
     <section v-if="quickActions.length" class="home-section home-care-grid">
@@ -217,6 +249,7 @@ onMounted(async () => {
         <img
           :src="textValue(introContent.imageUrl, 'https://images.unsplash.com/photo-1582750433449-648ed127bb54?auto=format&fit=crop&w=1200&q=80')"
           :alt="textValue(introContent.imageAlt, '医生与患者沟通')"
+          @error="onImageError"
         >
       </div>
     </section>
@@ -228,7 +261,7 @@ onMounted(async () => {
       </div>
       <div class="home-locations">
         <article v-for="item in locationItems" :key="item.title">
-          <img :src="item.imageUrl" :alt="item.alt">
+          <img :src="item.imageUrl" :alt="item.alt" @error="onImageError">
           <h3>{{ item.title }}</h3>
           <p>{{ item.meta }}</p>
         </article>
@@ -243,10 +276,10 @@ onMounted(async () => {
       <div class="home-care-grid">
         <RouterLink
           v-for="dept in featuredDepartments"
-          :key="String(dept.departmentId || dept.id || dept.name)"
-          :to="{ name: 'public-search', query: { q: String(dept.name || dept.departmentName || '科室') } }"
+          :key="recommendationKey(dept)"
+          :to="{ name: 'public-search', query: { q: recommendationTitle(dept) } }"
         >
-          {{ dept.name || dept.departmentName || "科室" }} <span>→</span>
+          {{ recommendationTitle(dept) }} <span>→</span>
         </RouterLink>
         <template v-if="!featuredDepartments.length && configuredDepartmentLinks.length">
           <RouterLink v-for="item in configuredDepartmentLinks" :key="item.label" :to="toPatientRoute(item)">
@@ -261,11 +294,32 @@ onMounted(async () => {
       </div>
     </section>
 
+    <section v-if="recommendedDoctors.length" class="home-section">
+      <div class="home-section-head">
+        <h2>推荐医生</h2>
+        <p>根据管理端配置优先展示推荐专家，患者可继续通过搜索查看完整医生团队。</p>
+      </div>
+      <div class="home-doctor-grid">
+        <RouterLink
+          v-for="doctor in recommendedDoctors"
+          :key="recommendationKey(doctor)"
+          :to="{ name: 'public-search', query: { q: recommendationTitle(doctor) } }"
+        >
+          <img v-if="doctor.imageUrl" :src="doctor.imageUrl" :alt="recommendationTitle(doctor)" @error="onImageError">
+          <span>
+            <strong>{{ recommendationTitle(doctor) }}</strong>
+            <small>{{ recommendationDescription(doctor) }}</small>
+          </span>
+        </RouterLink>
+      </div>
+    </section>
+
     <section v-if="staticContentModule" class="home-donate">
       <div>
         <img
           :src="textValue(staticContent.imageUrl, 'https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=1200&q=80')"
           :alt="textValue(staticContent.imageAlt, '实验室医学研究人员')"
+          @error="onImageError"
         >
       </div>
       <div>

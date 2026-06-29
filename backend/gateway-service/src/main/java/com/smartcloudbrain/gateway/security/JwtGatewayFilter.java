@@ -27,9 +27,9 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered {
       "/api/doctor/list",
       "/api/doctor/detail",
       "/api/doctor/department/list",
-      "/api/patient-site/config",
       "/actuator/health"
   );
+  private static final List<String> PUBLIC_PATH_PREFIXES = List.of("/api/patient-site/");
 
   private final JwtService jwtService;
 
@@ -73,7 +73,7 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered {
   }
 
   private boolean isPublic(String path) {
-    return PUBLIC_PATHS.contains(path);
+    return PUBLIC_PATHS.contains(path) || PUBLIC_PATH_PREFIXES.stream().anyMatch(path::startsWith);
   }
 
   private String resolveToken(ServerHttpRequest request) {

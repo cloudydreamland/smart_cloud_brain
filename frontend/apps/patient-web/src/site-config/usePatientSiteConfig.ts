@@ -37,6 +37,7 @@ async function loadConfig(options: LoadOptions = {}) {
 
 export function usePatientSiteConfig() {
   const load = () => loadConfig();
+  const loadHome = () => loadHomeConfig();
   const loadPreview = (token: string) => {
     activePreviewToken.value = token;
     if (pending) return pending.finally(() => loadConfig());
@@ -46,7 +47,7 @@ export function usePatientSiteConfig() {
     activePreviewToken.value = "";
   };
 
-  return { config, disabledStaticPageRouteNames, loading, activePreviewToken, load, loadPreview, clearPreview, refresh: load };
+  return { config, disabledStaticPageRouteNames, loading, activePreviewToken, load, loadHome, loadPreview, clearPreview, refresh: load };
 }
 
 export function startPatientSiteConfigAutoRefresh(intervalMs = 5000) {
@@ -68,6 +69,17 @@ export function startPatientSiteConfigAutoRefresh(intervalMs = 5000) {
 
 export function normalizeConfig(source: unknown): PatientSiteConfig {
   return normalizePatientSiteConfig(source);
+}
+
+async function loadHomeConfig() {
+  try {
+    const remote = await api.patientSiteHomeConfig();
+    config.value = normalizeConfig({ ...config.value, ...(isRow(remote) ? remote : {}) });
+    return remote;
+  } catch {
+    await loadConfig({ keepCurrentOnError: true });
+    return {};
+  }
 }
 
 function collectDisabledStaticPageRouteNames(source: unknown) {

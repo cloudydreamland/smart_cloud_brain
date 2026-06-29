@@ -495,6 +495,41 @@ CREATE TABLE IF NOT EXISTS patient_site_config (
   CONSTRAINT uk_patient_site_config_key_status_version UNIQUE (config_key, status, version)
 );
 
+CREATE TABLE IF NOT EXISTS patient_notice (
+  id BIGSERIAL PRIMARY KEY,
+  title VARCHAR(120) NOT NULL,
+  content TEXT NOT NULL,
+  link_type VARCHAR(32) DEFAULT 'NONE',
+  link_url VARCHAR(500),
+  start_time TIMESTAMP,
+  end_time TIMESTAMP,
+  pinned BOOLEAN NOT NULL DEFAULT FALSE,
+  sort INTEGER NOT NULL DEFAULT 0,
+  status VARCHAR(20) NOT NULL DEFAULT 'ENABLED',
+  deleted BOOLEAN NOT NULL DEFAULT FALSE,
+  created_by BIGINT,
+  updated_by BIGINT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS patient_recommendation (
+  id BIGSERIAL PRIMARY KEY,
+  recommend_type VARCHAR(32) NOT NULL,
+  target_id BIGINT NOT NULL,
+  title VARCHAR(120),
+  description VARCHAR(500),
+  image_url VARCHAR(500),
+  image_object_key VARCHAR(500),
+  sort INTEGER NOT NULL DEFAULT 0,
+  status VARCHAR(20) NOT NULL DEFAULT 'ENABLED',
+  deleted BOOLEAN NOT NULL DEFAULT FALSE,
+  created_by BIGINT,
+  updated_by BIGINT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 ALTER TABLE doctor_schedule ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
 ALTER TABLE appointment_slot ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
 ALTER TABLE patient ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
@@ -505,6 +540,12 @@ CREATE INDEX IF NOT EXISTS idx_role_permission_role ON role_permission(role, ena
 CREATE INDEX IF NOT EXISTS idx_patient_site_config_key_status ON patient_site_config(config_key, status);
 CREATE INDEX IF NOT EXISTS idx_patient_site_config_key_version ON patient_site_config(config_key, version DESC);
 CREATE INDEX IF NOT EXISTS idx_patient_site_config_key_status_version ON patient_site_config(config_key, status, version DESC);
+CREATE INDEX IF NOT EXISTS idx_patient_notice_public ON patient_notice(status, deleted, pinned, sort);
+CREATE INDEX IF NOT EXISTS idx_patient_notice_window ON patient_notice(start_time, end_time);
+CREATE INDEX IF NOT EXISTS idx_patient_notice_updated ON patient_notice(deleted, updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_patient_recommendation_public ON patient_recommendation(recommend_type, status, deleted, sort);
+CREATE INDEX IF NOT EXISTS idx_patient_recommendation_target ON patient_recommendation(target_id);
+CREATE INDEX IF NOT EXISTS idx_patient_recommendation_updated ON patient_recommendation(deleted, updated_at DESC);
 CREATE INDEX IF NOT EXISTS idx_patient_name_phone ON patient(name, phone);
 CREATE INDEX IF NOT EXISTS idx_registration_status_time ON registration(status, appointment_time);
 CREATE INDEX IF NOT EXISTS idx_registration_department_time ON registration(department_id, appointment_time);
@@ -537,3 +578,5 @@ SELECT setval(pg_get_serial_sequence('medical_device', 'id'), COALESCE((SELECT M
 SELECT setval(pg_get_serial_sequence('device_usage_record', 'id'), COALESCE((SELECT MAX(id) FROM device_usage_record), 1));
 SELECT setval(pg_get_serial_sequence('role_permission', 'id'), COALESCE((SELECT MAX(id) FROM role_permission), 1));
 SELECT setval(pg_get_serial_sequence('patient_site_config', 'id'), COALESCE((SELECT MAX(id) FROM patient_site_config), 1));
+SELECT setval(pg_get_serial_sequence('patient_notice', 'id'), COALESCE((SELECT MAX(id) FROM patient_notice), 1));
+SELECT setval(pg_get_serial_sequence('patient_recommendation', 'id'), COALESCE((SELECT MAX(id) FROM patient_recommendation), 1));

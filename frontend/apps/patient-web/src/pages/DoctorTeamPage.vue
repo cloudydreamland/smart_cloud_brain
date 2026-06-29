@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
 import { RouterLink } from "vue-router";
-import { api, fieldText, type DataRow } from "@smart-cloud-brain/shared-api";
+import { api, fieldText, type DataRow, type PatientRecommendation } from "@smart-cloud-brain/shared-api";
 
 type DoctorCard = {
   id: string;
@@ -24,6 +24,7 @@ const fallbackDoctors: DoctorCard[] = [
 
 const doctors = ref<DataRow[]>([]);
 const departments = ref<DataRow[]>([]);
+const recommendedDoctors = ref<PatientRecommendation[]>([]);
 const loading = ref(true);
 const failed = ref(false);
 const query = ref("");
@@ -31,6 +32,7 @@ const department = ref("全部科室");
 const selected = ref<DoctorCard | null>(null);
 
 const cards = computed<DoctorCard[]>(() => {
+  if (recommendedDoctors.value.length) return recommendedDoctors.value.map(recommendationCard);
   if (!doctors.value.length) return fallbackDoctors;
   return doctors.value.map((row, index) => ({
     id: String(row.doctorId || row.id || index),
@@ -65,9 +67,28 @@ function splitTags(value: string) {
   return value.split(/[、,，\s]+/).filter(Boolean).slice(0, 4);
 }
 
+function recommendationCard(row: PatientRecommendation, index: number): DoctorCard {
+  const name = row.title || row.targetName || "未命名医生";
+  const specialty = row.description || row.specialty || "常见病、慢病复诊和专科评估";
+  return {
+    id: String(row.id || row.targetId || `recommendation-${index}`),
+    name,
+    title: row.doctorTitle || "推荐医生",
+    department: row.departmentName || "未定科室",
+    specialty,
+    profile: row.description || "提供门诊评估、复诊沟通和检查结果解读服务。",
+    tags: splitTags(specialty),
+  };
+}
+
 onMounted(async () => {
   try {
-    const [departmentRows, doctorRows] = await Promise.all([api.departments(), api.doctors()]);
+    const [recommendationRows, departmentRows, doctorRows] = await Promise.all([
+      api.patientSiteRecommendations("DOCTOR").catch(() => []),
+      api.departments(),
+      api.doctors(),
+    ]);
+    recommendedDoctors.value = recommendationRows;
     departments.value = departmentRows;
     doctors.value = doctorRows;
   } catch {
@@ -106,7 +127,7 @@ onMounted(async () => {
         <RouterLink :to="{ name: 'patient-doctors' }">在线挂号</RouterLink>
       </div>
       <div class="resource-alert subtle">
-        <strong>{{ loading ? "正在同步医生数据" : failed || !doctors.length ? "当前显示默认专家资料" : "医生数据来自后端接口" }}</strong>
+        <strong>{{ loading ? "正在同步医生数据" : recommendedDoctors.length ? "数据来自患者端推荐配置" : failed || !doctors.length ? "当前显示默认专家资料" : "医生数据来自后端接口" }}</strong>
         <p>专家介绍用于就诊方向参考。选择医生前，请结合症状、科室范围和实际号源确认。</p>
       </div>
 

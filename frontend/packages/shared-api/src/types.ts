@@ -84,6 +84,49 @@ export type StatisticsQuery = { startDate?: string; endDate?: string };
 export type StatisticsReportRow = { metric: string; value: number | string };
 export type PatientSiteConfigSaveRequest = { configKey: string; configJson: string; remark?: string };
 export type PatientSiteConfigPublishRequest = { configKey: string; remark: string };
+export type PatientNotice = {
+  id?: number;
+  title: string;
+  content: string;
+  linkType?: "NONE" | "INTERNAL" | "EXTERNAL" | string;
+  linkUrl?: string;
+  startTime?: string;
+  endTime?: string;
+  pinned?: boolean;
+  sort?: number;
+  status?: "ENABLED" | "DISABLED" | string;
+  createdAt?: string;
+  updatedAt?: string;
+};
+export type PatientNoticeSaveRequest = Omit<PatientNotice, "createdAt" | "updatedAt">;
+export type PatientNoticeStatusRequest = { id: number; status: string };
+export type PatientNoticeSortRequest = { items: { id: number; sort: number }[] };
+export type PatientRecommendationType = "DEPARTMENT" | "DOCTOR";
+export type PatientRecommendation = {
+  id?: number;
+  recommendType: PatientRecommendationType | string;
+  targetId: number;
+  title?: string;
+  description?: string;
+  imageUrl?: string;
+  imageObjectKey?: string;
+  sort?: number;
+  status?: "ENABLED" | "DISABLED" | string;
+  targetAvailable?: boolean;
+  targetName?: string;
+  departmentId?: number;
+  departmentName?: string;
+  doctorTitle?: string;
+  specialty?: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
+export type PatientRecommendationSaveRequest = Omit<
+  PatientRecommendation,
+  "targetAvailable" | "targetName" | "departmentId" | "departmentName" | "doctorTitle" | "specialty" | "createdAt" | "updatedAt"
+>;
+export type PatientRecommendationStatusRequest = { id: number; status: string };
+export type PatientRecommendationSortRequest = { items: { id: number; sort: number }[] };
 export type AssetUploadPolicyRequest = {
   scene: "patient-site";
   fileName: string;

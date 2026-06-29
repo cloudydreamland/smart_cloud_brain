@@ -45,3 +45,7 @@ spring:
           uri: lb://admin-service
           predicates:
             - Path=/api/admin/**,/api/search/**
+        - id: patient-site-config
+          uri: lb://admin-service
+          predicates:
+            - Path=/api/patient-site/**

@@ -33,9 +33,10 @@ RUN cd frontend \
     && pnpm config set fetch-retries 5 \
     && pnpm config set fetch-retry-factor 2 \
     && pnpm config set fetch-timeout 120000 \
-    && (pnpm install --frozen-lockfile \
+    && (pnpm install --frozen-lockfile --prefer-offline=false \
         || (pnpm config set registry https://registry.npmjs.org \
-            && pnpm install --frozen-lockfile))
+            && pnpm install --frozen-lockfile --prefer-offline=false)) \
+    && pnpm --filter @smart-cloud-brain/admin-web exec node -e "require.resolve('@tabler/icons-vue')"
 
 # ── Step 3: 复制源码（改代码只重跑这一步和 build）────────────────────
 COPY frontend/apps ./frontend/apps
@@ -43,6 +44,8 @@ COPY frontend/packages ./frontend/packages
 
 # ── Step 4: 构建三端 ─────────────────────────────────────────────
 RUN cd frontend \
+    && pnpm install --frozen-lockfile --offline \
+    && test -f apps/admin-web/node_modules/@tabler/icons-vue/package.json \
     && pnpm --filter @smart-cloud-brain/patient-web build \
     && pnpm --filter @smart-cloud-brain/doctor-web build \
     && pnpm --filter @smart-cloud-brain/admin-web build

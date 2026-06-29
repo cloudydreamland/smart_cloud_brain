@@ -21,6 +21,8 @@ import java.util.Set;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -34,7 +36,7 @@ public class PatientSiteConfigService {
   private static final String STATUS_ARCHIVED = "ARCHIVED";
   private static final int HISTORY_RETENTION_LIMIT = 50;
   private static final int MAX_HISTORY_PAGE_SIZE = 100;
-  private static final Set<String> CONFIG_KEYS = Set.of("patient_nav", "patient_home", "patient_static_pages", "patient_pages");
+  private static final Set<String> CONFIG_KEYS = Set.of("patient_nav", "patient_home", "patient_static_pages", "patient_pages", "patient_hospital_info", "patient_footer");
   private static final Set<String> ROUTES = Set.of(
       "patient-home", "patient-dashboard", "patient-triage", "patient-doctors", "patient-appointments",
       "patient-records", "patient-prescriptions", "patient-reports", "patient-invoices", "patient-messages",
@@ -118,6 +120,7 @@ public class PatientSiteConfigService {
   }
 
   @Transactional
+  @CacheEvict(cacheNames = "patientSite", allEntries = true)
   public Map<String, Object> savePublished(PatientSiteConfigSaveRequest request, Long userId) {
     String key = requireConfigKey(request.configKey());
     JsonNode root = parseObject(request.configJson());
@@ -126,6 +129,7 @@ public class PatientSiteConfigService {
   }
 
   @Transactional
+  @CacheEvict(cacheNames = "patientSite", allEntries = true)
   public Map<String, Object> publish(String configKey, String remark, Long userId) {
     String key = requireConfigKey(configKey);
     String publishRemark = requireRemark(remark);
@@ -190,6 +194,7 @@ public class PatientSiteConfigService {
   }
 
   @Transactional
+  @Cacheable(cacheNames = "patientSite", key = "'publicConfig'")
   public Map<String, Object> publicConfig() {
     ensurePublishedDefaults();
     Map<String, Object> view = new LinkedHashMap<>();
@@ -197,6 +202,8 @@ public class PatientSiteConfigService {
     view.put("home", publishedJson("patient_home"));
     view.put("staticPages", publishedJson("patient_static_pages"));
     view.put("pages", publishedJson("patient_pages"));
+    view.put("hospitalInfo", publishedJson("patient_hospital_info"));
+    view.put("footer", publishedJson("patient_footer"));
     return view;
   }
 
@@ -260,6 +267,8 @@ public class PatientSiteConfigService {
       case "patient_home" -> "home";
       case "patient_static_pages" -> "staticPages";
       case "patient_pages" -> "pages";
+      case "patient_hospital_info" -> "hospitalInfo";
+      case "patient_footer" -> "footer";
       default -> throw new BusinessException(400, "Unsupported patient site config key: " + configKey);
     };
     if ("patient_pages".equals(configKey) && !root.has(section)) {
@@ -293,6 +302,8 @@ public class PatientSiteConfigService {
       case "patient_home" -> "home";
       case "patient_static_pages" -> "staticPages";
       case "patient_pages" -> "pages";
+      case "patient_hospital_info" -> "hospitalInfo";
+      case "patient_footer" -> "footer";
       default -> throw new BusinessException(400, "Unsupported patient site config key: " + configKey);
     };
   }
@@ -395,8 +406,26 @@ public class PatientSiteConfigService {
       case "patient_home" -> validateHome(root);
       case "patient_static_pages" -> validateStaticPages(root);
       case "patient_pages" -> validatePages(root);
+      case "patient_hospital_info" -> validateHospitalInfo(root);
+      case "patient_footer" -> validateFooter(root);
       default -> throw new BusinessException(400, "Unsupported patient site config key: " + configKey);
     }
+  }
+
+  private void validateHospitalInfo(JsonNode root) {
+    requireText(root, "name", "patient_hospital_info.name");
+    for (JsonNode location : array(root.path("locations"), "patient_hospital_info.locations")) {
+      if (location.path("enabled").asBoolean(true)) {
+        requireText(location, "name", "patient_hospital_info.locations[].name");
+        requireText(location, "address", "patient_hospital_info.locations[].address");
+      }
+    }
+  }
+
+  private void validateFooter(JsonNode root) {
+    requireText(root, "brandName", "patient_footer.brandName");
+    validateRouteTargets(root.path("links"), "patient_footer.links");
+    validateRouteTargets(root.path("legalLinks"), "patient_footer.legalLinks");
   }
 
   private void validateNav(JsonNode root) {

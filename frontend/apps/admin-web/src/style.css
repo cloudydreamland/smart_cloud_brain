@@ -578,6 +578,135 @@
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 }
 
+.footer-config-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.footer-config-card {
+  min-height: 178px;
+  align-content: start;
+}
+
+.footer-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.footer-card-head > div {
+  min-width: 0;
+}
+
+.footer-card-head h3 {
+  margin: 4px 0 0;
+  color: var(--ink);
+  font-size: 16px;
+}
+
+.footer-card-head p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.footer-card-kicker {
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.footer-card-meta {
+  display: grid;
+  gap: 8px;
+  margin: 2px 0 0;
+}
+
+.footer-card-meta div {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 10px;
+}
+
+.footer-card-meta dt {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.footer-card-meta dd {
+  min-width: 0;
+  margin: 0;
+  color: var(--ink);
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.footer-link-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.footer-link-preview span {
+  max-width: 100%;
+  padding: 6px 9px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--color-slate-50);
+  color: var(--ink);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.footer-link-preview .muted {
+  color: var(--muted);
+}
+
+.icon-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.footer-editor-modal-card {
+  width: min(940px, 100%);
+}
+
+.footer-link-editor-row {
+  align-items: start;
+}
+
+.footer-empty-state {
+  padding: 18px;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+.config-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.config-form-grid .span-2 {
+  grid-column: 1 / -1;
+}
+
+.config-form-grid textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
 .config-summary-card {
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: start;
