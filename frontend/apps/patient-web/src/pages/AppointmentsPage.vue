@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, inject, ref, watch, type Ref } from "vue";
 import { storeToRefs } from "pinia";
 import { api, fieldText, formatApiError, formatDateTime, statusClass, statusText, toNumber, usePagination, usePatientWorkflowStore, type DataRow } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, LoadingState, PaginationBar, SegmentedControl, StatusTag, Toast } from "@smart-cloud-brain/shared-ui";
@@ -9,9 +9,10 @@ const workflow = usePatientWorkflowStore();
 const { registrations } = storeToRefs(workflow);
 const statusFilter = ref("UNFINISHED");
 const loading = ref(false);
+const loaded = ref(false);
 const saving = ref(false);
 const error = ref("");
-const toast = ref<InstanceType<typeof Toast>>();
+const toast = inject<Ref<InstanceType<typeof Toast>>>("toast");
 const selected = ref<DataRow | null>(null);
 const filterOptions = [
   { label: "全部", value: "" },
@@ -49,6 +50,7 @@ async function refresh() {
   error.value = "";
   try {
     await workflow.refreshAuthenticated();
+    loaded.value = true;
   } catch (err) {
     error.value = formatApiError(err, "挂号记录加载失败");
   } finally {
@@ -64,7 +66,7 @@ async function cancel() {
     await api.cancelRegistration(toNumber(selected.value.registrationId));
     selected.value = null;
     await refresh();
-    toast.value?.success("操作成功", "挂号已取消。");
+    toast?.value?.success("操作成功", "挂号已取消。");
   } catch (err) {
     error.value = formatApiError(err, "取消挂号失败");
   } finally {
@@ -79,7 +81,10 @@ refresh();
   <section class="panel">
     <header class="panel-header">
       <div class="panel-title"><p class="eyebrow">我的挂号</p><h2>我的挂号</h2><p>默认查看未完成记录，并按创建时间倒序排列。</p></div>
-      <button type="button" :disabled="loading" @click="refresh">刷新</button>
+      <button type="button" :disabled="loading" @click="refresh">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="{ 'spin': loading }"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        刷新
+      </button>
     </header>
     <div class="panel-body stack">
       <ErrorState v-if="error" :message="error" />
@@ -87,7 +92,7 @@ refresh();
         <SegmentedControl v-model="statusFilter" :options="filterOptions" />
         <span class="row-meta">当前 {{ total }} 条 / 全部 {{ registrations.length }} 条</span>
       </div>
-      <LoadingState v-if="loading" />
+      <LoadingState v-if="!loaded && loading" />
       <div v-else-if="filteredRegistrations.length" class="list">
         <article v-for="item in pageRows" :key="String(item.registrationId)" class="list-row">
           <div class="row-main">
@@ -103,7 +108,6 @@ refresh();
       </div>
       <EmptyState v-else title="暂无挂号记录" message="当前分类下没有挂号记录。" />
     </div>
-    <Toast ref="toast" />
     <CancelAppointmentModal :open="Boolean(selected)" :busy="saving" @close="selected = null" @confirm="cancel" />
   </section>
 </template>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, inject, ref, watch, type Ref } from "vue";
 import { storeToRefs } from "pinia";
 import { api, fieldText, formatApiError, statusClass, statusText, toNumber, usePatientWorkflowStore, type DataRow } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, LoadingState, StatusTag, Toast } from "@smart-cloud-brain/shared-ui";
@@ -23,9 +23,10 @@ type DoctorGroup = {
 const workflow = usePatientWorkflowStore();
 const { slots, doctors, triageHistory, registrations } = storeToRefs(workflow);
 const loading = ref(false);
+const loaded = ref(false);
 const saving = ref(false);
 const error = ref("");
-const toast = ref<InstanceType<typeof Toast>>();
+const toast = inject<Ref<InstanceType<typeof Toast>>>("toast");
 const selectedDate = ref("");
 const selectedSlot = ref<DataRow | null>(null);
 const confirmOpen = ref(false);
@@ -128,6 +129,7 @@ async function refresh() {
   try {
     await workflow.refreshPublicData();
     await workflow.refreshAuthenticated();
+    loaded.value = true;
   } catch (err) {
     error.value = formatApiError(err, "号源加载失败");
   } finally {
@@ -192,7 +194,7 @@ async function confirmAppointment() {
     });
     await workflow.refreshAuthenticated();
     confirmOpen.value = false;
-    toast.value?.success("预约已提交", "可在“我的挂号”页面查看或取消。");
+    toast?.value?.success('预约已提交', '可在"我的挂号"页面查看或取消。');
   } catch (err) {
     error.value = formatApiError(err, "挂号失败");
   } finally {
@@ -211,7 +213,10 @@ refresh();
         <h2>可预约号源</h2>
         <p>按日期选择号源，查看当天出诊医生及可预约时间段。</p>
       </div>
-      <button type="button" :disabled="loading" @click="refresh">刷新号源</button>
+      <button type="button" :disabled="loading" @click="refresh">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="{ 'spin': loading }"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        刷新号源
+      </button>
     </header>
     <div class="panel-body stack">
       <ErrorState v-if="error" :message="error" />
@@ -222,7 +227,7 @@ refresh();
         <div class="summary-item"><span>可约日期</span><strong>{{ dateGroups.length }}</strong></div>
       </div>
 
-      <LoadingState v-if="loading" />
+      <LoadingState v-if="!loaded && loading" />
       <div v-else-if="displaySlots.length" class="slot-schedule">
         <div class="slot-date-picker" role="tablist" aria-label="选择预约日期">
           <button
@@ -279,7 +284,6 @@ refresh();
       </div>
       <EmptyState v-else title="暂无号源" message="当前推荐科室暂无可预约号源，请刷新或稍后再试。" />
     </div>
-    <Toast ref="toast" />
     <ConfirmAppointmentModal :open="confirmOpen" :slot="selectedSlot" :busy="saving" @close="confirmOpen = false" @confirm="confirmAppointment" />
   </section>
 </template>

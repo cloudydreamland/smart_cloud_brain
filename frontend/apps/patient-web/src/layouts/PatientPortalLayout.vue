@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from "vue";
+import { onBeforeUnmount, onMounted, provide, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { useRouter } from "vue-router";
 import { formatApiError, useAuthStore, usePatientWorkflowStore } from "@smart-cloud-brain/shared-api";
+import { Toast } from "@smart-cloud-brain/shared-ui";
 import PatientSiteFooter from "../components/PatientSiteFooter.vue";
 import PatientSiteHeader from "../components/PatientSiteHeader.vue";
 import SessionExpiredModal from "../components/SessionExpiredModal.vue";
@@ -14,6 +15,8 @@ const { session, permissionError } = storeToRefs(auth);
 const loading = ref(true);
 const sessionExpired = ref(false);
 const loadError = ref("");
+const toastRef = ref<InstanceType<typeof Toast> | null>(null);
+provide("toast", toastRef);
 let unbind: (() => void) | null = null;
 
 async function refresh() {
@@ -23,8 +26,10 @@ async function refresh() {
   try {
     await workflow.refreshPublicData();
     await workflow.refreshAuthenticated();
+    toastRef.value?.success("数据已刷新", "所有模块数据已同步最新状态。");
   } catch (err) {
     loadError.value = formatApiError(err, "患者资料加载失败");
+    toastRef.value?.error("刷新失败", "请检查网络后重试。");
   } finally {
     loading.value = false;
   }
@@ -66,6 +71,7 @@ onBeforeUnmount(() => {
     </main>
 
     <PatientSiteFooter />
+    <Toast ref="toastRef" />
     <SessionExpiredModal :open="sessionExpired" @close="logout" />
   </div>
 </template>

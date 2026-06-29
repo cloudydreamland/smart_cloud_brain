@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, inject, onMounted, ref, type Ref } from "vue";
 import { api, fieldText, formatApiError, formatDateTime, toNumber, type DataRow } from "@smart-cloud-brain/shared-api";
-import { EmptyState, ErrorState, LoadingState, SegmentedControl } from "@smart-cloud-brain/shared-ui";
+import { EmptyState, ErrorState, LoadingState, SegmentedControl, Toast } from "@smart-cloud-brain/shared-ui";
 
 type MessageRow = {
   id: number;
@@ -15,8 +15,10 @@ type MessageRow = {
 
 const rows = ref<DataRow[]>([]);
 const loading = ref(false);
+const loaded = ref(false);
 const saving = ref(false);
 const error = ref("");
+const toast = inject<Ref<InstanceType<typeof Toast>>>("toast");
 const filter = ref("");
 const selected = ref<MessageRow | null>(null);
 const options = [
@@ -60,9 +62,12 @@ async function refresh() {
   error.value = "";
   try {
     rows.value = await api.notifications(filter.value);
+    loaded.value = true;
+    toast?.value?.success("数据已刷新", "消息数据已同步最新状态。");
   } catch (err) {
     error.value = formatApiError(err, "消息加载失败，当前显示本地服务提醒");
     rows.value = [];
+    toast?.value?.error("刷新失败", "请检查网络后重试。");
   } finally {
     loading.value = false;
   }
@@ -94,7 +99,10 @@ onMounted(refresh);
         <h2>通知与提醒</h2>
         <p>集中查看预约提醒、诊后资料通知和系统服务公告。</p>
       </div>
-      <button type="button" :disabled="loading" @click="refresh">刷新</button>
+      <button type="button" :disabled="loading" @click="refresh">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="{ 'spin': loading }"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        刷新
+      </button>
     </header>
     <div class="panel-body stack">
       <ErrorState v-if="error" :message="error" />
@@ -107,7 +115,7 @@ onMounted(refresh);
         <SegmentedControl v-model="filter" :options="options" @update:model-value="refresh" />
         <span class="row-meta">{{ saving ? "正在更新消息状态" : "点击消息可查看详情并标记已读" }}</span>
       </div>
-      <LoadingState v-if="loading" />
+      <LoadingState v-if="!loaded && loading" />
       <div v-else-if="filteredMessages.length" class="message-list">
         <button v-for="item in filteredMessages" :key="`${item.id}-${item.title}`" type="button" class="message-row" :class="{ unread: !item.read }" @click="markRead(item)">
           <span>{{ item.type }} · {{ item.time }}</span>
