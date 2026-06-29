@@ -1,0 +1,118 @@
+@media (max-width: 980px) {
+  .catalog-layout,
+  .search-results {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-filter-row input,
+  .admin-filter-row select,
+  .admin-filter-row .scb-select {
+    max-width: none;
+  }
+}
+
+/* ── Dashboard responsive (desktop) ── */
+@media (max-width: 1099px) {
+  .metrics {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .analytics-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .analytics-toolbar {
+    justify-content: flex-start;
+  }
+
+  .analytics-metric-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .analytics-chart-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .patient-site-editor .config-grid.two,
+  .patient-site-editor .config-grid.three,
+  .patient-site-editor .config-grid.four,
+  .patient-site-editor .config-grid.five,
+  .patient-config-modal .config-grid.two,
+  .patient-config-modal .config-grid.three,
+  .patient-config-modal .config-grid.four,
+  .patient-config-modal .config-grid.five {
+    grid-template-columns: 1fr;
+  }
+
+  .patient-site-page .config-section-head,
+  .patient-site-page .page-editor-head,
+  .patient-site-page .nested-list-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .patient-site-page .config-card-actions,
+  .patient-site-page .section-add-buttons {
+    justify-content: flex-start;
+  }
+
+  .patient-config-modal-backdrop {
+    padding: 12px;
+  }
+
+  .patient-config-modal-card,
+  .cms-editor-modal-card,
+  .cms-editor-modal-card.wide {
+    width: 100%;
+    max-height: calc(100dvh - 24px);
+  }
+
+  .analytics-toolbar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .analytics-date-field {
+    min-width: 0;
+  }
+
+  .analytics-date-separator {
+    display: none;
+  }
+
+  .analytics-button {
+    width: 100%;
+  }
+
+  .analytics-metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .analytics-toolbar,
+  .analytics-metric-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .analytics-error {
+    grid-template-columns: 1fr;
+  }
+
+  .analytics-error button {
+    grid-column: 1;
+    grid-row: auto;
+    width: 100%;
+  }
+
+  .analytics-chart-card > header {
+    padding: 16px;
+  }
+}

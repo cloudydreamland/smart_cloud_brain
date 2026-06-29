@@ -1,0 +1,63 @@
+.account-layout {
+  display: block;
+}
+
+
+.catalog-layout {
+  grid-template-columns: 1fr;
+}
+
+.admin-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.admin-filter-row input,
+.admin-filter-row select,
+.admin-filter-row .scb-select {
+  max-width: 240px;
+}
+
+.account-role-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.account-role-bar input {
+  max-width: 280px;
+  flex: 1 1 200px;
+  padding: 8px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--ink);
+  background: var(--surface);
+}
+
+.account-role-bar input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: var(--focus);
+}
+
+.account-role-bar input::placeholder {
+  color: var(--muted);
+}
+
+.prompt-test-result {
+  max-height: 220px;
+  overflow: auto;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--color-slate-50);
+  color: var(--color-ink-blue);
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}

@@ -1,0 +1,86 @@
+/* ── Stat cards with icons ── */
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.metric {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--color-white);
+  transition: box-shadow 0.15s;
+}
+
+.metric:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.metric-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.metric-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.metric-info span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.metric-info strong {
+  color: var(--ink);
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+/* ── List row hover transition ── */
+.list-row {
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.list-row:hover {
+  background: var(--color-slate-50);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+/* ── TopBar buttons ── */
+.topbar-meta {
+  height: 32px; padding: 0 12px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--surface); font-size: 12px; font-weight: 600; color: var(--ink);
+  display: inline-flex; align-items: center; cursor: default;
+}
+
+.topbar-refresh {
+  height: 32px; padding: 0 12px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--surface); font-size: 12px; font-weight: 600; color: var(--ink);
+  transition: background 0.15s;
+}
+
+.topbar-refresh:hover { background: var(--surface-alt); }
+
+.topbar-logout {
+  height: 32px; padding: 0 12px; border: 1px solid var(--color-red-200); border-radius: 8px;
+  background: var(--surface); font-size: 12px; font-weight: 600; color: var(--color-red-600);
+  transition: background 0.15s;
+}
+
+.topbar-logout:hover { background: var(--color-red-50); }
