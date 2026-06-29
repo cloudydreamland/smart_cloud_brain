@@ -131,6 +131,7 @@ onMounted(refresh);
 </script>
 
 <template>
+  <section class="catalog-layout">
   <section class="panel">
     <header class="panel-header">
       <div class="panel-title">
@@ -221,5 +222,6 @@ onMounted(refresh);
         </div>
       </div>
     </Modal>
+  </section>
   </section>
 </template>

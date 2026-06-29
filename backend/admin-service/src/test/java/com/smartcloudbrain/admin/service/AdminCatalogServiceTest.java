@@ -7,7 +7,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartcloudbrain.admin.client.InternalAiClient;
 import com.smartcloudbrain.admin.client.InternalDoctorClient;
 import com.smartcloudbrain.admin.client.InternalTriageClient;
@@ -16,23 +15,16 @@ import com.smartcloudbrain.admin.dto.admin.ScheduleGenerateRequest;
 import com.smartcloudbrain.admin.dto.admin.AccountSaveRequest;
 import com.smartcloudbrain.admin.dto.admin.DepartmentSaveRequest;
 import com.smartcloudbrain.admin.dto.admin.DoctorSaveRequest;
-import com.smartcloudbrain.admin.dto.admin.KnowledgeEntrySaveRequest;
-import com.smartcloudbrain.admin.dto.admin.PromptTemplateSaveRequest;
 import com.smartcloudbrain.admin.entity.AdminUser;
 import com.smartcloudbrain.admin.entity.AiScheduleSuggestion;
 import com.smartcloudbrain.admin.entity.Department;
 import com.smartcloudbrain.admin.entity.Drug;
-import com.smartcloudbrain.admin.entity.KnowledgeEntry;
-import com.smartcloudbrain.admin.entity.PromptTemplate;
 import com.smartcloudbrain.admin.entity.Doctor;
 import com.smartcloudbrain.admin.repository.AdminUserRepository;
 import com.smartcloudbrain.admin.repository.AiScheduleSuggestionRepository;
 import com.smartcloudbrain.admin.repository.DepartmentRepository;
 import com.smartcloudbrain.admin.repository.DoctorRepository;
 import com.smartcloudbrain.admin.repository.DrugRepository;
-import com.smartcloudbrain.admin.repository.KnowledgeEntryRepository;
-import com.smartcloudbrain.admin.repository.PromptTemplateRepository;
-import com.smartcloudbrain.admin.repository.SystemDictRepository;
 import com.smartcloudbrain.common.security.PasswordHashService;
 import com.smartcloudbrain.aiapi.dto.ScheduleSuggestResponse;
 import com.smartcloudbrain.aiapi.dto.ScheduleSuggestionItem;
@@ -47,7 +39,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -56,16 +47,12 @@ class AdminCatalogServiceTest {
   @Mock private DepartmentRepository departmentRepository;
   @Mock private DoctorRepository doctorRepository;
   @Mock private DrugRepository drugRepository;
-  @Mock private PromptTemplateRepository promptTemplateRepository;
-  @Mock private KnowledgeEntryRepository knowledgeEntryRepository;
-  @Mock private SystemDictRepository systemDictRepository;
   @Mock private AiScheduleSuggestionRepository aiScheduleSuggestionRepository;
   @Mock private AdminUserRepository adminUserRepository;
   @Mock private InternalDoctorClient internalDoctorClient;
   @Mock private InternalAiClient internalAiClient;
   @Mock private InternalTriageClient internalTriageClient;
   @Mock private PasswordHashService passwordHashService;
-  @Spy private ObjectMapper objectMapper = new ObjectMapper();
   @InjectMocks private AdminCatalogService adminCatalogService;
 
   @Test
@@ -260,18 +247,6 @@ class AdminCatalogServiceTest {
     drug.setName("阿司匹林");
     drug.setSpecification("100mg");
     drug.setStatus("ENABLED");
-    PromptTemplate prompt = new PromptTemplate();
-    prompt.setId(5L);
-    prompt.setTaskType("SCHEDULE");
-    prompt.setTemplateName("排班模板");
-    prompt.setTemplateContent("生成排班");
-    prompt.setEnabled(true);
-    KnowledgeEntry knowledge = new KnowledgeEntry();
-    knowledge.setId(6L);
-    knowledge.setTitle("胸痛");
-    knowledge.setSymptoms("胸痛气短");
-    knowledge.setAdvice("心内科就诊");
-    knowledge.setStatus("ENABLED");
 
     when(departmentRepository.findAll()).thenReturn(List.of(department));
     when(departmentRepository.findByCode("GENERAL")).thenReturn(Optional.empty());
@@ -289,18 +264,6 @@ class AdminCatalogServiceTest {
     });
     when(doctorRepository.findById(2L)).thenReturn(Optional.of(doctor));
     when(drugRepository.findAll()).thenReturn(List.of(drug));
-    when(promptTemplateRepository.findAll()).thenReturn(List.of(prompt));
-    when(promptTemplateRepository.save(any())).thenAnswer(invocation -> {
-      PromptTemplate value = invocation.getArgument(0);
-      if (value.getId() == null) value.setId(9L);
-      return value;
-    });
-    when(knowledgeEntryRepository.findAll()).thenReturn(List.of(knowledge));
-    when(knowledgeEntryRepository.save(any())).thenAnswer(invocation -> {
-      KnowledgeEntry value = invocation.getArgument(0);
-      if (value.getId() == null) value.setId(10L);
-      return value;
-    });
     when(internalDoctorClient.schedules()).thenReturn(List.of(Map.of("id", 1L)));
     when(internalTriageClient.list()).thenReturn(List.of(Map.of("triageRecordId", 1L, "patientId", 1L, "status", "PENDING")));
     when(internalTriageClient.detail(1L)).thenReturn(Map.of("triageRecordId", 1L, "patientId", 1L, "status", "PENDING"));
@@ -314,23 +277,10 @@ class AdminCatalogServiceTest {
         new DoctorSaveRequest(2L, "王医生", "1", "new", 3L, "主任", "胸痛", null)).get("name"));
     assertEquals("新医生", adminCatalogService.saveDoctor(
         new DoctorSaveRequest(null, "新医生", "2", "", 3L, null, null, null)).get("name"));
-    assertEquals(1, adminCatalogService.prompts().size());
-    assertEquals("TRIAGE", adminCatalogService.savePrompt(
-        new PromptTemplateSaveRequest(null, "TRIAGE", null, "模板", "内容", null, null, null)).get("taskType"));
-    assertEquals(1, adminCatalogService.knowledgeEntries().size());
-    assertEquals("胸痛", adminCatalogService.saveKnowledgeEntry(
-        new KnowledgeEntrySaveRequest(null, "胸痛", "胸痛", null, "就诊", "CARDIOLOGY", null)).get("title"));
     assertEquals(1, adminCatalogService.searchDrugs("阿司匹林").size());
     assertEquals(1, adminCatalogService.searchDrugs("100mg").size());
     drug.setContraindication("活动性出血禁用");
     assertEquals(1, adminCatalogService.searchDrugs("出血禁用").size());
-    assertEquals(1, adminCatalogService.searchPrompts("排班").size());
-    assertEquals(1, adminCatalogService.searchPrompts("生成排班").size());
-    when(knowledgeEntryRepository.findByStatus("ENABLED")).thenReturn(List.of(knowledge));
-    assertEquals(1, adminCatalogService.searchKnowledge("气短", "").size());
-    knowledge.setRiskSignals("高危胸痛");
-    assertEquals(1, adminCatalogService.searchKnowledge("高危", "").size());
-    assertEquals(1, adminCatalogService.searchKnowledge("心内科就诊", "").size());
     assertEquals(1, adminCatalogService.schedules().size());
     assertEquals(1, adminCatalogService.triageDesk().size());
     assertEquals(1L, adminCatalogService.triageDetail(1L).get("triageRecordId"));

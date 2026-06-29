@@ -16,7 +16,7 @@ const props = withDefaults(
     /** 滚动时关闭下拉面板，适用于 Modal 内避免定位漂移 */
     closeOnScroll?: boolean;
   }>(),
-  { label: "", placeholder: "请选择", disabled: false, closeOnScroll: false }
+  { label: "", placeholder: "请选择", disabled: false, closeOnScroll: true }
 );
 
 const emit = defineEmits<{ "update:modelValue": [value: string | number | undefined] }>();

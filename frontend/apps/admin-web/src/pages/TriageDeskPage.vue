@@ -114,7 +114,8 @@ async function closeTriage() {
           <div class="summary-item"><span>筛选结果</span><strong>{{ rows.length }}</strong></div>
           <div class="summary-item"><span>状态</span><strong>人工复核</strong></div>
         </div>
-        <div v-if="rows.length" class="table-scroll table-breakout">
+        <template v-if="rows.length">
+        <div class="table-scroll table-breakout">
           <table class="data-table">
             <thead><tr><th>记录</th><th>主诉</th><th>推荐科室</th><th>医生</th><th>状态</th><th class="actions-cell">操作</th></tr></thead>
             <tbody>
@@ -128,8 +129,9 @@ async function closeTriage() {
               </tr>
             </tbody>
           </table>
-          <PaginationBar v-model="currentPage" :total="total" :page-size="pageSize" />
         </div>
+        <PaginationBar v-model="currentPage" :total="total" :page-size="pageSize" />
+        </template>
         <EmptyState v-else title="暂无分诊记录" />
       </div>
     </section>

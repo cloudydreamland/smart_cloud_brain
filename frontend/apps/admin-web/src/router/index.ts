@@ -10,7 +10,6 @@ const DoctorsPage = () => import("../pages/DoctorsPage.vue");
 const DrugsPage = () => import("../pages/DrugsPage.vue");
 const SchedulePage = () => import("../pages/SchedulePage.vue");
 const TriageDeskPage = () => import("../pages/TriageDeskPage.vue");
-const SearchPage = () => import("../pages/SearchPage.vue");
 const AccountsPage = () => import("../pages/AccountsPage.vue");
 const DevicesPage = () => import("../pages/DevicesPage.vue");
 const PatientsPage = () => import("../pages/PatientsPage.vue");
@@ -38,7 +37,6 @@ const router = createRouter({
         { path: "accounts", name: "admin-accounts", component: AccountsPage },
         { path: "permissions", name: "admin-permissions", component: PermissionsPage },
         { path: "patient-site", name: "admin-patient-site", component: PatientSiteConfigPage },
-        { path: "search", name: "admin-search", component: SearchPage },
       ],
     },
     { path: "/:pathMatch(.*)*", name: "not-found", component: NotFound },
