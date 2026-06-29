@@ -1,20 +1,20 @@
+import { computed, markRaw, ref, type ComputedRef, type Ref } from "vue";
+import { storeToRefs } from "pinia";
 import {
-  computed,
-  markRaw,
-  ref,
-  type ComputedRef,
-  type Ref,
-} from "vue";
-import {
+  IconAlertTriangle,
+  IconBuilding,
   IconChartLine,
   IconCircleCheck,
+  IconPill,
   IconStethoscope,
+  IconUser,
   IconUsers,
 } from "@tabler/icons-vue";
 import {
   api,
   displayText,
   formatApiError,
+  useAdminWorkflowStore,
   type DeviceUsageStatsRow,
   type DoctorWorkloadRow,
   type PatientDistribution,
@@ -65,6 +65,14 @@ export function useAdminAnalytics(): AdminAnalyticsState {
   const distribution = ref<PatientDistribution>({});
   const deviceUsage = ref<DeviceUsageStatsRow[]>([]);
 
+  const workflow = useAdminWorkflowStore();
+  const { departments, doctors, drugs, triageDesk } = storeToRefs(workflow);
+  const highRisk = computed(() =>
+    triageDesk.value.filter((item) =>
+      ["MANUAL_REQUIRED", "HIGH"].includes(String(item.status)),
+    ).length,
+  );
+
   const metricCards = computed(() => [
     {
       label: "就诊总数",
@@ -83,6 +91,30 @@ export function useAdminAnalytics(): AdminAnalyticsState {
       value: displayText(overview.value.patients, "0"),
       icon: markRaw(IconUsers),
       tone: "violet",
+    },
+    {
+      label: "待处理分诊",
+      value: String(highRisk.value),
+      icon: markRaw(IconAlertTriangle),
+      tone: "amber",
+    },
+    {
+      label: "科室",
+      value: String(departments.value.length),
+      icon: markRaw(IconBuilding),
+      tone: "blue",
+    },
+    {
+      label: "医生",
+      value: String(doctors.value.length),
+      icon: markRaw(IconUser),
+      tone: "violet",
+    },
+    {
+      label: "药品",
+      value: String(drugs.value.length),
+      icon: markRaw(IconPill),
+      tone: "emerald",
     },
     {
       label: "设备",

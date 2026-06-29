@@ -109,10 +109,12 @@ const {
           </span>
           <span>{{ metric.label }}</span>
         </div>
-        <strong>{{ metric.value }}</strong>
-        <span v-if="metric.sub" class="analytics-metric-sub">{{
-          metric.sub
-        }}</span>
+        <div class="analytics-metric-tail">
+          <strong>{{ metric.value }}</strong>
+          <span v-if="metric.sub" class="analytics-metric-sub">{{
+            metric.sub
+          }}</span>
+        </div>
       </article>
     </div>
   </section>

@@ -4,74 +4,6 @@
   gap: 20px;
 }
 
-/* ── Metric Cards ── */
-.metrics {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
-}
-
-.metric-card {
-  background: var(--surface);
-  border: 1px solid rgba(229, 231, 235, 0.8);
-  border-radius: 14px;
-  padding: 16px 18px;
-  display: grid;
-  gap: 8px;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.metric-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
-}
-
-.metric-label {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.metric-value {
-  font-size: 28px;
-  font-weight: 800;
-  letter-spacing: -0.04em;
-  line-height: 1;
-}
-
-.metric-card-head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.metric-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
-  color: var(--accent);
-  flex-shrink: 0;
-}
-
-.admin-metric-icon-indigo { --accent: var(--color-indigo-500); }
-.admin-metric-icon-violet { --accent: var(--color-violet-500); }
-.admin-metric-icon-emerald { --accent: var(--color-emerald-500); }
-.admin-metric-icon-amber { --accent: var(--color-amber-500); }
-
-.metric-label {
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.metric-value.blue { color: var(--color-blue-600); }
-.metric-value.orange { color: var(--color-orange-600); }
-
 /* ── Panel ── */
 .panel {
   background: var(--surface);
@@ -287,17 +219,17 @@ td.actions-cell .toolbar {
 
 .analytics-metric-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(150px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 14px;
 }
 
 .analytics-metric-card {
-  display: grid;
-  align-content: space-between;
-  min-height: 128px;
-  padding: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
   border: 1px solid rgba(217, 225, 222, 0.88);
-  border-radius: 18px;
+  border-radius: 14px;
   background: var(--surface);
   box-shadow: 0 8px 24px rgba(34, 59, 56, 0.045);
   transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
@@ -322,9 +254,9 @@ td.actions-cell .toolbar {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 13px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
 }
 
 .analytics-metric-icon.is-blue { color: #2563eb; background: #eaf1ff; }
@@ -333,9 +265,16 @@ td.actions-cell .toolbar {
 .analytics-metric-icon.is-cyan { color: #087f8c; background: #e2f3f4; }
 .analytics-metric-icon.is-amber { color: #c46f09; background: #fff1dc; }
 
+.analytics-metric-tail {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
 .analytics-metric-card strong {
   color: var(--ink);
-  font-size: 30px;
+  font-size: 28px;
   font-weight: 800;
   letter-spacing: -0.045em;
   line-height: 1;

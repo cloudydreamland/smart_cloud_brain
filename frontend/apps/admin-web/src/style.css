@@ -1430,17 +1430,17 @@ td.actions-cell .toolbar {
 
 .analytics-metric-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 14px;
 }
 
 .analytics-metric-card {
-  display: grid;
-  align-content: space-between;
-  min-height: 128px;
-  padding: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
   border: 1px solid rgba(217, 225, 222, 0.88);
-  border-radius: 18px;
+  border-radius: 14px;
   background: var(--surface);
   box-shadow: 0 8px 24px rgba(34, 59, 56, 0.045);
   transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
@@ -1465,9 +1465,9 @@ td.actions-cell .toolbar {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 13px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
 }
 
 .analytics-metric-icon.is-blue { color: #2563eb; background: #eaf1ff; }
@@ -1476,9 +1476,16 @@ td.actions-cell .toolbar {
 .analytics-metric-icon.is-cyan { color: #087f8c; background: #e2f3f4; }
 .analytics-metric-icon.is-amber { color: #c46f09; background: #fff1dc; }
 
+.analytics-metric-tail {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
 .analytics-metric-card strong {
   color: var(--ink);
-  font-size: 30px;
+  font-size: 28px;
   font-weight: 800;
   letter-spacing: -0.045em;
   line-height: 1;
@@ -1615,7 +1622,7 @@ td.actions-cell .toolbar {
   }
 
   .analytics-metric-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .analytics-chart-grid {

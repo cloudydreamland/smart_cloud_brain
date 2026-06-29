@@ -12,6 +12,7 @@ import {
   type PatientSaveRequest,
 } from "@smart-cloud-brain/shared-api";
 import { DataTable, ErrorState, FormField, Modal, PaginationBar, ScbSelect, StatusTag, Toast } from "@smart-cloud-brain/shared-ui";
+import AgeRangeFilter from "../components/AgeRangeFilter.vue";
 
 const rows = ref<Patient[]>([]);
 const detail = ref<PatientDetail | null>(null);
@@ -20,6 +21,7 @@ const gender = ref("");
 const minAge = ref<number | undefined>();
 const maxAge = ref<number | undefined>();
 const loading = ref(false);
+const loaded = ref(false);
 const saving = ref(false);
 const error = ref("");
 const toast = inject<Ref<InstanceType<typeof Toast>>>("toast");
@@ -69,6 +71,7 @@ async function refresh() {
       minAge: minAge.value,
       maxAge: maxAge.value,
     }) as Patient[];
+    loaded.value = true;
   } catch (err) {
     error.value = formatApiError(err, "加载患者列表失败");
   } finally {
@@ -136,7 +139,10 @@ onMounted(refresh);
         <h2>患者管理</h2>
       </div>
       <div class="toolbar">
-        <button type="button" :disabled="loading" @click="refresh">刷新</button>
+        <button type="button" :disabled="loading" @click="refresh">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="{ 'spin': loading }"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          刷新
+        </button>
       </div>
     </header>
 
@@ -146,12 +152,10 @@ onMounted(refresh);
       <div class="admin-filter-row">
         <input v-model.trim="keyword" placeholder="搜索姓名或手机号" @keyup.enter="refresh" />
         <ScbSelect v-model="gender" :options="genderFilterOptions" />
-        <input v-model.number="minAge" type="number" min="0" placeholder="最小年龄" />
-        <input v-model.number="maxAge" type="number" min="0" placeholder="最大年龄" />
-        <button type="button" :disabled="loading" @click="refresh">搜索</button>
+        <AgeRangeFilter v-model:min-age="minAge" v-model:max-age="maxAge" />
       </div>
 
-      <DataTable :rows="filtered" :loading="loading" :error="error" :breakout="true" empty-title="暂无患者">
+      <DataTable :rows="filtered" :loading="!loaded && loading" :error="error" :breakout="true" empty-title="暂无患者">
         <thead>
           <tr>
             <th>编号</th>

@@ -325,7 +325,6 @@ onBeforeUnmount(() => {
       <header>
         <div>
           <h3>就诊趋势</h3>
-          <p>所选日期范围内的每日就诊量</p>
         </div>
         <span class="analytics-chart-badge is-blue">趋势</span>
       </header>
@@ -348,7 +347,6 @@ onBeforeUnmount(() => {
       <header>
         <div>
           <h3>医生工作量</h3>
-          <p>就诊量排名前 10 的医生</p>
         </div>
         <span class="analytics-chart-badge is-teal">排名</span>
       </header>
@@ -371,7 +369,6 @@ onBeforeUnmount(() => {
       <header>
         <div>
           <h3>患者分布</h3>
-          <p>当前患者性别构成</p>
         </div>
         <span class="analytics-chart-badge is-violet">构成</span>
       </header>
@@ -394,7 +391,6 @@ onBeforeUnmount(() => {
       <header>
         <div>
           <h3>设备使用</h3>
-          <p>设备使用量与异常数对比</p>
         </div>
         <span class="analytics-chart-badge is-amber">设备</span>
       </header>
