@@ -113,7 +113,7 @@ class DoctorScheduleServiceTest {
     when(doctorRepository.findById(2L)).thenReturn(Optional.of(doctor));
     when(departmentRepository.findById(3L)).thenReturn(Optional.of(department));
     when(doctorScheduleRepository.findByWorkDateGreaterThanEqualOrderByWorkDateAscDoctorIdAsc(any())).thenReturn(List.of(schedule));
-    when(appointmentSlotRepository.findByStartTimeGreaterThanEqualOrderByStartTimeAscDoctorIdAsc(any())).thenReturn(List.of(slot));
+    when(appointmentSlotRepository.findByEndTimeGreaterThanEqualOrderByStartTimeAscDoctorIdAsc(any())).thenReturn(List.of(slot));
 
     assertEquals("王医生", doctorScheduleService.schedules().get(0).get("doctorName"));
     assertEquals(0, doctorScheduleService.slots().get(0).get("capacity"));

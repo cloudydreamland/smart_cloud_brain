@@ -46,15 +46,6 @@ onMounted(async () => {
   }
 });
 </script>
-    departments.value = departmentRows;
-  } catch {
-    failed.value = true;
-    departments.value = [];
-  } finally {
-    loading.value = false;
-  }
-});
-</script>
 
 <template>
   <main class="public-info-page">
