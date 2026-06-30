@@ -150,8 +150,8 @@ watch([startDate, endDate, status], () => {
             <thead><tr><th>日期</th><th>时间</th><th>科室</th><th>容量</th><th>已预约</th><th>剩余</th><th>状态</th></tr></thead>
             <tbody>
               <tr v-for="item in pageRows" :key="String(item.id)">
-                <td>{{ displayText(item.startTime?.slice(0, 10) || "") }}</td>
-                <td>{{ displayText(item.startTime?.slice(11, 16) + "-" + item.endTime?.slice(11, 16) || "") }}</td>
+                <td>{{ displayText(item.workDate) }}</td>
+                <td>{{ displayText(item.timeRange) }}</td>
                 <td>{{ displayText(item.departmentName) }}</td>
                 <td>{{ displayText(item.capacity) }}</td>
                 <td>{{ displayText(item.booked, "0") }}</td>

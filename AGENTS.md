@@ -264,14 +264,17 @@ docker start scb-patient-service scb-doctor-service  # 多个
 ### 组件体积
 
 - **单文件上限 400 行**（`<script>` + `<template>` + `<style>` 合计）。超过必须拆分。
-- 拆分方向：按功能拆子组件（`XxxEditor.vue`、`XxxList.vue`），或按逻辑抽 composable（`useXxx.ts`）。
+- 拆分方向：优先抽 composable（`useXxx.ts`）管理逻辑，模板保持完整。仅当模板本身过长时才拆子组件。
+- 新增子组件时，props 用具体类型（`{ record: MedicalRecord }`），不用 `DataRow`
 - 反面教材：`PatientSiteConfigPage.vue` 1705 行 / 75KB，一个文件塞了 3 种配置的全部 CRUD + 校验 + 6 种编辑弹窗。
 
 ### 类型安全
 
-- **禁止用 `Record<string, unknown>` 做业务数据类型**。`DataRow` 仅用于后端返回值的临时兼容层。
-- 新增/修改 API 返回值时，优先使用 `types.ts` 里已定义的具体接口（`Department`、`Doctor`、`Registration` 等）。
-- 模板中访问字段：用 `item.fieldName` 而不是 `fieldText(item, "fieldName")`（后者仅在类型不确定时使用）。
+- **API 层禁止返回 `DataRow[]`**。所有 API 函数必须返回 `types.ts` 中定义的具体类型
+- 页面/组件层禁止使用 `fieldText()`。直接用 `item.fieldName` 访问字段
+- `fieldText()` 仅保留在 shared-api 的 formatter 工具函数中，不在页面层使用
+- 新增 API 端点时，**必须同时在 types.ts 中定义返回类型**
+- 模板中访问字段：用 `item.fieldName` 而不是 `fieldText(item, "fieldName")`
 
 ### API 层
 

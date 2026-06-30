@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, inject, onMounted, ref, watch, type Ref } from "vue";
 import { storeToRefs } from "pinia";
-import { api, formatApiError, statusClass, statusText, toNumber, usePatientWorkflowStore, type Doctor, type Registration, type Schedule, type TriageRecord } from "@smart-cloud-brain/shared-api";
+import { api, formatApiError, statusClass, statusText, toNumber, usePatientWorkflowStore, type Doctor, type Registration, type AppointmentSlot, type TriageRecord } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, LoadingState, StatusTag, Toast } from "@smart-cloud-brain/shared-ui";
 import ConfirmAppointmentModal from "../components/ConfirmAppointmentModal.vue";
 
@@ -9,7 +9,7 @@ type DateGroup = {
   date: string;
   label: string;
   total: number;
-  slots: Schedule[];
+  slots: AppointmentSlot[];
 };
 
 type DoctorGroup = {
@@ -17,7 +17,7 @@ type DoctorGroup = {
   doctorName: string;
   departmentName: string;
   total: number;
-  periods: { key: string; label: string; slots: Schedule[] }[];
+  periods: { key: string; label: string; slots: AppointmentSlot[] }[];
 };
 
 const workflow = usePatientWorkflowStore();
@@ -28,7 +28,7 @@ const saving = ref(false);
 const error = ref("");
 const toast = inject<Ref<InstanceType<typeof Toast>>>("toast");
 const selectedDate = ref("");
-const selectedSlot = ref<Schedule | null>(null);
+const selectedSlot = ref<AppointmentSlot | null>(null);
 const confirmOpen = ref(false);
 
 const bookedTimes = computed(() => {
@@ -42,7 +42,7 @@ const bookedTimes = computed(() => {
   return times;
 });
 
-function isSlotBooked(slot: Schedule) {
+function isSlotBooked(slot: AppointmentSlot) {
   return bookedTimes.value.has(slot.startTime || "");
 }
 
@@ -74,7 +74,7 @@ const dateGroups = computed<DateGroup[]>(() => {
     const time = slot.startTime || "";
     const date = slotDateKey(time);
     if (!groups.has(date)) {
-      groups.set(date, { date, label: slotDateLabel(time), total: 0, slots: [] as Schedule[] });
+      groups.set(date, { date, label: slotDateLabel(time), total: 0, slots: [] as AppointmentSlot[] });
     }
     const group = groups.get(date)!;
     group.total += 1;
@@ -84,7 +84,7 @@ const dateGroups = computed<DateGroup[]>(() => {
 });
 const activeDateGroup = computed(() => dateGroups.value.find((group) => group.date === selectedDate.value) ?? dateGroups.value[0]);
 const doctorGroups = computed<DoctorGroup[]>(() => {
-  const groups = new Map<string, { doctorName: string; departmentName: string; slots: Schedule[] }>();
+  const groups = new Map<string, { doctorName: string; departmentName: string; slots: AppointmentSlot[] }>();
   activeDateGroup.value?.slots.forEach((slot) => {
     const key = String(slot.doctorId || slot.doctorName || "unknown");
     if (!groups.has(key)) {
@@ -97,7 +97,7 @@ const doctorGroups = computed<DoctorGroup[]>(() => {
     groups.get(key)!.slots.push(slot);
   });
   return [...groups.entries()].map(([key, group]) => {
-    const periods = new Map<string, { key: string; label: string; slots: Schedule[] }>();
+    const periods = new Map<string, { key: string; label: string; slots: AppointmentSlot[] }>();
     group.slots.forEach((slot) => {
       const period = slotPeriod(slot.startTime || "");
       if (!periods.has(period.key)) {
@@ -137,13 +137,13 @@ async function refresh() {
   }
 }
 
-function choose(slot: Schedule) {
+function choose(slot: AppointmentSlot) {
   if (isSlotBooked(slot)) return;
   selectedSlot.value = slot;
   confirmOpen.value = true;
 }
 
-function slotTimestamp(slot: Schedule) {
+function slotTimestamp(slot: AppointmentSlot) {
   const value = Date.parse(slot.startTime || "");
   return Number.isFinite(value) ? value : Number.MAX_SAFE_INTEGER;
 }
@@ -160,7 +160,7 @@ function slotDateLabel(time: string) {
   return new Intl.DateTimeFormat("zh-CN", { month: "long", day: "numeric", weekday: "short" }).format(date);
 }
 
-function slotTimeText(slot: Schedule) {
+function slotTimeText(slot: AppointmentSlot) {
   const value = slot.startTime || "";
   if (!value || value === "-") return "待定";
   const time = value.includes("T") ? value.split("T")[1] : value.split(" ")[1];

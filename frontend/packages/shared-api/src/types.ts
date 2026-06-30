@@ -311,9 +311,25 @@ export interface RoleInfo {
   permissions?: string;
 }
 
+/** 医生排班（/doctor/schedule/list） */
 export interface Schedule {
   id: number;
+  doctorId: number;
+  doctorName?: string;
+  departmentId: number;
+  departmentName?: string;
+  workDate: string;
+  timeRange: string;
+  capacity: number;
+  booked?: number;
+  remainingCapacity?: number;
   slotId?: number;
+  status?: string;
+}
+
+/** 患者端可预约号源（/registration/slots） */
+export interface AppointmentSlot {
+  slotId: number;
   doctorId: number;
   doctorName?: string;
   departmentId: number;
@@ -321,7 +337,6 @@ export interface Schedule {
   startTime: string;
   endTime: string;
   capacity: number;
-  booked?: number;
   remainingCapacity?: number;
   status?: string;
 }

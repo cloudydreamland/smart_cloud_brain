@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import { patientApi } from "../api";
-import type { Department, Doctor, Patient, Prescription, Registration, Schedule, TriageRecord, MedicalRecord } from "../types";
+import type { AppointmentSlot, Department, Doctor, Patient, Prescription, Registration, TriageRecord, MedicalRecord } from "../types";
 
 export const usePatientWorkflowStore = defineStore("patientWorkflow", () => {
   const patient = ref<Patient | null>(null);
@@ -9,7 +9,7 @@ export const usePatientWorkflowStore = defineStore("patientWorkflow", () => {
   const doctors = ref<Doctor[]>([]);
   const triage = ref<TriageRecord | null>(null);
   const triageHistory = ref<TriageRecord[]>([]);
-  const slots = ref<Schedule[]>([]);
+  const slots = ref<AppointmentSlot[]>([]);
   const registrations = ref<Registration[]>([]);
   const records = ref<MedicalRecord[]>([]);
   const prescriptions = ref<Prescription[]>([]);

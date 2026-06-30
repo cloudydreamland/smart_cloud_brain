@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject, onBeforeUnmount, onMounted, ref, watch, type Ref } from "vue";
+import { computed, inject, onMounted, ref, watch, type Ref } from "vue";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import {
@@ -14,8 +14,21 @@ import {
 import { EmptyState, ErrorState, LoadingState, PaginationBar, Toast } from "@smart-cloud-brain/shared-ui";
 import NotificationDetailModal from "../components/NotificationDetailModal.vue";
 import { formatTime, liveRows, statusLabel, statusTone } from "../doctorPresentation";
-
-type FilterKey = "read" | "type" | "risk" | "sort";
+import {
+  useNotificationFilters,
+  handleOptions,
+  filterGroups,
+  riskValue,
+  readValue,
+  handleValue,
+  typeLabel,
+  typeTone,
+  typeCategory,
+  relationText,
+  notificationKey,
+  processable,
+  primaryActionLabel,
+} from "../composables/useNotificationFilters";
 
 const emit = defineEmits<{ refresh: [] }>();
 const workflow = useDoctorWorkflowStore();
@@ -28,257 +41,33 @@ const selected = ref<Notification | null>(null);
 const error = ref("");
 const loading = ref(false);
 const loaded = ref(false);
-const search = ref("");
-const readFilter = ref("ALL");
-const handleFilter = ref("ALL");
-const typeFilter = ref("ALL");
-const riskFilter = ref("ALL");
-const sortBy = ref("DEFAULT");
-const openFilter = ref<FilterKey | null>(null);
-const openActionMenu = ref("");
 const toast = inject<Ref<InstanceType<typeof Toast>>>("toast");
 
-const handleOptions = [
-  { value: "ALL", label: "全部" },
-  { value: "PENDING", label: "待处理" },
-  { value: "HANDLED", label: "已处理" },
-  { value: "IGNORED", label: "已忽略" },
-];
-
-const filterGroups = [
-  {
-    key: "read",
-    label: "阅读状态",
-    options: [
-      { value: "ALL", label: "全部阅读" },
-      { value: "UNREAD", label: "未读" },
-      { value: "READ", label: "已读" },
-    ],
-  },
-  {
-    key: "type",
-    label: "通知类型",
-    options: [
-      { value: "ALL", label: "全部类型" },
-      { value: "PRESCRIPTION", label: "处方" },
-      { value: "TRIAGE", label: "分诊" },
-      { value: "MEDICAL_RECORD", label: "病历" },
-      { value: "REGISTRATION", label: "挂号" },
-      { value: "SYSTEM", label: "系统" },
-    ],
-  },
-  {
-    key: "risk",
-    label: "风险等级",
-    options: [
-      { value: "ALL", label: "全部风险" },
-      { value: "HIGH", label: "高风险" },
-      { value: "MEDIUM", label: "中风险" },
-      { value: "LOW", label: "低风险" },
-    ],
-  },
-  {
-    key: "sort",
-    label: "排序方式",
-    options: [
-      { value: "DEFAULT", label: "待办优先" },
-      { value: "CREATED_DESC", label: "最新优先" },
-      { value: "CREATED_ASC", label: "最早优先" },
-      { value: "RISK_DESC", label: "风险优先" },
-      { value: "UNREAD_FIRST", label: "未读优先" },
-      { value: "HANDLED_FIRST", label: "已处理优先" },
-    ],
-  },
-] as const;
+const {
+  search, readFilter, handleFilter, typeFilter, riskFilter, sortBy,
+  openFilter, openActionMenu, filteredRows,
+  filterValue, setFilterValue, filterLabel, toggleActionMenu,
+} = useNotificationFilters(() => allRows.value);
 
 const stats = computed(() => {
   const all = allRows.value.length ? allRows.value : displayNotifications.value;
   const today = new Date().toDateString();
   return [
-    {
-      label: "待处理",
-      value: all.filter((item) => handleValue(item) === "PENDING").length,
-      tone: "teal",
-      icon: "list",
-    },
-    {
-      label: "未读",
-      value: all.filter((item) => readValue(item) !== "READ").length,
-      tone: "blue",
-      icon: "bell",
-    },
-    {
-      label: "高/中风险",
-      value: all.filter((item) => ["HIGH", "MEDIUM"].includes(riskValue(item))).length,
-      tone: "red",
-      icon: "warning",
-    },
-    {
-      label: "今日新增",
-      value: all.filter((item) => item.createdAt && new Date(item.createdAt).toDateString() === today).length,
-      tone: "green",
-      icon: "check",
-    },
+    { label: "待处理", value: all.filter((item) => handleValue(item) === "PENDING").length, tone: "teal", icon: "list" },
+    { label: "未读", value: all.filter((item) => readValue(item) !== "READ").length, tone: "blue", icon: "bell" },
+    { label: "高/中风险", value: all.filter((item) => ["HIGH", "MEDIUM"].includes(riskValue(item))).length, tone: "red", icon: "warning" },
+    { label: "今日新增", value: all.filter((item) => item.createdAt && new Date(item.createdAt).toDateString() === today).length, tone: "green", icon: "check" },
   ];
-});
-
-const filteredRows = computed(() => {
-  const keyword = search.value.trim().toLowerCase();
-  return allRows.value
-    .filter((item) => handleFilter.value === "ALL" || handleValue(item) === handleFilter.value)
-    .filter((item) => readFilter.value === "ALL" || readValue(item) === readFilter.value)
-    .filter((item) => typeFilter.value === "ALL" || typeCategory(item.type) === typeFilter.value)
-    .filter((item) => riskFilter.value === "ALL" || riskValue(item) === riskFilter.value)
-    .filter((item) => !keyword || searchText(item).includes(keyword))
-    .slice()
-    .sort(rowComparator(sortBy.value));
 });
 
 const { currentPage, pageSize, total, pageRows } = usePagination(filteredRows, 10);
 
-function riskValue(item: Notification) {
-  return displayText(item.riskLevel, "INFO").toUpperCase();
-}
-
-function readValue(item: Notification) {
-  return displayText(item.readStatus, "UNREAD").toUpperCase();
-}
-
-function handleValue(item: Notification) {
-  return displayText(item.handleStatus, readValue(item) === "READ" ? "HANDLED" : "PENDING").toUpperCase();
-}
-
-function typeLabel(type: unknown) {
-  const category = typeCategory(type);
-  if (category === "TRIAGE") return "分诊";
-  if (category === "PRESCRIPTION") return "处方";
-  if (category === "MEDICAL_RECORD") return "病历";
-  if (category === "REGISTRATION") return "挂号";
-  return "系统";
-}
-
-function typeTone(type: unknown) {
-  const category = typeCategory(type);
-  if (category === "PRESCRIPTION") return "warning";
-  if (category === "TRIAGE") return "info";
-  if (category === "MEDICAL_RECORD") return "success";
-  return "active";
-}
-
-function typeCategory(type: unknown) {
-  const value = displayText(type, "SYSTEM_NOTICE").toUpperCase();
-  if (value.includes("PRESCRIPTION")) return "PRESCRIPTION";
-  if (value.includes("TRIAGE")) return "TRIAGE";
-  if (value.includes("MEDICAL_RECORD")) return "MEDICAL_RECORD";
-  if (value.includes("REGISTRATION")) return "REGISTRATION";
-  return "SYSTEM";
-}
-
-function relationText(item: Notification) {
-  const parts = [];
-  if (toNumber(item.patientId)) parts.push(`患者 #${item.patientId}`);
-  if (toNumber(item.prescriptionId)) parts.push(`处方 #${item.prescriptionId}`);
-  if (toNumber(item.triageRecordId)) parts.push(`分诊 #${item.triageRecordId}`);
-  if (toNumber(item.medicalRecordId)) parts.push(`病历 #${item.medicalRecordId}`);
-  return parts.join(" · ") || "未关联业务对象";
-}
-
-function searchText(item: Notification) {
-  return [
-    displayText(item.title, ""),
-    displayText(item.content, ""),
-    displayText(item.type, ""),
-    typeLabel(item.type),
-    statusLabel(riskValue(item)),
-    statusLabel(readValue(item)),
-    statusLabel(handleValue(item)),
-    relationText(item),
-    toNumber(item.patientId) ? `患者 ${item.patientId}` : "",
-    toNumber(item.prescriptionId) ? `处方 ${item.prescriptionId}` : "",
-    toNumber(item.triageRecordId) ? `分诊 ${item.triageRecordId}` : "",
-    toNumber(item.medicalRecordId) ? `病历 ${item.medicalRecordId}` : "",
-  ].join(" ").toLowerCase();
-}
-
-function createdTime(item: Notification) {
-  const time = new Date(displayText(item.createdAt, "")).getTime();
-  return Number.isFinite(time) ? time : 0;
-}
-
-function riskPriority(item: Notification) {
-  const value = riskValue(item);
-  if (value === "HIGH") return 0;
-  if (value === "MEDIUM") return 1;
-  if (value === "LOW") return 2;
-  return 3;
-}
-
-function handlePriority(item: Notification) {
-  const value = handleValue(item);
-  if (value === "PENDING") return 0;
-  if (value === "HANDLED") return 1;
-  if (value === "IGNORED") return 2;
-  return 3;
-}
-
-function rowComparator(sort: string) {
-  return (a: Notification, b: Notification) => {
-    if (sort === "CREATED_ASC") return createdTime(a) - createdTime(b);
-    if (sort === "CREATED_DESC") return createdTime(b) - createdTime(a);
-    if (sort === "RISK_DESC") return riskPriority(a) - riskPriority(b) || createdTime(b) - createdTime(a);
-    if (sort === "UNREAD_FIRST") return (readValue(a) === "READ" ? 1 : 0) - (readValue(b) === "READ" ? 1 : 0) || createdTime(b) - createdTime(a);
-    if (sort === "HANDLED_FIRST") return (handleValue(a) === "HANDLED" ? 0 : 1) - (handleValue(b) === "HANDLED" ? 0 : 1) || createdTime(b) - createdTime(a);
-    return handlePriority(a) - handlePriority(b) || riskPriority(a) - riskPriority(b) || createdTime(b) - createdTime(a);
-  };
-}
-
-function processable(item: Notification) {
-  const category = typeCategory(item.type);
-  return ["PRESCRIPTION", "MEDICAL_RECORD", "TRIAGE", "REGISTRATION"].includes(category);
-}
-
-function primaryActionLabel(item: Notification) {
-  return processable(item) ? "去处理" : "查看详情";
-}
-
-function filterValue(key: FilterKey) {
-  if (key === "read") return readFilter.value;
-  if (key === "type") return typeFilter.value;
-  if (key === "risk") return riskFilter.value;
-  return sortBy.value;
-}
-
-function setFilterValue(key: FilterKey, value: string) {
-  if (key === "read") readFilter.value = value;
-  if (key === "type") typeFilter.value = value;
-  if (key === "risk") riskFilter.value = value;
-  if (key === "sort") sortBy.value = value;
-  openFilter.value = null;
-}
-
-function filterLabel(key: FilterKey) {
-  const group = filterGroups.find((item) => item.key === key);
-  return group?.options.find((item) => item.value === filterValue(key))?.label ?? group?.label ?? "";
-}
-
-function notificationKey(item: Notification) {
-  return String(item.notificationId ?? item.createdAt ?? item.title ?? "");
-}
-
-function toggleActionMenu(item: Notification) {
-  const key = notificationKey(item);
-  openFilter.value = null;
-  openActionMenu.value = openActionMenu.value === key ? "" : key;
-}
-
-function closeMenus() {
-  openFilter.value = null;
-  openActionMenu.value = "";
-}
-
-function handleDocumentKeydown(event: KeyboardEvent) {
-  if (event.key === "Escape") closeMenus();
-}
+watch([search, readFilter, handleFilter, typeFilter, riskFilter, sortBy], () => {
+  currentPage.value = 1;
+});
+watch(displayNotifications, (value) => {
+  allRows.value = [...value];
+});
 
 async function refresh() {
   loading.value = true;
@@ -315,7 +104,7 @@ async function markRead(item = selected.value) {
   }
 }
 
-async function handleNotification(item: Notification | null, handleStatus: "HANDLED" | "IGNORED") {
+async function handleNotificationAction(item: Notification | null, handleStatus: "HANDLED" | "IGNORED") {
   if (!item) return;
   loading.value = true;
   error.value = "";
@@ -365,21 +154,7 @@ function goProcess(item: Notification) {
   }
 }
 
-watch([search, readFilter, handleFilter, typeFilter, riskFilter, sortBy], () => {
-  currentPage.value = 1;
-});
-watch(displayNotifications, (value) => {
-  allRows.value = [...value];
-});
-onMounted(() => {
-  document.addEventListener("click", closeMenus);
-  document.addEventListener("keydown", handleDocumentKeydown);
-});
-onBeforeUnmount(() => {
-  document.removeEventListener("click", closeMenus);
-  document.removeEventListener("keydown", handleDocumentKeydown);
-});
-refresh();
+onMounted(refresh);
 </script>
 
 <template>
@@ -443,7 +218,7 @@ refresh();
             </div>
           </label>
           <div class="notification-segment" aria-label="处理状态">
-            <span class="notification-segment-thumb" :style="{ transform: `translateX(${Math.max(0, handleOptions.findIndex((option) => option.value === handleFilter)) * 100}%)` }" aria-hidden="true"></span>
+            <span class="notification-segment-thumb" :style="{ transform: `translateX(${Math.max(0, handleOptions.findIndex((option) => option.value === handleFilter) * 100)}%)` }" aria-hidden="true"></span>
             <button
               v-for="option in handleOptions"
               :key="option.value"
@@ -537,8 +312,8 @@ refresh();
                 <div v-if="openActionMenu === notificationKey(item)" class="notification-action-popover" role="menu">
                   <button type="button" role="menuitem" @click="selected = item; openActionMenu = ''">查看详情</button>
                   <button v-if="readValue(item) !== 'READ'" type="button" role="menuitem" @click="markRead(item)">标记已读</button>
-                  <button v-if="handleValue(item) === 'PENDING'" type="button" role="menuitem" @click="handleNotification(item, 'HANDLED')">标记已处理</button>
-                  <button v-if="handleValue(item) === 'PENDING'" type="button" role="menuitem" class="danger" @click="handleNotification(item, 'IGNORED')">忽略通知</button>
+                  <button v-if="handleValue(item) === 'PENDING'" type="button" role="menuitem" @click="handleNotificationAction(item, 'HANDLED')">标记已处理</button>
+                  <button v-if="handleValue(item) === 'PENDING'" type="button" role="menuitem" class="danger" @click="handleNotificationAction(item, 'IGNORED')">忽略通知</button>
                 </div>
               </div>
             </div>
@@ -555,7 +330,7 @@ refresh();
       :notification="selected"
       @close="selected = null"
       @read="markRead(selected)"
-      @handle="(status) => handleNotification(selected, status)"
+      @handle="(status) => handleNotificationAction(selected, status)"
       @process="selected && goProcess(selected)"
     />
   </section>
