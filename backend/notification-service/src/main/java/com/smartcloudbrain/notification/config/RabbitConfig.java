@@ -31,6 +31,13 @@ public class RabbitConfig {
   }
 
   @Bean
+  Queue auditLogQueue() {
+    return new Queue(RabbitTopology.AUDIT_LOG_QUEUE, true, false, false, Map.of(
+        "x-dead-letter-exchange", RabbitTopology.DEAD_EXCHANGE
+    ));
+  }
+
+  @Bean
   Queue deadLetterQueue() {
     return new Queue(RabbitTopology.DEAD_LETTER_QUEUE, true);
   }
@@ -43,6 +50,16 @@ public class RabbitConfig {
     return BindingBuilder.bind(notificationDispatchQueue)
         .to(domainExchange)
         .with(RabbitTopology.ROUTING_NOTIFICATION_DISPATCH);
+  }
+
+  @Bean
+  Binding auditLogBinding(
+      @Qualifier("auditLogQueue") Queue auditLogQueue,
+      @Qualifier("domainExchange") TopicExchange domainExchange
+  ) {
+    return BindingBuilder.bind(auditLogQueue)
+        .to(domainExchange)
+        .with(RabbitTopology.ROUTING_AUDIT_LOG);
   }
 
   @Bean
