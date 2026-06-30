@@ -19,7 +19,7 @@ const permissionLabels: Record<string, string> = {
   "permission:manage": "权限管理", "statistics:view": "统计分析", "ai-log:view": "AI日志",
   "notification:manage": "通知管理", "medical-record:manage": "病历管理", "prescription:manage": "处方管理",
   "registration:manage": "挂号管理",
-  "statistics:export": "报表导出", "patient-site:manage": "患者端配置",
+  "statistics:export": "报表导出", "patient-site:manage": "患者端配置", "system-config:manage": "系统配置",
 };
 const permissionDescriptions: Record<string, string> = {
   "dashboard:view": "查看管理端工作台", "department:manage": "维护科室信息",
@@ -32,6 +32,7 @@ const permissionDescriptions: Record<string, string> = {
   "prescription:manage": "管理处方和审核", "registration:manage": "管理挂号记录",
   "statistics:export": "导出统计数据为CSV",
   "patient-site:manage": "管理患者端导航和内容",
+  "system-config:manage": "管理系统 SMTP 等集成配置",
 };
 const catalog = computed<PermissionCatalogItem[]>(() => (payload.value?.catalog ?? []).map((item) => ({
   key: displayText(item.key),

@@ -38,7 +38,8 @@ describe("shared api request handling", () => {
     vi.stubGlobal("fetch", fetch);
 
     await Promise.all([
-      api.registerPatient({ name: "Alice", phone: "13800000001", password: "123456" }),
+      api.registerPatient({ name: "Alice", phone: "13800000001", email: "alice@example.com", emailCode: "123456", password: "123456" }),
+      api.sendPatientEmailCode({ email: "alice@example.com", phone: "13800000001" }),
       api.loginDoctor("doctor1", "123456"),
       api.loginAdmin("admin", "123456"),
       api.patientInfo(),

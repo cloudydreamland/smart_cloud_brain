@@ -44,6 +44,7 @@ class AuthServiceTest {
   @Mock private DoctorRepository doctorRepository;
   @Mock private AdminUserRepository adminUserRepository;
   @Mock private RedisRateLimiter redisRateLimiter;
+  @Mock private PatientEmailVerificationService emailVerificationService;
   @InjectMocks private AuthService authService;
 
   @BeforeEach
@@ -57,13 +58,15 @@ class AuthServiceTest {
     Patient saved = new Patient();
     saved.setId(9L);
     when(patientRepository.findByPhone("13800000001")).thenReturn(Optional.empty());
+    when(patientRepository.findByEmail("alice@example.com")).thenReturn(Optional.empty());
     when(passwordService.encode("123456")).thenReturn("encoded");
     when(patientRepository.save(any(Patient.class))).thenReturn(saved);
 
     Map<String, Long> result = authService.registerPatient(new PatientRegisterRequest(
-        "Alice", "13800000001", "123456", "FEMALE", 30, "", ""));
+        "Alice", "13800000001", "alice@example.com", "123456", "123456", "FEMALE", 30, "", ""));
 
     assertEquals(9L, result.get("patientId"));
+    verify(emailVerificationService).verifyRegisterCode("alice@example.com", "123456");
   }
 
   @Test
@@ -71,7 +74,17 @@ class AuthServiceTest {
     when(patientRepository.findByPhone("13800000001")).thenReturn(Optional.of(new Patient()));
 
     assertThrows(BusinessException.class, () -> authService.registerPatient(new PatientRegisterRequest(
-        "Alice", "13800000001", "123456", "FEMALE", 30, "", "")));
+        "Alice", "13800000001", "alice@example.com", "123456", "123456", "FEMALE", 30, "", "")));
+    verify(patientRepository, never()).save(any());
+  }
+
+  @Test
+  void rejectsDuplicatePatientEmail() {
+    when(patientRepository.findByPhone("13800000001")).thenReturn(Optional.empty());
+    when(patientRepository.findByEmail("alice@example.com")).thenReturn(Optional.of(new Patient()));
+
+    assertThrows(BusinessException.class, () -> authService.registerPatient(new PatientRegisterRequest(
+        "Alice", "13800000001", "alice@example.com", "123456", "123456", "FEMALE", 30, "", "")));
     verify(patientRepository, never()).save(any());
   }
 

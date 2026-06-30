@@ -178,6 +178,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:-smart-cloud-brain-local-secret-please-change}
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-smart-cloud-brain-internal-local-token-change}
       AUTH_ENABLE_DEMO_ACCOUNT: ${AUTH_ENABLE_DEMO_ACCOUNT:-true}
+      NOTIFICATION_SERVICE_BASE_URL: http://notification-service:8089
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-scb}
@@ -304,6 +305,7 @@ services:
       SERVER_PORT: 8090
       DOCTOR_SERVICE_BASE_URL: http://doctor-service:8084
       TRIAGE_SERVICE_BASE_URL: http://triage-service:8086
+      NOTIFICATION_SERVICE_BASE_URL: http://notification-service:8089
       AI_SERVICE_BASE_URL: http://ai-service:8081
       SCB_OBJECT_STORAGE_PROVIDER: ${SCB_OBJECT_STORAGE_PROVIDER:-aliyun-oss}
       SCB_OBJECT_STORAGE_ENDPOINT: ${SCB_OBJECT_STORAGE_ENDPOINT:-}

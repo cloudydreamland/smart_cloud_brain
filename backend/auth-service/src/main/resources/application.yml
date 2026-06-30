@@ -35,4 +35,13 @@ jwt:
   secret: ${JWT_SECRET:smart-cloud-brain-local-secret-please-change}
   expire-hours: ${JWT_EXPIRE_HOURS:24}
 
+services:
+  notification:
+    base-url: ${NOTIFICATION_SERVICE_BASE_URL:http://localhost:8089}
+
+patient:
+  email-code:
+    ttl-minutes: ${PATIENT_EMAIL_CODE_TTL_MINUTES:10}
+    hash-secret: ${PATIENT_EMAIL_CODE_HASH_SECRET:${JWT_SECRET:smart-cloud-brain-local-secret-please-change}}
+
 

@@ -125,6 +125,7 @@ public class PatientService {
     view.put("id", patient.getId());
     view.put("name", patient.getName());
     view.put("phone", value(patient.getPhone()));
+    view.put("email", value(patient.getEmail()));
     view.put("gender", value(patient.getGender()));
     view.put("age", patient.getAge() == null ? 0 : patient.getAge());
     view.put("allergyHistory", value(patient.getAllergyHistory()));

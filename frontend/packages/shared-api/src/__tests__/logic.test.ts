@@ -38,7 +38,8 @@ describe("shared api business logic", () => {
     vi.stubGlobal("fetch", fetch);
     setTokenProvider(() => "jwt");
     await Promise.all([
-      api.registerPatient({ name: "患者", phone: "13800000001", password: "123456" }),
+      api.registerPatient({ name: "患者", phone: "13800000001", email: "patient@example.com", emailCode: "123456", password: "123456" }),
+      api.sendPatientEmailCode({ email: "patient@example.com", phone: "13800000001" }),
       api.currentUser(), api.loginPatient("p", "x"), api.loginDoctor("d", "x"), api.loginAdmin("a", "x"),
       api.patientInfo(), api.departments(), api.doctors(1), api.doctorDetail(1), api.drugs(),
       api.triage("胸痛"), api.triageList(),
@@ -56,6 +57,12 @@ describe("shared api business logic", () => {
       api.generateSchedule({ startDate: "2026-06-21", days: 2 }), api.publishSchedule({ suggestionIds: [1] }),
       api.schedules(), api.scheduleSuggestionDetail(1), api.triageDesk(), api.triageDetail(1),
       api.assignTriage({ triageRecordId: 1, doctorId: 2 }), api.closeTriage(1),
+      api.emailConfig(), api.saveEmailConfig({
+        host: "smtp.example.com", port: 465, username: "no-reply",
+        fromAddress: "no-reply@example.com", fromName: "智慧云脑",
+        sslEnabled: true, starttlsEnabled: false, enabled: true,
+      }),
+      api.testEmailConfig({ toAddress: "receiver@example.com" }),
     ]);
     expect(fetch.mock.calls.length).toBeGreaterThan(30);
     expect(String(fetch.mock.calls.find(([url]) => String(url).includes("departmentId=1"))?.[0])).toContain("departmentId=1");

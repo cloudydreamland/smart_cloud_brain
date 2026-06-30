@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 
 import com.smartcloudbrain.admin.service.AdminCatalogService;
 import com.smartcloudbrain.admin.service.AdminOperationsService;
+import com.smartcloudbrain.admin.service.SystemEmailConfigService;
 import com.smartcloudbrain.common.error.ErrorCode;
 import com.smartcloudbrain.common.exception.BusinessException;
 import com.smartcloudbrain.common.security.CurrentUserService;
@@ -21,11 +22,17 @@ class AdminControllerPermissionTest {
 
   @Mock private AdminCatalogService adminCatalogService;
   @Mock private AdminOperationsService adminOperationsService;
+  @Mock private SystemEmailConfigService systemEmailConfigService;
   @Mock private CurrentUserService currentUserService;
 
   @Test
   void nonAdminCannotReadAdminCatalog() {
-    AdminController controller = new AdminController(adminCatalogService, adminOperationsService, currentUserService);
+    AdminController controller = new AdminController(
+        adminCatalogService,
+        adminOperationsService,
+        systemEmailConfigService,
+        currentUserService
+    );
     when(currentUserService.require(RoleType.ADMIN)).thenThrow(new BusinessException(ErrorCode.FORBIDDEN));
 
     assertThrows(BusinessException.class, controller::departments);

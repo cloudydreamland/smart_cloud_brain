@@ -23,6 +23,9 @@ import {
   type DeviceUsageSaveRequest,
   type DoctorSaveRequest,
   type DrugSaveRequest,
+  type EmailConfig,
+  type EmailConfigSaveRequest,
+  type EmailConfigTestRequest,
   type MedicalRecordGenerateRequest,
   type MedicalRecordSaveRequest,
   type PatientNotice,
@@ -35,6 +38,7 @@ import {
   type PatientRecommendationStatusRequest,
   type PatientRecommendationType,
   type PatientSaveRequest,
+  type PatientEmailCodeRequest,
   type PatientVisitorSaveRequest,
   type PatientRegisterRequest,
   type PatientSiteConfigRecord,
@@ -142,6 +146,7 @@ const post = <T>(path: string, body?: unknown) => request<T>(path, jsonOptions("
 
 export const authApi = {
   registerPatient: (body: PatientRegisterRequest) => post<DataRow>("/patient/register", body),
+  sendPatientEmailCode: (body: PatientEmailCodeRequest) => post<DataRow>("/patient/email-code/send", body),
   loginPatient: (account: string, password: string) => post<Session>("/patient/login", { account, password }),
   loginDoctor: (account: string, password: string) => post<Session>("/doctor/login", { account, password }),
   loginAdmin: (account: string, password: string) => post<Session>("/admin/login", { account, password }),
@@ -235,6 +240,9 @@ export const adminApi = {
   permissions: () => get<DataRow>("/admin/permission/list"),
   myPermissions: () => get<string[]>("/admin/permission/my"),
   saveRolePermissions: (body: RolePermissionSaveRequest) => post<DataRow>("/admin/permission/save-role", body),
+  emailConfig: () => get<EmailConfig>("/admin/system/email-config"),
+  saveEmailConfig: (body: EmailConfigSaveRequest) => post<EmailConfig>("/admin/system/email-config", body),
+  testEmailConfig: (body: EmailConfigTestRequest) => post<DataRow>("/admin/system/email-config/test", body),
   patientSiteConfig: (configKey?: string) => get<DataRow>(`/admin/patient-site/config${query({ configKey })}`),
   savePatientSiteConfig: (body: PatientSiteConfigSaveRequest) => post<PatientSiteConfigRecord>("/admin/patient-site/save", body),
   savePublishedPatientSiteConfig: (body: PatientSiteConfigSaveRequest) => post<PatientSiteConfigRecord>("/admin/patient-site/save-published", body),
@@ -257,7 +265,7 @@ export const adminApi = {
 };
 
 export const api = {
-  registerPatient: authApi.registerPatient, currentUser: authApi.currentUser,
+  registerPatient: authApi.registerPatient, sendPatientEmailCode: authApi.sendPatientEmailCode, currentUser: authApi.currentUser,
   loginPatient: authApi.loginPatient, loginDoctor: authApi.loginDoctor, loginAdmin: authApi.loginAdmin,
   patientInfo: patientApi.info, departments: patientApi.departments, doctors: patientApi.doctors,
   doctorDetail: patientApi.doctorDetail, drugs: adminApi.drugs, triage: patientApi.triage,
@@ -286,6 +294,7 @@ export const api = {
   doctorWorkload: adminApi.doctorWorkload, patientDistribution: adminApi.patientDistribution,
   deviceUsageStatistics: adminApi.deviceUsageStatistics, statisticsReport: adminApi.statisticsReport,
   permissions: adminApi.permissions, saveRolePermissions: adminApi.saveRolePermissions,
+  emailConfig: adminApi.emailConfig, saveEmailConfig: adminApi.saveEmailConfig, testEmailConfig: adminApi.testEmailConfig,
   myPermissions: adminApi.myPermissions,
   patientSiteConfig: patientApi.siteConfig,
   patientSiteHomeConfig: patientApi.homeConfig,

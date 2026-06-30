@@ -47,6 +47,7 @@ public class AdminOperationsService {
       permission("prompt:manage", "Prompts", "Manage AI prompt templates"),
       permission("dict:manage", "Dictionaries", "Manage dictionaries"),
       permission("patient-site:manage", "Patient site", "Manage patient site navigation and content"),
+      permission("system-config:manage", "System config", "Manage system integration configuration"),
       permission("search:view", "Search", "Use admin search")
   );
 
@@ -410,6 +411,7 @@ public class AdminOperationsService {
     view.put("id", row.get("id"));
     view.put("name", value(row.get("name")));
     view.put("phone", value(row.get("phone")));
+    view.put("email", value(row.get("email")));
     view.put("gender", value(row.get("gender")));
     view.put("age", row.get("age") == null ? 0 : row.get("age"));
     view.put("allergyHistory", value(row.get("allergy_history")));

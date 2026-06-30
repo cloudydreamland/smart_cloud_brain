@@ -21,6 +21,7 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered {
 
   private static final List<String> PUBLIC_PATHS = List.of(
       "/api/patient/register",
+      "/api/patient/email-code/send",
       "/api/patient/login",
       "/api/doctor/login",
       "/api/admin/login",

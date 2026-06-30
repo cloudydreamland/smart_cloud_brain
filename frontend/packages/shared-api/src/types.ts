@@ -6,8 +6,9 @@ export type CurrentUser = { userId: number; role: Role; name: string };
 export type DataRow = Record<string, unknown>;
 
 export type PatientRegisterRequest = {
-  name: string; phone: string; password: string; gender?: string; age?: number;
+  name: string; phone: string; email: string; emailCode: string; password: string; gender?: string; age?: number;
 };
+export type PatientEmailCodeRequest = { email: string; phone?: string; purpose?: "REGISTER" | string };
 export type TriageRequest = { patientId?: number; chiefComplaint: string };
 export type RegistrationCreateRequest = {
   doctorId: number; departmentId: number; appointmentTime: string;
@@ -68,6 +69,19 @@ export type ScheduleSaveRequest = {
 };
 export type ScheduleCancelRequest = { scheduleId: number };
 export type RolePermissionSaveRequest = { role: Role; permissionKeys: string[] };
+export type EmailConfig = {
+  host: string;
+  port: number;
+  username: string;
+  passwordSet?: boolean;
+  fromAddress: string;
+  fromName?: string;
+  sslEnabled: boolean;
+  starttlsEnabled: boolean;
+  enabled: boolean;
+};
+export type EmailConfigSaveRequest = Omit<EmailConfig, "passwordSet"> & { password?: string };
+export type EmailConfigTestRequest = { toAddress: string };
 export type StatisticsQuery = { startDate?: string; endDate?: string };
 export type StatisticsReportRow = { metric: string; value: number | string };
 export type PatientSiteConfigSaveRequest = { configKey: string; configJson: string; remark?: string };
@@ -204,6 +218,7 @@ export interface Patient {
   gender?: string;
   age?: number;
   phone?: string;
+  email?: string;
   allergyHistory?: string;
   pastHistory?: string;
   address?: string;

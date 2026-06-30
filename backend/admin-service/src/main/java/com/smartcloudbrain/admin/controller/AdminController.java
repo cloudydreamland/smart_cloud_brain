@@ -8,6 +8,8 @@ import com.smartcloudbrain.admin.dto.admin.DeviceStatusRequest;
 import com.smartcloudbrain.admin.dto.admin.DeviceUsageSaveRequest;
 import com.smartcloudbrain.admin.dto.admin.DoctorSaveRequest;
 import com.smartcloudbrain.admin.dto.admin.DrugSaveRequest;
+import com.smartcloudbrain.admin.dto.admin.EmailConfigSaveRequest;
+import com.smartcloudbrain.admin.dto.admin.EmailConfigTestRequest;
 import com.smartcloudbrain.admin.dto.admin.PatientSaveRequest;
 import com.smartcloudbrain.admin.dto.admin.RolePermissionSaveRequest;
 import com.smartcloudbrain.admin.dto.admin.ScheduleCancelRequest;
@@ -17,6 +19,7 @@ import com.smartcloudbrain.admin.dto.admin.ScheduleSaveRequest;
 import com.smartcloudbrain.admin.dto.admin.TriageAssignRequest;
 import com.smartcloudbrain.admin.service.AdminCatalogService;
 import com.smartcloudbrain.admin.service.AdminOperationsService;
+import com.smartcloudbrain.admin.service.SystemEmailConfigService;
 import com.smartcloudbrain.common.exception.BusinessException;
 import com.smartcloudbrain.common.security.AuthenticatedUser;
 import com.smartcloudbrain.common.security.CurrentUserService;
@@ -35,11 +38,18 @@ public class AdminController {
 
   private final AdminCatalogService adminCatalogService;
   private final AdminOperationsService adminOperationsService;
+  private final SystemEmailConfigService systemEmailConfigService;
   private final CurrentUserService currentUserService;
 
-  public AdminController(AdminCatalogService adminCatalogService, AdminOperationsService adminOperationsService, CurrentUserService currentUserService) {
+  public AdminController(
+      AdminCatalogService adminCatalogService,
+      AdminOperationsService adminOperationsService,
+      SystemEmailConfigService systemEmailConfigService,
+      CurrentUserService currentUserService
+  ) {
     this.adminCatalogService = adminCatalogService;
     this.adminOperationsService = adminOperationsService;
+    this.systemEmailConfigService = systemEmailConfigService;
     this.currentUserService = currentUserService;
   }
 
@@ -296,15 +306,34 @@ public class AdminController {
     return Result.success(adminOperationsService.saveRolePermissions(request));
   }
 
+  @GetMapping("/system/email-config")
+  public Result<?> emailConfig() {
+    requireAdminPermission("system-config:manage");
+    return Result.success(systemEmailConfigService.getConfig());
+  }
+
+  @PostMapping("/system/email-config")
+  public Result<?> saveEmailConfig(@Valid @RequestBody EmailConfigSaveRequest request) {
+    AuthenticatedUser user = requireAdminPermission("system-config:manage");
+    return Result.success(systemEmailConfigService.save(request, user));
+  }
+
+  @PostMapping("/system/email-config/test")
+  public Result<?> testEmailConfig(@Valid @RequestBody EmailConfigTestRequest request) {
+    requireAdminPermission("system-config:manage");
+    return Result.success(systemEmailConfigService.sendTest(request));
+  }
+
   private void requireAdmin() {
     currentUserService.require(RoleType.ADMIN);
   }
 
-  private void requireAdminPermission(String permissionKey) {
+  private AuthenticatedUser requireAdminPermission(String permissionKey) {
     AuthenticatedUser user = currentUserService.require(RoleType.ADMIN);
     if (!adminOperationsService.hasPermission(user.role(), permissionKey)) {
       throw new BusinessException(403, "Permission denied: " + permissionKey);
     }
+    return user;
   }
 }
 

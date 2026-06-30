@@ -15,6 +15,7 @@ const DevicesPage = () => import("../pages/DevicesPage.vue");
 const PatientsPage = () => import("../pages/PatientsPage.vue");
 const PermissionsPage = () => import("../pages/PermissionsPage.vue");
 const PatientSiteConfigPage = () => import("../pages/PatientSiteConfigPage.vue");
+const EmailConfigPage = () => import("../pages/EmailConfigPage.vue");
 const NotFound = () => import("../pages/NotFound.vue");
 
 const router = createRouter({
@@ -37,6 +38,7 @@ const router = createRouter({
         { path: "accounts", name: "admin-accounts", component: AccountsPage },
         { path: "permissions", name: "admin-permissions", component: PermissionsPage },
         { path: "patient-site", name: "admin-patient-site", component: PatientSiteConfigPage },
+        { path: "email-config", name: "admin-email-config", component: EmailConfigPage },
       ],
     },
     { path: "/:pathMatch(.*)*", name: "not-found", component: NotFound },

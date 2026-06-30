@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -263,7 +264,7 @@ class AdminCatalogServiceTest {
       return value;
     });
     when(doctorRepository.findById(2L)).thenReturn(Optional.of(doctor));
-    when(drugRepository.findAll()).thenReturn(List.of(drug));
+    lenient().when(drugRepository.findAll()).thenReturn(List.of(drug));
     when(internalDoctorClient.schedules()).thenReturn(List.of(Map.of("id", 1L)));
     when(internalTriageClient.list()).thenReturn(List.of(Map.of("triageRecordId", 1L, "patientId", 1L, "status", "PENDING")));
     when(internalTriageClient.detail(1L)).thenReturn(Map.of("triageRecordId", 1L, "patientId", 1L, "status", "PENDING"));

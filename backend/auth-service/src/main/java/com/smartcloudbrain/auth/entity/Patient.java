@@ -11,6 +11,7 @@ public class Patient extends BaseEntity {
 
   private String name;
   private String phone;
+  private String email;
   @Column(name = "password_hash")
   private String passwordHash;
   private String gender;
@@ -36,6 +37,14 @@ public class Patient extends BaseEntity {
 
   public void setPhone(String phone) {
     this.phone = phone;
+  }
+
+  public String getEmail() {
+    return email;
+  }
+
+  public void setEmail(String email) {
+    this.email = email;
   }
 
   public String getPasswordHash() {

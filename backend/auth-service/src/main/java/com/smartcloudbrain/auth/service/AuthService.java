@@ -31,7 +31,8 @@ public class AuthService {
   private final DoctorRepository doctorRepository;
   private final AdminUserRepository adminUserRepository;
   private final RedisRateLimiter redisRateLimiter;
-  
+  private final PatientEmailVerificationService emailVerificationService;
+
   @Value("${auth.enable-demo-account:false}")
   private boolean enableDemoAccount;
 
@@ -41,7 +42,8 @@ public class AuthService {
       PatientRepository patientRepository,
       DoctorRepository doctorRepository,
       AdminUserRepository adminUserRepository,
-      RedisRateLimiter redisRateLimiter
+      RedisRateLimiter redisRateLimiter,
+      PatientEmailVerificationService emailVerificationService
   ) {
     this.jwtService = jwtService;
     this.passwordService = passwordService;
@@ -49,16 +51,23 @@ public class AuthService {
     this.doctorRepository = doctorRepository;
     this.adminUserRepository = adminUserRepository;
     this.redisRateLimiter = redisRateLimiter;
+    this.emailVerificationService = emailVerificationService;
   }
 
   @Transactional
   public Map<String, Long> registerPatient(PatientRegisterRequest request) {
+    String email = normalizeEmail(request.email());
     patientRepository.findByPhone(request.phone()).ifPresent(patient -> {
       throw new BusinessException(ErrorCode.CONFLICT);
     });
+    patientRepository.findByEmail(email).ifPresent(patient -> {
+      throw new BusinessException(409, "email already registered");
+    });
+    emailVerificationService.verifyRegisterCode(email, request.emailCode());
     Patient patient = new Patient();
     patient.setName(request.name());
     patient.setPhone(request.phone());
+    patient.setEmail(email);
     patient.setPasswordHash(passwordService.encode(request.password()));
     patient.setGender(request.gender());
     patient.setAge(request.age());
@@ -129,6 +138,10 @@ public class AuthService {
     if (!redisRateLimiter.allow("rate:login:account:" + normalizedAccount, 5, Duration.ofMinutes(5))) {
       throw new BusinessException(429, "login attempts too frequent");
     }
+  }
+
+  private String normalizeEmail(String email) {
+    return email == null ? "" : email.trim().toLowerCase(java.util.Locale.ROOT);
   }
 
   private java.util.Optional<Doctor> doctorByDemoAccount(String account) {

@@ -42,6 +42,7 @@ export const api = {
   get: (path) => request(path),
   post: (path, body) => request(path, "POST", body),
   registerPatient: (body) => request("/patient/register", "POST", body, { token: "" }),
+  sendPatientEmailCode: (body) => request("/patient/email-code/send", "POST", body, { token: "" }),
   loginPatient: (account, password, apiBase) => request("/patient/login", "POST", { account, password }, { token: "", apiBase }),
   patientInfo: () => request("/patient/info"),
   homeConfig: () => request("/patient-site/home"),

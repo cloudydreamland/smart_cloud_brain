@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
 import com.smartcloudbrain.auth.service.AuthService;
+import com.smartcloudbrain.auth.service.PatientEmailVerificationService;
 import com.smartcloudbrain.common.result.Result;
 import com.smartcloudbrain.common.security.AuthenticatedUser;
 import com.smartcloudbrain.common.security.CurrentUserService;
@@ -18,12 +19,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class AuthControllerCurrentUserTest {
 
   @Mock private AuthService authService;
+  @Mock private PatientEmailVerificationService emailVerificationService;
   @Mock private CurrentUserService currentUserService;
 
   @Test
   void currentUserReturnsGatewayInjectedUserContext() {
     when(currentUserService.get()).thenReturn(new AuthenticatedUser(7L, RoleType.DOCTOR, "doctor1"));
-    AuthController controller = new AuthController(authService, currentUserService);
+    AuthController controller = new AuthController(authService, emailVerificationService, currentUserService);
 
     Result<?> result = controller.currentUser();
 

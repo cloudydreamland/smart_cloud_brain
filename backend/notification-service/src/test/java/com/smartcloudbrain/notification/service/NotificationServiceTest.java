@@ -133,7 +133,7 @@ class NotificationServiceTest {
     message.setReadStatus("UNREAD");
     message.setHandleStatus("PENDING");
     message.setRiskLevel("HIGH");
-    when(currentUserService.require(RoleType.DOCTOR)).thenReturn(new AuthenticatedUser(8L, RoleType.DOCTOR, "doctor"));
+    when(currentUserService.get()).thenReturn(new AuthenticatedUser(8L, RoleType.DOCTOR, "doctor"));
     when(notificationRepository.findByDoctorId(8L)).thenReturn(List.of(message));
     NotificationService service = new NotificationService(notificationRepository, currentUserService, webSocketHandler);
 
@@ -146,7 +146,7 @@ class NotificationServiceTest {
   void listsPendingHighRiskBeforeHandledRecentNotificationsByDefault() {
     NotificationMessage handledRecent = notification(1L, "READ", "HANDLED", "LOW", LocalDateTime.now());
     NotificationMessage pendingOlder = notification(2L, "UNREAD", "PENDING", "HIGH", LocalDateTime.now().minusDays(1));
-    when(currentUserService.require(RoleType.DOCTOR)).thenReturn(new AuthenticatedUser(8L, RoleType.DOCTOR, "doctor"));
+    when(currentUserService.get()).thenReturn(new AuthenticatedUser(8L, RoleType.DOCTOR, "doctor"));
     when(notificationRepository.findByDoctorId(8L)).thenReturn(List.of(handledRecent, pendingOlder));
     NotificationService service = new NotificationService(notificationRepository, currentUserService, webSocketHandler);
 

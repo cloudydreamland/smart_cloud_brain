@@ -16,3 +16,7 @@ management:
   health:
     redis:
       enabled: ${REDIS_HEALTH_ENABLED:false}
+
+services:
+  notification:
+    base-url: ${NOTIFICATION_SERVICE_BASE_URL:http://localhost:8089}

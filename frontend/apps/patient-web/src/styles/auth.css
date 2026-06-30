@@ -117,3 +117,30 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
 }
+
+.auth-code-field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 112px;
+  align-items: end;
+  gap: 10px;
+}
+
+.email-code-action {
+  min-height: 40px;
+  border: 1px solid var(--hospital-navy);
+  border-radius: 8px;
+  background: var(--hospital-navy);
+  color: var(--color-white);
+  font-size: 13px;
+  font-weight: 700;
+  transition: opacity .18s ease, transform .18s ease;
+}
+
+.email-code-action:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+.email-code-action:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+}
