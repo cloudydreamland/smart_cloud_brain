@@ -38,6 +38,11 @@ public class PrescriptionController {
     return Result.success(prescriptionService.list());
   }
 
+  @GetMapping("/drug/list")
+  public Result<?> drugs() {
+    return Result.success(prescriptionService.availableDrugs());
+  }
+
   @GetMapping("/detail")
   public Result<?> detail(@RequestParam("id") Long id) {
     return Result.success(prescriptionService.detail(id));
@@ -48,5 +53,4 @@ public class PrescriptionController {
     return Result.success(prescriptionService.detail(id));
   }
 }
-
 

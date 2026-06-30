@@ -5,8 +5,9 @@ import { storeToRefs } from "pinia";
 import {
   api,
   displayText,
-  formatApiError,
   toNumber,
+  type Drug,
+  type DrugItem,
   useAuthStore,
   useDoctorWorkflowStore,
 } from "@smart-cloud-brain/shared-api";
@@ -17,9 +18,12 @@ import SaveRecordConfirmModal from "../components/SaveRecordConfirmModal.vue";
 import PrescriptionRiskModal from "../components/PrescriptionRiskModal.vue";
 import HighRiskConfirmModal from "../components/HighRiskConfirmModal.vue";
 import CompleteRegistrationConfirmModal from "../components/CompleteRegistrationConfirmModal.vue";
+import DrugCatalogSelect from "../components/DrugCatalogSelect.vue";
 import { formatTime, liveRows, patientName, statusLabel, statusTone } from "../doctorPresentation";
 import { useConsultationRecord } from "../composables/useConsultationRecord";
 import { useConsultationPrescription } from "../composables/useConsultationPrescription";
+import { useDoctorSettings } from "../composables/useDoctorSettings";
+import type { DrugCatalogOption } from "../types/drugCatalog";
 
 type ToastHandle = {
   success: (title: string, message?: string) => number;
@@ -44,6 +48,11 @@ const highRiskOpen = ref(false);
 const completeOpen = ref(false);
 const completeLoading = ref(false);
 const toastRef = ref<ToastHandle | null>(null);
+const { settings } = useDoctorSettings();
+const drugCatalog = ref<DrugCatalogOption[]>([]);
+const drugCatalogLoading = ref(false);
+const drugCatalogLoaded = ref(false);
+const drugCatalogError = ref("");
 
 const registration = computed(
   () => displayRegistrations.value.find((item) => toNumber(item.registrationId) === toNumber(props.registrationId)) ?? null,
@@ -56,6 +65,15 @@ const triage = computed(() =>
 );
 const triageRisk = computed(() => displayText(triage.value?.riskLevel, displayText(registration.value?.riskLevel, "MEDIUM")));
 const isCompleted = computed(() => displayText(registration.value?.status, "").toUpperCase() === "COMPLETED");
+const selectableDrugNames = computed(() =>
+  new Set(drugCatalog.value.filter((drug) => !drug.disabled).map((drug) => drug.name.trim())),
+);
+const drugCatalogStatus = computed(() => {
+  if (drugCatalogLoading.value) return "药品目录同步中";
+  if (drugCatalogError.value) return "目录不可用";
+  const count = selectableDrugNames.value.size;
+  return count ? `可选 ${count} 种目录药品` : "暂无可用目录药品";
+});
 
 const record = useConsultationRecord(
   () => props.registrationId,
@@ -72,9 +90,58 @@ const prescription = useConsultationPrescription(
   { session: auth.session ? { userId: auth.session.userId } : undefined },
   emit,
   () => toastRef.value,
+  { invalidMessage: validatePrescriptionCatalog },
 );
 
 
+
+function isDisabledDrugStatus(status: unknown) {
+  const value = String(status ?? "").trim().toUpperCase();
+  return ["DISABLED", "RETIRED", "OFFLINE", "INACTIVE", "STOPPED", "停用", "禁用", "下线"].includes(value);
+}
+
+function toDrugCatalogOption(row: Drug | Record<string, unknown>): DrugCatalogOption {
+  const name = displayText(row.name);
+  const rawStatus = displayText(row.status, "ENABLED");
+  return {
+    id: toNumber(row.id) || undefined,
+    name,
+    specification: displayText(row.specification),
+    contraindication: displayText(row.contraindication),
+    interactionRule: displayText(row.interactionRule),
+    status: statusLabel(rawStatus, rawStatus),
+    disabled: isDisabledDrugStatus(row.status),
+  };
+}
+
+function validatePrescriptionCatalog(drugs: DrugItem[]) {
+  if (drugCatalogLoading.value) return "药品目录加载中，请稍后再开处方。";
+  if (drugCatalogError.value) return "药品目录暂不可用，请联系管理员维护药品。";
+  if (!selectableDrugNames.value.size) return "药品目录暂无可用药品，请联系管理员维护药品。";
+  const invalidIndex = drugs.findIndex((drug) => drug.drugName.trim() && !selectableDrugNames.value.has(drug.drugName.trim()));
+  return invalidIndex >= 0 ? `第 ${invalidIndex + 1} 行请选择药品目录中的药品。` : "";
+}
+
+async function loadDrugCatalog() {
+  drugCatalogLoading.value = true;
+  drugCatalogError.value = "";
+  try {
+    const rows = await api.doctorDrugs();
+    drugCatalog.value = (rows as Drug[])
+      .map(toDrugCatalogOption)
+      .filter((drug) => drug.name);
+    drugCatalogLoaded.value = true;
+  } catch {
+    drugCatalog.value = [];
+    drugCatalogError.value = "药品目录加载失败，请稍后重试。";
+  } finally {
+    drugCatalogLoading.value = false;
+  }
+}
+
+function handleDrugSelect(drug: DrugItem, option: DrugCatalogOption) {
+  if (!drug.dosage.trim() && option.specification) drug.dosage = option.specification;
+}
 
 function setError(message: string) {
   error.value = message;
@@ -95,14 +162,23 @@ async function completeRegistration() {
   }
 }
 
-onMounted(() => {
-  try {
-    const saved = JSON.parse(localStorage.getItem("doctor-settings") || "{}");
-    if (saved.aiDraftMode) record.aiDraftMode.value = saved.aiDraftMode;
-  } catch { /* ignore */ }
-});
+async function createPrescriptionWithPolicy() {
+  if (String(prescription.prescription.riskLevel).toUpperCase() === "HIGH" && settings.highRiskConfirm) {
+    highRiskOpen.value = true;
+    return;
+  }
+  const ok = await prescription.createPrescription();
+  if (ok) {
+    riskOpen.value = false;
+    highRiskOpen.value = false;
+  }
+}
 
 watch(() => props.registrationId, record.applyRegistration, { immediate: true });
+watch(() => settings.aiDraftMode, (mode) => {
+  record.aiDraftMode.value = mode;
+}, { immediate: true });
+onMounted(loadDrugCatalog);
 </script>
 
 <template>
@@ -121,14 +197,14 @@ watch(() => props.registrationId, record.applyRegistration, { immediate: true })
         <span class="eyebrow">当前患者</span>
         <div class="patient-title">
           <strong>{{ registration ? patientName(registration) : "未选择" }}</strong>
+          <span class="patient-status-chip" :class="statusTone(registration?.status)">{{ statusLabel(registration?.status, "接诊中") }}</span>
         </div>
       </div>
-      <div class="patient-grid">
-        <div><b>患者 ID</b><span>{{ displayText(registration?.patientId) }}</span></div>
-        <div><b>挂号 ID</b><span>#{{ displayText(registration?.registrationId, registrationId) }}</span></div>
-        <div><b>科室</b><span>{{ displayText(registration?.departmentName) }}</span></div>
-        <div><b>预约</b><span>{{ formatTime(displayText(registration?.appointmentTime)) }}</span></div>
-        <div><b>状态</b><span><span class="tag" :class="statusTone(registration?.status)">{{ statusLabel(registration?.status, "接诊中") }}</span></span></div>
+      <div class="patient-chip-row" aria-label="当前患者上下文">
+        <div class="patient-chip"><b>患者 ID</b><span>{{ displayText(registration?.patientId) }}</span></div>
+        <div class="patient-chip"><b>挂号 ID</b><span>#{{ displayText(registration?.registrationId, registrationId) }}</span></div>
+        <div class="patient-chip"><b>科室</b><span>{{ displayText(registration?.departmentName) }}</span></div>
+        <div class="patient-chip"><b>预约</b><span>{{ formatTime(displayText(registration?.appointmentTime)) }}</span></div>
       </div>
       <div class="context-actions">
         <button type="button" class="action-btn" @click="contextOpen = true">上下文</button>
@@ -146,7 +222,7 @@ watch(() => props.registrationId, record.applyRegistration, { immediate: true })
       <div class="left-column">
         <aside class="panel triage-card">
           <header class="panel-header">
-            <div class="panel-title"><h3>患者分诊</h3></div>
+            <div class="panel-title"><h3>患者分诊</h3><p>先看风险与关键病史</p></div>
             <button type="button" class="action-btn" @click="contextOpen = true">详情</button>
           </header>
           <div class="panel-body">
@@ -159,28 +235,45 @@ watch(() => props.registrationId, record.applyRegistration, { immediate: true })
             </div>
             <div class="vitals">
               <div class="vital"><b>年龄</b><strong>{{ registration?.patientAge ? registration.patientAge + ' 岁' : '--' }}</strong></div>
-              <div class="vital"><b>性别</b><strong>{{ registration?.patientGender || '--' }}</strong></div>
+              <div class="vital"><b>性别</b><strong>{{ statusLabel(registration?.patientGender, '--') }}</strong></div>
             </div>
             <div class="dl-grid">
               <div><b>分诊等级</b><span><span class="tag" :class="statusTone(triageRisk)">{{ statusLabel(triageRisk, "中风险") }}</span></span></div>
               <div><b>到诊状态</b><span><span class="tag" :class="statusTone(registration?.status)">{{ statusLabel(registration?.status, "接诊中") }}</span></span></div>
-              <div class="span"><b>主诉</b><span>{{ displayText(triage?.chiefComplaint, record.medicalForm.chiefComplaint) }}</span></div>
-              <div class="span"><b>既往史</b><span>{{ displayText(triage?.pastHistory, record.medicalForm.pastHistory) }}</span></div>
+              <div class="span"><b>主诉</b><span>{{ displayText(triage?.chiefComplaint, record.medicalForm.chiefComplaint) || '暂无' }}</span></div>
+              <div class="span"><b>既往史</b><span>{{ displayText(triage?.pastHistory, record.medicalForm.pastHistory) || '暂无' }}</span></div>
             </div>
           </div>
         </aside>
 
         <aside class="panel">
           <header class="panel-header">
-            <div class="panel-title"><h3>处方与风险</h3></div>
+            <div class="panel-title"><h3>处方与风险</h3><p>保存病历后创建处方</p></div>
             <span class="tag" :class="statusTone(prescription.prescription.riskLevel)">{{ statusLabel(prescription.prescription.riskLevel) }}</span>
           </header>
+          <div class="drug-catalog-bar" :class="{ danger: drugCatalogError || (!drugCatalogLoading && drugCatalogLoaded && !selectableDrugNames.size) }">
+            <div>
+              <strong>药品目录选择</strong>
+              <span>{{ drugCatalogError || "仅可选择管理端已维护的可用药品" }}</span>
+            </div>
+            <button type="button" class="action-btn" :disabled="drugCatalogLoading" @click="loadDrugCatalog">
+              {{ drugCatalogLoading ? "同步中" : drugCatalogStatus }}
+            </button>
+          </div>
           <div class="table-wrap prescription-table-wrap">
             <table class="data-table prescription-table">
-              <thead><tr><th class="drug-name">药品</th><th>剂量</th><th>频次</th><th>用法</th><th></th></tr></thead>
+              <thead><tr><th class="drug-name">药品目录</th><th>剂量</th><th>频次</th><th>用法</th><th></th></tr></thead>
               <tbody>
                 <tr v-for="(drug, index) in prescription.prescription.drugs" :key="index">
-                  <td><input v-model.trim="drug.drugName" list="drug-options" /></td>
+                  <td>
+                    <DrugCatalogSelect
+                      v-model="drug.drugName"
+                      :drugs="drugCatalog"
+                      :disabled="drugCatalogLoading || Boolean(drugCatalogError) || !selectableDrugNames.size"
+                      :aria-label="`选择第 ${index + 1} 行药品`"
+                      @select="(option) => handleDrugSelect(drug, option)"
+                    />
+                  </td>
                   <td><input v-model.trim="drug.dosage" /></td>
                   <td><input v-model.trim="drug.frequency" /></td>
                   <td><input v-model.trim="drug.usageMethod" /></td>
@@ -189,15 +282,14 @@ watch(() => props.registrationId, record.applyRegistration, { immediate: true })
               </tbody>
             </table>
           </div>
-          <datalist id="drug-options" />
           <div class="risk-note">
             <strong>{{ prescription.checkResult.value ? "风险审核结果" : "待审方" }}</strong>
             <span>{{ prescription.checkResult.value ? displayText(prescription.checkResult.value.suggestions, "请医生复核用药风险。") : "系统将结合过敏史、诊断、剂量和相互作用进行风险提示。" }}</span>
           </div>
           <footer class="footer-actions">
             <button type="button" class="action-btn" @click="prescription.addDrug">新增药品</button>
-            <button type="button" class="action-btn primary" :disabled="prescription.prescriptionLoading.value || !prescription.canCheck.value" @click="async () => { const ok = await prescription.checkPrescription(); if (ok) riskOpen = true; }">{{ prescription.prescriptionLoading ? "审核中" : "风险审核" }}</button>
-            <button type="button" class="action-btn" :disabled="prescription.prescriptionLoading.value || !prescription.canCreate.value" @click="async () => { if (String(prescription.prescription.riskLevel).toUpperCase() === 'HIGH') { highRiskOpen = true; return; } const ok = await prescription.createPrescription(); if (ok) { riskOpen = false; highRiskOpen = false; } }">创建处方</button>
+            <button type="button" class="action-btn primary" :disabled="prescription.prescriptionLoading.value || !prescription.canCheck.value" @click="async () => { const ok = await prescription.checkPrescription(); if (ok) riskOpen = true; }">{{ prescription.prescriptionLoading.value ? "审核中" : "风险审核" }}</button>
+            <button type="button" class="action-btn" :disabled="prescription.prescriptionLoading.value || !prescription.canCreate.value" @click="createPrescriptionWithPolicy">创建处方</button>
           </footer>
         </aside>
       </div>
@@ -205,7 +297,7 @@ watch(() => props.registrationId, record.applyRegistration, { immediate: true })
       <!-- Right: Medical Record Editor -->
       <main class="panel record-panel">
         <header class="panel-header">
-          <div class="panel-title"><h3>病历工作区</h3></div>
+          <div class="panel-title"><h3>病历工作区</h3><p>主诉与诊断为保存必填项</p></div>
         </header>
         <div class="editor-grid">
           <div class="record-mode-toggle">
@@ -220,7 +312,7 @@ watch(() => props.registrationId, record.applyRegistration, { immediate: true })
             <div class="prompt-box">
               <textarea v-model.trim="record.dialogueText.value" class="consultation-textarea" rows="4" />
               <div class="prompt-actions">
-                <span v-for="chip in record.suggestedChips.value" :key="chip" class="prompt-chip" @click="record.insertChip(chip)">{{ chip }}</span>
+                <span v-for="chip in record.suggestedChips.value" :key="chip" class="prompt-chip" role="button" tabindex="0" @click="record.insertChip(chip)" @keydown.enter.prevent="record.insertChip(chip)" @keydown.space.prevent="record.insertChip(chip)">{{ chip }}</span>
                 <span class="spacer"></span>
                 <button class="action-btn primary" type="button" :disabled="record.recordLoading.value" @click="record.generateRecord">{{ record.recordLoading.value ? "生成中" : "生成病历" }}</button>
               </div>
@@ -234,7 +326,6 @@ watch(() => props.registrationId, record.applyRegistration, { immediate: true })
           <label class="field full"><span>处理建议</span><textarea v-model.trim="record.medicalForm.treatmentAdvice" rows="2" /></label>
         </div>
         <footer class="footer-actions">
-          <button v-if="record.recordMode.value === 'ai'" class="action-btn primary" type="button" :disabled="record.recordLoading.value" @click="record.generateRecord">{{ record.recordLoading.value ? "生成中" : "生成病历" }}</button>
           <button type="button" class="action-btn" :disabled="!record.canSaveRecord.value || record.recordLoading.value" @click="saveConfirmOpen = true">保存病历</button>
         </footer>
       </main>

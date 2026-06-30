@@ -1,43 +1,60 @@
 <script setup lang="ts">
-import { computed, inject, onMounted, ref, type Ref, watch } from "vue";
+import { computed, inject, ref, type Ref } from "vue";
 import { useAuthStore } from "@smart-cloud-brain/shared-api";
 import { statusLabel } from "../doctorPresentation";
+import { useDoctorSettings } from "../composables/useDoctorSettings";
+import type { DoctorSettings } from "../composables/useDoctorSettings";
 
 const auth = useAuthStore();
-const toast = inject<Ref<{ success: (t: string, d?: string) => void; error: (t: string, d?: string) => void }> | null>(null);
+const toast = inject<Ref<{ success: (t: string, d?: string) => void; error: (t: string, d?: string) => void } | null>>("toast", ref(null));
+const { settings, notifyLabel, setAiDraftMode, setHighRiskConfirm, setNotifyMode } = useDoctorSettings();
 
-/* ── 设置项 ── */
-const aiDraftMode = ref<"preview" | "auto">("preview");
-const highRiskConfirm = ref(true);
-const notifyMode = ref<"realtime" | "queue" | "dnd">("realtime");
+const aiDraftLabel = computed(() => settings.aiDraftMode === "auto" ? "自动填入" : "预览模式");
+const highRiskLabel = computed(() => settings.highRiskConfirm ? "已开启" : "已关闭");
+const settingEffectItems = computed(() => [
+  {
+    title: "病历草稿",
+    value: aiDraftLabel.value,
+    desc: settings.aiDraftMode === "auto"
+      ? "生成后直接写入接诊页病历表单"
+      : "生成后先保留草稿，由医生确认后复制",
+  },
+  {
+    title: "处方风险",
+    value: highRiskLabel.value,
+    desc: settings.highRiskConfirm
+      ? "创建高危处方时会弹出二次确认"
+      : "高危处方不再额外弹窗确认",
+  },
+  {
+    title: "通知同步",
+    value: notifyLabel.value,
+    desc: settings.notifyMode === "realtime"
+      ? "顶部状态使用实时通知连接"
+      : settings.notifyMode === "queue"
+        ? "关闭实时连接，仅保留队列刷新"
+        : "关闭自动同步，只保留手动同步",
+  },
+]);
 
-/* ── 读取 localStorage ── */
-onMounted(() => {
-  try {
-    const saved = JSON.parse(localStorage.getItem("doctor-settings") || "{}");
-    if (saved.aiDraftMode) aiDraftMode.value = saved.aiDraftMode;
-    if (saved.highRiskConfirm !== undefined) highRiskConfirm.value = saved.highRiskConfirm;
-    if (saved.notifyMode) notifyMode.value = saved.notifyMode;
-  } catch { /* ignore */ }
-});
-
-/* ── 自动保存：任意设置变化即写入 localStorage ── */
-function persist() {
-  localStorage.setItem("doctor-settings", JSON.stringify({
-    aiDraftMode: aiDraftMode.value,
-    highRiskConfirm: highRiskConfirm.value,
-    notifyMode: notifyMode.value,
-  }));
+function saved() {
   toast?.value?.success("设置已保存");
 }
 
-watch([aiDraftMode, highRiskConfirm, notifyMode], persist);
+function updateAiDraftMode(value: DoctorSettings["aiDraftMode"]) {
+  setAiDraftMode(value);
+  saved();
+}
 
-/* ── 通知方式标签 ── */
-const notifyLabel = computed(() => {
-  const map: Record<string, string> = { realtime: "实时推送", queue: "仅队列刷新", dnd: "免打扰" };
-  return map[notifyMode.value] || notifyMode.value;
-});
+function updateHighRiskConfirm(value: boolean) {
+  setHighRiskConfirm(value);
+  saved();
+}
+
+function updateNotifyMode(value: DoctorSettings["notifyMode"]) {
+  setNotifyMode(value);
+  saved();
+}
 </script>
 
 <template>
@@ -65,18 +82,35 @@ const notifyLabel = computed(() => {
         </div>
       </div>
 
+      <section class="settings-effect-panel" aria-label="当前已生效设置">
+        <div class="settings-effect-title">
+          <strong>当前已生效</strong>
+          <span>切换后会立即影响医生工作台</span>
+        </div>
+        <div class="settings-effect-grid">
+          <article v-for="item in settingEffectItems" :key="item.title" class="settings-effect-card">
+            <span>{{ item.title }}</span>
+            <strong>{{ item.value }}</strong>
+            <p>{{ item.desc }}</p>
+          </article>
+        </div>
+      </section>
+
       <!-- 设置区域 -->
       <div class="settings-stack">
         <!-- 1. AI 草稿策略 -->
         <article class="setting-row">
           <div class="setting-row-header">
-            <strong>AI 草稿策略</strong>
+            <div>
+              <strong>AI 草稿策略</strong>
+              <p>影响接诊页病历生成后的处理方式</p>
+            </div>
           </div>
           <div class="choicebox-group">
             <div
               class="choicebox-item"
-              :class="{ selected: aiDraftMode === 'preview' }"
-              @click="aiDraftMode = 'preview'"
+              :class="{ selected: settings.aiDraftMode === 'preview' }"
+              @click="updateAiDraftMode('preview')"
             >
               <div class="choicebox-indicator">
                 <span class="radio-dot" />
@@ -88,8 +122,8 @@ const notifyLabel = computed(() => {
             </div>
             <div
               class="choicebox-item"
-              :class="{ selected: aiDraftMode === 'auto' }"
-              @click="aiDraftMode = 'auto'"
+              :class="{ selected: settings.aiDraftMode === 'auto' }"
+              @click="updateAiDraftMode('auto')"
             >
               <div class="choicebox-indicator">
                 <span class="radio-dot" />
@@ -105,16 +139,19 @@ const notifyLabel = computed(() => {
         <!-- 3. 高危处方确认 -->
         <article class="setting-row">
           <div class="setting-row-header">
-            <strong>高危处方二次确认</strong>
+            <div>
+              <strong>高危处方二次确认</strong>
+              <p>影响接诊页创建高危处方时是否弹窗</p>
+            </div>
             <div class="setting-row-right">
-              <span class="toggle-label">{{ highRiskConfirm ? "已开启" : "已关闭" }}</span>
+              <span class="toggle-label" :class="{ active: settings.highRiskConfirm }">{{ settings.highRiskConfirm ? "已开启" : "已关闭" }}</span>
               <button
                 class="toggle-switch"
-                :class="{ on: highRiskConfirm }"
+                :class="{ on: settings.highRiskConfirm }"
                 type="button"
                 role="switch"
-                :aria-checked="highRiskConfirm"
-                @click="highRiskConfirm = !highRiskConfirm"
+                :aria-checked="settings.highRiskConfirm"
+                @click="updateHighRiskConfirm(!settings.highRiskConfirm)"
               >
                 <span class="toggle-knob" />
               </button>
@@ -125,23 +162,26 @@ const notifyLabel = computed(() => {
         <!-- 4. 通知方式 -->
         <article class="setting-row">
           <div class="setting-row-header">
-            <strong>通知方式</strong>
+            <div>
+              <strong>通知方式</strong>
+              <p>影响顶部状态 pill 与自动同步策略</p>
+            </div>
           </div>
           <div class="segmented-control">
             <button
-              :class="{ active: notifyMode === 'realtime' }"
+              :class="{ active: settings.notifyMode === 'realtime' }"
               type="button"
-              @click="notifyMode = 'realtime'"
+              @click="updateNotifyMode('realtime')"
             >实时推送</button>
             <button
-              :class="{ active: notifyMode === 'queue' }"
+              :class="{ active: settings.notifyMode === 'queue' }"
               type="button"
-              @click="notifyMode = 'queue'"
+              @click="updateNotifyMode('queue')"
             >仅队列刷新</button>
             <button
-              :class="{ active: notifyMode === 'dnd' }"
+              :class="{ active: settings.notifyMode === 'dnd' }"
               type="button"
-              @click="notifyMode = 'dnd'"
+              @click="updateNotifyMode('dnd')"
             >免打扰</button>
           </div>
         </article>

@@ -55,6 +55,7 @@ describe("shared api request handling", () => {
       api.medicalRecordDetail(1),
       api.checkPrescription({ drugs: [] }),
       api.createPrescription({ patientId: 1, medicalRecordId: 2, drugs: [] }),
+      api.doctorDrugs(),
       api.notifications("UNREAD"),
       api.markNotificationRead(1),
       api.accounts(),
@@ -78,6 +79,8 @@ describe("shared api request handling", () => {
     expect(fetch.mock.calls.length).toBeGreaterThan(20);
     expect(fetch.mock.calls.map((call) => String(call[0])).join("\n")).toContain("/admin/schedule/publish");
     expect(fetch.mock.calls.map((call) => String(call[0])).join("\n")).toContain("/admin/account/list");
+    expect(fetch.mock.calls.map((call) => String(call[0])).join("\n")).toContain("/prescription/drug/list");
+    expect(fetch.mock.calls.map((call) => String(call[0])).join("\n")).toContain("/admin/drug/list");
   });
 
   it("throws business, http, network, empty-body and invalid-json errors", async () => {

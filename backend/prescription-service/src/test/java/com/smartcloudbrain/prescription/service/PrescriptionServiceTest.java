@@ -11,11 +11,13 @@ import static org.mockito.Mockito.when;
 import com.smartcloudbrain.aiapi.dto.DrugItem;
 import com.smartcloudbrain.aiapi.dto.PrescriptionCheckRequest;
 import com.smartcloudbrain.aiapi.dto.PrescriptionCheckResponse;
+import com.smartcloudbrain.common.error.ErrorCode;
 import com.smartcloudbrain.common.exception.BusinessException;
 import com.smartcloudbrain.common.security.AuthenticatedUser;
 import com.smartcloudbrain.common.security.CurrentUserService;
 import com.smartcloudbrain.common.security.RoleType;
 import com.smartcloudbrain.prescription.dto.prescription.PrescriptionCreateRequest;
+import com.smartcloudbrain.prescription.entity.Drug;
 import com.smartcloudbrain.prescription.entity.MedicalRecord;
 import com.smartcloudbrain.prescription.entity.Prescription;
 import com.smartcloudbrain.prescription.entity.PrescriptionCheckRecord;
@@ -29,6 +31,7 @@ import com.smartcloudbrain.prescription.repository.PrescriptionItemRepository;
 import com.smartcloudbrain.prescription.repository.PrescriptionRepository;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -163,6 +166,30 @@ class PrescriptionServiceTest {
     assertThrows(BusinessException.class, () -> service.detail(99L));
   }
 
+  @Test
+  void doctorCanReadEnabledDrugCatalog() {
+    Drug drug = drug(4L, "阿司匹林", "100mg", "活动性出血禁用", "避免与华法林联用", "ENABLED");
+    when(currentUserService.require(RoleType.DOCTOR)).thenReturn(new AuthenticatedUser(2L, RoleType.DOCTOR, "医生"));
+    when(drugRepository.findByStatusIgnoreCase("ENABLED")).thenReturn(List.of(drug));
+
+    List<Map<String, Object>> rows = service.availableDrugs();
+
+    assertEquals(1, rows.size());
+    assertEquals("阿司匹林", rows.get(0).get("name"));
+    assertEquals("100mg", rows.get(0).get("specification"));
+    assertEquals("ENABLED", rows.get(0).get("status"));
+    verify(drugRepository).findByStatusIgnoreCase("ENABLED");
+  }
+
+  @Test
+  void nonDoctorCannotReadDrugCatalog() {
+    when(currentUserService.require(RoleType.DOCTOR)).thenThrow(new BusinessException(ErrorCode.FORBIDDEN));
+
+    assertThrows(BusinessException.class, () -> service.availableDrugs());
+
+    verify(drugRepository, never()).findByStatusIgnoreCase("ENABLED");
+  }
+
   private MedicalRecord medicalRecord(Long id, Long patientId, Long doctorId) {
     MedicalRecord record = new MedicalRecord();
     record.setId(id);
@@ -181,5 +208,16 @@ class PrescriptionServiceTest {
     prescription.setRiskLevel(null);
     prescription.setStatus("CONFIRMED");
     return prescription;
+  }
+
+  private Drug drug(Long id, String name, String specification, String contraindication, String interactionRule, String status) {
+    Drug drug = new Drug();
+    drug.setId(id);
+    drug.setName(name);
+    drug.setSpecification(specification);
+    drug.setContraindication(contraindication);
+    drug.setInteractionRule(interactionRule);
+    drug.setStatus(status);
+    return drug;
   }
 }

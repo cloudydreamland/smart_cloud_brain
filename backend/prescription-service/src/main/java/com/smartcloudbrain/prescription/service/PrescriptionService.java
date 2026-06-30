@@ -184,6 +184,24 @@ public class PrescriptionService {
     return prescriptionView(prescription);
   }
 
+  public List<Map<String, Object>> availableDrugs() {
+    currentUserService.require(RoleType.DOCTOR);
+    return drugRepository.findByStatusIgnoreCase("ENABLED").stream()
+        .map(this::drugView)
+        .toList();
+  }
+
+  private Map<String, Object> drugView(Drug drug) {
+    return Map.of(
+        "id", drug.getId() == null ? 0L : drug.getId(),
+        "name", nullToEmpty(drug.getName()),
+        "specification", nullToEmpty(drug.getSpecification()),
+        "contraindication", nullToEmpty(drug.getContraindication()),
+        "interactionRule", nullToEmpty(drug.getInteractionRule()),
+        "status", nullToEmpty(drug.getStatus())
+    );
+  }
+
   private Map<String, Object> prescriptionView(Prescription prescription) {
     List<Map<String, Object>> items = prescriptionItemRepository.findByPrescriptionId(prescription.getId()).stream()
         .map(item -> Map.<String, Object>of(
@@ -362,4 +380,3 @@ public class PrescriptionService {
     return value == null ? "" : value;
   }
 }
-

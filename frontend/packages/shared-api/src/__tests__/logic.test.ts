@@ -41,7 +41,7 @@ describe("shared api business logic", () => {
       api.registerPatient({ name: "患者", phone: "13800000001", email: "patient@example.com", emailCode: "123456", password: "123456" }),
       api.sendPatientEmailCode({ email: "patient@example.com", phone: "13800000001" }),
       api.currentUser(), api.loginPatient("p", "x"), api.loginDoctor("d", "x"), api.loginAdmin("a", "x"),
-      api.patientInfo(), api.departments(), api.doctors(1), api.doctorDetail(1), api.drugs(),
+      api.patientInfo(), api.departments(), api.doctors(1), api.doctorDetail(1), api.doctorDrugs(), api.drugs(),
       api.triage("胸痛"), api.triageList(),
       api.createRegistration({ doctorId: 1, departmentId: 1, appointmentTime: "2026-06-21T09:00:00" }),
       api.registrationSlots(), api.registrations(), api.cancelRegistration(1), api.completeRegistration(1),

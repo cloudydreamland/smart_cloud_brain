@@ -39,4 +39,19 @@ class AdminControllerPermissionTest {
 
     verify(adminCatalogService, never()).departments();
   }
+
+  @Test
+  void nonAdminCannotReadAdminDrugCatalog() {
+    AdminController controller = new AdminController(
+        adminCatalogService,
+        adminOperationsService,
+        systemEmailConfigService,
+        currentUserService
+    );
+    when(currentUserService.require(RoleType.ADMIN)).thenThrow(new BusinessException(ErrorCode.FORBIDDEN));
+
+    assertThrows(BusinessException.class, controller::drugs);
+
+    verify(adminCatalogService, never()).drugs();
+  }
 }
