@@ -3,9 +3,12 @@ package com.smartcloudbrain.auth.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.lenient;
 
 import com.smartcloudbrain.auth.dto.auth.LoginRequest;
 import com.smartcloudbrain.auth.dto.auth.LoginResponse;
@@ -17,17 +20,20 @@ import com.smartcloudbrain.auth.repository.AdminUserRepository;
 import com.smartcloudbrain.auth.repository.DoctorRepository;
 import com.smartcloudbrain.auth.repository.PatientRepository;
 import com.smartcloudbrain.common.exception.BusinessException;
+import com.smartcloudbrain.common.redis.RedisRateLimiter;
 import com.smartcloudbrain.common.security.JwtClaims;
 import com.smartcloudbrain.common.security.JwtService;
 import com.smartcloudbrain.common.security.RoleType;
 import java.util.Map;
 import java.util.Optional;
 import java.time.Instant;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
@@ -37,7 +43,14 @@ class AuthServiceTest {
   @Mock private PatientRepository patientRepository;
   @Mock private DoctorRepository doctorRepository;
   @Mock private AdminUserRepository adminUserRepository;
+  @Mock private RedisRateLimiter redisRateLimiter;
   @InjectMocks private AuthService authService;
+
+  @BeforeEach
+  void setUp() {
+    lenient().when(redisRateLimiter.allow(anyString(), anyInt(), any())).thenReturn(true);
+    ReflectionTestUtils.setField(authService, "enableDemoAccount", true);
+  }
 
   @Test
   void registersNewPatient() {
@@ -124,6 +137,18 @@ class AuthServiceTest {
 
     assertThrows(BusinessException.class, () -> authService.loginPatient(new LoginRequest("missing", "bad")));
     assertThrows(BusinessException.class, () -> authService.loginDoctor(new LoginRequest("missing", "bad")));
+  }
+
+  @Test
+  void rejectsLoginWhenAccountRateLimitExceeded() {
+    when(redisRateLimiter.allow("rate:login:account:13800000001", 5, java.time.Duration.ofMinutes(5)))
+        .thenReturn(false);
+
+    BusinessException error = assertThrows(BusinessException.class,
+        () -> authService.loginPatient(new LoginRequest("13800000001", "123456")));
+
+    assertEquals(429, error.code());
+    verify(patientRepository, never()).findByPhone(any());
   }
 
   @Test

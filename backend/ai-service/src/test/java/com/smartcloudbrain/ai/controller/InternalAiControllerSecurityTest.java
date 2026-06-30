@@ -2,11 +2,15 @@ package com.smartcloudbrain.ai.controller;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.lenient;
 
 import com.smartcloudbrain.ai.application.AiOrchestrationService;
 import com.smartcloudbrain.ai.application.AiTaskLogService;
@@ -16,9 +20,12 @@ import com.smartcloudbrain.aiapi.dto.ScheduleSuggestRequest;
 import com.smartcloudbrain.aiapi.dto.TriageRequest;
 import com.smartcloudbrain.common.error.ErrorCode;
 import com.smartcloudbrain.common.exception.BusinessException;
+import com.smartcloudbrain.common.redis.RedisRateLimiter;
 import com.smartcloudbrain.common.security.InternalRequestGuard;
+import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDate;
 import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class InternalAiControllerSecurityTest {
@@ -27,8 +34,17 @@ class InternalAiControllerSecurityTest {
   private final AiTaskLogService aiTaskLogService = mock(AiTaskLogService.class);
   private final PromptTemplateService promptTemplateService = mock(PromptTemplateService.class);
   private final InternalRequestGuard internalRequestGuard = mock(InternalRequestGuard.class);
+  private final RedisRateLimiter redisRateLimiter = mock(RedisRateLimiter.class);
+  private final HttpServletRequest httpServletRequest = mock(HttpServletRequest.class);
   private final InternalAiController controller =
-      new InternalAiController(aiOrchestrationService, aiTaskLogService, promptTemplateService, internalRequestGuard);
+      new InternalAiController(aiOrchestrationService, aiTaskLogService, promptTemplateService, internalRequestGuard,
+          redisRateLimiter, httpServletRequest);
+
+  @BeforeEach
+  void setUp() {
+    lenient().when(redisRateLimiter.allow(anyString(), anyInt(), any())).thenReturn(true);
+    lenient().when(httpServletRequest.getRemoteAddr()).thenReturn("127.0.0.1");
+  }
 
   @Test
   void validatesInternalTokenForAiEndpoints() {

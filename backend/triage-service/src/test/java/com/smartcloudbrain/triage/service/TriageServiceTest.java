@@ -3,11 +3,15 @@ package com.smartcloudbrain.triage.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.lenient;
 
 import com.smartcloudbrain.aiapi.dto.TriageRequest;
 import com.smartcloudbrain.aiapi.dto.TriageResponse;
 import com.smartcloudbrain.common.exception.BusinessException;
+import com.smartcloudbrain.common.redis.RedisRateLimiter;
 import com.smartcloudbrain.common.security.AuthenticatedUser;
 import com.smartcloudbrain.common.security.CurrentUserService;
 import com.smartcloudbrain.common.security.RoleType;
@@ -17,6 +21,7 @@ import com.smartcloudbrain.triage.repository.TriageRecordRepository;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -30,7 +35,13 @@ class TriageServiceTest {
   @Mock private TriageRecordRepository triageRecordRepository;
   @Mock private PatientRepository patientRepository;
   @Mock private CurrentUserService currentUserService;
+  @Mock private RedisRateLimiter redisRateLimiter;
   @InjectMocks private TriageService triageService;
+
+  @BeforeEach
+  void setUp() {
+    lenient().when(redisRateLimiter.allow(anyString(), anyInt(), any())).thenReturn(true);
+  }
 
   @Test
   void consultStoresAiRecommendedRecord() {

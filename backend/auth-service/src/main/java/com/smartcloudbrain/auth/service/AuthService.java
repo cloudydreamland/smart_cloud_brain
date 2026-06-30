@@ -11,9 +11,11 @@ import com.smartcloudbrain.auth.repository.DoctorRepository;
 import com.smartcloudbrain.auth.repository.PatientRepository;
 import com.smartcloudbrain.common.error.ErrorCode;
 import com.smartcloudbrain.common.exception.BusinessException;
+import com.smartcloudbrain.common.redis.RedisRateLimiter;
 import com.smartcloudbrain.common.security.JwtClaims;
 import com.smartcloudbrain.common.security.JwtService;
 import com.smartcloudbrain.common.security.RoleType;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,6 +30,7 @@ public class AuthService {
   private final PatientRepository patientRepository;
   private final DoctorRepository doctorRepository;
   private final AdminUserRepository adminUserRepository;
+  private final RedisRateLimiter redisRateLimiter;
   
   @Value("${auth.enable-demo-account:false}")
   private boolean enableDemoAccount;
@@ -37,13 +40,15 @@ public class AuthService {
       PasswordService passwordService,
       PatientRepository patientRepository,
       DoctorRepository doctorRepository,
-      AdminUserRepository adminUserRepository
+      AdminUserRepository adminUserRepository,
+      RedisRateLimiter redisRateLimiter
   ) {
     this.jwtService = jwtService;
     this.passwordService = passwordService;
     this.patientRepository = patientRepository;
     this.doctorRepository = doctorRepository;
     this.adminUserRepository = adminUserRepository;
+    this.redisRateLimiter = redisRateLimiter;
   }
 
   @Transactional
@@ -65,6 +70,7 @@ public class AuthService {
 
   @Transactional
   public LoginResponse loginPatient(LoginRequest request) {
+    enforceLoginRateLimit(request.account());
     Patient patient = patientRepository.findByPhone(request.account())
         .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
     passwordService.assertMatches(request.password(), patient.getPasswordHash());
@@ -78,6 +84,7 @@ public class AuthService {
 
   @Transactional
   public LoginResponse loginDoctor(LoginRequest request) {
+    enforceLoginRateLimit(request.account());
     Doctor doctor = doctorRepository.findByPhone(request.account())
         .or(() -> doctorByDemoAccount(request.account()))
         .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
@@ -94,6 +101,7 @@ public class AuthService {
 
   @Transactional
   public LoginResponse loginAdmin(LoginRequest request) {
+    enforceLoginRateLimit(request.account());
     AdminUser admin = adminUserRepository.findByUsername(request.account())
         .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
     if ("DISABLED".equalsIgnoreCase(admin.getStatus())) {
@@ -114,6 +122,13 @@ public class AuthService {
 
   private LoginResponse session(Long id, RoleType role, String name) {
     return new LoginResponse(jwtService.issue(id, role, name), id, role.name(), name);
+  }
+
+  private void enforceLoginRateLimit(String account) {
+    String normalizedAccount = account == null ? "" : account.trim();
+    if (!redisRateLimiter.allow("rate:login:account:" + normalizedAccount, 5, Duration.ofMinutes(5))) {
+      throw new BusinessException(429, "login attempts too frequent");
+    }
   }
 
   private java.util.Optional<Doctor> doctorByDemoAccount(String account) {

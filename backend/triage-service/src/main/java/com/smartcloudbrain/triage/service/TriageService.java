@@ -4,6 +4,7 @@ import com.smartcloudbrain.aiapi.dto.TriageRequest;
 import com.smartcloudbrain.aiapi.dto.TriageResponse;
 import com.smartcloudbrain.common.error.ErrorCode;
 import com.smartcloudbrain.common.exception.BusinessException;
+import com.smartcloudbrain.common.redis.RedisRateLimiter;
 import com.smartcloudbrain.common.security.RoleType;
 import com.smartcloudbrain.triage.entity.TriageRecord;
 import com.smartcloudbrain.triage.entity.Patient;
@@ -11,6 +12,7 @@ import com.smartcloudbrain.triage.repository.PatientRepository;
 import com.smartcloudbrain.triage.repository.TriageRecordRepository;
 import com.smartcloudbrain.common.security.AuthenticatedUser;
 import com.smartcloudbrain.common.security.CurrentUserService;
+import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,22 +27,28 @@ public class TriageService {
   private final TriageRecordRepository triageRecordRepository;
   private final PatientRepository patientRepository;
   private final CurrentUserService currentUserService;
+  private final RedisRateLimiter redisRateLimiter;
 
   public TriageService(
       AiGatewayService aiGatewayService,
       TriageRecordRepository triageRecordRepository,
       PatientRepository patientRepository,
-      CurrentUserService currentUserService
+      CurrentUserService currentUserService,
+      RedisRateLimiter redisRateLimiter
   ) {
     this.aiGatewayService = aiGatewayService;
     this.triageRecordRepository = triageRecordRepository;
     this.patientRepository = patientRepository;
     this.currentUserService = currentUserService;
+    this.redisRateLimiter = redisRateLimiter;
   }
 
   @Transactional
   public Map<String, Object> consult(TriageRequest request) {
     AuthenticatedUser user = currentUserService.require(RoleType.PATIENT);
+    if (!redisRateLimiter.allow("rate:triage:user:" + user.userId(), 10, Duration.ofMinutes(1))) {
+      throw new BusinessException(429, "triage requests too frequent");
+    }
     Long patientId = request.patientId() == null ? user.userId() : request.patientId();
     if (!patientId.equals(user.userId())) {
       throw new BusinessException(ErrorCode.FORBIDDEN);

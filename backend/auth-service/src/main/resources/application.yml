@@ -16,8 +16,16 @@ spring:
     properties:
       hibernate:
         dialect: ${DB_DIALECT:org.hibernate.dialect.PostgreSQLDialect}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
 
 management:
+  health:
+    redis:
+      enabled: ${REDIS_HEALTH_ENABLED:false}
   endpoints:
     web:
       exposure:

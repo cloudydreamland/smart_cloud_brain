@@ -2,6 +2,8 @@ package com.smartcloudbrain.registration.service;
 
 import com.smartcloudbrain.common.error.ErrorCode;
 import com.smartcloudbrain.common.exception.BusinessException;
+import com.smartcloudbrain.common.redis.RedisIdempotencyGuard;
+import com.smartcloudbrain.common.redis.RedisRateLimiter;
 import com.smartcloudbrain.common.security.RoleType;
 import com.smartcloudbrain.registration.dto.registration.CreateRegistrationRequest;
 import com.smartcloudbrain.registration.entity.AppointmentSlot;
@@ -16,10 +18,12 @@ import com.smartcloudbrain.registration.repository.PatientRepository;
 import com.smartcloudbrain.registration.repository.RegistrationRepository;
 import com.smartcloudbrain.common.security.AuthenticatedUser;
 import com.smartcloudbrain.common.security.CurrentUserService;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +36,9 @@ public class RegistrationService {
   private final DepartmentRepository departmentRepository;
   private final AppointmentSlotRepository appointmentSlotRepository;
   private final CurrentUserService currentUserService;
+  private final RedisRateLimiter redisRateLimiter;
+  private final RedisIdempotencyGuard redisIdempotencyGuard;
+  private final RegistrationSlotQueryService registrationSlotQueryService;
 
   public RegistrationService(
       RegistrationRepository registrationRepository,
@@ -39,7 +46,10 @@ public class RegistrationService {
       PatientRepository patientRepository,
       DepartmentRepository departmentRepository,
       AppointmentSlotRepository appointmentSlotRepository,
-      CurrentUserService currentUserService
+      CurrentUserService currentUserService,
+      RedisRateLimiter redisRateLimiter,
+      RedisIdempotencyGuard redisIdempotencyGuard,
+      RegistrationSlotQueryService registrationSlotQueryService
   ) {
     this.registrationRepository = registrationRepository;
     this.doctorRepository = doctorRepository;
@@ -47,11 +57,30 @@ public class RegistrationService {
     this.departmentRepository = departmentRepository;
     this.appointmentSlotRepository = appointmentSlotRepository;
     this.currentUserService = currentUserService;
+    this.redisRateLimiter = redisRateLimiter;
+    this.redisIdempotencyGuard = redisIdempotencyGuard;
+    this.registrationSlotQueryService = registrationSlotQueryService;
   }
 
+  @CacheEvict(cacheNames = "registration:slots", allEntries = true)
   @Transactional
   public Map<String, Object> create(CreateRegistrationRequest request) {
+    return create(request, null);
+  }
+
+  @CacheEvict(cacheNames = "registration:slots", allEntries = true)
+  @Transactional
+  public Map<String, Object> create(CreateRegistrationRequest request, String idempotencyKey) {
     AuthenticatedUser user = currentUserService.require(RoleType.PATIENT);
+    if (!redisRateLimiter.allow("rate:registration:create:user:" + user.userId(), 3, Duration.ofSeconds(10))) {
+      throw new BusinessException(429, "registration requests too frequent");
+    }
+    if (idempotencyKey != null && !idempotencyKey.isBlank()) {
+      String key = "idem:registration:create:" + user.userId() + ":" + idempotencyKey.trim();
+      if (!redisIdempotencyGuard.acquire(key, Duration.ofSeconds(60))) {
+        throw new BusinessException(409, "duplicate registration request is processing");
+      }
+    }
     Doctor doctor = doctorRepository.findById(request.doctorId())
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
     departmentRepository.findById(request.departmentId())
@@ -102,6 +131,7 @@ public class RegistrationService {
     return registrations.stream().map(this::registrationView).toList();
   }
 
+  @CacheEvict(cacheNames = "registration:slots", allEntries = true)
   @Transactional
   public Map<String, Object> cancel(Long registrationId) {
     AuthenticatedUser user = currentUserService.get();
@@ -144,13 +174,7 @@ public class RegistrationService {
 
   public List<Map<String, Object>> slots() {
     currentUserService.get();
-    return appointmentSlotRepository.findByStatusAndEndTimeGreaterThanEqualOrderByStartTimeAscDoctorIdAsc(
-            "AVAILABLE",
-            LocalDateTime.now()
-        ).stream()
-        .filter(slot -> slot.getRemainingCapacity() != null && slot.getRemainingCapacity() > 0)
-        .map(this::slotView)
-        .toList();
+    return registrationSlotQueryService.availableSlots();
   }
 
   public Map<String, Object> registrationView(Registration registration) {
@@ -193,22 +217,6 @@ public class RegistrationService {
     }
   }
 
-  private Map<String, Object> slotView(AppointmentSlot slot) {
-    Doctor doctor = doctorRepository.findById(slot.getDoctorId()).orElse(null);
-    Department department = departmentRepository.findById(slot.getDepartmentId()).orElse(null);
-    return Map.of(
-        "slotId", slot.getId(),
-        "doctorId", slot.getDoctorId(),
-        "doctorName", doctor == null ? "" : doctor.getName(),
-        "departmentId", slot.getDepartmentId(),
-        "departmentName", department == null ? "" : department.getName(),
-        "startTime", slot.getStartTime().toString(),
-        "endTime", slot.getEndTime() == null ? "" : slot.getEndTime().toString(),
-        "capacity", slot.getCapacity() == null ? 0 : slot.getCapacity(),
-        "remainingCapacity", slot.getRemainingCapacity() == null ? 0 : slot.getRemainingCapacity(),
-        "status", slot.getStatus()
-    );
-  }
 }
 
 

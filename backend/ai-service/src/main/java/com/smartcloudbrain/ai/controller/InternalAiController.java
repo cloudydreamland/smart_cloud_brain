@@ -10,10 +10,14 @@ import com.smartcloudbrain.aiapi.dto.PromptTestRequest;
 import com.smartcloudbrain.aiapi.dto.ScheduleSuggestRequest;
 import com.smartcloudbrain.aiapi.dto.TriageRequest;
 import com.smartcloudbrain.ai.service.PromptTemplateService;
+import com.smartcloudbrain.common.exception.BusinessException;
+import com.smartcloudbrain.common.redis.RedisRateLimiter;
 import com.smartcloudbrain.common.result.Result;
 import com.smartcloudbrain.common.security.InternalRequestGuard;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.io.IOException;
+import java.time.Duration;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,28 +35,36 @@ public class InternalAiController {
   private final AiTaskLogService aiTaskLogService;
   private final PromptTemplateService promptTemplateService;
   private final InternalRequestGuard internalRequestGuard;
+  private final RedisRateLimiter redisRateLimiter;
+  private final HttpServletRequest httpServletRequest;
 
   public InternalAiController(
       AiOrchestrationService aiOrchestrationService,
       AiTaskLogService aiTaskLogService,
       PromptTemplateService promptTemplateService,
-      InternalRequestGuard internalRequestGuard
+      InternalRequestGuard internalRequestGuard,
+      RedisRateLimiter redisRateLimiter,
+      HttpServletRequest httpServletRequest
   ) {
     this.aiOrchestrationService = aiOrchestrationService;
     this.aiTaskLogService = aiTaskLogService;
     this.promptTemplateService = promptTemplateService;
     this.internalRequestGuard = internalRequestGuard;
+    this.redisRateLimiter = redisRateLimiter;
+    this.httpServletRequest = httpServletRequest;
   }
 
   @PostMapping("/triage")
   public Result<?> triage(@Valid @RequestBody TriageRequest request) {
     internalRequestGuard.requireServiceRequest();
+    enforceInternalRateLimit();
     return Result.success(aiOrchestrationService.triage(request));
   }
 
   @PostMapping("/medical-record/generate")
   public Result<?> generateMedicalRecord(@Valid @RequestBody MedicalRecordGenerateRequest request) {
     internalRequestGuard.requireServiceRequest();
+    enforceInternalRateLimit();
     return Result.success(aiOrchestrationService.generateMedicalRecord(request));
   }
 
@@ -63,6 +75,7 @@ public class InternalAiController {
       @RequestParam(name = "departmentCode", required = false) String departmentCode
   ) {
     internalRequestGuard.requireServiceRequest();
+    enforceInternalRateLimit();
     SseEmitter emitter = new SseEmitter(30_000L);
     new Thread(() -> {
       try {
@@ -86,12 +99,14 @@ public class InternalAiController {
   @PostMapping("/prescription/check")
   public Result<?> checkPrescription(@Valid @RequestBody PrescriptionCheckRequest request) {
     internalRequestGuard.requireServiceRequest();
+    enforceInternalRateLimit();
     return Result.success(aiOrchestrationService.checkPrescription(request));
   }
 
   @PostMapping("/schedule/suggest")
   public Result<?> suggestSchedule(@Valid @RequestBody ScheduleSuggestRequest request) {
     internalRequestGuard.requireServiceRequest();
+    enforceInternalRateLimit();
     return Result.success(aiOrchestrationService.suggestSchedule(request));
   }
 
@@ -104,6 +119,7 @@ public class InternalAiController {
   @PostMapping("/prompt-template/test")
   public Result<?> testPrompt(@Valid @RequestBody PromptTestRequest request) {
     internalRequestGuard.requireServiceRequest();
+    enforceInternalRateLimit();
     return Result.success(aiOrchestrationService.testPrompt(request));
   }
 
@@ -111,5 +127,18 @@ public class InternalAiController {
   public Result<?> recentLogs() {
     internalRequestGuard.requireServiceRequest();
     return Result.success(aiTaskLogService.recentLogs());
+  }
+
+  private void enforceInternalRateLimit() {
+    String caller = httpServletRequest.getHeader("X-Internal-Caller");
+    if (caller == null || caller.isBlank()) {
+      caller = httpServletRequest.getRemoteAddr();
+    }
+    if (caller == null || caller.isBlank()) {
+      caller = "unknown";
+    }
+    if (!redisRateLimiter.allow("rate:ai:internal:" + caller, 20, Duration.ofMinutes(1))) {
+      throw new BusinessException(429, "AI requests too frequent");
+    }
   }
 }

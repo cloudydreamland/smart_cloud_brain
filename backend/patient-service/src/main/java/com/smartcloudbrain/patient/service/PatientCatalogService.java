@@ -6,6 +6,7 @@ import com.smartcloudbrain.patient.repository.DepartmentRepository;
 import com.smartcloudbrain.patient.repository.DoctorRepository;
 import java.util.List;
 import java.util.Map;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -19,6 +20,7 @@ public class PatientCatalogService {
     this.doctorRepository = doctorRepository;
   }
 
+  @Cacheable(cacheNames = "patient:department:list", key = "'all'")
   public List<Map<String, Object>> departments() {
     return departmentRepository.findAll().stream().map(department -> Map.<String, Object>of(
         "id", department.getId(),
@@ -28,6 +30,7 @@ public class PatientCatalogService {
     )).toList();
   }
 
+  @Cacheable(cacheNames = "patient:doctor:list", key = "#departmentId == null ? 'all' : #departmentId")
   public List<Map<String, Object>> doctors(Long departmentId) {
     List<Doctor> doctors = departmentId == null
         ? doctorRepository.findAll()

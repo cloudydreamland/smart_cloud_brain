@@ -3,11 +3,16 @@ package com.smartcloudbrain.registration.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.lenient;
 
 import com.smartcloudbrain.common.exception.BusinessException;
+import com.smartcloudbrain.common.redis.RedisIdempotencyGuard;
+import com.smartcloudbrain.common.redis.RedisRateLimiter;
 import com.smartcloudbrain.common.security.AuthenticatedUser;
 import com.smartcloudbrain.common.security.CurrentUserService;
 import com.smartcloudbrain.common.security.RoleType;
@@ -23,7 +28,9 @@ import com.smartcloudbrain.registration.repository.PatientRepository;
 import com.smartcloudbrain.registration.repository.RegistrationRepository;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -39,7 +46,15 @@ class RegistrationServiceTest {
   @Mock private DepartmentRepository departmentRepository;
   @Mock private AppointmentSlotRepository appointmentSlotRepository;
   @Mock private CurrentUserService currentUserService;
+  @Mock private RedisRateLimiter redisRateLimiter;
+  @Mock private RedisIdempotencyGuard redisIdempotencyGuard;
+  @Mock private RegistrationSlotQueryService registrationSlotQueryService;
   @InjectMocks private RegistrationService registrationService;
+
+  @BeforeEach
+  void setUp() {
+    lenient().when(redisRateLimiter.allow(anyString(), anyInt(), any())).thenReturn(true);
+  }
 
   @Test
   void createsRegistrationAndConsumesLastSlot() {
@@ -101,6 +116,21 @@ class RegistrationServiceTest {
   }
 
   @Test
+  void duplicateIdempotencyKeyDoesNotConsumeSlot() {
+    when(currentUserService.require(RoleType.PATIENT)).thenReturn(new AuthenticatedUser(1L, RoleType.PATIENT, "patient"));
+    when(redisIdempotencyGuard.acquire("idem:registration:create:1:submit-1", java.time.Duration.ofSeconds(60)))
+        .thenReturn(false);
+
+    BusinessException error = assertThrows(BusinessException.class,
+        () -> registrationService.create(new CreateRegistrationRequest(2L, 3L, LocalDateTime.now(), null, 4L), "submit-1"));
+
+    assertEquals(409, error.code());
+    verify(appointmentSlotRepository, never()).findByIdForUpdate(any());
+    verify(appointmentSlotRepository, never()).save(any());
+    verify(registrationRepository, never()).save(any(Registration.class));
+  }
+
+  @Test
   void cancelRestoresSlotCapacity() {
     Registration registration = registration(9L, 1L, 2L, 3L, 4L, "CREATED");
     AppointmentSlot slot = slot(4L, 2L, 3L, 0, "FULL");
@@ -148,11 +178,7 @@ class RegistrationServiceTest {
     when(registrationRepository.findAll()).thenReturn(List.of(patientRegistration));
     assertEquals(1, registrationService.list().size());
 
-    AppointmentSlot available = slot(4L, 2L, 3L, 1, "AVAILABLE");
-    when(appointmentSlotRepository.findByStatusAndEndTimeGreaterThanEqualOrderByStartTimeAscDoctorIdAsc(
-        any(), any())).thenReturn(List.of(available, slot(5L, 2L, 3L, 0, "AVAILABLE")));
-    when(doctorRepository.findById(2L)).thenReturn(Optional.of(doctor(2L)));
-    when(departmentRepository.findById(3L)).thenReturn(Optional.of(department(3L)));
+    when(registrationSlotQueryService.availableSlots()).thenReturn(List.of(Map.of("slotId", 4L)));
 
     assertEquals(1, registrationService.slots().size());
   }

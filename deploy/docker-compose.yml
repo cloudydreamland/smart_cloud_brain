@@ -182,6 +182,8 @@ services:
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-scb}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-scb_password}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
       NO_PROXY: ${NO_PROXY:-localhost,127.0.0.1,auth-service,patient-service,doctor-service,registration-service,triage-service,medical-record-service,prescription-service,notification-service,admin-service,ai-service,kingbase,redis,rabbitmq}
       no_proxy: ${NO_PROXY:-localhost,127.0.0.1,auth-service,patient-service,doctor-service,registration-service,triage-service,medical-record-service,prescription-service,notification-service,admin-service,ai-service,kingbase,redis,rabbitmq}
       TZ: Asia/Shanghai
@@ -300,8 +302,6 @@ services:
     environment:
       <<: *domain-env
       SERVER_PORT: 8090
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
       DOCTOR_SERVICE_BASE_URL: http://doctor-service:8084
       TRIAGE_SERVICE_BASE_URL: http://triage-service:8086
       AI_SERVICE_BASE_URL: http://ai-service:8081
@@ -337,11 +337,13 @@ services:
       SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: ${DB_POOL_MAX_SIZE:-4}
       SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: ${DB_POOL_MIN_IDLE:-1}
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-smart-cloud-brain-internal-local-token-change}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
       AI_TIMEOUT_MS: ${AI_TIMEOUT_MS:-8000}
       OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.deepseek.com}
       OPENAI_MODEL: ${OPENAI_MODEL:-}
-      NO_PROXY: ${NO_PROXY:-localhost,127.0.0.1,host.docker.internal,ai-service,docker-nginx-1,docker-api-1,nginx,api}
-      no_proxy: ${NO_PROXY:-localhost,127.0.0.1,host.docker.internal,ai-service,docker-nginx-1,docker-api-1,nginx,api}
+      NO_PROXY: ${NO_PROXY:-localhost,127.0.0.1,host.docker.internal,ai-service,docker-nginx-1,docker-api-1,nginx,api,kingbase,redis}
+      no_proxy: ${NO_PROXY:-localhost,127.0.0.1,host.docker.internal,ai-service,docker-nginx-1,docker-api-1,nginx,api,kingbase,redis}
       TZ: Asia/Shanghai
     ports:
       - "${AI_SERVICE_PORT:-8081}:8081"
