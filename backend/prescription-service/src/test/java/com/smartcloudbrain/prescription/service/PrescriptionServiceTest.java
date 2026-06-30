@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -133,7 +134,7 @@ class PrescriptionServiceTest {
 
     assertEquals("CONFIRMED", result.get("status"));
     assertEquals(1, ((List<?>) result.get("items")).size());
-    verify(outboxEventPublisher).enqueue(any(), any(), any());
+    verify(outboxEventPublisher, times(2)).enqueue(any(), any(), any());
   }
 
   @Test

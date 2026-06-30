@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -181,7 +182,7 @@ class PrescriptionServicePermissionTest {
     Map<String, Object> result = prescriptionService.create(new PrescriptionCreateRequest(2L, 30L, "MEDIUM", drugs()));
 
     assertEquals(88L, result.get("prescriptionId"));
-    verify(outboxEventPublisher).enqueue(any(), any(), any());
+    verify(outboxEventPublisher, times(2)).enqueue(any(), any(), any());
   }
 
   private static List<DrugItem> drugs() {

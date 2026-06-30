@@ -2,14 +2,17 @@ package com.smartcloudbrain.triage.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.times;
 
+import com.smartcloudbrain.common.event.DomainEventNames;
 import com.smartcloudbrain.common.exception.BusinessException;
-import com.smartcloudbrain.triage.client.InternalNotificationClient;
 import com.smartcloudbrain.triage.entity.Doctor;
 import com.smartcloudbrain.triage.entity.TriageRecord;
+import com.smartcloudbrain.triage.event.DomainEventPublisher;
 import com.smartcloudbrain.triage.repository.DoctorRepository;
 import com.smartcloudbrain.triage.repository.TriageRecordRepository;
 import java.util.List;
@@ -25,7 +28,7 @@ class TriageDeskServiceTest {
 
   @Mock private TriageRecordRepository triageRecordRepository;
   @Mock private DoctorRepository doctorRepository;
-  @Mock private InternalNotificationClient notificationClient;
+  @Mock private DomainEventPublisher domainEventPublisher;
   @InjectMocks private TriageDeskService triageDeskService;
 
   @Test
@@ -39,7 +42,7 @@ class TriageDeskServiceTest {
   }
 
   @Test
-  void assignsDoctorAndClosesRecord() {
+  void assignsDoctorPublishesEventsAndClosesRecord() {
     TriageRecord record = record(5L);
     Doctor doctor = new Doctor();
     doctor.setId(8L);
@@ -50,7 +53,9 @@ class TriageDeskServiceTest {
 
     assertEquals("ASSIGNED", triageDeskService.assign(5L, 8L).get("status"));
     assertEquals(8L, record.getAssignedDoctorId());
-    verify(notificationClient).createTriageAssign(8L, 1L, 5L, "患者分诊已分配给您，主诉：fever", "");
+    verify(domainEventPublisher).publishNotification(eq(DomainEventNames.TRIAGE_ASSIGNED), any());
+    verify(domainEventPublisher).publishAudit(eq(DomainEventNames.TRIAGE_ASSIGNED), any());
+
     assertEquals("CLOSED", triageDeskService.close(5L).get("status"));
     verify(triageRecordRepository, times(2)).save(record);
   }

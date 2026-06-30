@@ -5,12 +5,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.lenient;
 
 import com.smartcloudbrain.common.exception.BusinessException;
+import com.smartcloudbrain.common.event.DomainEventNames;
 import com.smartcloudbrain.common.redis.RedisIdempotencyGuard;
 import com.smartcloudbrain.common.redis.RedisRateLimiter;
 import com.smartcloudbrain.common.security.AuthenticatedUser;
@@ -21,6 +23,7 @@ import com.smartcloudbrain.registration.entity.AppointmentSlot;
 import com.smartcloudbrain.registration.entity.Department;
 import com.smartcloudbrain.registration.entity.Doctor;
 import com.smartcloudbrain.registration.entity.Registration;
+import com.smartcloudbrain.registration.event.DomainEventPublisher;
 import com.smartcloudbrain.registration.repository.AppointmentSlotRepository;
 import com.smartcloudbrain.registration.repository.DepartmentRepository;
 import com.smartcloudbrain.registration.repository.DoctorRepository;
@@ -49,6 +52,7 @@ class RegistrationServiceTest {
   @Mock private RedisRateLimiter redisRateLimiter;
   @Mock private RedisIdempotencyGuard redisIdempotencyGuard;
   @Mock private RegistrationSlotQueryService registrationSlotQueryService;
+  @Mock private DomainEventPublisher domainEventPublisher;
   @InjectMocks private RegistrationService registrationService;
 
   @BeforeEach
@@ -80,6 +84,8 @@ class RegistrationServiceTest {
     assertEquals(0, slot.getRemainingCapacity());
     assertEquals("FULL", slot.getStatus());
     verify(appointmentSlotRepository).save(slot);
+    verify(domainEventPublisher).publishNotification(eq(DomainEventNames.REGISTRATION_CREATED), any());
+    verify(domainEventPublisher).publishAudit(eq(DomainEventNames.REGISTRATION_CREATED), any());
   }
 
   @Test
@@ -145,6 +151,8 @@ class RegistrationServiceTest {
     assertEquals("CANCELLED", result.get("status"));
     assertEquals(1, slot.getRemainingCapacity());
     assertEquals("AVAILABLE", slot.getStatus());
+    verify(domainEventPublisher).publishNotification(eq(DomainEventNames.REGISTRATION_CANCELLED), any());
+    verify(domainEventPublisher).publishAudit(eq(DomainEventNames.REGISTRATION_CANCELLED), any());
   }
 
   @Test

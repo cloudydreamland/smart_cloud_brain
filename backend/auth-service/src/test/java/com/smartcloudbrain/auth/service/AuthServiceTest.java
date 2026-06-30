@@ -16,6 +16,7 @@ import com.smartcloudbrain.auth.dto.patient.PatientRegisterRequest;
 import com.smartcloudbrain.auth.entity.AdminUser;
 import com.smartcloudbrain.auth.entity.Doctor;
 import com.smartcloudbrain.auth.entity.Patient;
+import com.smartcloudbrain.auth.event.DomainEventPublisher;
 import com.smartcloudbrain.auth.repository.AdminUserRepository;
 import com.smartcloudbrain.auth.repository.DoctorRepository;
 import com.smartcloudbrain.auth.repository.PatientRepository;
@@ -45,6 +46,7 @@ class AuthServiceTest {
   @Mock private AdminUserRepository adminUserRepository;
   @Mock private RedisRateLimiter redisRateLimiter;
   @Mock private PatientEmailVerificationService emailVerificationService;
+  @Mock private DomainEventPublisher domainEventPublisher;
   @InjectMocks private AuthService authService;
 
   @BeforeEach

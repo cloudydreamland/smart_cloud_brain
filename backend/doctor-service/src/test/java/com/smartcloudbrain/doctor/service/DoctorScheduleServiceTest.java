@@ -17,6 +17,7 @@ import com.smartcloudbrain.doctor.entity.AppointmentSlot;
 import com.smartcloudbrain.doctor.entity.DoctorSchedule;
 import com.smartcloudbrain.doctor.entity.Doctor;
 import com.smartcloudbrain.doctor.entity.Department;
+import com.smartcloudbrain.doctor.event.DomainEventPublisher;
 import com.smartcloudbrain.doctor.repository.AppointmentSlotRepository;
 import com.smartcloudbrain.doctor.repository.DepartmentRepository;
 import com.smartcloudbrain.doctor.repository.DoctorRepository;
@@ -42,6 +43,7 @@ class DoctorScheduleServiceTest {
   @Mock private DoctorRepository doctorRepository;
   @Mock private DepartmentRepository departmentRepository;
   @Mock private InternalRegistrationCacheClient internalRegistrationCacheClient;
+  @Mock private DomainEventPublisher domainEventPublisher;
   @InjectMocks private DoctorScheduleService doctorScheduleService;
 
   @Test
