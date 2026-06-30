@@ -1,12 +1,14 @@
 package com.smartcloudbrain.triage.service;
 
 import com.smartcloudbrain.common.error.ErrorCode;
+import com.smartcloudbrain.common.event.DomainEventNames;
 import com.smartcloudbrain.common.exception.BusinessException;
-import com.smartcloudbrain.triage.client.InternalNotificationClient;
 import com.smartcloudbrain.triage.entity.Doctor;
 import com.smartcloudbrain.triage.entity.TriageRecord;
+import com.smartcloudbrain.triage.event.DomainEventPublisher;
 import com.smartcloudbrain.triage.repository.DoctorRepository;
 import com.smartcloudbrain.triage.repository.TriageRecordRepository;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.springframework.stereotype.Service;
@@ -17,12 +19,16 @@ public class TriageDeskService {
 
   private final TriageRecordRepository triageRecordRepository;
   private final DoctorRepository doctorRepository;
-  private final InternalNotificationClient notificationClient;
+  private final DomainEventPublisher domainEventPublisher;
 
-  public TriageDeskService(TriageRecordRepository triageRecordRepository, DoctorRepository doctorRepository, InternalNotificationClient notificationClient) {
+  public TriageDeskService(
+      TriageRecordRepository triageRecordRepository,
+      DoctorRepository doctorRepository,
+      DomainEventPublisher domainEventPublisher
+  ) {
     this.triageRecordRepository = triageRecordRepository;
     this.doctorRepository = doctorRepository;
-    this.notificationClient = notificationClient;
+    this.domainEventPublisher = domainEventPublisher;
   }
 
   public List<Map<String, Object>> list() {
@@ -38,18 +44,16 @@ public class TriageDeskService {
   public Map<String, Object> assign(Long triageRecordId, Long doctorId) {
     TriageRecord record = triageRecordRepository.findById(triageRecordId)
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
-    
-    // 校验医生有效性
     Doctor doctor = doctorRepository.findById(doctorId)
         .orElseThrow(() -> new BusinessException(404, "医生不存在"));
     if ("DISABLED".equalsIgnoreCase(doctor.getStatus())) {
       throw new BusinessException(400, "该医生已停用，无法分配");
     }
-    
+
     record.setAssignedDoctorId(doctorId);
     record.setStatus("ASSIGNED");
     TriageRecord saved = triageRecordRepository.save(record);
-    publishAssignNotification(saved, doctorId);
+    publishAssignEvents(saved, doctorId);
     return triageView(saved);
   }
 
@@ -75,16 +79,26 @@ public class TriageDeskService {
     );
   }
 
-  private void publishAssignNotification(TriageRecord record, Long doctorId) {
-    if (notificationClient == null || doctorId == null) {
-      return;
-    }
+  private void publishAssignEvents(TriageRecord record, Long doctorId) {
     String content = "患者分诊已分配给您，主诉：" + record.getChiefComplaint()
         + (record.getReason() == null || record.getReason().isBlank() ? "" : "。建议：" + record.getReason());
-    try {
-      notificationClient.createTriageAssign(doctorId, record.getPatientId(), record.getId(), content, "");
-    } catch (BusinessException ignored) {
-      // 分诊分配是主流程，通知失败不应阻断业务操作。
-    }
+    Map<String, Object> payload = new LinkedHashMap<>();
+    payload.put("doctorId", doctorId);
+    payload.put("patientId", record.getPatientId());
+    payload.put("triageRecordId", record.getId());
+    payload.put("type", "TRIAGE_ASSIGN");
+    payload.put("title", "分诊分配提醒");
+    payload.put("content", content);
+    payload.put("riskLevel", "");
+    domainEventPublisher.publishNotification(DomainEventNames.TRIAGE_ASSIGNED, payload);
+
+    Map<String, Object> auditPayload = new LinkedHashMap<>(payload);
+    auditPayload.put("actorType", "SYSTEM");
+    auditPayload.put("actorId", 0L);
+    auditPayload.put("action", "TRIAGE_ASSIGNED");
+    auditPayload.put("resourceType", "TRIAGE_RECORD");
+    auditPayload.put("resourceId", String.valueOf(record.getId()));
+    auditPayload.put("outcome", "SUCCESS");
+    domainEventPublisher.publishAudit(DomainEventNames.TRIAGE_ASSIGNED, auditPayload);
   }
 }

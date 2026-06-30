@@ -2,6 +2,7 @@ package com.smartcloudbrain.registration.service;
 
 import com.smartcloudbrain.common.error.ErrorCode;
 import com.smartcloudbrain.common.exception.BusinessException;
+import com.smartcloudbrain.common.event.DomainEventNames;
 import com.smartcloudbrain.common.redis.RedisIdempotencyGuard;
 import com.smartcloudbrain.common.redis.RedisRateLimiter;
 import com.smartcloudbrain.common.security.RoleType;
@@ -16,6 +17,7 @@ import com.smartcloudbrain.registration.repository.DepartmentRepository;
 import com.smartcloudbrain.registration.repository.DoctorRepository;
 import com.smartcloudbrain.registration.repository.PatientRepository;
 import com.smartcloudbrain.registration.repository.RegistrationRepository;
+import com.smartcloudbrain.registration.event.DomainEventPublisher;
 import com.smartcloudbrain.common.security.AuthenticatedUser;
 import com.smartcloudbrain.common.security.CurrentUserService;
 import java.time.Duration;
@@ -39,6 +41,7 @@ public class RegistrationService {
   private final RedisRateLimiter redisRateLimiter;
   private final RedisIdempotencyGuard redisIdempotencyGuard;
   private final RegistrationSlotQueryService registrationSlotQueryService;
+  private final DomainEventPublisher domainEventPublisher;
 
   public RegistrationService(
       RegistrationRepository registrationRepository,
@@ -49,7 +52,8 @@ public class RegistrationService {
       CurrentUserService currentUserService,
       RedisRateLimiter redisRateLimiter,
       RedisIdempotencyGuard redisIdempotencyGuard,
-      RegistrationSlotQueryService registrationSlotQueryService
+      RegistrationSlotQueryService registrationSlotQueryService,
+      DomainEventPublisher domainEventPublisher
   ) {
     this.registrationRepository = registrationRepository;
     this.doctorRepository = doctorRepository;
@@ -60,6 +64,7 @@ public class RegistrationService {
     this.redisRateLimiter = redisRateLimiter;
     this.redisIdempotencyGuard = redisIdempotencyGuard;
     this.registrationSlotQueryService = registrationSlotQueryService;
+    this.domainEventPublisher = domainEventPublisher;
   }
 
   @CacheEvict(cacheNames = "registration:slots", allEntries = true)
@@ -115,7 +120,9 @@ public class RegistrationService {
     registration.setAppointmentTime(slot.getStartTime());
     registration.setStatus("CREATED");
     registration.setUpdatedAt(LocalDateTime.now());
-    return registrationView(registrationRepository.save(registration));
+    Registration saved = registrationRepository.save(registration);
+    publishRegistrationCreated(saved, user);
+    return registrationView(saved);
   }
 
   public List<Map<String, Object>> list() {
@@ -153,6 +160,7 @@ public class RegistrationService {
     registration.setUpdatedAt(LocalDateTime.now());
     Registration saved = registrationRepository.save(registration);
     restoreSlotCapacity(saved.getSlotId());
+    publishRegistrationCancelled(saved, user);
     return registrationView(saved);
   }
 
@@ -215,6 +223,49 @@ public class RegistrationService {
       slot.setUpdatedAt(LocalDateTime.now());
       appointmentSlotRepository.save(slot);
     }
+  }
+
+  private void publishRegistrationCreated(Registration registration, AuthenticatedUser user) {
+    Map<String, Object> payload = registrationPayload(registration, "REGISTRATION_CREATED", "挂号成功提醒", "患者已完成挂号，请关注候诊队列。");
+    domainEventPublisher.publishNotification(DomainEventNames.REGISTRATION_CREATED, payload);
+    domainEventPublisher.publishAudit(DomainEventNames.REGISTRATION_CREATED, auditPayload(
+        user, "REGISTRATION_CREATED", "REGISTRATION", registration.getId(), payload));
+  }
+
+  private void publishRegistrationCancelled(Registration registration, AuthenticatedUser user) {
+    Map<String, Object> payload = registrationPayload(registration, "REGISTRATION_CANCELLED", "挂号取消提醒", "患者已取消挂号，请留意号源变化。");
+    domainEventPublisher.publishNotification(DomainEventNames.REGISTRATION_CANCELLED, payload);
+    domainEventPublisher.publishAudit(DomainEventNames.REGISTRATION_CANCELLED, auditPayload(
+        user, "REGISTRATION_CANCELLED", "REGISTRATION", registration.getId(), payload));
+  }
+
+  private Map<String, Object> registrationPayload(Registration registration, String type, String title, String content) {
+    Map<String, Object> payload = new LinkedHashMap<>();
+    payload.put("doctorId", registration.getDoctorId());
+    payload.put("patientId", registration.getPatientId());
+    payload.put("registrationId", registration.getId());
+    payload.put("triageRecordId", registration.getTriageRecordId() == null ? 0L : registration.getTriageRecordId());
+    payload.put("type", type);
+    payload.put("title", title);
+    payload.put("content", content);
+    return payload;
+  }
+
+  private Map<String, Object> auditPayload(
+      AuthenticatedUser user,
+      String action,
+      String resourceType,
+      Long resourceId,
+      Map<String, Object> detail
+  ) {
+    Map<String, Object> payload = new LinkedHashMap<>(detail);
+    payload.put("actorType", user.role().name());
+    payload.put("actorId", user.userId());
+    payload.put("action", action);
+    payload.put("resourceType", resourceType);
+    payload.put("resourceId", String.valueOf(resourceId));
+    payload.put("outcome", "SUCCESS");
+    return payload;
   }
 
 }

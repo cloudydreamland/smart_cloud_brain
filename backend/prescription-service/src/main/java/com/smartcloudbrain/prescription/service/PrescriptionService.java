@@ -154,6 +154,7 @@ public class PrescriptionService {
           false
       ));
     }
+    publishPrescriptionAudit(saved, user);
     return prescriptionView(saved);
   }
 
@@ -230,7 +231,25 @@ public class PrescriptionService {
     payload.put("interactions", safeInteractions(response));
     payload.put("type", "PRESCRIPTION_HIGH_RISK");
     payload.put("title", "AI处方风险提醒");
+    payload.put("content", nullToEmpty(response.suggestions()));
     return payload;
+  }
+
+  private void publishPrescriptionAudit(Prescription prescription, AuthenticatedUser user) {
+    Map<String, Object> payload = new LinkedHashMap<>();
+    payload.put("actorType", user.role().name());
+    payload.put("actorId", user.userId());
+    payload.put("action", "PRESCRIPTION_CREATED");
+    payload.put("resourceType", "PRESCRIPTION");
+    payload.put("resourceId", String.valueOf(prescription.getId()));
+    payload.put("outcome", "SUCCESS");
+    payload.put("doctorId", prescription.getDoctorId());
+    payload.put("patientId", prescription.getPatientId());
+    payload.put("prescriptionId", prescription.getId());
+    payload.put("medicalRecordId", prescription.getMedicalRecordId() == null ? 0L : prescription.getMedicalRecordId());
+    payload.put("registrationId", prescription.getRegistrationId() == null ? 0L : prescription.getRegistrationId());
+    payload.put("riskLevel", prescription.getRiskLevel() == null ? "" : prescription.getRiskLevel());
+    outboxEventPublisher.enqueue(DomainEventNames.PRESCRIPTION_CREATED, RabbitTopology.ROUTING_AUDIT_LOG, payload);
   }
 
   private Map<String, Drug> catalogDrugs(List<DrugItem> drugs) {

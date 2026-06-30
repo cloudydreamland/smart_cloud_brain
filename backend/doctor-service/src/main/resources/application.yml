@@ -16,6 +16,11 @@ spring:
     properties:
       hibernate:
         dialect: ${DB_DIALECT:org.hibernate.dialect.PostgreSQLDialect}
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:scb}
+    password: ${RABBITMQ_PASSWORD:scb_password}
 
 management:
   endpoints:

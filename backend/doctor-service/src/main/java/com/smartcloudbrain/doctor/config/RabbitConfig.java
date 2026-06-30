@@ -1,4 +1,4 @@
-package com.smartcloudbrain.prescription.config;
+package com.smartcloudbrain.doctor.config;
 
 import com.smartcloudbrain.common.event.RabbitTopology;
 import java.util.Map;

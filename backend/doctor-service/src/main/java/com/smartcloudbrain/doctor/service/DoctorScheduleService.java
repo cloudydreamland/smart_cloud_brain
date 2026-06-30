@@ -14,7 +14,9 @@ import com.smartcloudbrain.doctor.repository.DoctorRepository;
 import com.smartcloudbrain.doctor.repository.DoctorScheduleRepository;
 import com.smartcloudbrain.doctor.repository.RegistrationRepository;
 import com.smartcloudbrain.common.error.ErrorCode;
+import com.smartcloudbrain.common.event.DomainEventNames;
 import com.smartcloudbrain.common.exception.BusinessException;
+import com.smartcloudbrain.doctor.event.DomainEventPublisher;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -42,6 +44,7 @@ public class DoctorScheduleService {
   private final DoctorRepository doctorRepository;
   private final DepartmentRepository departmentRepository;
   private final InternalRegistrationCacheClient internalRegistrationCacheClient;
+  private final DomainEventPublisher domainEventPublisher;
 
   public DoctorScheduleService(
       DoctorScheduleRepository doctorScheduleRepository,
@@ -49,7 +52,8 @@ public class DoctorScheduleService {
       RegistrationRepository registrationRepository,
       DoctorRepository doctorRepository,
       DepartmentRepository departmentRepository,
-      InternalRegistrationCacheClient internalRegistrationCacheClient
+      InternalRegistrationCacheClient internalRegistrationCacheClient,
+      DomainEventPublisher domainEventPublisher
   ) {
     this.doctorScheduleRepository = doctorScheduleRepository;
     this.appointmentSlotRepository = appointmentSlotRepository;
@@ -57,6 +61,7 @@ public class DoctorScheduleService {
     this.doctorRepository = doctorRepository;
     this.departmentRepository = departmentRepository;
     this.internalRegistrationCacheClient = internalRegistrationCacheClient;
+    this.domainEventPublisher = domainEventPublisher;
   }
 
   @Transactional
@@ -107,6 +112,7 @@ public class DoctorScheduleService {
       slot.setStatus("AVAILABLE");
       slot.setUpdatedAt(LocalDateTime.now());
       appointmentSlotRepository.save(slot);
+      publishScheduleEvent(DomainEventNames.SCHEDULE_PUBLISHED, "SCHEDULE_PUBLISHED", "排班发布提醒", "您的门诊排班已发布。", savedSchedule);
     }
     if (!items.isEmpty()) {
       evictRegistrationSlotsCache();
@@ -146,6 +152,9 @@ public class DoctorScheduleService {
     DoctorSchedule saved = doctorScheduleRepository.save(schedule);
     upsertSlot(saved);
     evictRegistrationSlotsCache();
+    if ("PUBLISHED".equalsIgnoreCase(saved.getStatus())) {
+      publishScheduleEvent(DomainEventNames.SCHEDULE_PUBLISHED, "SCHEDULE_PUBLISHED", "排班发布提醒", "您的门诊排班已发布。", saved);
+    }
     return scheduleView(saved);
   }
 
@@ -169,6 +178,7 @@ public class DoctorScheduleService {
     }
     DoctorSchedule saved = doctorScheduleRepository.save(schedule);
     evictRegistrationSlotsCache();
+    publishScheduleEvent(DomainEventNames.SCHEDULE_CANCELLED, "SCHEDULE_CANCELLED", "排班取消提醒", "您的门诊排班已取消。", saved);
     return scheduleView(saved);
   }
 
@@ -382,5 +392,35 @@ public class DoctorScheduleService {
       view.put("status", schedule.getStatus());
       return view;
     }).toList();
+  }
+
+  private void publishScheduleEvent(
+      String eventType,
+      String notificationType,
+      String title,
+      String content,
+      DoctorSchedule schedule
+  ) {
+    Map<String, Object> payload = new LinkedHashMap<>();
+    payload.put("doctorId", schedule.getDoctorId());
+    payload.put("patientId", 0L);
+    payload.put("scheduleId", schedule.getId());
+    payload.put("departmentId", schedule.getDepartmentId());
+    payload.put("workDate", schedule.getWorkDate() == null ? "" : schedule.getWorkDate().toString());
+    payload.put("timeRange", schedule.getTimeRange() == null ? "" : schedule.getTimeRange());
+    payload.put("type", notificationType);
+    payload.put("title", title);
+    payload.put("content", content);
+    payload.put("riskLevel", "");
+    domainEventPublisher.publishNotification(eventType, payload);
+
+    Map<String, Object> auditPayload = new LinkedHashMap<>(payload);
+    auditPayload.put("actorType", "SYSTEM");
+    auditPayload.put("actorId", 0L);
+    auditPayload.put("action", notificationType);
+    auditPayload.put("resourceType", "DOCTOR_SCHEDULE");
+    auditPayload.put("resourceId", String.valueOf(schedule.getId()));
+    auditPayload.put("outcome", "SUCCESS");
+    domainEventPublisher.publishAudit(eventType, auditPayload);
   }
 }

@@ -9,6 +9,8 @@ import com.smartcloudbrain.auth.entity.Patient;
 import com.smartcloudbrain.auth.repository.AdminUserRepository;
 import com.smartcloudbrain.auth.repository.DoctorRepository;
 import com.smartcloudbrain.auth.repository.PatientRepository;
+import com.smartcloudbrain.auth.event.DomainEventPublisher;
+import com.smartcloudbrain.common.event.DomainEventNames;
 import com.smartcloudbrain.common.error.ErrorCode;
 import com.smartcloudbrain.common.exception.BusinessException;
 import com.smartcloudbrain.common.redis.RedisRateLimiter;
@@ -17,6 +19,7 @@ import com.smartcloudbrain.common.security.JwtService;
 import com.smartcloudbrain.common.security.RoleType;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -32,6 +35,7 @@ public class AuthService {
   private final AdminUserRepository adminUserRepository;
   private final RedisRateLimiter redisRateLimiter;
   private final PatientEmailVerificationService emailVerificationService;
+  private final DomainEventPublisher domainEventPublisher;
 
   @Value("${auth.enable-demo-account:false}")
   private boolean enableDemoAccount;
@@ -43,7 +47,8 @@ public class AuthService {
       DoctorRepository doctorRepository,
       AdminUserRepository adminUserRepository,
       RedisRateLimiter redisRateLimiter,
-      PatientEmailVerificationService emailVerificationService
+      PatientEmailVerificationService emailVerificationService,
+      DomainEventPublisher domainEventPublisher
   ) {
     this.jwtService = jwtService;
     this.passwordService = passwordService;
@@ -52,6 +57,7 @@ public class AuthService {
     this.adminUserRepository = adminUserRepository;
     this.redisRateLimiter = redisRateLimiter;
     this.emailVerificationService = emailVerificationService;
+    this.domainEventPublisher = domainEventPublisher;
   }
 
   @Transactional
@@ -88,7 +94,9 @@ public class AuthService {
       patient.setUpdatedAt(LocalDateTime.now());
       patientRepository.save(patient);
     }
-    return session(patient.getId(), RoleType.PATIENT, patient.getName());
+    LoginResponse response = session(patient.getId(), RoleType.PATIENT, patient.getName());
+    publishLoginAudit(patient.getId(), RoleType.PATIENT, request.account());
+    return response;
   }
 
   @Transactional
@@ -105,7 +113,9 @@ public class AuthService {
       doctor.setPasswordHash(passwordService.encode(request.password()));
       doctorRepository.save(doctor);
     }
-    return session(doctor.getId(), RoleType.DOCTOR, doctor.getName());
+    LoginResponse response = session(doctor.getId(), RoleType.DOCTOR, doctor.getName());
+    publishLoginAudit(doctor.getId(), RoleType.DOCTOR, request.account());
+    return response;
   }
 
   @Transactional
@@ -122,7 +132,9 @@ public class AuthService {
       admin.setUpdatedAt(LocalDateTime.now());
       adminUserRepository.save(admin);
     }
-    return session(admin.getId(), RoleType.ADMIN, admin.getName());
+    LoginResponse response = session(admin.getId(), RoleType.ADMIN, admin.getName());
+    publishLoginAudit(admin.getId(), RoleType.ADMIN, request.account());
+    return response;
   }
 
   public JwtClaims verify(String token) {
@@ -131,6 +143,18 @@ public class AuthService {
 
   private LoginResponse session(Long id, RoleType role, String name) {
     return new LoginResponse(jwtService.issue(id, role, name), id, role.name(), name);
+  }
+
+  private void publishLoginAudit(Long userId, RoleType role, String account) {
+    Map<String, Object> payload = new LinkedHashMap<>();
+    payload.put("actorType", role.name());
+    payload.put("actorId", userId);
+    payload.put("action", "AUTH_LOGIN");
+    payload.put("resourceType", "USER_SESSION");
+    payload.put("resourceId", role.name() + ":" + userId);
+    payload.put("outcome", "SUCCESS");
+    payload.put("account", account == null ? "" : account.trim());
+    domainEventPublisher.publishAudit(DomainEventNames.AUTH_LOGIN, payload);
   }
 
   private void enforceLoginRateLimit(String account) {
