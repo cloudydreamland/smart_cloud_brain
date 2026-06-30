@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { RouterLink } from "vue-router";
 import { api, type Doctor, type Department, type PatientRecommendation } from "@smart-cloud-brain/shared-api";
 
@@ -17,10 +17,15 @@ const doctors = ref<Doctor[]>([]);
 const departments = ref<Department[]>([]);
 const recommendedDoctors = ref<PatientRecommendation[]>([]);
 const loading = ref(true);
+const error = ref("");
 const failed = ref(false);
 const query = ref("");
 const department = ref("全部科室");
 const selected = ref<DoctorCard | null>(null);
+const drawerEl = ref<HTMLDivElement | null>(null);
+watch(selected, (value) => {
+  if (value) nextTick(() => drawerEl.value?.focus());
+});
 
 const cards = computed<DoctorCard[]>(() => {
   if (recommendedDoctors.value.length) return recommendedDoctors.value.map(recommendationCard);
@@ -109,6 +114,7 @@ onMounted(async () => {
       <p>按科室、专长和关键词查找医生。具体号源、出诊时间和可预约状态以在线挂号页面为准。</p>
     </header>
 
+    <ErrorState v-if="error" :message="error" />
     <section class="resource-search-page">
       <div class="doctor-team-toolbar">
         <input v-model.trim="query" type="search" placeholder="搜索医生、科室、疾病方向">
@@ -142,7 +148,7 @@ onMounted(async () => {
       <p v-if="!filteredCards.length" class="public-empty">没有匹配医生。可切换科室或减少关键词后再试。</p>
 
       <Transition name="fade">
-      <div v-if="selected" class="public-detail-panel" role="dialog" aria-modal="true">
+      <div v-if="selected" ref="drawerEl" class="public-detail-panel" role="dialog" aria-modal="true" tabindex="-1" @keydown.escape="selected = null" @click.self="selected = null">
         <button type="button" aria-label="关闭" @click="selected = null">×</button>
         <p>{{ selected.department }}</p>
         <h2>{{ selected.name }}</h2>

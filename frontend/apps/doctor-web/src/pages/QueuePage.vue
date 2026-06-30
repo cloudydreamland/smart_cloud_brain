@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject, ref, watch } from "vue";
+import { computed, inject, ref, watch, type Ref } from "vue";
 import { useRoute } from "vue-router";
 import { storeToRefs } from "pinia";
 import { displayText, formatApiError, useDoctorWorkflowStore, usePagination } from "@smart-cloud-brain/shared-api";

@@ -7,7 +7,7 @@ import { ErrorState } from "@smart-cloud-brain/shared-ui";
 const auth = useAuthStore();
 const route = useRoute();
 const router = useRouter();
-const form = reactive({ account: "doctor1", password: "123456" });
+const form = reactive({ account: "", password: "" });
 const loading = ref(false);
 const error = ref("");
 

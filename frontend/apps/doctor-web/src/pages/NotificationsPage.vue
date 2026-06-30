@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, inject, onBeforeUnmount, onMounted, ref, watch, type Ref } from "vue";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import {

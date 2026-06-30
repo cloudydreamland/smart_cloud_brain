@@ -17,6 +17,7 @@ const keyword = ref(String(route.query.q || ""));
 const departments = ref<Department[]>([]);
 const doctors = ref<Doctor[]>([]);
 const loading = ref(true);
+const error = ref("");
 const typeFilter = ref<SearchItem["type"] | "全部">("全部");
 const currentPage = ref(1);
 const pageSize = 8;
@@ -187,6 +188,7 @@ onMounted(async () => {
       </form>
     </header>
 
+    <ErrorState v-if="error" :message="error" />
     <section class="resource-search-page">
       <div class="resource-section-head">
         <h2>{{ keyword.trim() ? `“${keyword.trim()}” 的搜索结果` : "推荐资料" }}</h2>

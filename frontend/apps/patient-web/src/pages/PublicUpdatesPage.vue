@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import { RouterLink, useRoute } from "vue-router";
 
 type UpdateKind = "全部" | "通知公告" | "健康资讯" | "科研动态";
@@ -19,6 +19,10 @@ const route = useRoute();
 const query = ref("");
 const kind = ref<UpdateKind>(String(route.name) === "about-news" ? "通知公告" : "健康资讯");
 const selected = ref<UpdateItem | null>(null);
+const drawerEl = ref<HTMLDivElement | null>(null);
+watch(selected, (value) => {
+  if (value) nextTick(() => drawerEl.value?.focus());
+});
 
 const updates: UpdateItem[] = [
   { kind: "通知公告", title: "门诊预约与取消规则提醒", date: "2026-06-20", source: "门诊服务中心", readingTime: "3 分钟", summary: "预约后请按时到院，无法就诊时提前取消，释放号源给其他患者。", lead: "门诊号源是有限医疗资源。为了让患者能够更稳定地安排就诊，平台将预约确认、取消规则、到院时间和诊后资料入口集中在患者服务中展示。", body: ["患者完成预约后，应第一时间进入“我的预约”核对科室、医生、就诊时间和状态。如果发现时间不合适，应在就诊前尽早取消，不要等到当天才处理。", "预约记录会显示医生、科室、就诊时间、状态和取消入口。已完成或已取消记录仍会保留，便于患者复盘就诊安排，也便于后续查看对应病历、处方和报告线索。", "普通门诊不适合处理胸痛、呼吸困难、意识改变、单侧肢体无力、大量出血等急症。出现这些情况时，应直接前往急诊或拨打急救电话，不要等待普通门诊号源。"], tags: ["预约", "号源", "就诊提醒"] },
@@ -154,7 +158,7 @@ watch(() => route.name, (name) => {
       <p v-if="!filtered.length" class="public-empty">没有匹配内容。可切换分类或减少关键词。</p>
 
       <Transition name="fade">
-        <div v-if="selected" class="public-detail-panel" role="dialog" aria-modal="true">
+        <div v-if="selected" ref="drawerEl" class="public-detail-panel" role="dialog" aria-modal="true" tabindex="-1" @keydown.escape="selected = null" @click.self="selected = null">
         <button type="button" aria-label="关闭" @click="selected = null">×</button>
         <p>{{ selected.kind }} · {{ selected.date }} · {{ selected.source }} · {{ selected.readingTime }}</p>
         <h2>{{ selected.title }}</h2>

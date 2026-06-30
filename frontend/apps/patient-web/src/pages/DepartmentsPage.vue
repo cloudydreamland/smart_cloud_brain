@@ -13,6 +13,7 @@ type DepartmentResource = {
 const departments = ref<Department[]>([]);
 const recommendedDepartments = ref<PatientRecommendation[]>([]);
 const loading = ref(true);
+const error = ref("");
 const failed = ref(false);
 
 function normalizeDepartment(row: Department | PatientRecommendation): DepartmentResource {
@@ -64,6 +65,7 @@ onMounted(async () => {
       <p>优先展示后端科室数据，同时补充常见症状和就诊准备。无后端数据时展示默认重点专科资料。</p>
     </header>
 
+    <ErrorState v-if="error" :message="error" />
     <div class="resource-layout">
       <aside class="resource-toc" aria-label="科室目录">
         <strong>科室目录</strong>
