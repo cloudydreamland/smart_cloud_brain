@@ -1,0 +1,156 @@
+.cms-page-editor-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.page-editor-card {
+  gap: 14px;
+  background: var(--color-white);
+}
+
+.page-editor-head,
+.page-section-head,
+.section-add-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.page-editor-head p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.page-editor-head small,
+.cms-section-summary-card small {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.page-editor-head small,
+.cms-section-summary-card small {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.section-add-buttons {
+  justify-content: flex-end;
+}
+
+.cms-section-board {
+  display: grid;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--color-slate-200);
+  border-radius: 8px;
+  background: var(--color-slate-50);
+}
+
+.cms-section-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.page-section-card {
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
+}
+
+.cms-section-summary-card {
+  min-height: 132px;
+  background: var(--color-white);
+}
+
+.cms-section-summary-card .config-card-actions {
+  align-self: end;
+}
+
+.page-section-head > div {
+  min-width: 0;
+}
+
+.page-section-head p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.cms-empty-card {
+  display: flex;
+  min-height: 86px;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--color-slate-300);
+  border-radius: 8px;
+  background: var(--color-white);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.page-editor-card[draggable="true"],
+.page-section-card[draggable="true"] {
+  cursor: grab;
+}
+
+.page-editor-card.dragging,
+.page-section-card.dragging {
+  border-color: var(--primary);
+  opacity: 0.72;
+}
+
+.page-section-fields {
+  display: grid;
+  gap: 10px;
+}
+
+.cms-editor-modal-card {
+  width: min(920px, calc(100vw - 32px));
+}
+
+.cms-editor-modal-card.wide {
+  width: min(1080px, calc(100vw - 32px));
+}
+
+.span-two {
+  grid-column: 1 / -1;
+}
+
+.danger-link {
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--color-red-200);
+  border-radius: 8px;
+  background: var(--color-white);
+  color: var(--color-red-600);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.plain-link {
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--color-white);
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.plain-link:hover {
+  background: var(--color-teal-50);
+}
+
+.danger-link:hover {
+  background: var(--color-red-50);
+}

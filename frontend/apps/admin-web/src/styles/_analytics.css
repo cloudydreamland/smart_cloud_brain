@@ -1,26 +1,3 @@
-/* ── Dashboard layout ── */
-.dashboard {
-  display: grid;
-  gap: 20px;
-}
-
-/* ── Panel ── */
-.panel {
-  background: var(--surface);
-  border: 1px solid rgba(229, 231, 235, 0.8);
-  border-radius: 14px;
-  overflow: hidden;
-  margin-left: 8px;
-}
-
-/* ── Table action cells ── */
-td.actions-cell .toolbar {
-  width: 100%;
-}
-.actions-cell {
-  width: 190px !important;
-}
-
 .panel-header {
   display: flex;
   justify-content: space-between;
@@ -280,6 +257,13 @@ td.actions-cell .toolbar {
   line-height: 1;
 }
 
+.analytics-metric-sub {
+  color: var(--danger, #b42318);
+  font-size: 12px;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
 .analytics-chart-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -355,17 +339,3 @@ td.actions-cell .toolbar {
   color: var(--subtle);
   font-size: 12px;
 }
-
-/* ── Status Tags ── */
-.status-tag {
-  display: inline-flex;
-  padding: 3px 8px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.status-tag.done { background: var(--color-emerald-50); color: var(--color-emerald-600); }
-.status-tag.cancelled { background: var(--color-red-50); color: var(--color-red-600); }
-.status-tag.pending { background: var(--color-orange-50); color: var(--color-orange-600); }
-.status-tag.active { background: var(--color-blue-50); color: var(--color-blue-600); }

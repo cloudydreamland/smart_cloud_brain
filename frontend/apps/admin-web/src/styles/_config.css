@@ -1,0 +1,235 @@
+.config-section {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--color-white);
+}
+
+.config-section-head,
+.config-card-head,
+.nested-list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.config-section-head h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.config-section-head p,
+.muted-hint {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.config-card,
+.config-row-card,
+.nested-list {
+  display: grid;
+  gap: 10px;
+}
+
+.config-card {
+  padding: 12px;
+  border: 1px solid var(--color-slate-200);
+  border-radius: 8px;
+  background: var(--color-slate-50);
+}
+
+.config-card-grid,
+.config-list {
+  display: grid;
+  gap: 10px;
+}
+
+.config-card-grid {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.config-summary-card {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  min-height: 108px;
+}
+
+.config-summary-card p,
+.config-summary-card small,
+.config-summary-row span {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.config-summary-card small {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.config-summary-row {
+  align-items: center;
+}
+
+.config-summary-row > div:first-child {
+  min-width: 0;
+}
+
+.config-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  height: 24px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+button.status-pill {
+  cursor: pointer;
+}
+
+button.status-pill:hover {
+  filter: brightness(0.96);
+}
+
+.status-pill.enabled {
+  background: var(--color-emerald-100);
+  border-color: var(--color-emerald-200);
+  color: var(--color-emerald-800);
+}
+
+.status-pill.disabled {
+  background: var(--color-red-100);
+  border-color: var(--color-red-200);
+  color: var(--color-red-800);
+}
+
+/* ── Action pill buttons (table rows) ── */
+.action-btn {
+  height: 30px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line, #e5e7eb);
+  background: var(--surface, #fff);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink, #171717);
+  cursor: pointer;
+  transition: all 160ms ease;
+  white-space: nowrap;
+}
+.action-btn:hover {
+  background: var(--surface-2, #f3f5f8);
+}
+.action-btn.primary {
+  background: var(--primary, #0b5f78);
+  color: #fff;
+  border-color: var(--primary, #0b5f78);
+}
+.action-btn.primary:hover {
+  background: var(--primary-strong, #094d62);
+  border-color: var(--primary-strong, #094d62);
+}
+.action-btn.danger {
+  color: var(--danger, #dc2626);
+  border-color: var(--danger-soft, #fecaca);
+  background: var(--surface, #fff);
+}
+.action-btn.danger:hover {
+  background: var(--danger-soft, #fef2f2);
+}
+
+.config-card-head strong,
+.nested-list-head strong {
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.config-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.config-grid.two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.config-grid.three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.config-grid.four {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.config-grid.five {
+  grid-template-columns: minmax(130px, 1fr) minmax(180px, 1.3fr) minmax(150px, 1fr) 96px 88px;
+}
+
+.check-field {
+  display: flex !important;
+  min-height: 36px;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px !important;
+  padding-top: 20px;
+}
+
+.check-field span {
+  line-height: 1;
+}
+
+.check-field.compact {
+  min-height: 36px;
+  padding-top: 20px;
+}
+
+.static-page-tools {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 150px;
+  gap: 10px;
+}
+
+.nested-list {
+  padding: 10px;
+  border: 1px dashed var(--color-slate-300);
+  border-radius: 8px;
+  background: var(--color-white);
+}
+
+.config-row-card {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--color-white);
+}

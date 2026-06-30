@@ -1,0 +1,322 @@
+.patient-site-page {
+  display: grid;
+  gap: 16px;
+}
+
+.patient-site-header {
+  gap: 16px;
+}
+
+.patient-site-header p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.patient-site-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.patient-site-page .publish {
+  background: var(--color-teal-800);
+  border-color: var(--color-teal-800);
+  color: var(--color-white);
+}
+
+.patient-site-tabs {
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.patient-site-tabs button {
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--color-white);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.patient-site-tabs button.active {
+  border-color: var(--color-blue-600);
+  background: var(--color-blue-50);
+  color: var(--color-blue-700);
+}
+
+.patient-site-editor {
+  display: grid;
+  grid-template-columns: 290px minmax(0, 1fr);
+  gap: 16px;
+  padding: 18px;
+  align-items: start;
+}
+
+.patient-site-editor aside {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+}
+
+.patient-site-editor h2,
+.patient-site-editor p {
+  margin: 0;
+}
+
+.patient-site-editor p {
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.patient-site-editor dl {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--color-slate-50);
+}
+
+.patient-site-editor dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.patient-site-editor dt {
+  color: var(--muted);
+}
+
+.patient-site-editor dd {
+  margin: 0;
+  color: var(--ink);
+  text-align: right;
+  word-break: break-all;
+}
+
+.patient-site-editor label {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.patient-site-editor input,
+.patient-site-editor textarea,
+.patient-site-editor select,
+.patient-site-editor .scb-select {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--color-white);
+  color: var(--ink);
+}
+
+.patient-site-editor input,
+.patient-site-editor select,
+.patient-site-editor .scb-select {
+  height: 36px;
+  padding: 0 10px;
+}
+
+.patient-site-editor input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+}
+
+.patient-site-main {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.patient-site-side-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.patient-site-side-actions .quick-btn,
+.patient-site-side-actions .topbar-refresh {
+  justify-content: center;
+  width: 100%;
+  height: 34px;
+}
+
+.patient-site-confirm {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--color-teal-200);
+  border-radius: 8px;
+  background: var(--color-teal-50);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.patient-site-confirm p {
+  margin: 0;
+  color: var(--color-teal-800);
+}
+
+.patient-site-confirm strong {
+  color: var(--color-teal-900);
+}
+
+.patient-site-confirm > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.patient-site-confirm-warning {
+  font-weight: 800;
+}
+
+.patient-site-page .notice ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
+.patient-site-history {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--color-slate-50);
+}
+
+.patient-site-history strong {
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.patient-site-history p {
+  margin: 4px 0 0;
+  font-size: 12px;
+}
+
+.patient-site-history-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.patient-site-history-summary {
+  color: var(--muted);
+}
+
+.patient-config-modal-card.patient-site-history-modal-card {
+  width: min(1080px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+}
+
+.patient-site-history-modal-body {
+  display: grid;
+  gap: 12px;
+}
+
+.patient-site-version-toolbar,
+.patient-site-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.patient-site-version-toolbar span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.patient-site-version-list {
+  display: grid;
+  gap: 8px;
+  max-height: 280px;
+  overflow: auto;
+}
+
+.patient-site-version {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--color-white);
+}
+
+.patient-site-version.active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--color-teal-100);
+}
+
+.patient-site-version > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.patient-site-version small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.patient-site-version-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.patient-site-diff {
+  display: grid;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.patient-site-diff-table {
+  display: grid;
+  max-height: 300px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--color-white);
+}
+
+.patient-site-diff-head,
+.patient-site-diff-row {
+  display: grid;
+  grid-template-columns: minmax(140px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr);
+  gap: 8px;
+  padding: 8px;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+}
+
+.patient-site-diff-head {
+  position: sticky;
+  top: 0;
+  background: var(--color-slate-50);
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.patient-site-diff-row:last-child {
+  border-bottom: 0;
+}
+
+.patient-site-diff-row code,
+.patient-site-diff-row span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
