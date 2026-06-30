@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject, onMounted, ref, type Ref } from "vue";
+import { computed, inject, nextTick, onMounted, ref, watch, type Ref } from "vue";
 import { api, fieldText, formatApiError, formatDateTime, toNumber, type DataRow } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, LoadingState, SegmentedControl, Toast } from "@smart-cloud-brain/shared-ui";
 
@@ -21,6 +21,10 @@ const error = ref("");
 const toast = inject<Ref<InstanceType<typeof Toast>>>("toast");
 const filter = ref("");
 const selected = ref<MessageRow | null>(null);
+const drawerEl = ref<HTMLDivElement | null>(null);
+watch(selected, (value: MessageRow | null) => {
+  if (value) nextTick(() => drawerEl.value?.focus());
+});
 const options = [
   { label: "全部", value: "" },
   { label: "未读", value: "UNREAD" },
@@ -119,7 +123,7 @@ onMounted(refresh);
       </div>
       <EmptyState v-else title="暂无消息" message="当前筛选下没有消息。" />
 
-      <div v-if="selected" class="portal-detail-drawer" role="dialog" aria-modal="true">
+      <div v-if="selected" ref="drawerEl" class="portal-detail-drawer" role="dialog" aria-modal="true" tabindex="-1" @keydown.escape="selected = null" @click.self="selected = null">
         <button type="button" aria-label="关闭" @click="selected = null">×</button>
         <span>{{ selected.type }} · {{ selected.time }}</span>
         <h2>{{ selected.title }}</h2>

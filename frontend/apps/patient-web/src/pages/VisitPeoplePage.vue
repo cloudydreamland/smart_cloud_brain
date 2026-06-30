@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from "vue";
 import { api, fieldText, formatApiError, statusText, toNumber, type DataRow, type PatientVisitorSaveRequest } from "@smart-cloud-brain/shared-api";
-import { EmptyState, ErrorState, FormField, LoadingState, Toast } from "@smart-cloud-brain/shared-ui";
+import { ConfirmDialog, EmptyState, ErrorState, FormField, LoadingState, Toast } from "@smart-cloud-brain/shared-ui";
 
 const loading = ref(false);
 const saving = ref(false);
 const error = ref("");
 const toast = ref<InstanceType<typeof Toast>>();
 const visitors = ref<DataRow[]>([]);
+const targetToDelete = ref<DataRow | null>(null);
 
 const emptyForm: PatientVisitorSaveRequest = {
   name: "",
@@ -82,6 +83,11 @@ async function saveVisitor() {
   }
 }
 
+function confirmDeleteVisitor(row: DataRow) {
+  targetToDelete.value = row;
+}
+
+
 async function deleteVisitor(row: DataRow) {
   const id = toNumber(row.id, 0);
   if (!id) return;
@@ -95,6 +101,7 @@ async function deleteVisitor(row: DataRow) {
   } catch (err) {
     error.value = formatApiError(err, "就诊人删除失败");
   } finally {
+    targetToDelete.value = null;
     saving.value = false;
   }
 }
@@ -134,7 +141,7 @@ onMounted(loadVisitors);
             </div>
             <div class="visitor-actions">
               <button v-if="row.editable" class="secondary" type="button" @click="edit(row)">编辑</button>
-              <button v-if="row.editable" class="danger-text" type="button" :disabled="saving" @click="deleteVisitor(row)">删除</button>
+              <button v-if="row.editable" class="danger-text" type="button" :disabled="saving" @click="confirmDeleteVisitor(row)">删除</button>
             </div>
           </article>
         </div>
@@ -189,6 +196,16 @@ onMounted(loadVisitors);
         </div>
       </div>
     </aside>
+    <ConfirmDialog
+      :open="Boolean(targetToDelete)"
+      title="删除就诊人"
+      :message="`确认删除 ${targetToDelete ? targetToDelete.name || '就诊人' : ''}？删除后不可恢复。`"
+      confirm-text="确认删除"
+      tone="danger"
+      :busy="saving"
+      @close="targetToDelete = null"
+      @confirm="targetToDelete && deleteVisitor(targetToDelete)"
+    />
     <Toast ref="toast" />
   </section>
 </template>

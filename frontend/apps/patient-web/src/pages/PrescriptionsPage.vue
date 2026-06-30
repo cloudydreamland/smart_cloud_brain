@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { inject, ref, type Ref } from "vue";
+import { inject, onMounted, ref, type Ref } from "vue";
 import { storeToRefs } from "pinia";
 import { api, fieldText, formatApiError, formatDateTime, statusClass, statusText, toNumber, usePagination, usePatientWorkflowStore, type DataRow } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, LoadingState, PaginationBar, StatusTag, Toast } from "@smart-cloud-brain/shared-ui";
@@ -8,6 +8,7 @@ import PrescriptionDetailModal from "../components/PrescriptionDetailModal.vue";
 const workflow = usePatientWorkflowStore();
 const { prescriptions } = storeToRefs(workflow);
 const loading = ref(false);
+const detailLoading = ref(false);
 const loaded = ref(false);
 const error = ref("");
 const toast = inject<Ref<InstanceType<typeof Toast>>>("toast");
@@ -30,18 +31,18 @@ async function refresh() {
 }
 
 async function openDetail(item: DataRow) {
-  loading.value = true;
+  detailLoading.value = true;
   error.value = "";
   try {
     selected.value = await api.prescriptionDetail(toNumber(item.prescriptionId));
   } catch (err) {
     error.value = formatApiError(err, "处方详情加载失败");
   } finally {
-    loading.value = false;
+    detailLoading.value = false;
   }
 }
 
-refresh();
+onMounted(refresh);
 </script>
 
 <template>

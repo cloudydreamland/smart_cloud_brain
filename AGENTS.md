@@ -237,6 +237,26 @@ docker start scb-patient-service scb-doctor-service  # 多个
 
 **修复**：用环境变量控制是否启用，或直接移除。
 
+### 19. 患者端 loading 状态复用导致列表消失
+
+**问题**：`PrescriptionsPage.vue` 的 `openDetail()` 复用了列表的 `loading` ref，导致点"详情"按钮时整个列表被 `LoadingState` 覆盖，列表内容消失。
+
+**修复**：列表刷新和详情加载必须用独立的 ref（`loading` / `detailLoading`）。
+
+**教训**：一个页面里有多个异步操作时，每个操作的 loading 状态必须独立管理。这是患者端最常见的代码质量问题。
+
+### 20. 患者端删除操作无确认直接执行
+
+**问题**：`VisitPeoplePage.vue` 的 `deleteVisitor()` 直接调用 API 删除就诊人，没有 ConfirmDialog。用户误触即不可恢复。
+
+**修复**：所有删除/取消/危险操作必须经过确认对话框。详见患者端页面规范"删除/危险操作确认"。
+
+### 21. 患者端路由硬编码导致重定向依赖
+
+**问题**：`TriageResultModal` 用 `router.push('/doctors')` 跳转，依赖旧路径的兼容重定向（`/doctors` → `/patient-services/doctors`）。如果移除重定向就会 404。
+
+**修复**：统一用 `router.push({ name: 'patient-doctors' })` 命名路由，不要依赖重定向。
+
 ## 前端代码规范（Agent 必读）
 
 以下规则基于历史屎山代码审查总结，**违反任何一条都会被驳回**。
@@ -284,6 +304,94 @@ docker start scb-patient-service scb-doctor-service  # 多个
 
 - Pinia store 只管状态和数据获取，不管 UI 逻辑（格式化、DOM 操作）。
 - `refresh()` 方法里多个并行请求用 `Promise.all`，单个失败用 `.catch(fallback)` 隔离，不要让一个接口挂掉拖垮全部数据。
+
+## 患者端页面规范（patient-web 专用）
+
+以下规则基于 2026-06-30 全面审查总结，**违反任何一条都会被驳回**。
+
+### 异步操作 loading 分离
+
+- 每个独立的异步操作必须有自己的 `ref(false)` loading 状态
+- **禁止多个异步操作共享同一个 loading**（如列表刷新 + 详情加载共用 `loading`）
+- 命名约定：`loading`（列表/页面级刷新）、`detailLoading`（详情加载）、`saving`（提交/删除等写操作）
+- 模板中 `LoadingState` 的 `v-if` 必须绑定正确的 loading ref，不能错绑
+
+### 删除/危险操作确认
+
+- 所有删除操作必须经过 `ConfirmDialog`（shared-ui）或等效确认对话框
+- 确认框必须说明后果（如"取消后需要重新选择号源""就诊人数据将被删除"）
+- 事件命名：`@confirm`（确认执行）、`@close`（取消/关闭）
+- 确认框的 `tone` 属性：删除/危险操作用 `"danger"`，普通确认用默认
+
+### 异步导航
+
+- **禁止硬编码路径字符串**（如 `router.push('/doctors')`）
+- 必须用命名路由：`router.push({ name: 'patient-doctors' })`
+- 需要带参数时：`router.push({ name: 'xxx', query: { q: 'value' } })`
+- 异步操作后的跳转用 `await router.push(...)` 确保导航完成
+
+### 生命周期
+
+- 异步数据加载统一用 `onMounted()` 调用，不要在 `<script setup>` 顶层直接调用 async 函数
+- 延时操作（`setTimeout` 等）必须在 `onBeforeUnmount` 中清理，防止组件销毁后回调执行
+- 顶层直接调用 async 函数的时序不如 `onMounted` 可预测，且不利于测试
+
+### Toast
+
+- 优先用 `inject<Ref<InstanceType<typeof Toast>>>("toast")` 注入 Layout 提供的 Toast
+- inject 失败时必须 fallback 创建本地 Toast ref：`const toast = ref<InstanceType<typeof Toast>>()`
+- Toast 调用一律用可选链：`toast?.value?.success(...)` / `toast?.value?.error(...)`
+- **禁止假设 toast 一定存在**
+
+### Drawer / 自定义弹层
+
+- 必须支持 Escape 键关闭（`@keydown.escape` 或 `@keydown.escape.prevent`）
+- 必须支持点击遮罩关闭（`@click.self`）
+- 打开时自动 focus（`ref` + `nextTick(() => el.value?.focus())`），使 Escape 键可工作
+- 角色标记：`role="dialog"` + `aria-modal="true"`
+
+### 状态三件套
+
+- 每个数据展示页面必须包含：`LoadingState` + `ErrorState` + `EmptyState`
+- `LoadingState`：在 `!loaded && loading` 时显示（仅首次加载）
+- `ErrorState`：在 `error` 非空时显示，message 必须包含具体原因
+- `EmptyState`：在 `loaded` 且数据为空时显示
+- 三者互斥，不能同时显示多个
+
+### 假数据/占位数据
+
+- 页面中使用的假数据/占位数据必须在页面顶部用 Notice/Banner 标注
+- 标注文案格式："当前展示的是示例数据，正式数据接入后更新。"
+- **假数据和真数据不能混在一起展示**（如用病历数据假装检查报告数据）
+- 标注位置：页面标题下方、主内容区域上方
+
+### 文件结构
+
+- 单文件组件结构顺序：`<script setup>` → `<template>` → `<style scoped>`
+- 禁止顺序：`<template>` → `<script>` → `<style>`
+- 患者端页面单文件上限 **300 行**（比三端通用的 400 行更严格，因为患者端页面相对简单）
+- 超过 300 行必须拆分：逻辑抽 composable（`useXxx.ts`），UI 拆子组件
+
+### 错误恢复 UX
+
+- API 请求失败后，页面必须提供重试入口（按钮或文字链）
+- `ErrorState` 的 message 必须包含具体原因（"挂号记录加载失败"而不是"加载失败"）
+- error 清除时机：用户点击重试时、用户切换筛选条件时
+- 静默刷新（轮询/定时同步）失败时不要清除 error，避免闪烁
+
+### Toast inject 兜底
+
+- Layout（`PatientPortalLayout`）已 provide `toast` ref
+- 页面优先 inject 使用
+- inject 失败时必须 fallback 创建本地 Toast
+- 所有 toast 调用用可选链，不要假设 toast 一定存在
+
+### usePageAsync composable（推荐）
+
+- 新增页面优先使用 `usePageAsync` composable 管理 loading/error/refresh
+- 不要自己手动管理 `loading` / `loaded` / `error` 三件套
+- `usePageAsync` 提供标准的异步操作模式：自动 loading 状态、错误处理、Toast 反馈
+- 用法：`const { loading, loaded, error, refresh } = usePageAsync({ fetchFn: loadData, errorMessage: '数据加载失败' })`
 
 ## AI 助手注意事项
 

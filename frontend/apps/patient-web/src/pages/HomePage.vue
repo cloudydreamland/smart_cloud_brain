@@ -191,7 +191,7 @@ onMounted(async () => {
         <p class="home-eyebrow">按首字母查找疾病百科</p>
         <div class="home-letters" aria-label="疾病索引">
           <RouterLink
-            v-for="letter in ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','R','S','T','U','V','W','X','Y','Z','#']"
+            v-for="letter in ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','#']"
             :key="letter"
             :to="{ name: 'public-conditions', query: { letter } }"
           >

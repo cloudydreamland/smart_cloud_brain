@@ -99,9 +99,9 @@ const doctorItems = computed<SearchItem[]>(() =>
   doctors.value.map((row) => ({
     type: "医生",
     title: String(row.name || row.doctorName || "未命名医生"),
-    description: `${String(row.departmentName || row.department || "未定科室")} · ${String(row.title || "门诊医生")}。登录后可查看可预约号源。`,
-    meta: [String(row.departmentName || row.department || "科室待定"), String(row.specialty || "门诊服务"), "需登录预约"],
-    to: { name: "patient-login" },
+    description: `${String(row.departmentName || row.department || "未定科室")} · ${String(row.title || "门诊医生")}。查看医生详情和专长方向。`,
+    meta: [String(row.departmentName || row.department || "科室待定"), String(row.specialty || "门诊服务"), "在线查看"],
+    to: { name: "doctor-experts" },
   })),
 );
 

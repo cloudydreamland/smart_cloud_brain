@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 import { fieldText, formatDateTime, toNumber, usePatientWorkflowStore } from "@smart-cloud-brain/shared-api";
 import { EmptyState, SegmentedControl } from "@smart-cloud-brain/shared-ui";
@@ -18,6 +18,10 @@ const workflow = usePatientWorkflowStore();
 const { registrations, prescriptions } = storeToRefs(workflow);
 const category = ref("");
 const selected = ref<InvoiceRow | null>(null);
+const drawerEl = ref<HTMLDivElement | null>(null);
+watch(selected, (value: InvoiceRow | null) => {
+  if (value) nextTick(() => drawerEl.value?.focus());
+});
 const options = [
   { label: "全部", value: "" },
   { label: "门诊", value: "门诊" },
@@ -63,6 +67,7 @@ const guideCards = [
         <p>按就诊记录和处方记录整理票据线索，便于后续接入正式财务接口。</p>
       </div>
     </header>
+    <div class="resource-alert subtle" style="margin-bottom: 16px;"><strong>数据说明</strong><p>发票功能正在接入，当前展示的是费用线索。</p></div>
     <div class="panel-body stack">
       <div class="toolbar">
         <SegmentedControl v-model="category" :options="options" />
@@ -92,7 +97,7 @@ const guideCards = [
         </article>
       </div>
 
-      <div v-if="selected" class="portal-detail-drawer" role="dialog" aria-modal="true">
+      <div v-if="selected" ref="drawerEl" class="portal-detail-drawer" role="dialog" aria-modal="true" tabindex="-1" @keydown.escape="selected = null" @click.self="selected = null">
         <button type="button" aria-label="关闭" @click="selected = null">×</button>
         <span>{{ selected.category }} · {{ selected.status }}</span>
         <h2>{{ selected.title }}</h2>

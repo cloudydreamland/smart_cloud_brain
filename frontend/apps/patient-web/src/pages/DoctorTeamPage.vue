@@ -141,6 +141,7 @@ onMounted(async () => {
       </div>
       <p v-if="!filteredCards.length" class="public-empty">没有匹配医生。可切换科室或减少关键词后再试。</p>
 
+      <Transition name="fade">
       <div v-if="selected" class="public-detail-panel" role="dialog" aria-modal="true">
         <button type="button" aria-label="关闭" @click="selected = null">×</button>
         <p>{{ selected.department }}</p>
@@ -154,6 +155,7 @@ onMounted(async () => {
         </ul>
         <RouterLink :to="{ name: 'patient-doctors' }">查看可预约号源</RouterLink>
       </div>
+      </Transition>
     </section>
   </main>
 </template>

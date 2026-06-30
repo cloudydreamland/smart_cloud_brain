@@ -93,6 +93,6 @@ async function submit() {
       </section>
     </aside>
     <Toast ref="toast" />
-    <TriageResultModal :open="resultOpen" :result="triage" @close="resultOpen = false" @doctors="router.push('/doctors')" />
+    <TriageResultModal :open="resultOpen" :result="triage" @close="resultOpen = false" @doctors="router.push({ name: 'patient-doctors' })" />
   </section>
 </template>

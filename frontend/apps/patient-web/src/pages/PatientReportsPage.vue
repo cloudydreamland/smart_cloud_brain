@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 import { fieldText, formatDateTime, usePatientWorkflowStore, type DataRow } from "@smart-cloud-brain/shared-api";
 import { EmptyState, SegmentedControl } from "@smart-cloud-brain/shared-ui";
@@ -19,6 +19,10 @@ const { records } = storeToRefs(workflow);
 const typeFilter = ref("");
 const query = ref("");
 const selected = ref<ReportRow | null>(null);
+const drawerEl = ref<HTMLDivElement | null>(null);
+watch(selected, (value: ReportRow | null) => {
+  if (value) nextTick(() => drawerEl.value?.focus());
+});
 const typeOptions = [
   { label: "全部", value: "" },
   { label: "检验", value: "检验" },
@@ -65,6 +69,7 @@ const guideCards = [
         <p>按检查类型和关键词整理报告线索，帮助复诊前快速回看。</p>
       </div>
     </header>
+    <div class="resource-alert subtle" style="margin-bottom: 16px;"><strong>数据说明</strong><p>报告功能正在接入，当前展示的是病历关联数据，非独立检查检验报告。</p></div>
     <div class="panel-body stack">
       <div class="toolbar">
         <SegmentedControl v-model="typeFilter" :options="typeOptions" />
@@ -91,7 +96,7 @@ const guideCards = [
         </article>
       </div>
 
-      <div v-if="selected" class="portal-detail-drawer" role="dialog" aria-modal="true">
+      <div v-if="selected" ref="drawerEl" class="portal-detail-drawer" role="dialog" aria-modal="true" tabindex="-1" @keydown.escape="selected = null" @click.self="selected = null">
         <button type="button" aria-label="关闭" @click="selected = null">×</button>
         <span>{{ selected.type }} · {{ selected.status }}</span>
         <h2>{{ selected.title }}</h2>

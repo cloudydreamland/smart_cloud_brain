@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject, ref, watch, type Ref } from "vue";
+import { computed, inject, onMounted, ref, watch, type Ref } from "vue";
 import { storeToRefs } from "pinia";
 import { api, fieldText, formatApiError, formatDateTime, statusClass, statusText, toNumber, usePagination, usePatientWorkflowStore, type DataRow } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, LoadingState, PaginationBar, SegmentedControl, StatusTag, Toast } from "@smart-cloud-brain/shared-ui";
@@ -74,7 +74,7 @@ async function cancel() {
   }
 }
 
-refresh();
+onMounted(refresh);
 </script>
 
 <template>

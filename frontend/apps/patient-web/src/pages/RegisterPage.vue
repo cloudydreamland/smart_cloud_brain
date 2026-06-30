@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, ref } from "vue";
+import { onBeforeUnmount, reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 import { api, formatApiError } from "@smart-cloud-brain/shared-api";
 import { Alert, Button, Input } from "@smart-cloud-brain/shared-ui";
@@ -8,6 +8,11 @@ const router = useRouter();
 const loading = ref(false);
 const error = ref("");
 const notice = ref("");
+const redirectTimer = ref<number | null>(null);
+
+onBeforeUnmount(() => {
+  if (redirectTimer.value !== null) clearTimeout(redirectTimer.value);
+});
 const form = reactive({
   name: "",
   phone: "",
@@ -36,7 +41,7 @@ async function submit() {
   try {
     await api.registerPatient({ ...form, phone: form.phone.trim() });
     notice.value = "注册成功，请登录后继续分诊和挂号。";
-    window.setTimeout(() => router.push({ name: "patient-login" }), 600);
+    redirectTimer.value = window.setTimeout(() => router.push({ name: "patient-login" }), 600);
   } catch (err) {
     error.value = formatApiError(err, "注册失败");
   } finally {
@@ -70,14 +75,13 @@ async function submit() {
         <Input v-model="form.phone" label="手机号" placeholder="请输入11位手机号" />
         <Input v-model="form.password" label="密码" type="password" placeholder="至少6位" autocomplete="new-password" />
         <Input v-model.number="form.age" label="年龄" type="number" />
-        <div class="flex flex-col gap-1.5">
-          <label class="text-sm font-medium text-[var(--ink)]">性别</label>
-          <select v-model="form.gender" class="h-10 rounded-md border border-[var(--line)] bg-white px-3 text-sm focus-visible:outline-none focus-visible:border-[var(--primary)] focus-visible:ring-2 focus-visible:ring-[var(--focus)]">
-            <option value="FEMALE">女</option>
-            <option value="MALE">男</option>
-            <option value="UNKNOWN">未说明</option>
-          </select>
-        </div>
+        <FormField label="性别">
+            <select v-model="form.gender">
+              <option value="FEMALE">女</option>
+              <option value="MALE">男</option>
+              <option value="UNKNOWN">未说明</option>
+            </select>
+          </FormField>
       </div>
       <Button type="submit" :loading="loading" class="w-full">
         {{ loading ? "注册中" : "创建档案并继续" }}

@@ -153,7 +153,8 @@ watch(() => route.name, (name) => {
       </div>
       <p v-if="!filtered.length" class="public-empty">没有匹配内容。可切换分类或减少关键词。</p>
 
-      <div v-if="selected" class="public-detail-panel" role="dialog" aria-modal="true">
+      <Transition name="fade">
+        <div v-if="selected" class="public-detail-panel" role="dialog" aria-modal="true">
         <button type="button" aria-label="关闭" @click="selected = null">×</button>
         <p>{{ selected.kind }} · {{ selected.date }} · {{ selected.source }} · {{ selected.readingTime }}</p>
         <h2>{{ selected.title }}</h2>
@@ -166,6 +167,7 @@ watch(() => route.name, (name) => {
           <RouterLink :to="{ name: 'patient-doctors' }">预约相关门诊</RouterLink>
         </div>
       </div>
+        </Transition>
     </section>
   </main>
 </template>

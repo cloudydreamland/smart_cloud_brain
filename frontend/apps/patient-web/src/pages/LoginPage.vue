@@ -23,6 +23,9 @@ async function submit() {
     auth.save("patient-session", session, "PATIENT");
     if (!auth.permissionError) {
       await router.push(String(route.query.redirect || "/patient-services"));
+    } else {
+      error.value = "账户角色不匹配，请使用患者账户登录。";
+      auth.logout();
     }
   } catch (err) {
     error.value = formatApiError(err, "登录失败");
