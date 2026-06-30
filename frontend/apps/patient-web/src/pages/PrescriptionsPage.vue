@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { inject, onMounted, ref, type Ref } from "vue";
 import { storeToRefs } from "pinia";
-import { api, fieldText, formatApiError, formatDateTime, statusClass, statusText, toNumber, usePagination, usePatientWorkflowStore, type DataRow } from "@smart-cloud-brain/shared-api";
+import { api, formatApiError, formatDateTime, statusClass, statusText, toNumber, usePagination, usePatientWorkflowStore, type Prescription } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, LoadingState, PaginationBar, StatusTag, Toast } from "@smart-cloud-brain/shared-ui";
 import PrescriptionDetailModal from "../components/PrescriptionDetailModal.vue";
 
@@ -12,7 +12,7 @@ const detailLoading = ref(false);
 const loaded = ref(false);
 const error = ref("");
 const toast = inject<Ref<InstanceType<typeof Toast>>>("toast");
-const selected = ref<DataRow | null>(null);
+const selected = ref<Prescription | null>(null);
 const { currentPage, pageSize, total, pageRows } = usePagination(prescriptions, 8);
 
 async function refresh() {
@@ -30,7 +30,7 @@ async function refresh() {
   }
 }
 
-async function openDetail(item: DataRow) {
+async function openDetail(item: Prescription) {
   detailLoading.value = true;
   error.value = "";
   try {
@@ -53,7 +53,7 @@ onMounted(refresh);
       <LoadingState v-if="!loaded && loading" />
       <div v-else-if="prescriptions.length" class="list">
         <article v-for="item in pageRows" :key="String(item.prescriptionId)" class="list-row">
-          <div class="row-main"><strong>处方 #{{ fieldText(item, "prescriptionId") }}</strong><p>{{ formatDateTime(fieldText(item, "createdAt")) }} · {{ statusText(item.status) }}</p></div>
+          <div class="row-main"><strong>处方 #{{ String(item.prescriptionId) }}</strong><p>{{ formatDateTime(item.createdAt) }} · {{ statusText(item.status) }}</p></div>
           <div class="toolbar">
             <StatusTag :status="statusText(item.riskLevel, '未审核')" :tone="statusClass(item.riskLevel)" />
             <button type="button" @click="openDetail(item)">详情</button>

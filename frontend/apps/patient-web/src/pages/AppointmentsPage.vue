@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, inject, onMounted, ref, watch, type Ref } from "vue";
 import { storeToRefs } from "pinia";
-import { api, fieldText, formatApiError, formatDateTime, statusClass, statusText, toNumber, usePagination, usePatientWorkflowStore, type DataRow } from "@smart-cloud-brain/shared-api";
+import { api, formatApiError, formatDateTime, statusClass, statusText, toNumber, usePagination, usePatientWorkflowStore, type Registration } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, LoadingState, PaginationBar, SegmentedControl, StatusTag, Toast } from "@smart-cloud-brain/shared-ui";
 import CancelAppointmentModal from "../components/CancelAppointmentModal.vue";
 
@@ -13,7 +13,7 @@ const loaded = ref(false);
 const saving = ref(false);
 const error = ref("");
 const toast = inject<Ref<InstanceType<typeof Toast>>>("toast");
-const selected = ref<DataRow | null>(null);
+const selected = ref<Registration | null>(null);
 const filterOptions = [
   { label: "全部", value: "" },
   { label: "未完成", value: "UNFINISHED" },
@@ -26,7 +26,7 @@ const sortedRegistrations = computed(() => [...registrations.value].sort((left, 
     || toNumber(right.registrationId) - toNumber(left.registrationId);
 }));
 const filteredRegistrations = computed(() => sortedRegistrations.value.filter((item) => {
-  const status = fieldText(item, "status");
+  const status = item.status || "";
   if (statusFilter.value === "COMPLETED") return status === "COMPLETED";
   if (statusFilter.value === "CANCELLED") return status === "CANCELLED";
   if (statusFilter.value === "UNFINISHED") return !["COMPLETED", "CANCELLED"].includes(status);
@@ -38,8 +38,8 @@ watch(statusFilter, () => {
   currentPage.value = 1;
 });
 
-function timestamp(item: DataRow, key: string) {
-  const value = item[key];
+function timestamp(item: Registration, key: string) {
+  const value = (item as unknown as Record<string, unknown>)[key];
   if (!value) return 0;
   const time = new Date(String(value)).getTime();
   return Number.isFinite(time) ? time : 0;
@@ -96,12 +96,12 @@ onMounted(refresh);
       <div v-else-if="filteredRegistrations.length" class="list">
         <article v-for="item in pageRows" :key="String(item.registrationId)" class="list-row">
           <div class="row-main">
-            <strong>#{{ fieldText(item, "registrationId") }} {{ fieldText(item, "departmentName") }} · {{ fieldText(item, "doctorName") }}</strong>
-            <p>创建时间：{{ formatDateTime(fieldText(item, "createdAt"), "暂无") }} · 就诊时间：{{ formatDateTime(fieldText(item, "appointmentTime"), "待定") }}</p>
+            <strong>#{{ String(item.registrationId) }} {{ item.departmentName || "" }} · {{ item.doctorName || "" }}</strong>
+            <p>创建时间：{{ formatDateTime(item.createdAt, "暂无") }} · 就诊时间：{{ formatDateTime(item.appointmentTime, "待定") }}</p>
           </div>
           <div class="toolbar">
             <StatusTag :status="statusText(item.status)" :tone="statusClass(item.status)" />
-            <button class="danger" type="button" :disabled="['CANCELLED', 'COMPLETED'].includes(fieldText(item, 'status'))" @click="selected = item">取消</button>
+            <button class="danger" type="button" :disabled="['CANCELLED', 'COMPLETED'].includes(item.status || '')" @click="selected = item">取消</button>
           </div>
         </article>
         <PaginationBar v-model="currentPage" :total="total" :page-size="pageSize" />

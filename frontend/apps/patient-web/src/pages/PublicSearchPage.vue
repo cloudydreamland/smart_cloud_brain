@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
-import { api, type DataRow } from "@smart-cloud-brain/shared-api";
+import { api, type Department, type Doctor } from "@smart-cloud-brain/shared-api";
 
 type SearchItem = {
   type: "科室" | "医生" | "疾病/症状" | "服务资料";
@@ -14,8 +14,8 @@ type SearchItem = {
 const route = useRoute();
 const router = useRouter();
 const keyword = ref(String(route.query.q || ""));
-const departments = ref<DataRow[]>([]);
-const doctors = ref<DataRow[]>([]);
+const departments = ref<Department[]>([]);
+const doctors = ref<Doctor[]>([]);
 const loading = ref(true);
 const typeFilter = ref<SearchItem["type"] | "全部">("全部");
 const currentPage = ref(1);
@@ -84,11 +84,11 @@ const normalizedKeyword = computed(() => keyword.value.trim().toLowerCase());
 
 const departmentItems = computed<SearchItem[]>(() =>
   departments.value.map((row) => {
-    const title = String(row.name || row.departmentName || "未命名科室");
+    const title = row.name || row.name || "未命名科室";
     return {
       type: "科室",
       title,
-      description: String(row.description || row.remark || row.specialty || "提供门诊、复诊和专科评估服务。"),
+      description: row.description || "提供门诊、复诊和专科评估服务。",
       meta: ["科室资料", "常见症状", "就诊准备"],
       to: { name: "public-departments", query: { q: title } },
     };
@@ -98,9 +98,9 @@ const departmentItems = computed<SearchItem[]>(() =>
 const doctorItems = computed<SearchItem[]>(() =>
   doctors.value.map((row) => ({
     type: "医生",
-    title: String(row.name || row.doctorName || "未命名医生"),
-    description: `${String(row.departmentName || row.department || "未定科室")} · ${String(row.title || "门诊医生")}。查看医生详情和专长方向。`,
-    meta: [String(row.departmentName || row.department || "科室待定"), String(row.specialty || "门诊服务"), "在线查看"],
+    title: row.name || "未命名医生",
+    description: `${row.name || "未定科室"} · ${row.title || "门诊医生"}。查看医生详情和专长方向。`,
+    meta: [row.name || "科室待定", row.specialty || "门诊服务", "在线查看"],
     to: { name: "doctor-experts" },
   })),
 );

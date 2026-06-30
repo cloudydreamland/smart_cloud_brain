@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, inject, nextTick, onMounted, ref, watch, type Ref } from "vue";
-import { api, fieldText, formatApiError, formatDateTime, toNumber, type DataRow } from "@smart-cloud-brain/shared-api";
+import { api, formatApiError, formatDateTime, toNumber, type Notification } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, LoadingState, SegmentedControl, Toast } from "@smart-cloud-brain/shared-ui";
 
 type MessageRow = {
@@ -10,10 +10,10 @@ type MessageRow = {
   content: string;
   time: string;
   read: boolean;
-  source?: DataRow;
+  source?: Notification;
 };
 
-const rows = ref<DataRow[]>([]);
+const rows = ref<Notification[]>([]);
 const loading = ref(false);
 const loaded = ref(false);
 const saving = ref(false);
@@ -33,12 +33,12 @@ const options = [
 
 const messages = computed<MessageRow[]>(() => {
   return rows.value.map((row, index) => ({
-    id: toNumber(row.notificationId ?? row.id, index + 1),
-    type: normalizeType(fieldText(row, "type", fieldText(row, "category", ""))),
-    title: fieldText(row, "title", "系统通知"),
-    content: fieldText(row, "content", fieldText(row, "message", "暂无通知正文")),
-    time: formatDateTime(fieldText(row, "createdAt"), fieldText(row, "time", "时间待同步")),
-    read: fieldText(row, "readStatus", fieldText(row, "status", "")).toUpperCase() === "READ" || row.read === true,
+    id: toNumber(row.notificationId, index + 1),
+    type: normalizeType(row.type || ""),
+    title: row.title || "系统通知",
+    content: row.content || "暂无通知正文",
+    time: formatDateTime(row.createdAt, "时间待同步"),
+    read: (row.readStatus || "").toUpperCase() === "READ",
     source: row,
   }));
 });

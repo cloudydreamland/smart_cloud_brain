@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
-import { fieldText, formatDateTime, toNumber, usePatientWorkflowStore } from "@smart-cloud-brain/shared-api";
+import { formatDateTime, toNumber, usePatientWorkflowStore, type Prescription, type Registration } from "@smart-cloud-brain/shared-api";
 import { EmptyState, SegmentedControl } from "@smart-cloud-brain/shared-ui";
 
 type InvoiceRow = {
@@ -31,22 +31,22 @@ const options = [
 
 const invoiceRows = computed<InvoiceRow[]>(() => {
   const registrationRows = registrations.value.map((item, index) => ({
-    id: `registration-${fieldText(item, "registrationId", String(index + 1))}`,
+    id: `registration-${String(item.registrationId || index + 1)}`,
     category: "门诊" as const,
-    title: `${fieldText(item, "departmentName", "门诊")} · ${fieldText(item, "doctorName", "医生待定")}`,
-    date: formatDateTime(fieldText(item, "appointmentTime"), formatDateTime(fieldText(item, "createdAt"), "时间待同步")),
-    status: fieldText(item, "status") === "COMPLETED" ? "可申请" as const : "待开具" as const,
+    title: `${item.departmentName || "门诊"} · ${item.doctorName || "医生待定"}`,
+    date: formatDateTime(item.appointmentTime, formatDateTime(item.createdAt, "时间待同步")),
+    status: (item.status || "") === "COMPLETED" ? "可申请" as const : "待开具" as const,
     amountText: "以财务系统为准",
     description: "门诊挂号费用和相关票据状态以医院财务系统最终记录为准。",
   }));
   const prescriptionRows = prescriptions.value.map((item, index) => ({
-    id: `prescription-${fieldText(item, "prescriptionId", String(index + 1))}`,
+    id: `prescription-${String(item.prescriptionId || index + 1)}`,
     category: "处方" as const,
-    title: `处方 #${fieldText(item, "prescriptionId", String(index + 1))}`,
-    date: formatDateTime(fieldText(item, "createdAt"), "时间待同步"),
+    title: `处方 #${String(item.prescriptionId || index + 1)}`,
+    date: formatDateTime(item.createdAt, "时间待同步"),
     status: toNumber(item.prescriptionId) ? "已归档" as const : "待开具" as const,
     amountText: "药品费用待同步",
-    description: fieldText(item, "riskLevel", "处方记录已归档，费用明细以后端财务接口为准。"),
+    description: item.riskLevel || "处方记录已归档，费用明细以后端财务接口为准。",
   }));
   return [...registrationRows, ...prescriptionRows];
 });

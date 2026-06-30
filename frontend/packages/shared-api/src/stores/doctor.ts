@@ -13,17 +13,15 @@ export const useDoctorWorkflowStore = defineStore("doctorWorkflow", () => {
   const streamStatus = ref("IDLE");
 
   async function refresh() {
-    const settled = await Promise.allSettled([
+    const [regResult, triageResult, recordResult, prescriptionResult, notifResult] = await Promise.allSettled([
       doctorApi.registrations(), doctorApi.triageList(), doctorApi.medicalRecords(),
       doctorApi.prescriptions(), doctorApi.notifications(),
     ]);
-    const pick = <T>(r: PromiseSettledResult<unknown>, fallback: T[]): T[] =>
-      r.status === "fulfilled" && Array.isArray(r.value) ? r.value as T[] : fallback;
-    registrations.value = pick<Registration>(settled[0], registrations.value);
-    triageRecords.value = pick<TriageRecord>(settled[1], triageRecords.value);
-    records.value = pick<MedicalRecord>(settled[2], records.value);
-    prescriptions.value = pick<Prescription>(settled[3], prescriptions.value);
-    notifications.value = pick<Notification>(settled[4], notifications.value);
+    if (regResult.status === "fulfilled") registrations.value = regResult.value;
+    if (triageResult.status === "fulfilled") triageRecords.value = triageResult.value;
+    if (recordResult.status === "fulfilled") records.value = recordResult.value;
+    if (prescriptionResult.status === "fulfilled") prescriptions.value = prescriptionResult.value;
+    if (notifResult.status === "fulfilled") notifications.value = notifResult.value;
   }
 
   return { registrations, triageRecords, records, prescriptions, notifications, streamText, streamStatus, refresh };

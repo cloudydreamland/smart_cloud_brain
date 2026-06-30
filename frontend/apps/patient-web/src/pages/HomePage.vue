@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
-import { api, type DataRow, type PatientNotice, type PatientRecommendation } from "@smart-cloud-brain/shared-api";
+import { api, type Department, type Doctor, type PatientNotice, type PatientRecommendation } from "@smart-cloud-brain/shared-api";
 import { toPatientRoute } from "../site-config/routeTarget";
 import { usePatientSiteConfig } from "../site-config/usePatientSiteConfig";
 import type { PatientHomeModule, RouteTargetConfig } from "../site-config/types";
@@ -14,8 +14,8 @@ type HomeLocation = {
 };
 
 const router = useRouter();
-const departments = ref<DataRow[]>([]);
-const doctors = ref<DataRow[]>([]);
+const departments = ref<Department[]>([]);
+const doctors = ref<Doctor[]>([]);
 const portalNotices = ref<PatientNotice[]>([]);
 const hotDepartments = ref<PatientRecommendation[]>([]);
 const recommendedDoctors = ref<PatientRecommendation[]>([]);
@@ -126,16 +126,16 @@ function goSearch(q = "") {
   router.push({ name: "public-search", query: queryText ? { q: queryText } : {} });
 }
 
-function recommendationTitle(item: PatientRecommendation | DataRow) {
-  return String(("title" in item && item.title) || ("targetName" in item && item.targetName) || ("name" in item && item.name) || ("departmentName" in item && item.departmentName) || "科室");
+function recommendationTitle(item: PatientRecommendation | Department | Doctor) {
+  return String(("title" in item && item.title) || ("targetName" in item && item.targetName) || ("name" in item && item.name) || "科室");
 }
 
 function recommendationDescription(item: PatientRecommendation) {
   return item.description || item.departmentName || item.specialty || "";
 }
 
-function recommendationKey(item: PatientRecommendation | DataRow) {
-  return String(("id" in item && item.id) || ("targetId" in item && item.targetId) || ("departmentId" in item && item.departmentId) || ("name" in item && item.name) || recommendationTitle(item));
+function recommendationKey(item: PatientRecommendation | Department | Doctor) {
+  return String(("id" in item && item.id) || ("targetId" in item && item.targetId) || ("name" in item && item.name) || recommendationTitle(item));
 }
 
 function onImageError(event: Event) {

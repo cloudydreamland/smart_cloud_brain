@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
 import { RouterLink } from "vue-router";
-import { api, fieldText, type DataRow, type PatientRecommendation } from "@smart-cloud-brain/shared-api";
+import { api, type Doctor, type Department, type PatientRecommendation } from "@smart-cloud-brain/shared-api";
 
 type DoctorCard = {
   id: string;
@@ -13,8 +13,8 @@ type DoctorCard = {
   tags: string[];
 };
 
-const doctors = ref<DataRow[]>([]);
-const departments = ref<DataRow[]>([]);
+const doctors = ref<Doctor[]>([]);
+const departments = ref<Department[]>([]);
 const recommendedDoctors = ref<PatientRecommendation[]>([]);
 const loading = ref(true);
 const failed = ref(false);
@@ -26,18 +26,18 @@ const cards = computed<DoctorCard[]>(() => {
   if (recommendedDoctors.value.length) return recommendedDoctors.value.map(recommendationCard);
   if (!doctors.value.length) return [];
   return doctors.value.map((row, index) => ({
-    id: String(row.doctorId || row.id || index),
-    name: fieldText(row, "name", fieldText(row, "doctorName", "未命名医生")),
-    title: fieldText(row, "title", "门诊医生"),
-    department: fieldText(row, "departmentName", fieldText(row, "department", "未定科室")),
-    specialty: fieldText(row, "specialty", "常见病、慢病复诊和专科评估"),
-    profile: fieldText(row, "profile", fieldText(row, "introduction", "提供门诊评估、复诊沟通和检查结果解读服务。")),
-    tags: splitTags(fieldText(row, "specialty", "")),
+    id: String(row.id || index),
+    name: row.name || "未命名医生",
+    title: row.title || "门诊医生",
+    department: row.departmentName || "未定科室",
+    specialty: row.specialty || "常见病、慢病复诊和专科评估",
+    profile: row.specialty || "提供门诊评估、复诊沟通和检查结果解读服务。",
+    tags: splitTags(row.specialty || ""),
   }));
 });
 const departmentOptions = computed(() => {
   const names = new Set(["全部科室"]);
-  departments.value.forEach((row) => names.add(fieldText(row, "name", fieldText(row, "departmentName", "未定科室"))));
+  departments.value.forEach((row) => names.add(row.name || "未定科室"));
   cards.value.forEach((item) => names.add(item.department));
   return [...names].filter(Boolean);
 });

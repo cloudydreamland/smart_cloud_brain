@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { inject, onMounted, ref, type Ref } from "vue";
 import { storeToRefs } from "pinia";
-import { api, fieldText, formatApiError, formatDateTime, usePatientWorkflowStore, type DataRow } from "@smart-cloud-brain/shared-api";
+import { api, formatApiError, formatDateTime, usePatientWorkflowStore, type MedicalRecord } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, LoadingState, Toast } from "@smart-cloud-brain/shared-ui";
 import MedicalRecordDetailModal from "../components/MedicalRecordDetailModal.vue";
 
@@ -12,7 +12,7 @@ const loaded = ref(false);
 const detailLoading = ref(false);
 const error = ref("");
 const toast = inject<Ref<InstanceType<typeof Toast>>>("toast");
-const selected = ref<DataRow | null>(null);
+const selected = ref<MedicalRecord | null>(null);
 
 async function refresh() {
   loading.value = true;
@@ -29,7 +29,7 @@ async function refresh() {
   }
 }
 
-async function open(item: DataRow) {
+async function open(item: MedicalRecord) {
   const id = recordId(item);
   if (!id) {
     error.value = "无法识别这条病历记录，请刷新后重试。";
@@ -46,8 +46,8 @@ async function open(item: DataRow) {
   }
 }
 
-function recordId(item: DataRow) {
-  const value = Number(item.medicalRecordId ?? item.id);
+function recordId(item: MedicalRecord) {
+  const value = Number(item.medicalRecordId);
   return Number.isFinite(value) && value > 0 ? value : 0;
 }
 
@@ -71,14 +71,14 @@ onMounted(refresh);
       <ErrorState v-if="error" :message="error" />
       <LoadingState v-if="(!loaded && loading) || detailLoading" />
       <div v-else-if="records.length" class="record-list">
-        <article v-for="item in records" :key="String(recordId(item) || fieldText(item, 'createdAt'))" class="record-card">
+        <article v-for="item in records" :key="String(recordId(item) || item.createdAt || '')" class="record-card">
           <div>
-            <span class="record-kicker">病历 #{{ fieldText(item, "medicalRecordId", fieldText(item, "id")) }}</span>
-            <h3>{{ fieldText(item, "diagnosis", "诊断待同步") }}</h3>
-            <p>{{ fieldText(item, "chiefComplaint", "暂无主诉记录") }}</p>
+            <span class="record-kicker">病历 #{{ String(item.medicalRecordId) }}</span>
+            <h3>{{ item.diagnosis || "诊断待同步" }}</h3>
+            <p>{{ item.chiefComplaint || "暂无主诉记录" }}</p>
             <div class="record-meta">
               <span>{{ item.aiGenerated ? "AI草稿经医生确认" : "医生录入" }}</span>
-              <span>{{ formatDateTime(fieldText(item, "createdAt"), "时间待同步") }}</span>
+              <span>{{ formatDateTime(item.createdAt, "时间待同步") }}</span>
             </div>
           </div>
           <button type="button" @click="open(item)">查看详情</button>

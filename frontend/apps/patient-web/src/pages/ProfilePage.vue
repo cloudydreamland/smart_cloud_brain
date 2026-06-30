@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { reactive, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
-import { api, fieldText, formatApiError, statusText, toNumber, useAuthStore, usePatientWorkflowStore, type PatientSaveRequest } from "@smart-cloud-brain/shared-api";
+import { api, formatApiError, statusText, toNumber, useAuthStore, usePatientWorkflowStore, type PatientSaveRequest } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, FormField, LoadingState, Toast } from "@smart-cloud-brain/shared-ui";
 
 const auth = useAuthStore();
@@ -25,17 +25,17 @@ const form = reactive<PatientSaveRequest>({
 });
 
 watch(patient, (value) => {
-  form.name = fieldText(value, "name", auth.session?.name || "");
-  form.gender = fieldText(value, "gender", "");
+  form.name = value?.name || auth.session?.name || "";
+  form.gender = value?.gender || "";
   form.age = toNumber(value?.age, 0);
-  form.address = fieldText(value, "address", "");
-  form.emergencyContact = fieldText(value, "emergencyContact", "");
-  form.emergencyPhone = fieldText(value, "emergencyPhone", "");
-  form.bloodType = fieldText(value, "bloodType", "");
+  form.address = value?.address || "";
+  form.emergencyContact = value?.emergencyContact || "";
+  form.emergencyPhone = value?.emergencyPhone || "";
+  form.bloodType = value?.bloodType || "";
   form.heightCm = toNumber(value?.heightCm, 0);
   form.weightKg = toNumber(value?.weightKg, 0);
-  form.allergyHistory = fieldText(value, "allergyHistory", "");
-  form.pastHistory = fieldText(value, "pastHistory", "");
+  form.allergyHistory = value?.allergyHistory || "";
+  form.pastHistory = value?.pastHistory || "";
 }, { immediate: true });
 
 async function save() {
@@ -105,8 +105,8 @@ async function save() {
         <div class="summary-strip">
           <div class="summary-item"><span>角色</span><strong>{{ statusText(auth.session?.role, "-") }}</strong></div>
           <div class="summary-item"><span>账户 ID</span><strong>{{ auth.session?.userId }}</strong></div>
-          <div class="summary-item"><span>手机号</span><strong>{{ fieldText(patient, "phone", "-") }}</strong></div>
-          <div class="summary-item"><span>紧急联系人</span><strong>{{ fieldText(patient, "emergencyContact", "-") }}</strong></div>
+          <div class="summary-item"><span>手机号</span><strong>{{ patient?.phone || "-" }}</strong></div>
+          <div class="summary-item"><span>紧急联系人</span><strong>{{ patient?.emergencyContact || "-" }}</strong></div>
         </div>
       </div>
     </aside>

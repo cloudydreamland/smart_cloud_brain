@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { storeToRefs } from "pinia";
-import { fieldText, formatDateTime, statusClass, statusText, useAuthStore, usePatientWorkflowStore } from "@smart-cloud-brain/shared-api";
+import { formatDateTime, statusClass, statusText, useAuthStore, usePatientWorkflowStore } from "@smart-cloud-brain/shared-api";
 import { Badge, Button, EmptyState, LoadingState, StatusTag } from "@smart-cloud-brain/shared-ui";
 
 defineProps<{ bootLoading?: boolean }>();
@@ -13,12 +13,12 @@ const { patient, triageHistory, registrations, records, prescriptions, slots } =
 
 const latestTriage = computed(() => triageHistory.value[0] ?? workflow.triage ?? null);
 const activeRegistration = computed(() => registrations.value.find((item) => {
-  const status = fieldText(item, "status");
+  const status = item.status || "";
   return !["COMPLETED", "CANCELLED"].includes(status);
 }) ?? registrations.value[0] ?? null);
 const latestRecord = computed(() => records.value[0] ?? null);
 const latestPrescription = computed(() => prescriptions.value[0] ?? null);
-const patientName = computed(() => fieldText(patient.value, "name", auth.session?.name || "患者"));
+const patientName = computed(() => patient.value?.name || auth.session?.name || "患者");
 const nextRoute = computed(() => latestTriage.value ? { name: "patient-doctors" } : { name: "patient-triage" });
 const nextText = computed(() => latestTriage.value ? "查看推荐号源" : "开始 AI 分诊");
 </script>
@@ -38,7 +38,7 @@ const nextText = computed(() => latestTriage.value ? "查看推荐号源" : "开
 
     <section class="portal-metrics">
       <article><span>当前患者</span><strong>{{ patientName }}</strong></article>
-      <article><span>推荐科室</span><strong>{{ fieldText(latestTriage, "recommendedDepartment", "待分诊") }}</strong></article>
+      <article><span>推荐科室</span><strong>{{ latestTriage?.recommendedDepartment || "待分诊" }}</strong></article>
       <article><span>可预约号源</span><strong>{{ slots.length }} 个</strong></article>
       <article><span>诊后资料</span><strong>{{ records.length + prescriptions.length }} 份</strong></article>
     </section>
@@ -63,7 +63,7 @@ const nextText = computed(() => latestTriage.value ? "查看推荐号源" : "开
         <div v-if="latestTriage" class="portal-list-row">
           <div>
             <strong>当前分诊结果</strong>
-            <p>{{ fieldText(latestTriage, "recommendedDepartment", "待确认") }} · {{ fieldText(latestTriage, "reason", "暂无说明") }}</p>
+            <p>{{ latestTriage?.recommendedDepartment || "待确认" }} · {{ latestTriage?.reason || "暂无说明" }}</p>
           </div>
           <StatusTag :status="statusText(latestTriage.status)" :tone="statusClass(latestTriage.status)" />
         </div>
@@ -75,7 +75,7 @@ const nextText = computed(() => latestTriage.value ? "查看推荐号源" : "开
         <div v-if="activeRegistration" class="portal-list-row">
           <div>
             <strong>最近挂号</strong>
-            <p>{{ fieldText(activeRegistration, "departmentName") }} · {{ fieldText(activeRegistration, "doctorName") }} · {{ formatDateTime(fieldText(activeRegistration, "appointmentTime"), "待定") }}</p>
+            <p>{{ activeRegistration?.departmentName || "" }} · {{ activeRegistration?.doctorName || "" }} · {{ formatDateTime(activeRegistration?.appointmentTime, "待定") }}</p>
           </div>
           <StatusTag :status="statusText(activeRegistration.status)" :tone="statusClass(activeRegistration.status)" />
         </div>
@@ -87,7 +87,7 @@ const nextText = computed(() => latestTriage.value ? "查看推荐号源" : "开
         <div v-if="latestRecord || latestPrescription" class="portal-list-row">
           <div>
             <strong>诊后资料</strong>
-            <p>{{ fieldText(latestRecord, "diagnosis", "病历待同步") }} · 处方 {{ latestPrescription ? `#${fieldText(latestPrescription, "prescriptionId")}` : "待同步" }}</p>
+            <p>{{ latestRecord?.diagnosis || "病历待同步" }} · 处方 {{ latestPrescription ? `#${latestPrescription?.prescriptionId || ""}` : "待同步" }}</p>
           </div>
           <RouterLink class="portal-link" :to="{ name: 'patient-records' }">查看</RouterLink>
         </div>

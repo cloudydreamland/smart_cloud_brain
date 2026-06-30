@@ -198,6 +198,9 @@ export interface Drug {
 export interface Patient {
   id: number;
   name: string;
+  visitorType?: string;
+  relationship?: string;
+  editable?: boolean;
   gender?: string;
   age?: number;
   phone?: string;
@@ -310,16 +313,16 @@ export interface RoleInfo {
 
 export interface Schedule {
   id: number;
+  slotId?: number;
   doctorId: number;
   doctorName?: string;
   departmentId: number;
   departmentName?: string;
-  workDate: string;
-  timeRange: string;
+  startTime: string;
+  endTime: string;
   capacity: number;
   booked?: number;
   remainingCapacity?: number;
-  slotId?: number;
   status?: string;
 }
 

@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from "vue";
-import { api, fieldText, formatApiError, statusText, toNumber, type DataRow, type PatientVisitorSaveRequest } from "@smart-cloud-brain/shared-api";
+import { api, formatApiError, statusText, toNumber, type Patient, type PatientVisitorSaveRequest } from "@smart-cloud-brain/shared-api";
 import { ConfirmDialog, EmptyState, ErrorState, FormField, LoadingState, Toast } from "@smart-cloud-brain/shared-ui";
 
 const loading = ref(false);
 const saving = ref(false);
 const error = ref("");
 const toast = ref<InstanceType<typeof Toast>>();
-const visitors = ref<DataRow[]>([]);
-const targetToDelete = ref<DataRow | null>(null);
+const visitors = ref<Patient[]>([]);
+const targetToDelete = ref<Patient | null>(null);
 
 const emptyForm: PatientVisitorSaveRequest = {
   name: "",
@@ -33,22 +33,22 @@ function resetForm() {
   Object.assign(form, emptyForm);
 }
 
-function edit(row: DataRow) {
+function edit(row: Patient) {
   Object.assign(form, {
     id: toNumber(row.id, 0),
-    name: fieldText(row, "name", ""),
-    relationship: fieldText(row, "relationship", ""),
-    phone: fieldText(row, "phone", ""),
-    gender: fieldText(row, "gender", ""),
+    name: row.name || "",
+    relationship: row.relationship || "",
+    phone: row.phone || "",
+    gender: row.gender || "",
     age: toNumber(row.age, 0),
-    address: fieldText(row, "address", ""),
-    emergencyContact: fieldText(row, "emergencyContact", ""),
-    emergencyPhone: fieldText(row, "emergencyPhone", ""),
-    bloodType: fieldText(row, "bloodType", ""),
+    address: row.address || "",
+    emergencyContact: row.emergencyContact || "",
+    emergencyPhone: row.emergencyPhone || "",
+    bloodType: row.bloodType || "",
     heightCm: toNumber(row.heightCm, 0),
     weightKg: toNumber(row.weightKg, 0),
-    allergyHistory: fieldText(row, "allergyHistory", ""),
-    pastHistory: fieldText(row, "pastHistory", ""),
+    allergyHistory: row.allergyHistory || "",
+    pastHistory: row.pastHistory || "",
   });
 }
 
@@ -83,12 +83,12 @@ async function saveVisitor() {
   }
 }
 
-function confirmDeleteVisitor(row: DataRow) {
+function confirmDeleteVisitor(row: Patient) {
   targetToDelete.value = row;
 }
 
 
-async function deleteVisitor(row: DataRow) {
+async function deleteVisitor(row: Patient) {
   const id = toNumber(row.id, 0);
   if (!id) return;
   saving.value = true;
@@ -124,20 +124,20 @@ onMounted(loadVisitors);
         <LoadingState v-if="loading" />
 
         <div v-if="visitors.length" class="visitor-list">
-          <article v-for="row in visitors" :key="`${fieldText(row, 'visitorType')}-${fieldText(row, 'id')}`" class="visitor-row">
+          <article v-for="row in visitors" :key="`${row.visitorType || ''}-${String(row.id)}`" class="visitor-row">
             <div>
               <div class="visitor-row-title">
-                <strong>{{ fieldText(row, "name") }}</strong>
-                <span class="portal-status" :class="fieldText(row, 'visitorType') === 'ACCOUNT' ? 'online' : ''">
-                  {{ fieldText(row, "visitorType") === "ACCOUNT" ? "账户本人" : fieldText(row, "relationship", "就诊人") }}
+                <strong>{{ row.name || "" }}</strong>
+                <span class="portal-status" :class="(row.visitorType || '') === 'ACCOUNT' ? 'online' : ''">
+                  {{ (row.visitorType || "") === "ACCOUNT" ? "账户本人" : row.relationship || "就诊人" }}
                 </span>
               </div>
               <p>
-                {{ statusText(row.gender, "未说明") }} · {{ fieldText(row, "age", "0") }} 岁 ·
-                {{ fieldText(row, "phone", "未填写电话") }}
+                {{ statusText(row.gender, "未说明") }} · {{ String(row.age ?? 0) }} 岁 ·
+                {{ row.phone || "未填写电话" }}
               </p>
-              <p>紧急联系人：{{ fieldText(row, "emergencyContact", "未填写") }} {{ fieldText(row, "emergencyPhone", "") }}</p>
-              <p>血型 {{ fieldText(row, "bloodType", "未说明") }} · 身高 {{ fieldText(row, "heightCm", "0") }} cm · 体重 {{ fieldText(row, "weightKg", "0") }} kg</p>
+              <p>紧急联系人：{{ row.emergencyContact || "未填写" }} {{ row.emergencyPhone || "" }}</p>
+              <p>血型 {{ row.bloodType || "未说明" }} · 身高 {{ String(row.heightCm ?? 0) }} cm · 体重 {{ String(row.weightKg ?? 0) }} kg</p>
             </div>
             <div class="visitor-actions">
               <button v-if="row.editable" class="secondary" type="button" @click="edit(row)">编辑</button>

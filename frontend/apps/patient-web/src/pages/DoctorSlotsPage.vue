@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, inject, onMounted, ref, watch, type Ref } from "vue";
 import { storeToRefs } from "pinia";
-import { api, fieldText, formatApiError, statusClass, statusText, toNumber, usePatientWorkflowStore, type DataRow } from "@smart-cloud-brain/shared-api";
+import { api, formatApiError, statusClass, statusText, toNumber, usePatientWorkflowStore, type Doctor, type Registration, type Schedule, type TriageRecord } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, LoadingState, StatusTag, Toast } from "@smart-cloud-brain/shared-ui";
 import ConfirmAppointmentModal from "../components/ConfirmAppointmentModal.vue";
 
@@ -9,7 +9,7 @@ type DateGroup = {
   date: string;
   label: string;
   total: number;
-  slots: DataRow[];
+  slots: Schedule[];
 };
 
 type DoctorGroup = {
@@ -17,7 +17,7 @@ type DoctorGroup = {
   doctorName: string;
   departmentName: string;
   total: number;
-  periods: { key: string; label: string; slots: DataRow[] }[];
+  periods: { key: string; label: string; slots: Schedule[] }[];
 };
 
 const workflow = usePatientWorkflowStore();
@@ -28,30 +28,30 @@ const saving = ref(false);
 const error = ref("");
 const toast = inject<Ref<InstanceType<typeof Toast>>>("toast");
 const selectedDate = ref("");
-const selectedSlot = ref<DataRow | null>(null);
+const selectedSlot = ref<Schedule | null>(null);
 const confirmOpen = ref(false);
 
 const bookedTimes = computed(() => {
   const times = new Set<string>();
   registrations.value.forEach((reg) => {
-    const status = fieldText(reg, "status");
+    const status = reg.status || "";
     if (status === "CANCELLED") return;
-    const time = fieldText(reg, "appointmentTime", "");
+    const time = reg.appointmentTime || "";
     if (time) times.add(time);
   });
   return times;
 });
 
-function isSlotBooked(slot: DataRow) {
-  return bookedTimes.value.has(fieldText(slot, "startTime", ""));
+function isSlotBooked(slot: Schedule) {
+  return bookedTimes.value.has(slot.startTime || "");
 }
 
 const latestTriage = computed(() => triageHistory.value[0] ?? null);
 const assignedDoctorId = computed(() => toNumber(latestTriage.value?.assignedDoctorId, 0));
-const recommendedDepartment = computed(() => fieldText(latestTriage.value, "recommendedDepartment", ""));
+const recommendedDepartment = computed(() => latestTriage.value?.recommendedDepartment || "");
 const assignedDoctorSlots = computed(() => slots.value.filter((slot) => assignedDoctorId.value && toNumber(slot.doctorId) === assignedDoctorId.value));
 const recommendedDepartmentSlots = computed(() => slots.value.filter((slot) =>
-  !assignedDoctorId.value && (!recommendedDepartment.value || fieldText(slot, "departmentName", "").includes(recommendedDepartment.value))
+  !assignedDoctorId.value && (!recommendedDepartment.value || (slot.departmentName || "").includes(recommendedDepartment.value))
 ));
 const displaySlots = computed(() => {
   const source = assignedDoctorSlots.value.length
@@ -66,15 +66,15 @@ const guidanceValue = computed(() => {
   if (!assignedDoctorId.value) return recommendedDepartment.value || "暂无";
   const slotDoctor = slots.value.find((slot) => toNumber(slot.doctorId) === assignedDoctorId.value);
   const doctor = doctors.value.find((item) => toNumber(item.id) === assignedDoctorId.value);
-  return fieldText(slotDoctor, "doctorName", fieldText(doctor, "name", `医生 #${assignedDoctorId.value}`));
+  return slotDoctor?.doctorName || doctor?.name || `医生 #${assignedDoctorId.value}`;
 });
 const dateGroups = computed<DateGroup[]>(() => {
   const groups = new Map<string, DateGroup>();
   displaySlots.value.forEach((slot) => {
-    const time = fieldText(slot, "startTime", "");
+    const time = slot.startTime || "";
     const date = slotDateKey(time);
     if (!groups.has(date)) {
-      groups.set(date, { date, label: slotDateLabel(time), total: 0, slots: [] });
+      groups.set(date, { date, label: slotDateLabel(time), total: 0, slots: [] as Schedule[] });
     }
     const group = groups.get(date)!;
     group.total += 1;
@@ -84,22 +84,22 @@ const dateGroups = computed<DateGroup[]>(() => {
 });
 const activeDateGroup = computed(() => dateGroups.value.find((group) => group.date === selectedDate.value) ?? dateGroups.value[0]);
 const doctorGroups = computed<DoctorGroup[]>(() => {
-  const groups = new Map<string, { doctorName: string; departmentName: string; slots: DataRow[] }>();
+  const groups = new Map<string, { doctorName: string; departmentName: string; slots: Schedule[] }>();
   activeDateGroup.value?.slots.forEach((slot) => {
-    const key = fieldText(slot, "doctorId", fieldText(slot, "doctorName", "unknown"));
+    const key = String(slot.doctorId || slot.doctorName || "unknown");
     if (!groups.has(key)) {
       groups.set(key, {
-        doctorName: fieldText(slot, "doctorName", "未命名医生"),
-        departmentName: fieldText(slot, "departmentName", "未定科室"),
+        doctorName: slot.doctorName || "未命名医生",
+        departmentName: slot.departmentName || "未定科室",
         slots: [],
       });
     }
     groups.get(key)!.slots.push(slot);
   });
   return [...groups.entries()].map(([key, group]) => {
-    const periods = new Map<string, { key: string; label: string; slots: DataRow[] }>();
+    const periods = new Map<string, { key: string; label: string; slots: Schedule[] }>();
     group.slots.forEach((slot) => {
-      const period = slotPeriod(fieldText(slot, "startTime", ""));
+      const period = slotPeriod(slot.startTime || "");
       if (!periods.has(period.key)) {
         periods.set(period.key, { key: period.key, label: period.label, slots: [] });
       }
@@ -137,14 +137,14 @@ async function refresh() {
   }
 }
 
-function choose(slot: DataRow) {
+function choose(slot: Schedule) {
   if (isSlotBooked(slot)) return;
   selectedSlot.value = slot;
   confirmOpen.value = true;
 }
 
-function slotTimestamp(slot: DataRow) {
-  const value = Date.parse(fieldText(slot, "startTime", ""));
+function slotTimestamp(slot: Schedule) {
+  const value = Date.parse(slot.startTime || "");
   return Number.isFinite(value) ? value : Number.MAX_SAFE_INTEGER;
 }
 
@@ -160,8 +160,8 @@ function slotDateLabel(time: string) {
   return new Intl.DateTimeFormat("zh-CN", { month: "long", day: "numeric", weekday: "short" }).format(date);
 }
 
-function slotTimeText(slot: DataRow) {
-  const value = fieldText(slot, "startTime", "");
+function slotTimeText(slot: Schedule) {
+  const value = slot.startTime || "";
   if (!value || value === "-") return "待定";
   const time = value.includes("T") ? value.split("T")[1] : value.split(" ")[1];
   return time ? time.slice(0, 5) : value;
@@ -188,7 +188,7 @@ async function confirmAppointment() {
     await api.createRegistration({
       doctorId: toNumber(selectedSlot.value.doctorId),
       departmentId: toNumber(selectedSlot.value.departmentId),
-      appointmentTime: fieldText(selectedSlot.value, "startTime", ""),
+      appointmentTime: selectedSlot.value?.startTime || "",
       slotId: toNumber(selectedSlot.value.slotId) || null,
       triageRecordId: toNumber(triageHistory.value[0]?.triageRecordId, 0) || null,
     });
@@ -263,7 +263,7 @@ onMounted(refresh);
                   <article v-for="slot in period.slots" :key="String(slot.slotId)" class="slot-card" :class="{ selected: selectedSlot?.slotId === slot.slotId, booked: isSlotBooked(slot) }">
                     <div class="row-main">
                       <strong>{{ slotTimeText(slot) }}</strong>
-                      <p>余号 {{ fieldText(slot, "remainingCapacity", "0") }}/{{ fieldText(slot, "capacity", "0") }}</p>
+                      <p>余号 {{ String(slot.remainingCapacity ?? 0) }}/{{ String(slot.capacity ?? 0) }}</p>
                     </div>
                     <div class="toolbar">
                       <template v-if="isSlotBooked(slot)">

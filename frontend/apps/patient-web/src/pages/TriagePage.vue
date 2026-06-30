@@ -2,7 +2,7 @@
 import { computed, reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
-import { aiSourceLabel, aiSourceTone, api, fieldText, formatApiError, statusClass, statusText, usePagination, usePatientWorkflowStore } from "@smart-cloud-brain/shared-api";
+import { aiSourceLabel, aiSourceTone, api, formatApiError, statusClass, statusText, usePagination, usePatientWorkflowStore, type TriageRecord } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, FormField, LoadingState, PaginationBar, StatusTag, Toast } from "@smart-cloud-brain/shared-ui";
 import TriageResultModal from "../components/TriageResultModal.vue";
 
@@ -71,11 +71,11 @@ async function submit() {
           <LoadingState v-if="loading" title="正在分析症状" />
           <div v-else-if="triage" class="clinical-note">
             <StatusTag :status="statusText(triage.status)" :tone="statusClass(triage.status)" />
-            <span v-if="fieldText(triage, 'provider', '')" class="tag" :class="aiSourceTone(triage.provider)">
-              {{ aiSourceLabel(triage.provider) }} · {{ fieldText(triage, "provider") }}{{ fieldText(triage, "model", "") ? ` / ${fieldText(triage, "model")}` : "" }}
+            <span v-if="triage.provider || ''" class="tag" :class="aiSourceTone(triage.provider)">
+              {{ aiSourceLabel(triage.provider) }} · {{ triage.provider || "" }}{{ triage.model || "" ? ` / ${triage?.model || ""}` : "" }}
             </span>
-            <h3>{{ fieldText(triage, "recommendedDepartment", "待确认") }}</h3>
-            <p>{{ fieldText(triage, "reason", "暂无说明") }}</p>
+            <h3>{{ triage.recommendedDepartment || "待确认" }}</h3>
+            <p>{{ triage.reason || "暂无说明" }}</p>
           </div>
           <EmptyState v-else title="暂无分诊结果" />
         </div>
@@ -84,7 +84,7 @@ async function submit() {
         <header class="panel-header"><div class="panel-title"><h2>历史分诊</h2><p>用于回看最近症状和推荐记录。</p></div></header>
         <div class="list">
           <article v-for="item in pageRows" :key="String(item.triageRecordId)" class="list-row">
-            <div class="row-main"><strong>{{ fieldText(item, "recommendedDepartment", "待确认") }}</strong><p>{{ fieldText(item, "chiefComplaint") }}</p></div>
+            <div class="row-main"><strong>{{ item.recommendedDepartment || "待确认" }}</strong><p>{{ item.chiefComplaint || "" }}</p></div>
             <StatusTag :status="statusText(item.status)" :tone="statusClass(item.status)" />
           </article>
           <PaginationBar v-model="currentPage" :total="total" :page-size="pageSize" />

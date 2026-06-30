@@ -1,18 +1,18 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import { patientApi } from "../api";
-import type { DataRow } from "../types";
+import type { Department, Doctor, Patient, Prescription, Registration, Schedule, TriageRecord, MedicalRecord } from "../types";
 
 export const usePatientWorkflowStore = defineStore("patientWorkflow", () => {
-  const patient = ref<DataRow | null>(null);
-  const departments = ref<DataRow[]>([]);
-  const doctors = ref<DataRow[]>([]);
-  const triage = ref<DataRow | null>(null);
-  const triageHistory = ref<DataRow[]>([]);
-  const slots = ref<DataRow[]>([]);
-  const registrations = ref<DataRow[]>([]);
-  const records = ref<DataRow[]>([]);
-  const prescriptions = ref<DataRow[]>([]);
+  const patient = ref<Patient | null>(null);
+  const departments = ref<Department[]>([]);
+  const doctors = ref<Doctor[]>([]);
+  const triage = ref<TriageRecord | null>(null);
+  const triageHistory = ref<TriageRecord[]>([]);
+  const slots = ref<Schedule[]>([]);
+  const registrations = ref<Registration[]>([]);
+  const records = ref<MedicalRecord[]>([]);
+  const prescriptions = ref<Prescription[]>([]);
 
   async function refreshPublicData() {
     departments.value = await patientApi.departments();

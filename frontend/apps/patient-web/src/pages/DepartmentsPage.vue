@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import { RouterLink } from "vue-router";
-import { api, type DataRow, type PatientRecommendation } from "@smart-cloud-brain/shared-api";
+import { api, type Department, type Doctor, type PatientRecommendation } from "@smart-cloud-brain/shared-api";
 
 type DepartmentResource = {
   name: string;
@@ -10,12 +10,12 @@ type DepartmentResource = {
   preparation: string[];
 };
 
-const departments = ref<DataRow[]>([]);
+const departments = ref<Department[]>([]);
 const recommendedDepartments = ref<PatientRecommendation[]>([]);
 const loading = ref(true);
 const failed = ref(false);
 
-function normalizeDepartment(row: DataRow | PatientRecommendation): DepartmentResource {
+function normalizeDepartment(row: Department | PatientRecommendation): DepartmentResource {
   const name = String(("title" in row && row.title) || ("targetName" in row && row.targetName) || ("name" in row && row.name) || ("departmentName" in row && row.departmentName) || "未命名科室");
   return {
     name,
