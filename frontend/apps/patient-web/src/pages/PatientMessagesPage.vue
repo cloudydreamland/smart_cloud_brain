@@ -55,19 +55,19 @@ function normalizeType(value: string): MessageRow["type"] {
   return "系统通知";
 }
 
-async function refresh() {
-  loading.value = true;
+async function refresh(silent = false, showLoading = true) {
+  if (showLoading) loading.value = true;
   error.value = "";
   try {
     rows.value = await api.notifications(filter.value);
     loaded.value = true;
-    toast?.value?.success("数据已刷新", "消息数据已同步最新状态。");
+    if (!silent) toast?.value?.success("数据已刷新", "消息数据已同步最新状态。");
   } catch (err) {
     error.value = formatApiError(err, "消息加载失败，当前显示本地服务提醒");
     rows.value = [];
-    toast?.value?.error("刷新失败", "请检查网络后重试。");
+    if (!silent) toast?.value?.error("刷新失败", "请检查网络后重试。");
   } finally {
-    loading.value = false;
+    if (showLoading) loading.value = false;
   }
 }
 
@@ -86,7 +86,7 @@ async function markRead(item: MessageRow) {
   }
 }
 
-onMounted(refresh);
+onMounted(() => refresh(true, false));
 </script>
 
 <template>
@@ -97,7 +97,7 @@ onMounted(refresh);
         <h2>通知与提醒</h2>
         <p>集中查看预约提醒、诊后资料通知和系统服务公告。</p>
       </div>
-      <button type="button" :disabled="loading" @click="refresh">
+      <button type="button" :disabled="loading" @click="refresh()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="{ 'spin': loading }"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
         刷新
       </button>

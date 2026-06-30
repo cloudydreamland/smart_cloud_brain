@@ -133,11 +133,8 @@
   font-weight: 700;
 }
 
-.analytics-date-field input {
-  height: 36px;
-  border-radius: 9px;
-  background: rgba(255, 255, 255, 0.92);
-  font-size: 12px;
+.analytics-date-field .scb-date-picker {
+  width: 168px;
 }
 
 .analytics-date-separator {

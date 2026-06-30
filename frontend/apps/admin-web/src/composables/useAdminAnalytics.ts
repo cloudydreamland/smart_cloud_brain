@@ -1,4 +1,4 @@
-import { computed, markRaw, ref, type ComputedRef, type Ref } from "vue";
+import { computed, inject, markRaw, ref, type ComputedRef, type Ref } from "vue";
 import { storeToRefs } from "pinia";
 import {
   IconAlertTriangle,
@@ -22,6 +22,7 @@ import {
   type StatisticsReportRow,
   type StatisticsTrendRow,
 } from "@smart-cloud-brain/shared-api";
+import type { Toast } from "@smart-cloud-brain/shared-ui";
 
 const DAY_MS = 86_400_000;
 
@@ -46,7 +47,7 @@ export interface AdminAnalyticsState {
       sub?: string;
     }[]
   >;
-  refresh: () => Promise<void>;
+  refresh: (silent?: boolean) => Promise<void>;
   exportCsv: () => Promise<void>;
 }
 
@@ -55,6 +56,8 @@ export function useAdminAnalytics(): AdminAnalyticsState {
   const exporting = ref(false);
   const loaded = ref(false);
   const error = ref("");
+  let toast: Ref<InstanceType<typeof Toast>> | null = null;
+  try { toast = inject<Ref<InstanceType<typeof Toast>>>("toast") ?? null; } catch { toast = null; }
   const startDate = ref(
     new Date(Date.now() - 14 * DAY_MS).toISOString().slice(0, 10),
   );
@@ -127,7 +130,7 @@ export function useAdminAnalytics(): AdminAnalyticsState {
     },
   ]);
 
-  async function refresh() {
+  async function refresh(silent = false) {
     loading.value = true;
     error.value = "";
     try {
@@ -151,8 +154,10 @@ export function useAdminAnalytics(): AdminAnalyticsState {
       distribution.value = nextDistribution as PatientDistribution;
       deviceUsage.value = nextDeviceUsage as DeviceUsageStatsRow[];
       loaded.value = true;
+      if (!silent) toast?.value?.success("数据已刷新", "运营数据已同步最新状态。");
     } catch (err) {
       error.value = formatApiError(err, "运营统计数据加载失败");
+      if (!silent) toast?.value?.error("刷新失败", "请检查网络后重试。");
     } finally {
       loading.value = false;
     }

@@ -14,20 +14,22 @@ const error = ref("");
 const toast = inject<Ref<InstanceType<typeof Toast>>>("toast");
 const selected = ref<MedicalRecord | null>(null);
 
-async function refresh() {
-  loading.value = true;
+async function refresh(silent = false, showLoading = true) {
+  if (showLoading) loading.value = true;
   error.value = "";
   try {
     await workflow.refreshAuthenticated();
     loaded.value = true;
-    toast?.value?.success("数据已刷新", "病历数据已同步最新状态。");
+    if (!silent) toast?.value?.success("数据已刷新", "病历数据已同步最新状态。");
   } catch (err) {
-    error.value = formatApiError(err, "病历记录加载失败");
-    toast?.value?.error("刷新失败", "请检查网络后重试。");
+    error.value = formatApiError(err, "病历加载失败，请稍后重试。");
+    if (!silent) toast?.value?.error("刷新失败", "请检查网络后重试。");
   } finally {
-    loading.value = false;
+    if (showLoading) loading.value = false;
   }
 }
+
+onMounted(() => refresh(true, false));
 
 async function open(item: MedicalRecord) {
   const id = recordId(item);
@@ -51,7 +53,6 @@ function recordId(item: MedicalRecord) {
   return Number.isFinite(value) && value > 0 ? value : 0;
 }
 
-onMounted(refresh);
 </script>
 
 <template>
@@ -62,7 +63,7 @@ onMounted(refresh);
         <h2>病历记录</h2>
         <p>医生保存后同步到患者服务，便于复诊前回看诊断、主诉和医嘱。</p>
       </div>
-      <button type="button" :disabled="loading" @click="refresh">
+      <button type="button" :disabled="loading" @click="refresh()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="{ 'spin': loading }"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
         刷新
       </button>

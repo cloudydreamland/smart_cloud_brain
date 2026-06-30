@@ -32,7 +32,7 @@
     <view class="panel">
       <view class="panel-head">
         <text class="section-title">就诊人列表</text>
-        <button class="ghost small" :disabled="busy" @click="refresh">刷新</button>
+        <button class="ghost small" :disabled="busy" @click="refresh()">刷新</button>
       </view>
       <view v-for="item in rows" :key="String(item.id || item.visitorId)" class="record">
         <text class="strong">{{ item.name || "未命名" }}</text>

@@ -20,7 +20,7 @@ const analytics = useAdminAnalytics();
 provide("adminAnalytics", analytics);
 
 onMounted(() => {
-  analytics.refresh();
+  analytics.refresh(true);
 });
 </script>
 

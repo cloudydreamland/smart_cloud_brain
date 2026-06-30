@@ -21,7 +21,7 @@
     <view class="panel">
       <view class="panel-head">
         <text class="section-title">快捷入口</text>
-        <button class="ghost small" :disabled="busy" @click="refresh">刷新</button>
+        <button class="ghost small" :disabled="busy" @click="refresh()">刷新</button>
       </view>
       <view class="quick-grid">
         <button class="quick" @click="go('/pages/public/home')">医院首页</button>

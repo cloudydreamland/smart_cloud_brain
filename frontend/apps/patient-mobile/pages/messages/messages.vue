@@ -12,7 +12,7 @@
     <view class="panel">
       <view class="panel-head">
         <text class="section-title">消息列表</text>
-        <button class="ghost small" :disabled="busy" @click="refresh">刷新</button>
+        <button class="ghost small" :disabled="busy" @click="refresh()">刷新</button>
       </view>
       <view v-for="item in messages" :key="String(item.id) + item.title" class="record" @click="markRead(item)">
         <text class="strong">{{ item.title }}</text>

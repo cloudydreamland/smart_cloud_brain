@@ -9,7 +9,7 @@
     <view class="panel">
       <view class="panel-head">
         <text class="section-title">预约记录</text>
-        <button class="ghost small" :disabled="busy" @click="refresh">刷新</button>
+        <button class="ghost small" :disabled="busy" @click="refresh()">刷新</button>
       </view>
       <view v-for="item in rows" :key="String(item.registrationId)" class="record">
         <text class="strong">{{ item.departmentName || "门诊" }} · {{ item.doctorName || "医生待定" }}</text>

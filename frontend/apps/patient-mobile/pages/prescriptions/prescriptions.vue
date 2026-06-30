@@ -9,7 +9,7 @@
     <view class="panel">
       <view class="panel-head">
         <text class="section-title">处方记录</text>
-        <button class="ghost small" :disabled="busy" @click="refresh">刷新</button>
+        <button class="ghost small" :disabled="busy" @click="refresh()">刷新</button>
       </view>
       <view v-for="item in rows" :key="String(item.prescriptionId)" class="record" @click="open(item)">
         <text class="strong">处方 #{{ item.prescriptionId || "-" }}</text>

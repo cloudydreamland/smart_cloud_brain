@@ -1,8 +1,10 @@
 /* ── TopBar buttons ── */
 .topbar-btn {
-  height: 32px; padding: 0 12px; border: 1px solid var(--line); border-radius: var(--radius-xs);
+  height: 32px; padding: 0 12px; min-width: 84px; border: 1px solid var(--line); border-radius: var(--radius-xs);
   background: var(--surface); font-size: 12px; font-weight: 600; color: var(--ink);
   transition: background 0.15s ease, border-color 0.15s ease;
+  display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+  white-space: nowrap;
 }
 .topbar-btn:hover { background: var(--surface-alt); border-color: var(--primary); }
 .topbar-btn.danger { color: var(--red); border-color: var(--color-red-200); }
@@ -116,14 +118,7 @@
     padding: 14px;
   }
 
-  .notification-filter-menu {
-    position: relative;
-    top: 4px;
-    right: auto;
-    left: auto;
-    width: 100%;
-    box-shadow: var(--shadow);
-  }
+
 
   .notification-task-row {
     grid-template-columns: 1fr;

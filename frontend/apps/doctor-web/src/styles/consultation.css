@@ -9,13 +9,13 @@
 .consultation-workbench .patient-context {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(200px, 0.45fr) minmax(0, 1.5fr) auto;
-  align-items: stretch;
-  gap: 18px;
-  padding: 16px;
+  grid-template-columns: minmax(180px, 0.28fr) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 15px;
   overflow: hidden;
   border: 1px solid rgba(203, 217, 222, 0.8);
-  border-radius: 24px;
+  border-radius: 18px;
   background: rgba(255, 255, 255, 0.86);
   box-shadow: var(--shadow);
   backdrop-filter: blur(20px);
@@ -28,7 +28,7 @@
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(circle at 0 0, rgba(11, 95, 120, 0.1), transparent 34%),
+    radial-gradient(circle at 0 0, rgba(11, 95, 120, 0.08), transparent 28%),
     linear-gradient(90deg, rgba(255, 255, 255, 0.65), transparent);
 }
 
@@ -60,35 +60,50 @@
 }
 
 .consultation-workbench .patient-title strong {
-  font-size: 22px;
+  font-size: 24px;
   letter-spacing: -0.02em;
 }
 
-.consultation-workbench .patient-grid {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(86px, 1fr));
-  gap: 8px;
+.consultation-workbench .patient-status-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.consultation-workbench .patient-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
   min-width: 0;
 }
 
-.consultation-workbench .patient-grid div {
+.consultation-workbench .patient-chip {
   min-width: 0;
-  padding: 10px 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 0 10px;
   border: 1px solid rgba(223, 231, 234, 0.76);
-  border-radius: 14px;
+  border-radius: 10px;
   background: rgba(248, 250, 251, 0.76);
 }
 
-.consultation-workbench .patient-grid b {
-  display: block;
-  margin-bottom: 5px;
+.consultation-workbench .patient-chip b {
   color: var(--muted);
   font-size: 11px;
   font-weight: 700;
+  white-space: nowrap;
 }
 
-.consultation-workbench .patient-grid span {
-  display: block;
+.consultation-workbench .patient-chip span {
+  min-width: 0;
   overflow: hidden;
   color: var(--ink);
   font-size: 12px;
@@ -138,7 +153,7 @@
 
 .consultation-workbench .consult-layout {
   display: grid;
-  grid-template-columns: clamp(340px, 24vw, 420px) minmax(0, 1fr);
+  grid-template-columns: clamp(320px, 22vw, 360px) minmax(0, 1fr);
   align-items: start;
   gap: 16px;
 }
@@ -166,8 +181,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  min-height: 48px;
-  padding: 12px 15px;
+  min-height: 46px;
+  padding: 10px 14px;
   border-bottom: 1px solid rgba(223, 231, 234, 0.72);
   background: linear-gradient(180deg, rgba(248, 250, 251, 0.92), rgba(255, 255, 255, 0.72));
 }
@@ -191,18 +206,16 @@
 }
 
 .consultation-workbench .panel-body {
-  padding: 14px 15px;
+  padding: 12px 14px;
 }
 
 .consultation-workbench .triage-level {
   display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
-  padding: 12px;
+  gap: 9px;
+  margin-bottom: 10px;
+  padding: 11px;
   border: 1px solid rgba(181, 106, 8, 0.18);
-  border-radius: 16px;
+  border-radius: 13px;
   background: linear-gradient(135deg, rgba(255, 245, 223, 0.85), rgba(255, 255, 255, 0.78));
 }
 
@@ -221,13 +234,13 @@
 
 .consultation-workbench .vitals {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .consultation-workbench .vital {
-  padding: 10px;
+  padding: 9px 10px;
   border: 1px solid rgba(223, 231, 234, 0.8);
   border-radius: 14px;
   background: var(--surface-alt);
@@ -258,7 +271,7 @@
 }
 
 .consultation-workbench .dl-grid div {
-  padding: 10px;
+  padding: 9px 10px;
   border: 1px solid rgba(223, 231, 234, 0.68);
   border-radius: 13px;
   background: rgba(248, 250, 251, 0.78);
@@ -305,7 +318,7 @@
 
 .consultation-workbench .table-wrap {
   max-width: 100%;
-  max-height: 244px;
+  max-height: 228px;
   overflow: auto;
   scrollbar-gutter: stable;
   border-top: 1px solid rgba(223, 231, 234, 0.72);
@@ -315,6 +328,52 @@
 .consultation-workbench .prescription-table-wrap {
   width: 100%;
   margin: 0;
+  max-height: none;
+  overflow: visible;
+}
+
+.consultation-workbench .drug-catalog-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 12px 14px;
+  padding: 10px 11px;
+  border: 1px solid rgba(11, 95, 120, 0.18);
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(224, 242, 241, 0.72), rgba(255, 255, 255, 0.86));
+}
+
+.consultation-workbench .drug-catalog-bar.danger {
+  border-color: rgba(180, 35, 24, 0.18);
+  background: linear-gradient(135deg, rgba(255, 240, 237, 0.92), rgba(255, 255, 255, 0.78));
+}
+
+.consultation-workbench .drug-catalog-bar div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.consultation-workbench .drug-catalog-bar strong {
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.consultation-workbench .drug-catalog-bar span {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.consultation-workbench .drug-catalog-bar .action-btn {
+  flex: 0 0 auto;
+  min-height: 30px;
+  padding: 0 10px;
+  font-size: 11px;
 }
 
 .consultation-workbench .table-wrap::-webkit-scrollbar {
@@ -328,7 +387,7 @@
 }
 
 .consultation-workbench .data-table {
-  min-width: 468px;
+  min-width: 0;
   width: 100%;
   border-collapse: collapse;
   font-size: 12px;
@@ -336,32 +395,32 @@
 }
 
 .consultation-workbench .prescription-table {
-  width: 468px;
+  width: 100%;
 }
 
 .consultation-workbench .data-table th:nth-child(1),
 .consultation-workbench .data-table td:nth-child(1) {
-  width: 150px;
+  width: 42%;
 }
 
 .consultation-workbench .data-table th:nth-child(2),
 .consultation-workbench .data-table td:nth-child(2) {
-  width: 86px;
+  width: 16%;
 }
 
 .consultation-workbench .data-table th:nth-child(3),
 .consultation-workbench .data-table td:nth-child(3) {
-  width: 76px;
+  width: 14%;
 }
 
 .consultation-workbench .data-table th:nth-child(4),
 .consultation-workbench .data-table td:nth-child(4) {
-  width: 80px;
+  width: 14%;
 }
 
 .consultation-workbench .data-table th:nth-child(5),
 .consultation-workbench .data-table td:nth-child(5) {
-  width: 68px;
+  width: 14%;
 }
 
 .consultation-workbench .data-table th {
@@ -378,7 +437,7 @@
 }
 
 .consultation-workbench .data-table td {
-  padding: 8px 9px;
+  padding: 7px 6px;
   border-bottom: 1px solid rgba(223, 231, 234, 0.7);
   transition: background 0.15s ease;
   vertical-align: middle;
@@ -391,7 +450,7 @@
 .consultation-workbench .data-table input {
   width: 100%;
   height: 30px;
-  padding: 0 8px;
+  padding: 0 7px;
   border: 1px solid var(--line);
   border-radius: 9px;
   background: var(--color-white);
@@ -402,8 +461,8 @@
 
 .consultation-workbench .data-table button {
   min-height: 28px;
-  padding: 0 8px;
-  font-size: 12px;
+  padding: 0 7px;
+  font-size: 11px;
 }
 
 .consultation-workbench .data-table input:focus {
@@ -419,8 +478,8 @@
 .consultation-workbench .risk-note {
   display: grid;
   gap: 6px;
-  margin: 12px 15px 0;
-  padding: 11px 12px;
+  margin: 10px 14px 0;
+  padding: 10px 11px;
   border: 1px solid rgba(180, 35, 24, 0.18);
   border-radius: 14px;
   background: linear-gradient(135deg, rgba(255, 240, 237, 0.92), rgba(255, 255, 255, 0.78));
@@ -436,6 +495,7 @@
 .consultation-workbench .record-panel {
   min-height: calc(100vh - 174px);
   min-width: 0;
+  box-shadow: 0 18px 44px rgba(15, 35, 42, 0.1);
 }
 
 .consultation-workbench .record-status {
@@ -450,8 +510,8 @@
 .consultation-workbench .editor-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  padding: 15px;
+  gap: 13px;
+  padding: 16px;
 }
 
 .consultation-workbench .editor-grid .full {
@@ -491,13 +551,13 @@
 }
 
 .consultation-workbench .field input {
-  height: 36px;
-  padding: 0 11px;
+  height: 40px;
+  padding: 0 12px;
 }
 
 .consultation-workbench .field textarea {
-  min-height: 66px;
-  padding: 9px 11px;
+  min-height: 78px;
+  padding: 10px 12px;
   resize: vertical;
 }
 
@@ -520,8 +580,8 @@
 }
 
 .consultation-workbench .prompt-box textarea {
-  min-height: 96px;
-  padding: 14px 16px 8px;
+  min-height: 112px;
+  padding: 15px 16px 8px;
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -535,7 +595,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  padding: 8px;
+  padding: 9px;
   border-top: 1px solid rgba(223, 231, 234, 0.65);
 }
 
@@ -552,6 +612,11 @@
   font-weight: 800;
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease;
+}
+.consultation-workbench .prompt-chip:focus-visible {
+  border-color: var(--primary, #0b5f78);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(11, 95, 120, 0.12);
 }
 .consultation-workbench .prompt-chip:hover {
   background: var(--primary-soft, #e0f2f1);
@@ -669,7 +734,7 @@
   }
 
   .consultation-workbench .consult-layout {
-    grid-template-columns: minmax(310px, 380px) minmax(0, 1fr);
+    grid-template-columns: minmax(300px, 340px) minmax(0, 1fr);
   }
 }
 
@@ -693,9 +758,14 @@
   }
 
   .consultation-workbench .patient-grid,
+  .consultation-workbench .patient-chip-row,
   .consultation-workbench .vitals,
   .consultation-workbench .editor-grid {
     grid-template-columns: 1fr;
+  }
+
+  .consultation-workbench .patient-chip-row {
+    display: grid;
   }
 
   .consultation-workbench .editor-grid .full {
@@ -714,4 +784,51 @@
   .consultation-workbench .notice-stack {
     grid-template-columns: 1fr;
   }
+
+  .consultation-workbench .drug-catalog-bar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .consultation-workbench .drug-catalog-bar .action-btn {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .consultation-workbench .prescription-table,
+  .consultation-workbench .prescription-table thead,
+  .consultation-workbench .prescription-table tbody,
+  .consultation-workbench .prescription-table tr,
+  .consultation-workbench .prescription-table th,
+  .consultation-workbench .prescription-table td {
+    display: block;
+    width: 100% !important;
+  }
+
+  .consultation-workbench .prescription-table thead {
+    display: none;
+  }
+
+  .consultation-workbench .prescription-table tr {
+    padding: 8px;
+    border-bottom: 1px solid rgba(223, 231, 234, 0.7);
+  }
+
+  .consultation-workbench .prescription-table td {
+    padding: 5px 0;
+    border-bottom: 0;
+  }
+
+  .consultation-workbench .prescription-table td::before {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 900;
+  }
+
+  .consultation-workbench .prescription-table td:nth-child(1)::before { content: "药品目录"; }
+  .consultation-workbench .prescription-table td:nth-child(2)::before { content: "剂量"; }
+  .consultation-workbench .prescription-table td:nth-child(3)::before { content: "频次"; }
+  .consultation-workbench .prescription-table td:nth-child(4)::before { content: "用法"; }
 }

@@ -1,9 +1,150 @@
+.records-workbench .panel-body {
+  gap: 14px;
+}
+
+.records-hero {
+  align-items: center;
+}
+
+.records-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.records-summary-item {
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(223, 231, 234, 0.82);
+  border-radius: 12px;
+  background: rgba(248, 250, 251, 0.86);
+}
+
+.records-summary-item span {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.records-summary-item strong {
+  display: block;
+  margin-top: 5px;
+  color: var(--ink);
+  font-size: 20px;
+  letter-spacing: -0.02em;
+}
+
+.records-filter-bar {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+}
+
+.records-search {
+  display: grid;
+  gap: 6px;
+}
+
+.records-search > span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.records-search-box {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) 28px;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 9px 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.records-search-box:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(11, 95, 120, 0.1);
+}
+
+.records-search-box svg {
+  color: var(--muted);
+}
+
+.records-search-box input {
+  min-width: 0;
+  height: 38px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  outline: none;
+}
+
+.records-search-box button {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.records-search-box button:hover,
+.records-search-box button:focus-visible {
+  background: var(--surface-alt);
+  color: var(--ink);
+  outline: none;
+}
+
+.records-source-filter {
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.records-source-filter button {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.records-source-filter button + button {
+  border-left: 1px solid var(--line);
+}
+
+.records-source-filter button:hover {
+  background: var(--surface-alt);
+  color: var(--ink);
+}
+
+.records-source-filter button.active {
+  background: var(--primary);
+  color: var(--color-white);
+}
+
 /* ── Card Grid ── */
 .card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 14px;
-  padding: 16px;
+  padding: 0;
 }
 .record-card {
   background: var(--surface);
@@ -48,14 +189,94 @@
 /* ── Records List View ── */
 .card-grid.list-view { grid-template-columns: 1fr; gap: 10px; }
 .card-grid.list-view .record-card {
-  display: grid; grid-template-columns: 1fr auto; gap: 0;
-  padding: 14px 18px; align-items: start;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(190px, 0.34fr) auto;
+  gap: 14px;
+  padding: 13px 14px;
+  align-items: center;
 }
 .card-grid.list-view .record-card:hover { box-shadow: var(--shadow); }
 .list-left { min-width: 0; }
 .list-title-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
 .list-title-row .tag { flex-shrink: 0; }
 .list-title-row strong { font-size: 14px; white-space: nowrap; }
-.list-left p { font-size: 13px; color: var(--muted); margin: 0; line-height: 1.7; }
+.list-left p {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 8px;
+  overflow: hidden;
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0;
+  line-height: 1.55;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.list-left p b {
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.list-meta {
+  min-width: 0;
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+}
+
+.list-meta time {
+  overflow: hidden;
+  max-width: 100%;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .list-detail { align-self: center; flex-shrink: 0; margin-left: 16px; }
 .list-detail button { height: 32px; padding: 0 14px; }
+
+.records-empty-inline {
+  display: grid;
+  place-items: center;
+  min-height: 120px;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .records-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .records-filter-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .records-source-filter {
+    width: 100%;
+  }
+
+  .records-source-filter button {
+    flex: 1;
+  }
+
+  .card-grid.list-view .record-card {
+    grid-template-columns: 1fr;
+  }
+
+  .list-detail {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 560px) {
+  .records-summary {
+    grid-template-columns: 1fr;
+  }
+}

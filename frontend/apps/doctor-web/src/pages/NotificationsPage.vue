@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject, onMounted, ref, watch, type Ref } from "vue";
+import { computed, inject, nextTick, onBeforeUnmount, onMounted, ref, watch, type Ref } from "vue";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import {
@@ -30,7 +30,6 @@ import {
   primaryActionLabel,
 } from "../composables/useNotificationFilters";
 
-const emit = defineEmits<{ refresh: [] }>();
 const workflow = useDoctorWorkflowStore();
 const router = useRouter();
 const { notifications, registrations } = storeToRefs(workflow);
@@ -46,8 +45,30 @@ const toast = inject<Ref<InstanceType<typeof Toast>>>("toast");
 const {
   search, readFilter, handleFilter, typeFilter, riskFilter, sortBy,
   openFilter, openActionMenu, filteredRows,
-  filterValue, setFilterValue, filterLabel, toggleActionMenu,
+  filterValue, setFilterValue, filterLabel, toggleActionMenu, closeMenus,
 } = useNotificationFilters(() => allRows.value);
+
+/* ── Teleport 筛选菜单定位（ScbSelect 模式） ── */
+const filterTriggerRefs = ref<Record<string, HTMLElement>>({});
+const filterMenuStyle = ref<Record<string, string>>({});
+
+function positionFilterMenu() {
+  const key = openFilter.value;
+  if (!key) return;
+  nextTick(() => {
+    const el = filterTriggerRefs.value[key];
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const MENU_MAX_H = 300;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const openAbove = spaceBelow < MENU_MAX_H + 8 && rect.top > spaceBelow;
+    filterMenuStyle.value = openAbove
+      ? { position: "fixed", left: `${rect.left}px`, top: `${rect.top - 6}px`, transform: "translateY(-100%)", width: `${rect.width}px`, maxHeight: `${MENU_MAX_H}px`, zIndex: "9999" }
+      : { position: "fixed", left: `${rect.left}px`, top: `${rect.bottom + 6}px`, width: `${rect.width}px`, maxHeight: `${MENU_MAX_H}px`, zIndex: "9999" };
+  });
+}
+
+watch(openFilter, () => { if (openFilter.value) positionFilterMenu(); });
 
 const stats = computed(() => {
   const all = allRows.value.length ? allRows.value : displayNotifications.value;
@@ -69,19 +90,19 @@ watch(displayNotifications, (value) => {
   allRows.value = [...value];
 });
 
-async function refresh() {
-  loading.value = true;
+async function refresh(silent = false, showLoading = true) {
+  if (showLoading) loading.value = true;
   error.value = "";
   try {
     await workflow.refresh();
     allRows.value = [...displayNotifications.value];
     loaded.value = true;
-    toast?.value?.success("数据已刷新", "通知数据已同步最新状态。");
+    if (!silent) toast?.value?.success("数据已刷新", "通知数据已同步最新状态。");
   } catch (err) {
-    error.value = formatApiError(err, "通知列表加载失败，请稍后重试。");
-    toast?.value?.error("刷新失败", "请检查网络后重试。");
+    error.value = formatApiError(err, "通知加载失败，请稍后重试。");
+    if (!silent) toast?.value?.error("刷新失败", "请检查网络后重试。");
   } finally {
-    loading.value = false;
+    if (showLoading) loading.value = false;
   }
 }
 
@@ -92,7 +113,6 @@ async function markRead(item = selected.value) {
   try {
     await api.markNotificationRead(toNumber(item.notificationId));
     selected.value = null;
-    emit("refresh");
     await refresh();
     toast?.value?.success("已标记为已读", displayText(item.title));
   } catch (err) {
@@ -111,7 +131,6 @@ async function handleNotificationAction(item: Notification | null, handleStatus:
   try {
     await api.handleNotification(toNumber(item.notificationId), handleStatus);
     selected.value = null;
-    emit("refresh");
     await refresh();
     toast?.value?.success(handleStatus === "HANDLED" ? "已标记为已处理" : "已忽略通知", displayText(item.title));
   } catch (err) {
@@ -154,7 +173,16 @@ function goProcess(item: Notification) {
   }
 }
 
-onMounted(refresh);
+onMounted(() => {
+  refresh(true, false);
+  window.addEventListener("scroll", closeMenus, true);
+  window.addEventListener("resize", closeMenus);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("scroll", closeMenus, true);
+  window.removeEventListener("resize", closeMenus);
+});
 </script>
 
 <template>
@@ -164,7 +192,7 @@ onMounted(refresh);
         <p class="eyebrow">待办与通知</p>
         <h2>通知中心</h2>
       </div>
-      <button class="refresh-btn" type="button" :disabled="loading" @click="refresh">
+      <button class="refresh-btn" type="button" :disabled="loading" @click="refresh()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="{ 'spin': loading }"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
         刷新
       </button>
@@ -233,6 +261,7 @@ onMounted(refresh);
         <div class="notification-toolbar-row filters">
           <div v-for="group in filterGroups" :key="group.key" class="notification-filter" @click.stop>
             <button
+              :ref="(el: any) => { if (el) filterTriggerRefs[group.key] = el }"
               class="notification-filter-trigger"
               type="button"
               :aria-expanded="openFilter === group.key"
@@ -245,22 +274,24 @@ onMounted(refresh);
                 <path d="m6 9 6 6 6-6" />
               </svg>
             </button>
-            <div v-if="openFilter === group.key" class="notification-filter-menu" role="listbox">
-              <button
-                v-for="option in group.options"
-                :key="option.value"
-                type="button"
-                role="option"
-                :aria-selected="filterValue(group.key) === option.value"
-                :class="{ selected: filterValue(group.key) === option.value }"
-                @click="setFilterValue(group.key, option.value)"
-              >
-                <span>{{ option.label }}</span>
-                <svg v-if="filterValue(group.key) === option.value" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="m20 6-11 11-5-5" />
-                </svg>
-              </button>
-            </div>
+            <Teleport to="body">
+              <div v-if="openFilter === group.key" class="notification-filter-menu" role="listbox" :style="filterMenuStyle">
+                <button
+                  v-for="option in group.options"
+                  :key="option.value"
+                  type="button"
+                  role="option"
+                  :aria-selected="filterValue(group.key) === option.value"
+                  :class="{ selected: filterValue(group.key) === option.value }"
+                  @click="setFilterValue(group.key, option.value)"
+                >
+                  <span>{{ option.label }}</span>
+                  <svg v-if="filterValue(group.key) === option.value" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m20 6-11 11-5-5" />
+                  </svg>
+                </button>
+              </div>
+            </Teleport>
           </div>
         </div>
       </div>

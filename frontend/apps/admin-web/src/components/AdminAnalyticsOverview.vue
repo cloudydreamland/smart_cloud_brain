@@ -6,7 +6,7 @@ import {
   IconLoader2,
   IconRefresh,
 } from "@tabler/icons-vue";
-import { ErrorState } from "@smart-cloud-brain/shared-ui";
+import { DatePicker, ErrorState } from "@smart-cloud-brain/shared-ui";
 
 const {
   loading,
@@ -32,20 +32,20 @@ const {
         <h2 id="analytics-title">运营数据概览</h2>
       </div>
       <div class="analytics-toolbar">
-        <label class="analytics-date-field">
+        <div class="analytics-date-field">
           <span>开始日期</span>
-          <input v-model="startDate" type="date" />
-        </label>
+          <DatePicker v-model="startDate" aria-label="运营概览开始日期" :clearable="false" />
+        </div>
         <span class="analytics-date-separator" aria-hidden="true">至</span>
-        <label class="analytics-date-field">
+        <div class="analytics-date-field">
           <span>结束日期</span>
-          <input v-model="endDate" type="date" />
-        </label>
+          <DatePicker v-model="endDate" aria-label="运营概览结束日期" :clearable="false" />
+        </div>
         <button
           class="analytics-button"
           type="button"
           :disabled="loading"
-          @click="refresh"
+          @click="refresh()"
         >
           <IconLoader2
             v-if="loading"
@@ -78,7 +78,7 @@ const {
       title="统计数据暂不可用"
       :message="error"
     >
-      <button type="button" @click="refresh">重新加载</button>
+      <button type="button" @click="refresh()">重新加载</button>
     </ErrorState>
 
     <div

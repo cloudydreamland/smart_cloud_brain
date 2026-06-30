@@ -331,7 +331,16 @@
   color: var(--muted);
 }
 
-.notification-filter-menu,
+.notification-filter-menu {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+  min-width: 180px;
+  padding: 5px;
+}
+
 .notification-action-popover {
   position: absolute;
   z-index: 30;
@@ -340,14 +349,6 @@
   border-radius: 12px;
   background: var(--surface);
   box-shadow: var(--shadow-lg);
-}
-
-.notification-filter-menu {
-  top: calc(100% + 6px);
-  right: 0;
-  left: 0;
-  min-width: 180px;
-  padding: 5px;
 }
 
 .notification-filter-menu button,

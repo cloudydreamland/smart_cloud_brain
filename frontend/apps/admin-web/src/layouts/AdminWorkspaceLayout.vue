@@ -39,16 +39,16 @@ const navGroups = computed(() => [
   ] },
 ]);
 
-async function refresh() {
+async function refresh(silent = false, showLoading = true) {
   if (!session.value || !auth.requireRole("ADMIN")) return;
-  loading.value = true;
+  if (showLoading) loading.value = true;
   try {
     await workflow.refresh();
-    toastRef.value?.success("数据已刷新", "所有模块数据已同步最新状态。");
+    if (!silent) toastRef.value?.success("数据已刷新", "所有模块数据已同步最新状态。");
   } catch {
-    toastRef.value?.error("刷新失败", "请检查网络后重试。");
+    if (!silent) toastRef.value?.error("刷新失败", "请检查网络后重试。");
   } finally {
-    loading.value = false;
+    if (showLoading) loading.value = false;
   }
 }
 function logout() {
@@ -58,7 +58,7 @@ function logout() {
 
 onMounted(async () => {
   unbind = auth.bindUnauthorized();
-  await refresh();
+  await refresh(true, false);
 });
 
 onBeforeUnmount(() => unbind?.());
@@ -87,7 +87,7 @@ onBeforeUnmount(() => unbind?.());
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
             Dify
           </a>
-          <button type="button" class="topbar-btn ghost" :disabled="loading" @click="refresh">
+          <button type="button" class="topbar-btn ghost" :disabled="loading" @click="refresh()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="{ 'spin': loading }"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
             刷新
           </button>

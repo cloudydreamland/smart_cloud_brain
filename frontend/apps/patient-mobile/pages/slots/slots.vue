@@ -18,7 +18,7 @@
         <text class="tag">分诊推荐</text>
         <text class="muted">{{ guidanceText }}</text>
       </view>
-      <button class="ghost" :disabled="busy" @click="refresh">刷新号源</button>
+      <button class="ghost" :disabled="busy" @click="refresh()">刷新号源</button>
     </view>
 
     <view class="panel">

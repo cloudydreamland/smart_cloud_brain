@@ -170,16 +170,18 @@ function displayCell(column: string, value: unknown) {
   return String(value ?? "");
 }
 
-async function refresh() {
-  loading.value = true;
+async function refresh(silent = false, showLoading = true) {
+  if (showLoading) loading.value = true;
   error.value = "";
   try {
     await workflow.refresh();
     loaded.value = true;
+    if (!silent) toast?.value?.success("数据已刷新", `${config.value.title}数据已同步最新状态。`);
   } catch (err) {
     error.value = formatApiError(err, "列表加载失败");
+    if (!silent) toast?.value?.error("刷新失败", "请检查网络后重试。");
   } finally {
-    loading.value = false;
+    if (showLoading) loading.value = false;
   }
 }
 
@@ -245,7 +247,7 @@ async function save() {
     editorOpen.value = false;
     toast?.value?.success("保存成功", `${config.value.title}已保存`);
     emit("refresh");
-    await refresh();
+    await refresh(true);
   } catch (err) {
     error.value = formatApiError(err, "保存失败");
   } finally {
@@ -253,7 +255,7 @@ async function save() {
   }
 }
 
-refresh();
+refresh(true, false);
 </script>
 
 <template>
@@ -262,7 +264,7 @@ refresh();
       <header class="panel-header">
         <div class="panel-title"><h2>{{ config.title }}</h2></div>
         <div class="toolbar">
-          <button type="button" :disabled="loading" @click="refresh">
+          <button type="button" :disabled="loading" @click="refresh()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="{ 'spin': loading }"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
             刷新
           </button>

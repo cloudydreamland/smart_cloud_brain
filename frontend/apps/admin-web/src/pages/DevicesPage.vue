@@ -2,7 +2,7 @@
 import { computed, inject, reactive, ref, type Ref } from "vue";
 import { storeToRefs } from "pinia";
 import { api, displayText, formatApiError, statusClass, toNumber, useAdminWorkflowStore, useAuthStore, usePagination, type Device, type DeviceSaveRequest, type DeviceUsage, type DeviceUsageSaveRequest } from "@smart-cloud-brain/shared-api";
-import { EmptyState, ErrorState, FormField, Modal, PaginationBar, ScbSelect, StatusTag, Toast } from "@smart-cloud-brain/shared-ui";
+import { DatePicker, EmptyState, ErrorState, FormField, Modal, PaginationBar, ScbSelect, StatusTag, Toast } from "@smart-cloud-brain/shared-ui";
 import RowActionMenu, { type RowActionMenuItem } from "../components/RowActionMenu.vue";
 
 const workflow = useAdminWorkflowStore();
@@ -56,15 +56,15 @@ const resultStatusOptions = [
   { value: "FAILED", label: "失败" },
 ];
 
-async function refresh() {
-  loading.value = true;
+async function refresh(silent = false, showLoading = true) {
+  if (showLoading) loading.value = true;
   error.value = "";
   try {
     rows.value = await api.devices() as Device[];
   } catch (err) {
     error.value = formatApiError(err, "加载设备列表失败");
   } finally {
-    loading.value = false;
+    if (showLoading) loading.value = false;
   }
 }
 
@@ -246,7 +246,7 @@ refresh();
           <FormField label="科室"><ScbSelect v-model="form.departmentId" :options="deviceDeptOptions" /></FormField>
           <FormField label="位置"><input v-model.trim="form.location" /></FormField>
           <FormField label="状态"><ScbSelect v-model="form.status" :options="deviceFormStatusOptions" /></FormField>
-          <FormField label="采购日期"><input v-model="form.purchaseDate" type="date" /></FormField>
+          <FormField label="采购日期"><DatePicker v-model="form.purchaseDate" aria-label="采购日期" /></FormField>
         </div>
         <FormField label="备注"><textarea v-model.trim="form.remark" /></FormField>
       </div>

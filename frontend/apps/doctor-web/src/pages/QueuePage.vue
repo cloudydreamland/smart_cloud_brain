@@ -29,22 +29,22 @@ const rows = computed(() => sourceRows.value.filter((item) => {
 }));
 const { currentPage, pageSize, total, pageRows } = usePagination(rows, 10);
 
-async function refresh() {
-  loading.value = true;
+async function refresh(silent = false, showLoading = true) {
+  if (showLoading) loading.value = true;
   error.value = "";
   try {
     await workflow.refresh();
     loaded.value = true;
-    toast?.value?.success("数据已刷新", "队列数据已同步最新状态。");
+    if (!silent) toast?.value?.success("数据已刷新", "队列数据已同步最新状态。");
   } catch (err) {
     error.value = formatApiError(err, "队列加载失败，请稍后重试。");
-    toast?.value?.error("刷新失败", "请检查网络后重试。");
+    if (!silent) toast?.value?.error("刷新失败", "请检查网络后重试。");
   } finally {
-    loading.value = false;
+    if (showLoading) loading.value = false;
   }
 }
 
-refresh();
+refresh(true, false);
 
 watch(() => [route.query.patientId, route.query.triageRecordId], ([patientId, triageRecordId]) => {
   const next = displayText(patientId ?? triageRecordId, "");
@@ -77,7 +77,7 @@ watch(() => [route.query.patientId, route.query.triageRecordId], ([patientId, tr
           <p class="eyebrow">接诊队列</p>
           <h2>患者队列筛选</h2>
         </div>
-        <button class="refresh-btn" type="button" :disabled="loading" @click="refresh">
+        <button class="refresh-btn" type="button" :disabled="loading" @click="refresh()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="{ 'spin': loading }"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
           刷新
         </button>

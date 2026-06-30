@@ -19,19 +19,19 @@ const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 provide("toast", toastRef);
 let unbind: (() => void) | null = null;
 
-async function refresh() {
+async function refresh(silent = false, showLoading = true) {
   if (!session.value || !auth.requireRole("PATIENT")) return;
-  loading.value = true;
+  if (showLoading) loading.value = true;
   loadError.value = "";
   try {
     await workflow.refreshPublicData();
     await workflow.refreshAuthenticated();
-    toastRef.value?.success("数据已刷新", "所有模块数据已同步最新状态。");
+    if (!silent) toastRef.value?.success("数据已刷新", "所有模块数据已同步最新状态。");
   } catch (err) {
     loadError.value = formatApiError(err, "患者资料加载失败");
-    toastRef.value?.error("刷新失败", "请检查网络后重试。");
+    if (!silent) toastRef.value?.error("刷新失败", "请检查网络后重试。");
   } finally {
-    loading.value = false;
+    if (showLoading) loading.value = false;
   }
 }
 
@@ -45,7 +45,7 @@ onMounted(async () => {
   window.addEventListener("smart-cloud-brain:unauthorized", () => {
     sessionExpired.value = true;
   });
-  await refresh();
+  await refresh(true, false);
 });
 
 onBeforeUnmount(() => {
@@ -64,7 +64,7 @@ onBeforeUnmount(() => {
       </div>
       <div v-else-if="loadError" class="portal-message error">
         <span>{{ loadError }}</span>
-        <button type="button" @click="refresh">重试</button>
+        <button type="button" @click="refresh()">重试</button>
       </div>
 
       <RouterView :boot-loading="loading" @refresh="refresh" />

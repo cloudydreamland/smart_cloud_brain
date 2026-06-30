@@ -23,8 +23,8 @@ const form = reactive<EmailConfigSaveRequest>({
   enabled: false,
 });
 
-async function refresh() {
-  loading.value = true;
+async function refresh(silent = false, showLoading = true) {
+  if (showLoading) loading.value = true;
   error.value = "";
   try {
     const config = await api.emailConfig();
@@ -38,10 +38,12 @@ async function refresh() {
     form.starttlsEnabled = Boolean(config.starttlsEnabled);
     form.enabled = Boolean(config.enabled);
     passwordSet.value = Boolean(config.passwordSet);
+    if (!silent) toast?.value?.success("数据已刷新", "邮箱配置已同步最新状态。");
   } catch (err) {
     error.value = formatApiError(err, "邮箱配置加载失败");
+    if (!silent) toast?.value?.error("刷新失败", "请检查网络后重试。");
   } finally {
-    loading.value = false;
+    if (showLoading) loading.value = false;
   }
 }
 
@@ -90,7 +92,7 @@ async function sendTest() {
   }
 }
 
-onMounted(refresh);
+onMounted(() => refresh(true, false));
 </script>
 
 <template>
@@ -102,7 +104,7 @@ onMounted(refresh);
           <p>配置患者注册验证码使用的 SMTP 发件邮箱。</p>
         </div>
         <div class="toolbar">
-          <button type="button" :disabled="loading" @click="refresh">
+          <button type="button" :disabled="loading" @click="refresh()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="{ spin: loading }"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
             刷新
           </button>
