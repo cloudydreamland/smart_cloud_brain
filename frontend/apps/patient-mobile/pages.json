@@ -135,19 +135,27 @@
     "list": [
       {
         "pagePath": "pages/index/index",
-        "text": "首页"
+        "text": "首页",
+        "iconPath": "static/tabbar/home-normal.png",
+        "selectedIconPath": "static/tabbar/home-active.png"
       },
       {
         "pagePath": "pages/triage/triage",
-        "text": "分诊"
+        "text": "分诊",
+        "iconPath": "static/tabbar/triage-normal.png",
+        "selectedIconPath": "static/tabbar/triage-active.png"
       },
       {
         "pagePath": "pages/appointments/appointments",
-        "text": "预约"
+        "text": "预约",
+        "iconPath": "static/tabbar/appointments-normal.png",
+        "selectedIconPath": "static/tabbar/appointments-active.png"
       },
       {
         "pagePath": "pages/mine/mine",
-        "text": "我的"
+        "text": "我的",
+        "iconPath": "static/tabbar/mine-normal.png",
+        "selectedIconPath": "static/tabbar/mine-active.png"
       }
     ]
   }
