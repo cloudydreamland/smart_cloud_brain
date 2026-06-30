@@ -41,6 +41,8 @@ management:
         include: health,info
 
 services:
+  patient:
+    base-url: ${PATIENT_SERVICE_BASE_URL:http://localhost:8083}
   doctor:
     base-url: ${DOCTOR_SERVICE_BASE_URL:http://localhost:8084}
   triage:

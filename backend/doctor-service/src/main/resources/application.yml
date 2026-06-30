@@ -23,4 +23,8 @@ management:
       exposure:
         include: health,info
 
+services:
+  registration:
+    base-url: ${REGISTRATION_SERVICE_BASE_URL:http://localhost:8085}
+
 

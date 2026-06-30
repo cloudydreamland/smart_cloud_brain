@@ -218,6 +218,7 @@ services:
     environment:
       <<: *domain-env
       SERVER_PORT: 8084
+      REGISTRATION_SERVICE_BASE_URL: http://registration-service:8085
 
   registration-service:
     <<: *domain-service
@@ -303,6 +304,7 @@ services:
     environment:
       <<: *domain-env
       SERVER_PORT: 8090
+      PATIENT_SERVICE_BASE_URL: http://patient-service:8083
       DOCTOR_SERVICE_BASE_URL: http://doctor-service:8084
       TRIAGE_SERVICE_BASE_URL: http://triage-service:8086
       NOTIFICATION_SERVICE_BASE_URL: http://notification-service:8089

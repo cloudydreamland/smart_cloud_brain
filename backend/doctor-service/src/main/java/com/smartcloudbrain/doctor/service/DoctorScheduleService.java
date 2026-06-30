@@ -3,6 +3,7 @@ package com.smartcloudbrain.doctor.service;
 import com.smartcloudbrain.doctor.dto.internal.InternalSchedulePublishRequest;
 import com.smartcloudbrain.doctor.dto.internal.InternalScheduleCancelRequest;
 import com.smartcloudbrain.doctor.dto.internal.InternalScheduleSaveRequest;
+import com.smartcloudbrain.doctor.client.InternalRegistrationCacheClient;
 import com.smartcloudbrain.doctor.entity.AppointmentSlot;
 import com.smartcloudbrain.doctor.entity.Department;
 import com.smartcloudbrain.doctor.entity.Doctor;
@@ -25,30 +26,37 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class DoctorScheduleService {
 
+  private static final Logger log = LoggerFactory.getLogger(DoctorScheduleService.class);
+
   private final DoctorScheduleRepository doctorScheduleRepository;
   private final AppointmentSlotRepository appointmentSlotRepository;
   private final RegistrationRepository registrationRepository;
   private final DoctorRepository doctorRepository;
   private final DepartmentRepository departmentRepository;
+  private final InternalRegistrationCacheClient internalRegistrationCacheClient;
 
   public DoctorScheduleService(
       DoctorScheduleRepository doctorScheduleRepository,
       AppointmentSlotRepository appointmentSlotRepository,
       RegistrationRepository registrationRepository,
       DoctorRepository doctorRepository,
-      DepartmentRepository departmentRepository
+      DepartmentRepository departmentRepository,
+      InternalRegistrationCacheClient internalRegistrationCacheClient
   ) {
     this.doctorScheduleRepository = doctorScheduleRepository;
     this.appointmentSlotRepository = appointmentSlotRepository;
     this.registrationRepository = registrationRepository;
     this.doctorRepository = doctorRepository;
     this.departmentRepository = departmentRepository;
+    this.internalRegistrationCacheClient = internalRegistrationCacheClient;
   }
 
   @Transactional
@@ -100,6 +108,9 @@ public class DoctorScheduleService {
       slot.setUpdatedAt(LocalDateTime.now());
       appointmentSlotRepository.save(slot);
     }
+    if (!items.isEmpty()) {
+      evictRegistrationSlotsCache();
+    }
     return schedules();
   }
 
@@ -134,6 +145,7 @@ public class DoctorScheduleService {
     schedule.setUpdatedAt(LocalDateTime.now());
     DoctorSchedule saved = doctorScheduleRepository.save(schedule);
     upsertSlot(saved);
+    evictRegistrationSlotsCache();
     return scheduleView(saved);
   }
 
@@ -155,7 +167,9 @@ public class DoctorScheduleService {
       slot.setUpdatedAt(LocalDateTime.now());
       appointmentSlotRepository.save(slot);
     }
-    return scheduleView(doctorScheduleRepository.save(schedule));
+    DoctorSchedule saved = doctorScheduleRepository.save(schedule);
+    evictRegistrationSlotsCache();
+    return scheduleView(saved);
   }
 
   public List<Map<String, Object>> slots() {
@@ -280,6 +294,14 @@ public class DoctorScheduleService {
     slot.setStatus("CANCELLED".equalsIgnoreCase(schedule.getStatus()) ? "CANCELLED" : "AVAILABLE");
     slot.setUpdatedAt(LocalDateTime.now());
     appointmentSlotRepository.save(slot);
+  }
+
+  private void evictRegistrationSlotsCache() {
+    try {
+      internalRegistrationCacheClient.evictSlotsCache();
+    } catch (RuntimeException exception) {
+      log.warn("registration-service slots cache evict failed after schedule write: {}", exception.getMessage());
+    }
   }
 
   private Map<String, Object> slotView(AppointmentSlot slot) {

@@ -2,6 +2,7 @@ package com.smartcloudbrain.admin.service;
 
 import com.smartcloudbrain.admin.client.InternalAiClient;
 import com.smartcloudbrain.admin.client.InternalDoctorClient;
+import com.smartcloudbrain.admin.client.InternalPatientCacheClient;
 import com.smartcloudbrain.admin.client.InternalTriageClient;
 import com.smartcloudbrain.admin.dto.admin.AccountSaveRequest;
 import com.smartcloudbrain.admin.dto.admin.DepartmentSaveRequest;
@@ -38,6 +39,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -46,12 +49,15 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class AdminCatalogService {
 
+  private static final Logger log = LoggerFactory.getLogger(AdminCatalogService.class);
+
   private final DepartmentRepository departmentRepository;
   private final DoctorRepository doctorRepository;
   private final DrugRepository drugRepository;
   private final AiScheduleSuggestionRepository aiScheduleSuggestionRepository;
   private final AdminUserRepository adminUserRepository;
   private final InternalDoctorClient internalDoctorClient;
+  private final InternalPatientCacheClient internalPatientCacheClient;
   private final InternalAiClient internalAiClient;
   private final InternalTriageClient internalTriageClient;
   private final PasswordHashService passwordHashService;
@@ -63,6 +69,7 @@ public class AdminCatalogService {
       AiScheduleSuggestionRepository aiScheduleSuggestionRepository,
       AdminUserRepository adminUserRepository,
       InternalDoctorClient internalDoctorClient,
+      InternalPatientCacheClient internalPatientCacheClient,
       InternalAiClient internalAiClient,
       InternalTriageClient internalTriageClient,
       PasswordHashService passwordHashService
@@ -73,6 +80,7 @@ public class AdminCatalogService {
     this.aiScheduleSuggestionRepository = aiScheduleSuggestionRepository;
     this.adminUserRepository = adminUserRepository;
     this.internalDoctorClient = internalDoctorClient;
+    this.internalPatientCacheClient = internalPatientCacheClient;
     this.internalAiClient = internalAiClient;
     this.internalTriageClient = internalTriageClient;
     this.passwordHashService = passwordHashService;
@@ -114,7 +122,7 @@ public class AdminCatalogService {
       return saveAdminAccount(request);
     }
     if (role == RoleType.DOCTOR) {
-      return doctorAccountView(saveDoctorEntity(new DoctorSaveRequest(
+      Doctor savedDoctor = saveDoctorEntity(new DoctorSaveRequest(
           request.id(),
           request.name(),
           request.account(),
@@ -123,7 +131,9 @@ public class AdminCatalogService {
           request.title(),
           request.specialty(),
           request.status()
-      )));
+      ));
+      evictPatientCatalogCache();
+      return doctorAccountView(savedDoctor);
     }
     throw new BusinessException(400, "Patient accounts are self-registered and cannot be assigned in admin console");
   }
@@ -137,13 +147,17 @@ public class AdminCatalogService {
     department.setCode(request.code());
     department.setName(request.name());
     department.setDescription(request.description());
-    return departmentView(departmentRepository.save(department));
+    Department saved = departmentRepository.save(department);
+    evictPatientCatalogCache();
+    return departmentView(saved);
   }
 
   @CacheEvict(cacheNames = "adminCatalog", allEntries = true)
   @Transactional
   public Map<String, Object> saveDoctor(DoctorSaveRequest request) {
-    return doctorView(saveDoctorEntity(request));
+    Doctor saved = saveDoctorEntity(request);
+    evictPatientCatalogCache();
+    return doctorView(saved);
   }
 
   private Doctor saveDoctorEntity(DoctorSaveRequest request) {
@@ -160,6 +174,14 @@ public class AdminCatalogService {
     doctor.setSpecialty(request.specialty());
     doctor.setStatus(request.status() == null ? "ENABLED" : request.status());
     return doctorRepository.save(doctor);
+  }
+
+  private void evictPatientCatalogCache() {
+    try {
+      internalPatientCacheClient.evictCatalogCache();
+    } catch (RuntimeException exception) {
+      log.warn("patient-service catalog cache evict failed after admin catalog write: {}", exception.getMessage());
+    }
   }
 
   @Cacheable(cacheNames = "adminCatalog", key = "'drugs'")
