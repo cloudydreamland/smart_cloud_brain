@@ -1,15 +1,18 @@
 package com.smartcloudbrain.admin.service;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.smartcloudbrain.admin.client.InternalAiClient;
 import com.smartcloudbrain.admin.client.InternalDoctorClient;
+import com.smartcloudbrain.admin.client.InternalPatientCacheClient;
 import com.smartcloudbrain.admin.client.InternalTriageClient;
 import com.smartcloudbrain.admin.dto.admin.SchedulePublishRequest;
 import com.smartcloudbrain.admin.dto.admin.ScheduleGenerateRequest;
@@ -51,6 +54,7 @@ class AdminCatalogServiceTest {
   @Mock private AiScheduleSuggestionRepository aiScheduleSuggestionRepository;
   @Mock private AdminUserRepository adminUserRepository;
   @Mock private InternalDoctorClient internalDoctorClient;
+  @Mock private InternalPatientCacheClient internalPatientCacheClient;
   @Mock private InternalAiClient internalAiClient;
   @Mock private InternalTriageClient internalTriageClient;
   @Mock private PasswordHashService passwordHashService;
@@ -341,5 +345,55 @@ class AdminCatalogServiceTest {
         .thenReturn(List.of(publishable));
     when(internalDoctorClient.publishSchedules(any())).thenReturn(List.of(Map.of("id", 1L)));
     assertEquals(1, adminCatalogService.publishSchedule(new SchedulePublishRequest(List.of())).size());
+  }
+
+  @Test
+  void evictsPatientCatalogCacheAfterDepartmentAndDoctorSave() {
+    Department department = new Department();
+    department.setId(3L);
+    department.setCode("GENERAL");
+    department.setName("General");
+    Doctor doctor = new Doctor();
+    doctor.setId(2L);
+    doctor.setName("Doctor Two");
+    doctor.setDepartmentId(3L);
+    doctor.setStatus("ENABLED");
+
+    when(departmentRepository.findByCode("GENERAL")).thenReturn(Optional.empty());
+    when(departmentRepository.save(any())).thenReturn(department);
+    when(departmentRepository.findById(3L)).thenReturn(Optional.of(department));
+    when(doctorRepository.findById(2L)).thenReturn(Optional.of(doctor));
+    when(doctorRepository.save(any())).thenReturn(doctor);
+
+    adminCatalogService.saveDepartment(new DepartmentSaveRequest(null, "GENERAL", "General", null));
+    adminCatalogService.saveDoctor(
+        new DoctorSaveRequest(2L, "Doctor Two", "13900000001", null, 3L, "Chief", "Cardiology", "ENABLED"));
+
+    verify(internalPatientCacheClient, org.mockito.Mockito.times(2)).evictCatalogCache();
+  }
+
+  @Test
+  void patientCatalogCacheEvictFailureDoesNotBreakDepartmentOrDoctorSave() {
+    Department department = new Department();
+    department.setId(3L);
+    department.setCode("GENERAL");
+    department.setName("General");
+    Doctor doctor = new Doctor();
+    doctor.setId(2L);
+    doctor.setName("Doctor Two");
+    doctor.setDepartmentId(3L);
+    doctor.setStatus("ENABLED");
+
+    when(departmentRepository.findByCode("GENERAL")).thenReturn(Optional.empty());
+    when(departmentRepository.save(any())).thenReturn(department);
+    when(departmentRepository.findById(3L)).thenReturn(Optional.of(department));
+    when(doctorRepository.findById(2L)).thenReturn(Optional.of(doctor));
+    when(doctorRepository.save(any())).thenReturn(doctor);
+    doThrow(new RuntimeException("patient cache unavailable")).when(internalPatientCacheClient).evictCatalogCache();
+
+    assertDoesNotThrow(() -> adminCatalogService.saveDepartment(
+        new DepartmentSaveRequest(null, "GENERAL", "General", null)));
+    assertDoesNotThrow(() -> adminCatalogService.saveDoctor(
+        new DoctorSaveRequest(2L, "Doctor Two", "13900000001", null, 3L, "Chief", "Cardiology", "ENABLED")));
   }
 }

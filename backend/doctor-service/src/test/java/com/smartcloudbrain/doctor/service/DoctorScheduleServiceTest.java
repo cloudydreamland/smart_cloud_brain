@@ -1,12 +1,16 @@
 package com.smartcloudbrain.doctor.service;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.smartcloudbrain.doctor.client.InternalRegistrationCacheClient;
+import com.smartcloudbrain.doctor.dto.internal.InternalScheduleCancelRequest;
 import com.smartcloudbrain.doctor.dto.internal.InternalSchedulePublishRequest;
 import com.smartcloudbrain.doctor.dto.internal.InternalScheduleSaveRequest;
 import com.smartcloudbrain.doctor.entity.AppointmentSlot;
@@ -37,6 +41,7 @@ class DoctorScheduleServiceTest {
   @Mock private RegistrationRepository registrationRepository;
   @Mock private DoctorRepository doctorRepository;
   @Mock private DepartmentRepository departmentRepository;
+  @Mock private InternalRegistrationCacheClient internalRegistrationCacheClient;
   @InjectMocks private DoctorScheduleService doctorScheduleService;
 
   @Test
@@ -69,6 +74,7 @@ class DoctorScheduleServiceTest {
     ArgumentCaptor<AppointmentSlot> slotCaptor = ArgumentCaptor.forClass(AppointmentSlot.class);
     verify(doctorScheduleRepository).save(scheduleCaptor.capture());
     verify(appointmentSlotRepository).save(slotCaptor.capture());
+    verify(internalRegistrationCacheClient).evictSlotsCache();
 
     DoctorSchedule savedSchedule = scheduleCaptor.getValue();
     assertEquals("PUBLISHED", savedSchedule.getStatus());
@@ -89,8 +95,10 @@ class DoctorScheduleServiceTest {
   @Test
   void listsSchedulesAndSlotsWithDoctorAndDepartmentNames() {
     Doctor doctor = new Doctor();
+    doctor.setId(2L);
     doctor.setName("王医生");
     Department department = new Department();
+    department.setId(3L);
     department.setName("心内科");
     DoctorSchedule schedule = new DoctorSchedule();
     schedule.setId(1L);
@@ -108,10 +116,10 @@ class DoctorScheduleServiceTest {
     slot.setStartTime(LocalDateTime.now().plusDays(1));
     slot.setEndTime(null);
     slot.setCapacity(null);
-    slot.setRemainingCapacity(null);
+    slot.setRemainingCapacity(1);
     slot.setStatus("AVAILABLE");
-    when(doctorRepository.findById(2L)).thenReturn(Optional.of(doctor));
-    when(departmentRepository.findById(3L)).thenReturn(Optional.of(department));
+    when(doctorRepository.findAllById(any())).thenReturn(List.of(doctor));
+    when(departmentRepository.findAllById(any())).thenReturn(List.of(department));
     when(doctorScheduleRepository.findByWorkDateGreaterThanEqualOrderByWorkDateAscDoctorIdAsc(any())).thenReturn(List.of(schedule));
     when(appointmentSlotRepository.findByEndTimeGreaterThanEqualOrderByStartTimeAscDoctorIdAsc(any())).thenReturn(List.of(slot));
 
@@ -197,6 +205,33 @@ class DoctorScheduleServiceTest {
             new InternalSchedulePublishRequest.ScheduleItem(2L, 3L, workDate, "09:00-12:00", 20),
             new InternalSchedulePublishRequest.ScheduleItem(2L, 3L, workDate, "11:30-14:00", 20)
         ))));
+  }
+
+  @Test
+  void registrationSlotsCacheEvictFailureDoesNotBreakScheduleWrites() {
+    LocalDate workDate = LocalDate.of(2026, 6, 22);
+    Doctor doctor = new Doctor();
+    doctor.setId(2L);
+    doctor.setDepartmentId(3L);
+    DoctorSchedule existing = schedule(9L, 2L, 3L, workDate, "09:00-12:00", "PUBLISHED");
+    AppointmentSlot slot = new AppointmentSlot();
+    slot.setId(11L);
+    slot.setScheduleId(9L);
+    slot.setCapacity(20);
+    slot.setRemainingCapacity(20);
+
+    when(doctorRepository.findById(2L)).thenReturn(Optional.of(doctor));
+    when(doctorScheduleRepository.findByDoctorIdAndWorkDate(2L, workDate)).thenReturn(List.of());
+    when(doctorScheduleRepository.findById(9L)).thenReturn(Optional.of(existing));
+    when(appointmentSlotRepository.findByScheduleId(any())).thenReturn(Optional.empty()).thenReturn(Optional.of(slot));
+    when(registrationRepository.existsBySlotIdAndStatusNot(11L, "CANCELLED")).thenReturn(false);
+    when(doctorScheduleRepository.save(any(DoctorSchedule.class))).thenAnswer(invocation -> invocation.getArgument(0));
+    when(appointmentSlotRepository.save(any(AppointmentSlot.class))).thenAnswer(invocation -> invocation.getArgument(0));
+    doThrow(new RuntimeException("registration cache unavailable")).when(internalRegistrationCacheClient).evictSlotsCache();
+
+    assertDoesNotThrow(() -> doctorScheduleService.saveSchedule(
+        new InternalScheduleSaveRequest(null, 2L, 3L, workDate, "12:00-14:00", 20, "PUBLISHED")));
+    assertDoesNotThrow(() -> doctorScheduleService.cancelSchedule(new InternalScheduleCancelRequest(9L)));
   }
 
   private DoctorSchedule schedule(
