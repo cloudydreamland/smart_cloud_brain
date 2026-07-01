@@ -3,7 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "@smart-cloud-brain/shared-api";
-import { toPatientRoute } from "../site-config/routeTarget";
+import { toPatientRoute, withPatientPreview } from "../site-config/routeTarget";
 import { startPatientSiteConfigAutoRefresh, usePatientSiteConfig } from "../site-config/usePatientSiteConfig";
 import type { PatientNavMenu, RouteTargetConfig } from "../site-config/types";
 
@@ -15,11 +15,14 @@ const activeMenu = ref<string | null>(null);
 const mobileOpen = ref(false);
 const userOpen = ref(false);
 const userMenuRef = ref<HTMLDivElement | null>(null);
-const { config, disabledStaticPageRouteNames, load } = usePatientSiteConfig();
+const { config, disabledStaticPageRouteNames, activePreviewToken, load, loadPreview } = usePatientSiteConfig();
 
 auth.load("patient-session", "PATIENT");
 onMounted(() => {
-  void load();
+  const previewToken = route.query.previewToken;
+  if (typeof previewToken === "string" && previewToken) void loadPreview(previewToken);
+  else if (activePreviewToken.value) void loadPreview(activePreviewToken.value);
+  else void load();
   startPatientSiteConfigAutoRefresh();
   document.addEventListener("click", onDocumentClick);
 });
@@ -49,7 +52,7 @@ const navMenus = computed<PatientNavMenu[]>(() =>
     .filter((menu) => Boolean(menu.label && ((menu.links || []).length || menu.feature))),
 );
 const userLinks = computed(() => visibleLinks(nav.value.userLinks));
-const brandRoute = computed(() => ({ name: nav.value.brand.homeRoute || "patient-home" }));
+const brandRoute = computed(() => withPatientPreview({ name: nav.value.brand.homeRoute || "patient-home" }, activePreviewToken.value));
 const brandLogoAlt = computed(() => nav.value.brand.logoAlt || nav.value.brand.name);
 
 function isVisibleLink(link: RouteTargetConfig | undefined): link is RouteTargetConfig {
@@ -94,13 +97,13 @@ function isMenuActive(menu: PatientNavMenu) {
 
 function openSearch() {
   closeMenus();
-  router.push({ name: "public-search" });
+  router.push(withPatientPreview({ name: "public-search" }, activePreviewToken.value));
 }
 
 async function logout() {
   auth.logout();
   closeMenus();
-  await router.push({ name: "patient-home" });
+  await router.push(withPatientPreview({ name: "patient-home" }, activePreviewToken.value));
 }
 </script>
 

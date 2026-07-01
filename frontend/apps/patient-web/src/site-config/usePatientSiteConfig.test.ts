@@ -15,6 +15,10 @@ vi.mock("@smart-cloud-brain/shared-api", async () => {
   };
 });
 
+function partialConfig(value: unknown) {
+  return value as never;
+}
+
 describe("normalizeConfig", () => {
   it("returns an empty structure when the published payload is empty", () => {
     const config = normalizeConfig({});
@@ -63,6 +67,27 @@ describe("normalizeConfig", () => {
     expect(config.pages.pages).toHaveLength(1);
     expect(config.pages.pages[0].slug).toBe("hospital-guide");
     expect(config.pages.pages[0].sections.map((section) => section.type)).toEqual(["rich_text", "notice"]);
+  });
+
+  it("preserves static page CMS bindings from the published payload", () => {
+    const config = normalizeConfig({
+      staticPages: {
+        pages: [
+          {
+            routeName: "about-hospital",
+            label: "About",
+            title: "About",
+            contentSource: "cms-page",
+            slug: "hospital-intro",
+            points: [],
+          },
+        ],
+      },
+    });
+
+    expect(config.staticPages.pages).toHaveLength(1);
+    expect(config.staticPages.pages[0].contentSource).toBe("cms-page");
+    expect(config.staticPages.pages[0].slug).toBe("hospital-intro");
   });
 
   it("filters disabled entries and unknown routes", () => {
@@ -209,8 +234,8 @@ describe("normalizeConfig", () => {
   it("reloads published config instead of keeping the first response forever", async () => {
     const patientSiteConfig = vi.mocked(api.patientSiteConfig);
     patientSiteConfig
-      .mockResolvedValueOnce({ home: { hero: { title: "First version" } } })
-      .mockResolvedValueOnce({ home: { hero: { title: "Published version" } } });
+      .mockResolvedValueOnce(partialConfig({ home: { hero: { title: "First version" }, modules: [] } }))
+      .mockResolvedValueOnce(partialConfig({ home: { hero: { title: "Published version" }, modules: [] } }));
 
     const { config, load } = usePatientSiteConfig();
     await load();
@@ -223,14 +248,14 @@ describe("normalizeConfig", () => {
 
   it("tracks disabled static page route names for navigation filtering", async () => {
     const patientSiteConfig = vi.mocked(api.patientSiteConfig);
-    patientSiteConfig.mockResolvedValueOnce({
+    patientSiteConfig.mockResolvedValueOnce(partialConfig({
       staticPages: {
         pages: [
-          { routeName: "about-contact", title: "Contact", enabled: false },
-          { routeName: "about-hospital", title: "Hospital", enabled: true },
+          { routeName: "about-contact", label: "Contact", title: "Contact", intro: "", enabled: false, points: [] },
+          { routeName: "about-hospital", label: "Hospital", title: "Hospital", intro: "", enabled: true, points: [] },
         ],
       },
-    });
+    }));
 
     const { disabledStaticPageRouteNames, load } = usePatientSiteConfig();
     await load();
@@ -244,8 +269,8 @@ describe("normalizeConfig", () => {
     const patientSiteConfig = vi.mocked(api.patientSiteConfig);
     const publishedCallCount = patientSiteConfig.mock.calls.length;
     patientSitePreviewConfig
-      .mockResolvedValueOnce({ pages: { pages: [{ routeName: "about-hospital", slug: "draft", label: "Draft", title: "Draft", sections: [] }] } })
-      .mockResolvedValueOnce({ pages: { pages: [{ routeName: "about-hospital", slug: "draft-2", label: "Draft", title: "Draft 2", sections: [] }] } });
+      .mockResolvedValueOnce(partialConfig({ pages: { pages: [{ routeName: "about-hospital", slug: "draft", label: "Draft", title: "Draft", intro: "", sections: [] }] } }))
+      .mockResolvedValueOnce(partialConfig({ pages: { pages: [{ routeName: "about-hospital", slug: "draft-2", label: "Draft", title: "Draft 2", intro: "", sections: [] }] } }));
 
     const { config, loadPreview, refresh } = usePatientSiteConfig();
     await loadPreview("preview-token");
@@ -255,5 +280,35 @@ describe("normalizeConfig", () => {
     expect(config.value.pages.pages[0].slug).toBe("draft-2");
     expect(patientSitePreviewConfig).toHaveBeenCalledTimes(2);
     expect(patientSiteConfig).toHaveBeenCalledTimes(publishedCallCount);
+  });
+
+  it("preserves disabled CMS content while loading preview config", async () => {
+    const patientSitePreviewConfig = vi.mocked(api.patientSitePreviewConfig);
+    patientSitePreviewConfig.mockResolvedValueOnce(partialConfig({
+      staticPages: {
+        pages: [{ routeName: "about-hospital", label: "Hospital", title: "Hospital", intro: "", contentSource: "cms-page", slug: "draft", enabled: false, points: [] }],
+      },
+      pages: {
+        pages: [
+          {
+            routeName: "about-hospital",
+            slug: "draft",
+            label: "Draft",
+            title: "Draft",
+            intro: "",
+            enabled: false,
+            sections: [{ id: "draft-section", type: "notice", enabled: false, sort: 10, level: "info", text: "Draft disabled section" }],
+          },
+        ],
+      },
+    }));
+
+    const { config, disabledStaticPageRouteNames, loadPreview } = usePatientSiteConfig();
+    await loadPreview("preview-token");
+
+    expect(config.value.staticPages.pages[0].enabled).toBe(false);
+    expect(config.value.pages.pages[0].enabled).toBe(false);
+    expect(config.value.pages.pages[0].sections[0].enabled).toBe(false);
+    expect(disabledStaticPageRouteNames.value.has("about-hospital")).toBe(false);
   });
 });
