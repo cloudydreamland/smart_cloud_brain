@@ -59,7 +59,6 @@ async function submit() {
             <input v-model="form.password" type="password" autocomplete="current-password" />
           </label>
           <button class="primary" type="submit" :disabled="loading">{{ loading ? "登录中" : "进入工作台" }}</button>
-          <span class="hint">真实前端页面，登录仍会调用后端认证接口。</span>
         </div>
       </form>
     </section>

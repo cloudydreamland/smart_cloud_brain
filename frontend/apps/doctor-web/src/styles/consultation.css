@@ -329,51 +329,12 @@
   width: 100%;
   margin: 0;
   max-height: none;
-  overflow: visible;
-}
-
-.consultation-workbench .drug-catalog-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin: 12px 14px;
-  padding: 10px 11px;
-  border: 1px solid rgba(11, 95, 120, 0.18);
-  border-radius: 14px;
-  background: linear-gradient(135deg, rgba(224, 242, 241, 0.72), rgba(255, 255, 255, 0.86));
-}
-
-.consultation-workbench .drug-catalog-bar.danger {
-  border-color: rgba(180, 35, 24, 0.18);
-  background: linear-gradient(135deg, rgba(255, 240, 237, 0.92), rgba(255, 255, 255, 0.78));
-}
-
-.consultation-workbench .drug-catalog-bar div {
-  display: grid;
-  gap: 3px;
-  min-width: 0;
-}
-
-.consultation-workbench .drug-catalog-bar strong {
-  color: var(--ink);
-  font-size: 13px;
-}
-
-.consultation-workbench .drug-catalog-bar span {
-  overflow: hidden;
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 700;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.consultation-workbench .drug-catalog-bar .action-btn {
-  flex: 0 0 auto;
-  min-height: 30px;
-  padding: 0 10px;
-  font-size: 11px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+  touch-action: pan-x pan-y;
+  -webkit-overflow-scrolling: touch;
 }
 
 .consultation-workbench .table-wrap::-webkit-scrollbar {
@@ -395,32 +356,33 @@
 }
 
 .consultation-workbench .prescription-table {
-  width: 100%;
+  width: 620px;
+  min-width: 620px;
 }
 
-.consultation-workbench .data-table th:nth-child(1),
-.consultation-workbench .data-table td:nth-child(1) {
-  width: 42%;
+.consultation-workbench .prescription-table th:nth-child(1),
+.consultation-workbench .prescription-table td:nth-child(1) {
+  width: 250px;
 }
 
-.consultation-workbench .data-table th:nth-child(2),
-.consultation-workbench .data-table td:nth-child(2) {
-  width: 16%;
+.consultation-workbench .prescription-table th:nth-child(2),
+.consultation-workbench .prescription-table td:nth-child(2) {
+  width: 100px;
 }
 
-.consultation-workbench .data-table th:nth-child(3),
-.consultation-workbench .data-table td:nth-child(3) {
-  width: 14%;
+.consultation-workbench .prescription-table th:nth-child(3),
+.consultation-workbench .prescription-table td:nth-child(3) {
+  width: 100px;
 }
 
-.consultation-workbench .data-table th:nth-child(4),
-.consultation-workbench .data-table td:nth-child(4) {
-  width: 14%;
+.consultation-workbench .prescription-table th:nth-child(4),
+.consultation-workbench .prescription-table td:nth-child(4) {
+  width: 100px;
 }
 
-.consultation-workbench .data-table th:nth-child(5),
-.consultation-workbench .data-table td:nth-child(5) {
-  width: 14%;
+.consultation-workbench .prescription-table th:nth-child(5),
+.consultation-workbench .prescription-table td:nth-child(5) {
+  width: 48px;
 }
 
 .consultation-workbench .data-table th {
@@ -449,7 +411,7 @@
 
 .consultation-workbench .data-table input {
   width: 100%;
-  height: 30px;
+  height: 36px;
   padding: 0 7px;
   border: 1px solid var(--line);
   border-radius: 9px;
@@ -460,9 +422,22 @@
 }
 
 .consultation-workbench .data-table button {
-  min-height: 28px;
+  min-height: 30px;
   padding: 0 7px;
   font-size: 11px;
+}
+
+.consultation-workbench .data-table .icon-only {
+  display: inline-grid;
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  min-height: 32px;
+  place-items: center;
+  padding: 0;
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1;
 }
 
 .consultation-workbench .data-table input:focus {
@@ -785,50 +760,7 @@
     grid-template-columns: 1fr;
   }
 
-  .consultation-workbench .drug-catalog-bar {
-    align-items: stretch;
-    flex-direction: column;
+  .consultation-workbench .prescription-table-wrap {
+    scrollbar-gutter: stable;
   }
-
-  .consultation-workbench .drug-catalog-bar .action-btn {
-    justify-content: center;
-    width: 100%;
-  }
-
-  .consultation-workbench .prescription-table,
-  .consultation-workbench .prescription-table thead,
-  .consultation-workbench .prescription-table tbody,
-  .consultation-workbench .prescription-table tr,
-  .consultation-workbench .prescription-table th,
-  .consultation-workbench .prescription-table td {
-    display: block;
-    width: 100% !important;
-  }
-
-  .consultation-workbench .prescription-table thead {
-    display: none;
-  }
-
-  .consultation-workbench .prescription-table tr {
-    padding: 8px;
-    border-bottom: 1px solid rgba(223, 231, 234, 0.7);
-  }
-
-  .consultation-workbench .prescription-table td {
-    padding: 5px 0;
-    border-bottom: 0;
-  }
-
-  .consultation-workbench .prescription-table td::before {
-    display: block;
-    margin-bottom: 4px;
-    color: var(--muted);
-    font-size: 11px;
-    font-weight: 900;
-  }
-
-  .consultation-workbench .prescription-table td:nth-child(1)::before { content: "药品目录"; }
-  .consultation-workbench .prescription-table td:nth-child(2)::before { content: "剂量"; }
-  .consultation-workbench .prescription-table td:nth-child(3)::before { content: "频次"; }
-  .consultation-workbench .prescription-table td:nth-child(4)::before { content: "用法"; }
 }

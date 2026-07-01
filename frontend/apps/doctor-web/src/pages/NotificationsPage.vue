@@ -39,6 +39,7 @@ const allRows = ref<Notification[]>([]);
 const selected = ref<Notification | null>(null);
 const error = ref("");
 const loading = ref(false);
+const markingRead = ref(false);
 const loaded = ref(false);
 const toast = inject<Ref<InstanceType<typeof Toast>>>("toast");
 
@@ -108,7 +109,7 @@ async function refresh(silent = false, showLoading = true) {
 
 async function markRead(item = selected.value) {
   if (!item) return;
-  loading.value = true;
+  markingRead.value = true;
   error.value = "";
   try {
     await api.markNotificationRead(toNumber(item.notificationId));
@@ -120,7 +121,7 @@ async function markRead(item = selected.value) {
     error.value = formatApiError(err, "标记通知失败，请刷新后重试。");
     toast?.value?.error("操作失败", error.value);
   } finally {
-    loading.value = false;
+    markingRead.value = false;
   }
 }
 

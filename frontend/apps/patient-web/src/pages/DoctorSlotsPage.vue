@@ -50,18 +50,26 @@ const latestTriage = computed(() => triageHistory.value[0] ?? null);
 const assignedDoctorId = computed(() => toNumber(latestTriage.value?.assignedDoctorId, 0));
 const recommendedDepartment = computed(() => latestTriage.value?.recommendedDepartment || "");
 const assignedDoctorSlots = computed(() => slots.value.filter((slot) => assignedDoctorId.value && toNumber(slot.doctorId) === assignedDoctorId.value));
-const recommendedDepartmentSlots = computed(() => slots.value.filter((slot) =>
-  !assignedDoctorId.value && (!recommendedDepartment.value || (slot.departmentName || "").includes(recommendedDepartment.value))
-));
-const displaySlots = computed(() => {
-  const source = assignedDoctorSlots.value.length
-    ? assignedDoctorSlots.value
-    : recommendedDepartmentSlots.value.length
-      ? recommendedDepartmentSlots.value
-      : slots.value;
-  return [...source].sort((left, right) => slotTimestamp(left) - slotTimestamp(right));
+const recommendedSlotIds = computed(() => {
+  if (!recommendedDepartment.value) return new Set<string>();
+  const ids = new Set<string>();
+  slots.value.forEach((slot) => {
+    if ((slot.departmentName || "").includes(recommendedDepartment.value)) {
+      ids.add(String(slot.slotId));
+    }
+  });
+  return ids;
 });
-const guidanceLabel = computed(() => assignedDoctorId.value ? "已分配医生" : "推荐科室");
+const displaySlots = computed(() => {
+  const source = assignedDoctorSlots.value.length ? assignedDoctorSlots.value : slots.value;
+  return [...source].sort((left, right) => {
+    const leftRec = recommendedSlotIds.value.has(String(left.slotId)) ? 0 : 1;
+    const rightRec = recommendedSlotIds.value.has(String(right.slotId)) ? 0 : 1;
+    if (leftRec !== rightRec) return leftRec - rightRec;
+    return slotTimestamp(left) - slotTimestamp(right);
+  });
+});
+const guidanceLabel = computed(() => assignedDoctorId.value ? "已分配医生" : recommendedDepartment.value ? "推荐科室" : "");
 const guidanceValue = computed(() => {
   if (!assignedDoctorId.value) return recommendedDepartment.value || "暂无";
   const slotDoctor = slots.value.find((slot) => toNumber(slot.doctorId) === assignedDoctorId.value);
@@ -80,7 +88,7 @@ const dateGroups = computed<DateGroup[]>(() => {
     group.total += 1;
     group.slots.push(slot);
   });
-  return [...groups.values()];
+  return [...groups.values()].sort((a, b) => a.date.localeCompare(b.date));
 });
 const activeDateGroup = computed(() => dateGroups.value.find((group) => group.date === selectedDate.value) ?? dateGroups.value[0]);
 const doctorGroups = computed<DoctorGroup[]>(() => {
@@ -139,6 +147,7 @@ async function refresh() {
 
 function choose(slot: AppointmentSlot) {
   if (isSlotBooked(slot)) return;
+  if (slot.status !== "AVAILABLE" || !slot.remainingCapacity) return;
   selectedSlot.value = slot;
   confirmOpen.value = true;
 }
@@ -194,6 +203,7 @@ async function confirmAppointment() {
     });
     await workflow.refreshAuthenticated();
     confirmOpen.value = false;
+    selectedSlot.value = null;
     toast?.value?.success('预约已提交', '可在"我的挂号"页面查看或取消。');
   } catch (err) {
     error.value = formatApiError(err, "挂号失败");
@@ -270,8 +280,9 @@ onMounted(refresh);
                         <span class="tag booked-label">已选择</span>
                       </template>
                       <template v-else>
+                        <span v-if="recommendedSlotIds.has(String(slot.slotId))" class="tag recommended-tag">✦ 推荐</span>
                         <StatusTag :status="statusText(slot.status)" :tone="statusClass(slot.status)" />
-                        <button class="primary" type="button" @click="choose(slot)">选择</button>
+                        <button class="primary" type="button" :disabled="slot.status !== 'AVAILABLE' || !slot.remainingCapacity" @click="choose(slot)">{{ !slot.remainingCapacity ? '已满' : '选择' }}</button>
                       </template>
                     </div>
                   </article>
@@ -287,3 +298,10 @@ onMounted(refresh);
     <ConfirmAppointmentModal :open="confirmOpen" :slot="selectedSlot" :busy="saving" @close="confirmOpen = false" @confirm="confirmAppointment" />
   </section>
 </template>
+
+<style scoped>
+.recommended-tag {
+  background: var(--primary-soft, #e0f2fe);
+  color: var(--primary, #0369a1);
+}
+</style>

@@ -112,7 +112,7 @@ async function closeTriage() {
         <div class="triage-summary-bar">
           <div class="summary-item"><span>医生数量</span><strong>{{ doctors.length }}</strong></div>
           <div class="summary-item"><span>筛选结果</span><strong>{{ rows.length }}</strong></div>
-          <div class="summary-item"><span>状态</span><strong>人工复核</strong></div>
+          <div class="summary-item"><span>状态</span><strong>{{ filter.status ? triageStatusOptions.find(o => o.value === filter.status)?.label || filter.status : "全部状态" }}</strong></div>
         </div>
         <template v-if="rows.length">
         <div class="table-scroll table-breakout">

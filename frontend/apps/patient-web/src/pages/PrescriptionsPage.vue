@@ -56,7 +56,7 @@ onMounted(() => refresh(true, false));
           <div class="row-main"><strong>处方 #{{ String(item.prescriptionId) }}</strong><p>{{ formatDateTime(item.createdAt) }} · {{ statusText(item.status) }}</p></div>
           <div class="toolbar">
             <StatusTag :status="statusText(item.riskLevel, '未审核')" :tone="statusClass(item.riskLevel)" />
-            <button type="button" @click="openDetail(item)">详情</button>
+            <button type="button" :disabled="detailLoading" @click="openDetail(item)">{{ detailLoading ? '加载中...' : '详情' }}</button>
           </div>
         </article>
         <PaginationBar v-model="currentPage" :total="total" :page-size="pageSize" />

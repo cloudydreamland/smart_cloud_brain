@@ -15,7 +15,7 @@ const { session, permissionError } = storeToRefs(auth);
 const { departments, doctors, triageDesk } = storeToRefs(workflow);
 const loading = ref(false);
 const permissions = ref<Set<string>>(new Set());
-const difyUrl = import.meta.env.VITE_DIFY_URL || "";
+const difyUrl = import.meta.env.VITE_DIFY_URL || "http://localhost";
 let unbind: (() => void) | null = null;
 
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);

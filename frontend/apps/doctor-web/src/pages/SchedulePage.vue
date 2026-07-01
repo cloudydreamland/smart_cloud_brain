@@ -4,12 +4,19 @@ import { api, displayText, formatApiError, toNumber, usePagination, type Schedul
 import { DatePicker, EmptyState, ErrorState, LoadingState, PaginationBar, ScbSelect, StatusTag, Toast } from "@smart-cloud-brain/shared-ui";
 
 const rows = ref<Schedule[]>([]);
-const loading = ref(false);
+const loading = ref(true);
 const loaded = ref(false);
 const error = ref("");
-const toast = inject<Ref<InstanceType<typeof Toast>>>("toast");
-const startDate = ref(new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10));
-const endDate = ref(new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10));
+const toast = inject<Ref<InstanceType<typeof Toast>>>(("toast"));
+function toLocalDateStr(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+const DAY_MS = 86_400_000;
+const startDate = ref(toLocalDateStr(new Date(Date.now() - 7 * DAY_MS)));
+const endDate = ref(toLocalDateStr(new Date(Date.now() + 30 * DAY_MS)));
 const status = ref("");
 let scheduleRequestId = 0;
 const { currentPage, pageSize, total, pageRows } = usePagination(rows, 8);

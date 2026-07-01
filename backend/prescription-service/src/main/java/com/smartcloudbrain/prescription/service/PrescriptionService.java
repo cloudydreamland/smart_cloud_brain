@@ -213,9 +213,16 @@ public class PrescriptionService {
             "remark", item.getRemark() == null ? "" : item.getRemark()
         ))
         .toList();
+    String patientName = "";
+    if (prescription.getPatientId() != null) {
+      patientName = patientRepository.findById(prescription.getPatientId())
+          .map(Patient::getName)
+          .orElse("");
+    }
     return Map.of(
         "prescriptionId", prescription.getId(),
         "patientId", prescription.getPatientId(),
+        "patientName", patientName == null ? "" : patientName,
         "doctorId", prescription.getDoctorId(),
         "medicalRecordId", prescription.getMedicalRecordId() == null ? 0L : prescription.getMedicalRecordId(),
         "registrationId", prescription.getRegistrationId() == null ? 0L : prescription.getRegistrationId(),

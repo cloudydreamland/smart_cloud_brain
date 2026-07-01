@@ -73,6 +73,32 @@
   max-width: 240px;
 }
 
+.status-segment {
+  display: inline-flex;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.status-segment button {
+  padding: 6px 16px;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--muted, #64748b);
+  transition: background 0.15s, color 0.15s;
+}
+
+.status-segment button.active {
+  background: var(--primary, #0b5f78);
+  color: #fff;
+}
+
+.status-segment button:not(:last-child) {
+  border-right: 1px solid var(--border, #e2e8f0);
+}
+
 .account-role-bar {
   display: flex;
   flex-wrap: wrap;

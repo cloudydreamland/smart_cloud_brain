@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref } from "vue";
+import { computed, reactive, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { aiSourceLabel, aiSourceTone, api, formatApiError, statusClass, statusText, usePagination, usePatientWorkflowStore, type TriageRecord } from "@smart-cloud-brain/shared-api";
@@ -14,6 +14,9 @@ const loading = ref(false);
 const error = ref("");
 const toast = ref<InstanceType<typeof Toast>>();
 const resultOpen = ref(false);
+watch(resultOpen, (open) => {
+  if (!open) Object.assign(form, { symptoms: "", duration: "", severity: "MEDIUM", extra: "" });
+});
 const canSubmit = computed(() => form.symptoms.trim().length > 0);
 const severityLabels: Record<string, string> = { LOW: "轻度", MEDIUM: "中度", HIGH: "重度或明显加重" };
 const { currentPage, pageSize, total, pageRows } = usePagination(triageHistory, 5);
@@ -76,6 +79,7 @@ async function submit() {
             </span>
             <h3>{{ triage.recommendedDepartment || "待确认" }}</h3>
             <p>{{ triage.reason || "暂无说明" }}</p>
+            <button type="button" class="primary" style="margin-top: 12px" @click="router.push({ name: 'patient-doctors' })">查看号源</button>
           </div>
           <EmptyState v-else title="暂无分诊结果" />
         </div>

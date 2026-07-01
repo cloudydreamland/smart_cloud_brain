@@ -46,6 +46,7 @@ onMounted(async () => {
     sessionExpired.value = true;
   });
   await refresh(true, false);
+  loading.value = false;
 });
 
 onBeforeUnmount(() => {

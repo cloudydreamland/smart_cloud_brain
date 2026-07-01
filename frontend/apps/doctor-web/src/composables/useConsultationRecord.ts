@@ -49,6 +49,7 @@ export function useConsultationRecord(
   const recordMode = ref<"ai" | "manual">("ai");
   const aiDraftMode = ref<"preview" | "auto">("preview");
   const recordLoading = ref(false);
+  const lastDraft = ref<StreamPayload | null>(null);
 
   let recordStream: AbortController | null = null;
 
@@ -161,6 +162,7 @@ export function useConsultationRecord(
       streamText.value += `${displayText(data.text, dataText)}\n`;
     } else if (eventName === "structured") {
       const draft = normalizeDraft(parseEventData(dataText));
+      lastDraft.value = draft;
       if (aiDraftMode.value === "auto") applyDraft(draft);
       recordAiProvider.value = displayText(draft.provider, "Dify");
       recordAiModel.value = displayText(draft.model, "medical-record-v2");
@@ -254,6 +256,8 @@ export function useConsultationRecord(
     suggestedChips,
     insertChip,
     applyRegistration,
+    applyDraft,
+    lastDraft,
     generateRecord,
     saveRecord,
   };

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, inject, reactive, ref, type Ref } from "vue";
+import { computed, inject, onMounted, reactive, ref, type Ref } from "vue";
 import { storeToRefs } from "pinia";
-import { api, displayText, formatApiError, statusClass, toNumber, useAdminWorkflowStore, useAuthStore, usePagination, type Device, type DeviceSaveRequest, type DeviceUsage, type DeviceUsageSaveRequest } from "@smart-cloud-brain/shared-api";
+import { api, displayText, formatApiError, statusClass, toNumber, useAdminWorkflowStore, usePagination, type Device, type DeviceSaveRequest, type DeviceUsage, type DeviceUsageSaveRequest } from "@smart-cloud-brain/shared-api";
 import { DatePicker, EmptyState, ErrorState, FormField, Modal, PaginationBar, ScbSelect, StatusTag, Toast } from "@smart-cloud-brain/shared-ui";
 import RowActionMenu, { type RowActionMenuItem } from "../components/RowActionMenu.vue";
 
@@ -118,8 +118,12 @@ async function openUsage(item: Device) {
   usageForm.patientId = 0;
   usageForm.resultStatus = "NORMAL";
   usageForm.remark = "";
-  usages.value = await api.deviceUsages(usageForm.deviceId) as DeviceUsage[];
-  usageOpen.value = true;
+  try {
+    usages.value = await api.deviceUsages(usageForm.deviceId) as DeviceUsage[];
+    usageOpen.value = true;
+  } catch (err) {
+    error.value = formatApiError(err, "加载使用记录失败");
+  }
 }
 
 async function saveUsage() {
@@ -173,7 +177,7 @@ async function doRetire() {
   await changeStatus(retireTarget.value, "RETIRED");
 }
 
-refresh();
+onMounted(() => refresh());
 </script>
 
 <template>

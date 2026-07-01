@@ -39,7 +39,7 @@ public class MockAiProvider implements AiProvider {
     if (cardiology) {
       return new TriageResponse("心内科", "CARDIOLOGY", List.of(1L), "确定性降级：主诉提示心内科评估。", true);
     }
-    return new TriageResponse("全科", "GENERAL", List.of(), "降级为人工分诊。", true);
+    return new TriageResponse("全科门诊", "GENERAL", List.of(), "降级为人工分诊。", true);
   }
 
   @Override

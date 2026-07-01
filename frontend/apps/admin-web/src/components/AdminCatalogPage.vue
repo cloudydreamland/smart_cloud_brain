@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject, reactive, ref, type Ref } from "vue";
+import { computed, inject, onMounted, reactive, ref, type Ref } from "vue";
 import { storeToRefs } from "pinia";
 import {
   api,
@@ -27,6 +27,12 @@ const emit = defineEmits<{ refresh: [] }>();
 const workflow = useAdminWorkflowStore();
 const { departments, doctors, drugs } = storeToRefs(workflow);
 const keyword = ref("");
+const statusFilter = ref("ALL");
+const statusOptions = [
+  { value: "ALL", label: "全部" },
+  { value: "ENABLED", label: "启用" },
+  { value: "DISABLED", label: "停用" },
+];
 const error = ref("");
 const toast = inject<Ref<InstanceType<typeof Toast>>>("toast");
 const saving = ref(false);
@@ -118,8 +124,14 @@ const saveHandlers: Record<Entity, () => Promise<void>> = {
 const rows = computed(() => {
   const q = keyword.value.trim().toLowerCase();
   const source = config.value.rows();
-  if (!q) return source;
-  return source.filter((item) => config.value.keys.some((key) => displayText(getCatalogValue(item, key), "").toLowerCase().includes(q)));
+  let result = source;
+  if (props.entity === "drug" && statusFilter.value !== "ALL") {
+    result = result.filter((item) => String(getCatalogValue(item, "status") ?? "").toUpperCase() === statusFilter.value);
+  }
+  if (q) {
+    result = result.filter((item) => config.value.keys.some((key) => displayText(getCatalogValue(item, key), "").toLowerCase().includes(q)));
+  }
+  return result;
 });
 const { currentPage, pageSize, total, pageRows } = usePagination(rows, 8);
 
@@ -255,7 +267,7 @@ async function save() {
   }
 }
 
-refresh(true, false);
+onMounted(() => refresh(true, false));
 </script>
 
 <template>
@@ -273,7 +285,12 @@ refresh(true, false);
       </header>
       <div class="panel-body stack">
         <ErrorState v-if="error" :message="error" />
-        <div class="admin-filter-row"><input v-model.trim="keyword" placeholder="搜索当前表" /></div>
+        <div class="admin-filter-row">
+          <input v-model.trim="keyword" placeholder="搜索当前表" />
+          <div v-if="props.entity === 'drug'" class="status-segment" role="tablist" aria-label="状态筛选">
+            <button v-for="opt in statusOptions" :key="opt.value" type="button" role="tab" :aria-selected="statusFilter === opt.value" :class="{ active: statusFilter === opt.value }" @click="statusFilter = opt.value">{{ opt.label }}</button>
+          </div>
+        </div>
         <DataTable :rows="rows" :loading="!loaded && loading" :error="error" :breakout="true" empty-title="暂无数据" empty-message="当前筛选条件下没有记录。">
           <thead><tr><th v-for="column in config.columns" :key="column">{{ config.columnLabels[column] ?? column }}</th><th class="actions-cell">操作</th></tr></thead>
           <tbody>
