@@ -32,7 +32,7 @@ export const patientSiteSectionRegistry: {
       { key: "level", label: "提示级别", kind: "select", options: ["info", "warning", "success"], required: true },
       { key: "text", label: "正文", kind: "textarea", required: true },
     ],
-    createDefault: () => ({ id: sectionId("notice"), type: "notice", enabled: true, sort: 10, level: "info", text: "请填写提示内容。" }),
+    createDefault: (): NoticeSection => ({ id: sectionId("notice"), type: "notice", enabled: true, sort: 10, level: "info", text: "请填写提示内容。" }),
   },
   rich_text: {
     type: "rich_text",
@@ -42,7 +42,7 @@ export const patientSiteSectionRegistry: {
       { key: "title", label: "标题", kind: "text" },
       { key: "body", label: "正文", kind: "textarea", required: true },
     ],
-    createDefault: () => ({ id: sectionId("rich_text"), type: "rich_text", enabled: true, sort: 20, title: "正文标题", body: "请填写正文内容。" }),
+    createDefault: (): RichTextSection => ({ id: sectionId("rich_text"), type: "rich_text", enabled: true, sort: 20, title: "正文标题", body: "请填写正文内容。" }),
   },
   card_grid: {
     type: "card_grid",
@@ -52,7 +52,7 @@ export const patientSiteSectionRegistry: {
       { key: "title", label: "标题", kind: "text" },
       { key: "cards", label: "卡片", kind: "card_list", required: true },
     ],
-    createDefault: () => ({ id: sectionId("card_grid"), type: "card_grid", enabled: true, sort: 30, title: "重点内容", cards: [] }),
+    createDefault: (): CardGridSection => ({ id: sectionId("card_grid"), type: "card_grid", enabled: true, sort: 30, title: "重点内容", cards: [] }),
   },
   faq: {
     type: "faq",
@@ -62,7 +62,7 @@ export const patientSiteSectionRegistry: {
       { key: "title", label: "标题", kind: "text" },
       { key: "items", label: "问答", kind: "faq_list", required: true },
     ],
-    createDefault: () => ({ id: sectionId("faq"), type: "faq", enabled: true, sort: 40, title: "常见问题", items: [] }),
+    createDefault: (): FaqSection => ({ id: sectionId("faq"), type: "faq", enabled: true, sort: 40, title: "常见问题", items: [] }),
   },
   timeline: {
     type: "timeline",
@@ -72,7 +72,7 @@ export const patientSiteSectionRegistry: {
       { key: "title", label: "标题", kind: "text" },
       { key: "items", label: "步骤", kind: "timeline_list", required: true },
     ],
-    createDefault: () => ({ id: sectionId("timeline"), type: "timeline", enabled: true, sort: 50, title: "服务流程", items: [] }),
+    createDefault: (): TimelineSection => ({ id: sectionId("timeline"), type: "timeline", enabled: true, sort: 50, title: "服务流程", items: [] }),
   },
   cta: {
     type: "cta",
@@ -84,7 +84,7 @@ export const patientSiteSectionRegistry: {
       { key: "primary", label: "主按钮", kind: "route_target" },
       { key: "secondary", label: "次按钮", kind: "route_target" },
     ],
-    createDefault: () => ({ id: sectionId("cta"), type: "cta", enabled: true, sort: 60, title: "需要帮助？", text: "请选择下一步服务。" }),
+    createDefault: (): CtaSection => ({ id: sectionId("cta"), type: "cta", enabled: true, sort: 60, title: "需要帮助？", text: "请选择下一步服务。" }),
   },
   link_grid: {
     type: "link_grid",
@@ -94,7 +94,7 @@ export const patientSiteSectionRegistry: {
       { key: "title", label: "标题", kind: "text" },
       { key: "links", label: "链接", kind: "route_target_list", required: true },
     ],
-    createDefault: () => ({ id: sectionId("link_grid"), type: "link_grid", enabled: true, sort: 70, title: "相关入口", links: [] }),
+    createDefault: (): LinkGridSection => ({ id: sectionId("link_grid"), type: "link_grid", enabled: true, sort: 70, title: "相关入口", links: [] }),
   },
   department_links: {
     type: "department_links",
@@ -106,7 +106,7 @@ export const patientSiteSectionRegistry: {
       { key: "fallbackNames", label: "默认科室名", kind: "string_list" },
       { key: "links", label: "固定链接", kind: "route_target_list" },
     ],
-    createDefault: () => ({ id: sectionId("department_links"), type: "department_links", enabled: true, sort: 80, title: "科室导航", limit: 12, fallbackNames: [], links: [] }),
+    createDefault: (): DepartmentLinksSection => ({ id: sectionId("department_links"), type: "department_links", enabled: true, sort: 80, title: "科室导航", limit: 12, fallbackNames: [], links: [] }),
   },
 };
 
