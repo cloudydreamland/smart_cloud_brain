@@ -212,6 +212,13 @@ describe("doctor settings behavior", () => {
     expect(generateButtons).toHaveLength(1);
     expect(wrapper.text()).toContain("病历工作区");
     expect(wrapper.text()).toContain("处方与风险");
+    expect(wrapper.text()).not.toContain("药品目录选择");
+    expect(wrapper.text()).not.toContain("仅可选择管理端已维护");
+    expect(wrapper.text()).not.toContain("可选 30 种目录药品");
+    expect(wrapper.findComponent(DrugCatalogSelect).props("placeholder")).toBe("搜索药品");
+
+    const deleteButton = wrapper.findAll("button").find((button) => button.text() === "×");
+    expect(deleteButton?.attributes("aria-label")).toBe("删除第 1 行药品");
   });
 
   it("requires prescription drugs to come from the doctor drug catalog without calling admin drugs", async () => {
@@ -253,8 +260,11 @@ describe("doctor settings behavior", () => {
     });
     await flushPromises();
 
-    expect(wrapper.text()).toContain("暂无可用目录药品");
-    expect(wrapper.findAllComponents(DrugCatalogSelect)[0].props("disabled")).toBe(true);
+    const selector = wrapper.findAllComponents(DrugCatalogSelect)[0];
+    expect(wrapper.text()).not.toContain("药品目录选择");
+    expect(selector.props("placeholder")).toBe("暂无可用药品");
+    expect(selector.props("emptyMessage")).toContain("暂无可用药品");
+    expect(selector.props("disabled")).toBe(false);
   });
 
   it("shows a friendly catalog loading error instead of raw forbidden text", async () => {
@@ -267,9 +277,17 @@ describe("doctor settings behavior", () => {
     });
     await flushPromises();
 
-    expect(wrapper.text()).toContain("药品目录加载失败，请稍后重试。");
+    const selector = wrapper.findAllComponents(DrugCatalogSelect)[0];
+    expect(selector.props("placeholder")).toBe("目录加载失败");
+    expect(selector.props("emptyMessage")).toBe("药品目录加载失败，请稍后重试。");
+    expect(selector.props("emptyActionLabel")).toBe("重新加载");
     expect(wrapper.text()).not.toContain("forbidden");
-    expect(wrapper.findAllComponents(DrugCatalogSelect)[0].props("disabled")).toBe(true);
+    expect(selector.props("disabled")).toBe(false);
+
+    const riskButton = wrapper.findAll("button").find((button) => button.text() === "风险审核");
+    const createButton = wrapper.findAll("button").find((button) => button.text() === "创建处方");
+    expect(riskButton?.attributes("disabled")).toBeDefined();
+    expect(createButton?.attributes("disabled")).toBeDefined();
   });
 });
 
@@ -285,13 +303,65 @@ describe("doctor drug catalog selector", () => {
     await wrapper.get("input").trigger("focus");
     await nextTick();
 
-    expect(wrapper.text()).toContain("阿莫西林胶囊");
-    expect(wrapper.text()).toContain("青霉素过敏禁用");
+    expect(document.body.textContent).toContain("阿莫西林胶囊");
+    expect(document.body.textContent).toContain("青霉素过敏禁用");
 
-    await wrapper.findAll(".drug-option")[0].trigger("click");
+    (document.body.querySelector(".drug-option") as HTMLButtonElement).click();
+    await nextTick();
 
     expect(wrapper.emitted("update:modelValue")?.[0]).toEqual(["阿莫西林胶囊"]);
     expect(wrapper.emitted("select")?.[0]?.[0]).toMatchObject({ name: "阿莫西林胶囊", specification: "0.5g" });
+    wrapper.unmount();
+  });
+
+  it("shows the complete catalog when reopening a selected drug and only filters after typing", async () => {
+    const drugs = Array.from({ length: 30 }, (_, index) => ({
+      id: index + 1,
+      name: `目录药品${String(index + 1).padStart(2, "0")}`,
+      specification: `${index + 1}mg`,
+      contraindication: `第${index + 1}项禁忌`,
+      status: "启用",
+    }));
+    const wrapper = mount(DrugCatalogSelect, {
+      props: {
+        modelValue: "目录药品01",
+        drugs,
+      },
+    });
+
+    await wrapper.get("input").trigger("focus");
+    await nextTick();
+
+    expect(document.body.querySelectorAll(".drug-option")).toHaveLength(30);
+    expect(wrapper.find(".drug-selected-meta").exists()).toBe(false);
+
+    await wrapper.get("input").setValue("目录药品2");
+    await nextTick();
+
+    expect(document.body.querySelectorAll(".drug-option")).toHaveLength(10);
+    expect(document.body.textContent).toContain("目录药品20");
+    expect(document.body.textContent).not.toContain("目录药品01");
+    wrapper.unmount();
+  });
+
+  it("keeps retry inside the selector empty state", async () => {
+    const wrapper = mount(DrugCatalogSelect, {
+      props: {
+        modelValue: "",
+        drugs: [],
+        emptyMessage: "药品目录加载失败，请稍后重试。",
+        emptyActionLabel: "重新加载",
+      },
+    });
+
+    await wrapper.get("input").trigger("focus");
+    await nextTick();
+    expect(document.body.textContent).toContain("药品目录加载失败，请稍后重试。");
+
+    (document.body.querySelector(".drug-option-retry") as HTMLButtonElement).click();
+    await nextTick();
+    expect(wrapper.emitted("retry")).toHaveLength(1);
+    wrapper.unmount();
   });
 });
 

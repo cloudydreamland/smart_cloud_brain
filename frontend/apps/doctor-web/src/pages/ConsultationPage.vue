@@ -68,11 +68,16 @@ const isCompleted = computed(() => displayText(registration.value?.status, "").t
 const selectableDrugNames = computed(() =>
   new Set(drugCatalog.value.filter((drug) => !drug.disabled).map((drug) => drug.name.trim())),
 );
-const drugCatalogStatus = computed(() => {
-  if (drugCatalogLoading.value) return "药品目录同步中";
-  if (drugCatalogError.value) return "目录不可用";
-  const count = selectableDrugNames.value.size;
-  return count ? `可选 ${count} 种目录药品` : "暂无可用目录药品";
+const drugCatalogPlaceholder = computed(() => {
+  if (drugCatalogLoading.value) return "加载药品...";
+  if (drugCatalogError.value) return "目录加载失败";
+  if (drugCatalogLoaded.value && !selectableDrugNames.value.size) return "暂无可用药品";
+  return "搜索药品";
+});
+const drugCatalogEmptyMessage = computed(() => {
+  if (drugCatalogError.value) return "药品目录加载失败，请稍后重试。";
+  if (drugCatalogLoaded.value && !selectableDrugNames.value.size) return "暂无可用药品，请联系管理员维护药品。";
+  return "未找到匹配药品。";
 });
 
 const record = useConsultationRecord(
@@ -251,33 +256,37 @@ onMounted(loadDrugCatalog);
             <div class="panel-title"><h3>处方与风险</h3><p>保存病历后创建处方</p></div>
             <span class="tag" :class="statusTone(prescription.prescription.riskLevel)">{{ statusLabel(prescription.prescription.riskLevel) }}</span>
           </header>
-          <div class="drug-catalog-bar" :class="{ danger: drugCatalogError || (!drugCatalogLoading && drugCatalogLoaded && !selectableDrugNames.size) }">
-            <div>
-              <strong>药品目录选择</strong>
-              <span>{{ drugCatalogError || "仅可选择管理端已维护的可用药品" }}</span>
-            </div>
-            <button type="button" class="action-btn" :disabled="drugCatalogLoading" @click="loadDrugCatalog">
-              {{ drugCatalogLoading ? "同步中" : drugCatalogStatus }}
-            </button>
-          </div>
           <div class="table-wrap prescription-table-wrap">
             <table class="data-table prescription-table">
-              <thead><tr><th class="drug-name">药品目录</th><th>剂量</th><th>频次</th><th>用法</th><th></th></tr></thead>
+              <thead><tr><th class="drug-name">药品</th><th>剂量</th><th>频次</th><th>用法</th><th></th></tr></thead>
               <tbody>
                 <tr v-for="(drug, index) in prescription.prescription.drugs" :key="index">
                   <td>
                     <DrugCatalogSelect
                       v-model="drug.drugName"
                       :drugs="drugCatalog"
-                      :disabled="drugCatalogLoading || Boolean(drugCatalogError) || !selectableDrugNames.size"
+                      :disabled="drugCatalogLoading"
+                      :placeholder="drugCatalogPlaceholder"
+                      :empty-message="drugCatalogEmptyMessage"
+                      :empty-action-label="drugCatalogError ? '重新加载' : ''"
                       :aria-label="`选择第 ${index + 1} 行药品`"
                       @select="(option) => handleDrugSelect(drug, option)"
+                      @retry="loadDrugCatalog"
                     />
                   </td>
-                  <td><input v-model.trim="drug.dosage" /></td>
-                  <td><input v-model.trim="drug.frequency" /></td>
-                  <td><input v-model.trim="drug.usageMethod" /></td>
-                  <td><button class="action-btn danger" type="button" @click="prescription.removeDrug(index)">删除</button></td>
+                  <td><input v-model.trim="drug.dosage" placeholder="剂量" /></td>
+                  <td><input v-model.trim="drug.frequency" placeholder="频次" /></td>
+                  <td><input v-model.trim="drug.usageMethod" placeholder="用法" /></td>
+                  <td>
+                    <button
+                      class="action-btn danger icon-only"
+                      type="button"
+                      :aria-label="`删除第 ${index + 1} 行药品`"
+                      @click="prescription.removeDrug(index)"
+                    >
+                      ×
+                    </button>
+                  </td>
                 </tr>
               </tbody>
             </table>
