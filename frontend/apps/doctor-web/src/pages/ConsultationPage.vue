@@ -183,6 +183,11 @@ watch(() => props.registrationId, record.applyRegistration, { immediate: true })
 watch(() => settings.aiDraftMode, (mode) => {
   record.aiDraftMode.value = mode;
 }, { immediate: true });
+watch(() => record.streamStatus.value, (status) => {
+  if (status === "DRAFT_READY" && record.aiDraftMode.value === "preview") {
+    previewOpen.value = true;
+  }
+});
 onMounted(loadDrugCatalog);
 </script>
 
@@ -341,7 +346,7 @@ onMounted(loadDrugCatalog);
     </div>
 
     <PatientContextDrawer :open="contextOpen" :registration="registration" :triage="triage" @close="contextOpen = false" />
-    <AiRecordPreviewModal :open="previewOpen" :text="streamText" @close="previewOpen = false" />
+    <AiRecordPreviewModal :open="previewOpen" :text="streamText" @close="previewOpen = false" @confirm="previewOpen = false; if (record.lastDraft.value) record.applyDraft(record.lastDraft.value)" />
     <SaveRecordConfirmModal :open="saveConfirmOpen" :busy="record.recordLoading.value" @close="saveConfirmOpen = false" @confirm="async () => { const id = await record.saveRecord(); if (id) { prescription.prescription.medicalRecordId = id; saveConfirmOpen = false; } }" />
     <PrescriptionRiskModal :open="riskOpen" :result="prescription.checkResult.value" @close="riskOpen = false" @confirm="async () => { const ok = await prescription.createPrescription(); if (ok) riskOpen = false; }" />
     <HighRiskConfirmModal :open="highRiskOpen" :busy="prescription.prescriptionLoading.value" @close="highRiskOpen = false" @confirm="async () => { const ok = await prescription.createPrescription(); if (ok) { riskOpen = false; highRiskOpen = false; } }" />

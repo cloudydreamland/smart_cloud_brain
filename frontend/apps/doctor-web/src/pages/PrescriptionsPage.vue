@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { inject, onMounted, ref, type Ref } from "vue";
+import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { displayText, formatApiError, formatDateTime, useDoctorWorkflowStore, usePagination, type Prescription } from "@smart-cloud-brain/shared-api";
 import { ErrorState, LoadingState, PaginationBar, Toast } from "@smart-cloud-brain/shared-ui";
@@ -14,7 +15,16 @@ const loaded = ref(false);
 const error = ref("");
 const toast = inject<Ref<InstanceType<typeof Toast>>>("toast");
 const selected = ref<Prescription | null>(null);
+const router = useRouter();
 const { currentPage, pageSize, total, pageRows } = usePagination(displayPrescriptions, 8);
+
+function handleReturnToModify() {
+  const regId = selected.value?.registrationId;
+  selected.value = null;
+  if (regId) {
+    router.push(`/consult/${regId}`);
+  }
+}
 
 async function refresh(silent = false, showLoading = true) {
   if (showLoading) loading.value = true;
@@ -77,7 +87,7 @@ onMounted(() => refresh(true, false));
       </div>
       <PaginationBar v-model="currentPage" :total="total" :page-size="pageSize" />
     </div>
-    <PrescriptionRiskModal :open="Boolean(selected)" :result="selected" @close="selected = null" @confirm="selected = null" />
+    <PrescriptionRiskModal :open="Boolean(selected)" :result="selected" @close="handleReturnToModify" @confirm="selected = null" />
   </section>
 </template>
 

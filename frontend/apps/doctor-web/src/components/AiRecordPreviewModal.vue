@@ -3,7 +3,7 @@ import { Modal } from "@smart-cloud-brain/shared-ui";
 import { formatAiDraft } from "../doctorPresentation";
 
 defineProps<{ open: boolean; text: string }>();
-defineEmits<{ close: [] }>();
+defineEmits<{ close: []; confirm: [] }>();
 </script>
 
 <style scoped>
@@ -20,7 +20,7 @@ defineEmits<{ close: [] }>();
     <div class="ai-draft">{{ text || formatAiDraft() }}</div>
     <template #footer>
       <button type="button" @click="$emit('close')">返回编辑</button>
-      <button type="button" class="primary" @click="$emit('close')">确认采用</button>
+      <button type="button" class="primary" @click="$emit('confirm')">确认采用</button>
     </template>
   </Modal>
 </template>
