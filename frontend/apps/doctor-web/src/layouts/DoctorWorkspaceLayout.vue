@@ -50,10 +50,10 @@ const flowSteps = computed(() => [
 const navItems = computed(() => [
   { label: "首页", to: "/", name: "doctor-dashboard", badge: activeQueue.value },
   { label: "队列", to: "/queue", name: "doctor-queue", badge: activeQueue.value },
-  { label: "接诊", to: activeQueue.value ? `/consult/${displayRegistrations.value[0]?.registrationId || 10023}` : "/queue", name: "doctor-consult" },
+  { label: "接诊", to: activeQueue.value && displayRegistrations.value[0]?.registrationId ? `/consult/${displayRegistrations.value[0].registrationId}` : "/queue", name: "doctor-consult" },
   { label: "排班", to: "/schedule", name: "doctor-schedule" },
   { label: "病历", to: "/records", name: "doctor-records" },
-  { label: "处方", to: "/prescriptions", name: "doctor-prescriptions", badge: 2 },
+  { label: "处方", to: "/prescriptions", name: "doctor-prescriptions" },
   { label: "通知", to: "/notifications", name: "doctor-notifications", badge: unread.value },
   { label: "设置", to: "/settings", name: "doctor-settings" },
 ]);
@@ -176,7 +176,7 @@ onBeforeUnmount(() => {
       <header class="doctor-topline">
         <div class="doctor-session">
           <strong>{{ session?.name || "医生" }}</strong>
-          <span>{{ session?.departmentName || "心内科" }} · {{ statusLabel(session?.role, "医生") }} #{{ session?.userId || "-" }}</span>
+          <span>{{ session?.departmentName || "--" }} · {{ statusLabel(session?.role, "医生") }} #{{ session?.userId || "-" }}</span>
         </div>
         <div class="doctor-topline-status">
           <span class="status-pill"><i class="dot"></i>{{ socketStatus }}</span>
