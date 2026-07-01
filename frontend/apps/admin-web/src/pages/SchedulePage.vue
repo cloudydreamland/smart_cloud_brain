@@ -2,8 +2,7 @@
 import { computed, inject, reactive, ref, watch, type Ref } from "vue";
 import { storeToRefs } from "pinia";
 import { aiSourceLabel, aiSourceTone, api, displayText, formatApiError, statusClass, toNumber, useAdminWorkflowStore, usePagination, type Doctor, type Schedule, type ScheduleSaveRequest } from "@smart-cloud-brain/shared-api";
-import { DatePicker, EmptyState, ErrorState, FormField, LoadingState, Modal, PaginationBar, ScbSelect, StatusTag, TimeRangePicker, Toast } from "@smart-cloud-brain/shared-ui";
-import ConfirmDialog from "@smart-cloud-brain/shared-ui/src/components/ConfirmDialog.vue";
+import { DatePicker, EmptyState, ErrorState, FormField, LoadingState, Modal, PaginationBar, ScbSelect, StatusTag, TimeRangePicker, Toast, ConfirmDialog } from "@smart-cloud-brain/shared-ui";
 import DepartmentDoctorCascader from "../components/DepartmentDoctorCascader.vue";
 
 const emit = defineEmits<{ refresh: [] }>();
