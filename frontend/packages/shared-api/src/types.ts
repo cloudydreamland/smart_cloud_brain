@@ -1,7 +1,7 @@
 export type Role = "PATIENT" | "DOCTOR" | "ADMIN";
 
 export type ApiResult<T> = { code: number; message: string; data: T };
-export type Session = { token: string; userId: number; role: Role; name: string };
+export type Session = { token: string; userId: number; role: Role; name: string; departmentName?: string };
 export type CurrentUser = { userId: number; role: Role; name: string };
 export type DataRow = Record<string, unknown>;
 
@@ -234,6 +234,8 @@ export interface Registration {
   registrationId: number;
   patientId: number;
   patientName?: string;
+  patientAge?: number;
+  patientGender?: string;
   doctorId?: number;
   doctorName?: string;
   departmentId?: number;
