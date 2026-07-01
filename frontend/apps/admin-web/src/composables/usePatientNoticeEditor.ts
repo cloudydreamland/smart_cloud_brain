@@ -67,7 +67,7 @@ export function usePatientNoticeEditor() {
   }
 
   async function remove(id?: number) {
-    if (!id || !window.confirm("确认删除该公告？")) return;
+    if (!id || !window.confirm("确认删除该公告？删除后患者端公开公告列表将不再展示该内容。")) return;
     saving.value = true;
     error.value = "";
     try {

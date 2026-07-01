@@ -20,7 +20,9 @@ function addLocation() {
 }
 
 function removeLocation(index: number) {
-  props.hospitalDraft.locations[index].enabled = false;
+  const location = props.hospitalDraft.locations[index];
+  if (!location || !window.confirm(`确认删除院区「${location.name || "未命名院区"}」？删除后只会影响当前编辑稿，发布或保存并生效后才会更新正式页面。`)) return;
+  location.enabled = false;
 }
 
 function nextSort() {

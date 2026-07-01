@@ -13,6 +13,8 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   uploaded: [value: UploadedImageAsset];
+  "update:imageUrl": [value: string];
+  "update:objectKey": [value: string];
   "update:imageAlt": [value: string];
   cleared: [];
 }>();
@@ -32,12 +34,19 @@ async function onFileChange(event: Event) {
   input.value = "";
   if (!file) return;
   const asset = await uploadImage(file);
-  if (asset) emit("uploaded", asset);
+  if (!asset) return;
+  emit("uploaded", asset);
+  emit("update:imageUrl", asset.url);
+  emit("update:objectKey", asset.objectKey);
 }
 
 function clearImage() {
   if (props.disabled || uploading.value) return;
+  if (!window.confirm(`确认清空${props.label}？清空后会从当前编辑稿移除图片 URL、objectKey 和图片说明，保存草稿不会影响患者端，发布或保存并生效后才会更新正式页面。`)) return;
   emit("cleared");
+  emit("update:imageUrl", "");
+  emit("update:objectKey", "");
+  emit("update:imageAlt", "");
 }
 </script>
 

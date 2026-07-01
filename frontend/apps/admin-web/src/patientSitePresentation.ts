@@ -1,3 +1,5 @@
+import { patientSiteSectionRegistry, type PatientSiteSectionType } from "@smart-cloud-brain/shared-api";
+
 export type PatientHomeModuleType =
   | "notice"
   | "quick_actions"
@@ -34,6 +36,7 @@ const fieldLabels: Record<string, string> = {
   routeName: "页面入口",
   label: "显示名称",
   title: "页面标题",
+  contentSource: "内容来源",
   slug: "页面地址",
   sort: "排序值",
   key: "内部标识",
@@ -42,6 +45,9 @@ const fieldLabels: Record<string, string> = {
 };
 
 export function homeModuleTypeLabel(type?: string) {
+  if (type && Object.prototype.hasOwnProperty.call(patientSiteSectionRegistry, type)) {
+    return patientSiteSectionRegistry[type as PatientSiteSectionType].label;
+  }
   return (type && homeModuleTypeLabels[type as PatientHomeModuleType]) || (type ? "自定义模块" : "未设置模块");
 }
 

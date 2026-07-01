@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import { useAuthStore } from "@smart-cloud-brain/shared-api";
 
 import AdminWorkspaceLayout from "../layouts/AdminWorkspaceLayout.vue";
+import { hasAdminPermission, loadAdminPermissions, PATIENT_SITE_MANAGE_PERMISSION } from "../adminPermissions";
 
 const AdminLoginPage = () => import("../pages/AdminLoginPage.vue");
 const AdminDashboard = () => import("../pages/AdminDashboard.vue");
@@ -37,7 +38,7 @@ const router = createRouter({
         { path: "patients", name: "admin-patients", component: PatientsPage },
         { path: "accounts", name: "admin-accounts", component: AccountsPage },
         { path: "permissions", name: "admin-permissions", component: PermissionsPage },
-        { path: "patient-site", name: "admin-patient-site", component: PatientSiteConfigPage },
+        { path: "patient-site", name: "admin-patient-site", component: PatientSiteConfigPage, meta: { permission: PATIENT_SITE_MANAGE_PERMISSION } },
         { path: "email-config", name: "admin-email-config", component: EmailConfigPage },
       ],
     },
@@ -45,11 +46,16 @@ const router = createRouter({
   ],
 });
 
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   const auth = useAuthStore();
   auth.load("admin-session", "ADMIN");
   if (to.meta.requiresAuth && (!auth.session || auth.permissionError)) return { name: "admin-login", query: { redirect: to.fullPath } };
   if (to.name === "admin-login" && auth.session && !auth.permissionError) return { name: "admin-dashboard" };
+  const permission = typeof to.meta.permission === "string" ? to.meta.permission : "";
+  if (auth.session && permission) {
+    const permissions = await loadAdminPermissions();
+    if (!hasAdminPermission(permissions, permission)) return { name: "admin-dashboard", query: { denied: permission } };
+  }
   return true;
 });
 
