@@ -147,6 +147,7 @@ async function refresh() {
 
 function choose(slot: AppointmentSlot) {
   if (isSlotBooked(slot)) return;
+  if (slot.status !== "AVAILABLE" || !slot.remainingCapacity) return;
   selectedSlot.value = slot;
   confirmOpen.value = true;
 }
@@ -202,6 +203,7 @@ async function confirmAppointment() {
     });
     await workflow.refreshAuthenticated();
     confirmOpen.value = false;
+    selectedSlot.value = null;
     toast?.value?.success('预约已提交', '可在"我的挂号"页面查看或取消。');
   } catch (err) {
     error.value = formatApiError(err, "挂号失败");
@@ -280,7 +282,7 @@ onMounted(refresh);
                       <template v-else>
                         <span v-if="recommendedSlotIds.has(String(slot.slotId))" class="tag recommended-tag">✦ 推荐</span>
                         <StatusTag :status="statusText(slot.status)" :tone="statusClass(slot.status)" />
-                        <button class="primary" type="button" @click="choose(slot)">选择</button>
+                        <button class="primary" type="button" :disabled="slot.status !== 'AVAILABLE' || !slot.remainingCapacity" @click="choose(slot)">{{ !slot.remainingCapacity ? '已满' : '选择' }}</button>
                       </template>
                     </div>
                   </article>

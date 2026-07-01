@@ -59,7 +59,7 @@ async function refresh(silent = false, showLoading = true) {
   if (showLoading) loading.value = true;
   error.value = "";
   try {
-    rows.value = await api.notifications(filter.value);
+    rows.value = await api.notifications();
     loaded.value = true;
     if (!silent) toast?.value?.success("数据已刷新", "消息数据已同步最新状态。");
   } catch (err) {
@@ -86,7 +86,7 @@ async function markRead(item: MessageRow) {
   }
 }
 
-onMounted(() => refresh(true, false));
+onMounted(() => refresh(true, true));
 </script>
 
 <template>
@@ -110,7 +110,7 @@ onMounted(() => refresh(true, false));
         <div class="summary-item"><span>当前筛选</span><strong>{{ filteredMessages.length }}</strong></div>
       </div>
       <div class="toolbar">
-        <SegmentedControl v-model="filter" :options="options" @update:model-value="refresh" />
+        <SegmentedControl v-model="filter" :options="options" />
         <span class="row-meta">{{ saving ? "正在更新消息状态" : "点击消息可查看详情并标记已读" }}</span>
       </div>
       <LoadingState v-if="!loaded && loading" />

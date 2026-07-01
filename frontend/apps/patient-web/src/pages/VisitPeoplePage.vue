@@ -15,13 +15,13 @@ const emptyForm: PatientVisitorSaveRequest = {
   relationship: "",
   phone: "",
   gender: "",
-  age: 0,
+  age: "" as unknown as number,
   address: "",
   emergencyContact: "",
   emergencyPhone: "",
   bloodType: "",
-  heightCm: 0,
-  weightKg: 0,
+  heightCm: "" as unknown as number,
+  weightKg: "" as unknown as number,
   allergyHistory: "",
   pastHistory: "",
 };
@@ -29,7 +29,7 @@ const emptyForm: PatientVisitorSaveRequest = {
 const form = reactive<PatientVisitorSaveRequest>({ ...emptyForm });
 
 function resetForm() {
-  delete form.id;
+  form.id = undefined;
   Object.assign(form, emptyForm);
 }
 
@@ -72,7 +72,7 @@ async function saveVisitor() {
   saving.value = true;
   error.value = "";
   try {
-    await api.savePatientVisitor({ ...form, name: form.name.trim() });
+    await api.savePatientVisitor({ ...form, name: form.name.trim(), age: Number(form.age) || 0, heightCm: Number(form.heightCm) || 0, weightKg: Number(form.weightKg) || 0 });
     resetForm();
     await loadVisitors();
     toast.value?.success("保存成功", "就诊人已保存");
@@ -133,11 +133,11 @@ onMounted(loadVisitors);
                 </span>
               </div>
               <p>
-                {{ statusText(row.gender, "未说明") }} · {{ String(row.age ?? 0) }} 岁 ·
+                {{ statusText(row.gender, "未说明") }} · {{ row.age ? `${row.age} 岁` : "年龄未填写" }} ·
                 {{ row.phone || "未填写电话" }}
               </p>
               <p>紧急联系人：{{ row.emergencyContact || "未填写" }} {{ row.emergencyPhone || "" }}</p>
-              <p>血型 {{ row.bloodType || "未说明" }} · 身高 {{ String(row.heightCm ?? 0) }} cm · 体重 {{ String(row.weightKg ?? 0) }} kg</p>
+              <p>血型 {{ row.bloodType || "未说明" }} · 身高 {{ row.heightCm ? `${row.heightCm} cm` : "未填写" }} · 体重 {{ row.weightKg ? `${row.weightKg} kg` : "未填写" }}</p>
             </div>
             <div class="visitor-actions">
               <button v-if="row.editable" class="secondary" type="button" @click="edit(row)">编辑</button>
@@ -166,10 +166,10 @@ onMounted(loadVisitors);
               <option value="">未说明</option>
               <option value="MALE">男</option>
               <option value="FEMALE">女</option>
-              <option value="UNKNOWN">未说明</option>
+              <option value="UNKNOWN">不清楚</option>
             </select>
           </FormField>
-          <FormField label="年龄"><input v-model.number="form.age" type="number" min="0" max="130" /></FormField>
+          <FormField label="年龄"><input v-model="form.age" type="number" min="0" max="130" placeholder="未填写" /></FormField>
           <FormField label="血型">
             <select v-model="form.bloodType">
               <option value="">未说明</option>
@@ -180,8 +180,8 @@ onMounted(loadVisitors);
               <option value="UNKNOWN">不确定</option>
             </select>
           </FormField>
-          <FormField label="身高（cm）"><input v-model.number="form.heightCm" type="number" min="0" max="260" /></FormField>
-          <FormField label="体重（kg）"><input v-model.number="form.weightKg" type="number" min="0" max="400" step="0.1" /></FormField>
+          <FormField label="身高（cm）"><input v-model="form.heightCm" type="number" min="0" max="260" placeholder="未填写" /></FormField>
+          <FormField label="体重（kg）"><input v-model="form.weightKg" type="number" min="0" max="400" step="0.1" placeholder="未填写" /></FormField>
         </div>
         <FormField label="地址"><input v-model.trim="form.address" /></FormField>
         <div class="form-grid">
