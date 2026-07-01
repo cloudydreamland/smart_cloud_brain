@@ -76,6 +76,7 @@ async function submit() {
             </span>
             <h3>{{ triage.recommendedDepartment || "待确认" }}</h3>
             <p>{{ triage.reason || "暂无说明" }}</p>
+            <button type="button" class="primary" style="margin-top: 12px" @click="router.push({ name: 'patient-doctors' })">查看号源</button>
           </div>
           <EmptyState v-else title="暂无分诊结果" />
         </div>
