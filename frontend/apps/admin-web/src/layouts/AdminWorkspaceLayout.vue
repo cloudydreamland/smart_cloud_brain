@@ -13,7 +13,7 @@ const router = useRouter();
 const { session, permissionError } = storeToRefs(auth);
 const { departments, doctors, triageDesk } = storeToRefs(workflow);
 const loading = ref(false);
-const difyUrl = import.meta.env.VITE_DIFY_URL || "";
+const difyUrl = import.meta.env.VITE_DIFY_URL || "http://localhost";
 let unbind: (() => void) | null = null;
 
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);
