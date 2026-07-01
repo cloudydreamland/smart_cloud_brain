@@ -161,7 +161,7 @@ onMounted(() => refresh(true, false));
         <AgeRangeFilter v-model:min-age="minAge" v-model:max-age="maxAge" />
       </div>
 
-      <DataTable :rows="filtered" :loading="!loaded && loading" :error="error" :breakout="true" empty-title="暂无患者">
+      <DataTable :rows="pageRows" :loading="!loaded && loading" :error="error" :breakout="true" empty-title="暂无患者">
         <thead>
           <tr>
             <th>编号</th>
