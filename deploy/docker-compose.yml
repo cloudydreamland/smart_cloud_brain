@@ -70,6 +70,7 @@ services:
           fi
           psql -v ON_ERROR_STOP=1 -h "$${DB_HOST}" -p "$${DB_PORT}" -U "$${DB_USER}" -d "$${DB_NAME}" -f /sql/kingbase_schema.sql
           psql -v ON_ERROR_STOP=1 -h "$${DB_HOST}" -p "$${DB_PORT}" -U "$${DB_USER}" -d "$${DB_NAME}" -f /sql/V7__seed_expansion_v2.sql || true
+          psql -v ON_ERROR_STOP=1 -h "$${DB_HOST}" -p "$${DB_PORT}" -U "$${DB_USER}" -d "$${DB_NAME}" -f /sql/V8__seed_expansion_v3.sql || true
         else
           BIN=/home/kingbase/install/kingbase/bin
           export KINGBASE_PASSWORD="$${DB_PASSWORD}"
@@ -82,10 +83,12 @@ services:
           fi
           "$${BIN}/ksql" -v ON_ERROR_STOP=1 -h "$${DB_HOST}" -p "$${DB_PORT}" -U "$${DB_USER}" -d "$${DB_NAME}" -f /sql/kingbase_schema.sql
           "$${BIN}/ksql" -v ON_ERROR_STOP=1 -h "$${DB_HOST}" -p "$${DB_PORT}" -U "$${DB_USER}" -d "$${DB_NAME}" -f /sql/V7__seed_expansion_v2.sql || true
+          "$${BIN}/ksql" -v ON_ERROR_STOP=1 -h "$${DB_HOST}" -p "$${DB_PORT}" -U "$${DB_USER}" -d "$${DB_NAME}" -f /sql/V8__seed_expansion_v3.sql || true
         fi
     volumes:
       - ../sql/kingbase_schema.sql:/sql/kingbase_schema.sql:ro
       - ../sql/V7__seed_expansion_v2.sql:/sql/V7__seed_expansion_v2.sql:ro
+      - ../sql/V8__seed_expansion_v3.sql:/sql/V8__seed_expansion_v3.sql:ro
 
   rabbitmq:
     image: rabbitmq:3.13-management
