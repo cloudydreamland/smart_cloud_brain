@@ -48,11 +48,11 @@ export function formatTime(iso: unknown) {
 
 export function formatAiDraft() {
   return [
-    "Chief complaint: ",
-    "Present illness: ",
-    "Past history: ",
-    "Physical exam: ",
-    "Diagnosis: ",
-    "Treatment advice: ",
+    "主诉：",
+    "现病史：",
+    "既往史：",
+    "体格检查：",
+    "诊断：",
+    "治疗建议：",
   ].join("\n");
 }

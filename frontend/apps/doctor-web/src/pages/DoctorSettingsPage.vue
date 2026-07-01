@@ -70,7 +70,7 @@ function updateNotifyMode(value: DoctorSettings["notifyMode"]) {
       <div class="summary-strip">
         <div class="summary-item">
           <span>医生</span>
-          <strong>{{ auth.session?.name || "张医生" }}</strong>
+          <strong>{{ auth.session?.name || "--" }}</strong>
         </div>
         <div class="summary-item">
           <span>角色</span>

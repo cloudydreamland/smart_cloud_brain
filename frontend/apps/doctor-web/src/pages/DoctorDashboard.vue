@@ -33,7 +33,10 @@ const workloadBars = computed(() => [
 
 <template>
   <section class="dashboard-v2">
-    <div class="metrics">
+    <div v-if="!registrations.length && !records.length && !prescriptions.length" class="doctor-empty-hint" style="padding:2rem;text-align:center;color:#888;">
+      暂无数据，请先在队列中接诊患者。
+    </div>
+    <div v-else class="metrics">
 
       <div class="metric-card">
         <div class="metric-card-head">

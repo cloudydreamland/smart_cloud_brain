@@ -3,9 +3,9 @@
     <div class="doctor-not-found-card">
       <h1 class="doctor-not-found-title">404</h1>
       <p class="doctor-not-found-message">页面不存在</p>
-      <a class="doctor-not-found-link" href="/">
+      <RouterLink class="doctor-not-found-link" to="/">
         返回首页
-      </a>
+      </RouterLink>
     </div>
   </div>
 </template>
