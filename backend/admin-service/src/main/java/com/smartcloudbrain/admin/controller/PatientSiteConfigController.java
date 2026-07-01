@@ -89,6 +89,12 @@ public class PatientSiteConfigController {
     return Result.success(patientSiteConfigService.createPreviewToken(configKey, version));
   }
 
+  @PostMapping("/api/admin/patient-site/site-preview-token")
+  public Result<?> sitePreviewToken() {
+    requireManagePermission();
+    return Result.success(patientSiteConfigService.createSitePreviewToken());
+  }
+
   @GetMapping("/api/patient-site/config")
   public Result<?> publicConfig() {
     return Result.success(patientSiteConfigService.publicConfig());

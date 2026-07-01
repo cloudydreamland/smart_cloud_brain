@@ -320,3 +320,328 @@
   min-width: 0;
   overflow-wrap: anywhere;
 }
+
+.icon-action,
+.icon-only {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-action {
+  gap: 6px;
+}
+
+.icon-only {
+  width: 34px;
+  padding: 0;
+}
+
+.hospital-overview-grid,
+.home-config-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(240px, 0.75fr);
+  gap: 14px;
+}
+
+.hospital-info-card,
+.home-hero-summary-card,
+.home-module-stat-card {
+  min-height: 154px;
+  align-content: space-between;
+  background: var(--color-white);
+}
+
+.hospital-card-head,
+.home-card-head {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.hospital-card-head > div,
+.home-card-head > div {
+  min-width: 0;
+}
+
+.hospital-card-kicker,
+.home-card-kicker {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.hospital-info-card h3,
+.home-hero-summary-card h3,
+.home-module-stat-card h3 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+.hospital-info-card p,
+.home-hero-summary-card p,
+.home-module-stat-card p {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.hospital-card-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 14px 0 0;
+}
+
+.hospital-card-meta div {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--color-slate-50);
+}
+
+.hospital-card-meta dt {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.hospital-card-meta dd {
+  overflow: hidden;
+  margin: 4px 0 0;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hospital-location-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.hospital-location-card {
+  grid-template-columns: 72px minmax(0, 1fr);
+  align-items: start;
+  background: var(--color-white);
+}
+
+.hospital-location-card.disabled {
+  background: var(--color-slate-50);
+}
+
+.hospital-location-thumb {
+  display: grid;
+  width: 72px;
+  height: 72px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--color-slate-100);
+  color: var(--muted);
+}
+
+.hospital-location-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hospital-location-body {
+  display: grid;
+  min-width: 0;
+  gap: 8px;
+}
+
+.hospital-location-title {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.hospital-location-title strong {
+  display: block;
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.hospital-location-title span,
+.hospital-location-body small,
+.home-module-content small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.hospital-location-body p,
+.home-module-content p {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.hospital-location-card .config-card-actions {
+  grid-column: 1 / -1;
+  justify-content: flex-start;
+  padding-top: 2px;
+}
+
+.hospital-empty-card,
+.home-empty-module {
+  display: grid;
+  min-height: 96px;
+  place-items: center;
+  border: 1px dashed var(--color-slate-300);
+  border-radius: 8px;
+  background: var(--color-white);
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.hospital-editor-modal-card {
+  width: min(900px, calc(100vw - 32px));
+}
+
+.home-hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.home-hero-meta span {
+  min-height: 28px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--color-slate-50);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.home-module-stat-card h3 {
+  font-size: 28px;
+}
+
+.home-module-toolbox {
+  gap: 14px;
+}
+
+.home-add-groups {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+}
+
+.home-add-group {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--color-slate-50);
+}
+
+.home-add-group strong {
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.home-add-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.home-empty-note {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.home-module-board {
+  display: grid;
+  gap: 10px;
+}
+
+.home-module-row {
+  grid-template-columns: 24px 38px minmax(0, 1fr) auto;
+  align-items: center;
+  min-height: 92px;
+  background: var(--color-white);
+}
+
+.home-module-row.disabled {
+  background: var(--color-slate-50);
+}
+
+.home-module-drag {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+}
+
+.home-module-order {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--color-teal-50);
+  color: var(--color-teal-800);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.home-module-content {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.home-module-title {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.home-module-title strong {
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.home-module-title span {
+  padding: 3px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--color-slate-50);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.home-module-row .config-card-actions {
+  flex-wrap: nowrap;
+}

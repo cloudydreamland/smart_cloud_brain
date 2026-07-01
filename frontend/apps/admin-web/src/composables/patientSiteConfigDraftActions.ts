@@ -1,13 +1,15 @@
 import {
   api,
   createDefaultPatientSiteSection,
+  isPatientSiteSectionType,
+  normalizePatientSiteSection,
   resolvePatientSiteConfigSection,
-  type DataRow,
   type PatientHomeModule,
   type PatientSitePageConfig,
   type PatientSitePagesConfig,
   type PatientSiteSectionType,
   type PatientStaticPagesConfig,
+  type PatientSiteConfigKey,
   type RouteTargetConfig,
 } from "@smart-cloud-brain/shared-api";
 import {
@@ -29,8 +31,10 @@ import {
   stringValue,
 } from "./patientSiteConfigEditorUtils";
 import type { ConfigDrafts, EditingTarget } from "./patientSiteConfigEditorState";
+import { emptyPatientSiteEditorDraft, type PatientSiteEditorDraft, type PatientSiteEditorDraftContent } from "./patientSiteEditorDraftTypes";
 
 type ValueRef<T> = { value: T };
+type EditableRow = Record<string, unknown>;
 
 type DraftActionContext = {
   auth: { session: unknown };
@@ -39,15 +43,25 @@ type DraftActionContext = {
   saving: ValueRef<boolean>;
   status: ValueRef<string>;
   error: ValueRef<string>;
-  editingDraft: ValueRef<any>;
+  editingDraft: ValueRef<PatientSiteEditorDraft | null>;
   navDraft: ValueRef<ConfigDrafts["patient_nav"]>;
   homeDraft: ValueRef<ConfigDrafts["patient_home"]>;
   staticDraft: ValueRef<PatientStaticPagesConfig>;
   pagesDraft: ValueRef<PatientSitePagesConfig>;
   validationErrors: Record<string, string[]>;
   openEditor: (target: EditingTarget) => void;
-  refreshHistory: (key: "patient_pages") => Promise<void>;
+  refreshHistory: (key: PatientSiteConfigKey) => Promise<void>;
 };
+
+const configKeys: PatientSiteConfigKey[] = [
+  "patient_nav",
+  "patient_home",
+  "patient_static_pages",
+  "patient_pages",
+  "patient_hospital_info",
+  "patient_footer",
+];
+const legacyHomeModuleTypes = new Set(["notice", "quick_actions", "intro", "locations", "featured_departments", "static_content"]);
 
 export function createPatientSiteDraftActions(ctx: DraftActionContext) {
   function readEditingTarget(target: EditingTarget) {
@@ -64,28 +78,40 @@ export function createPatientSiteDraftActions(ctx: DraftActionContext) {
     else if (target.type === "nav-menu") ctx.navDraft.value.menus[target.index] = normalizeNavMenu(value, target.index);
     else if (target.type === "user-link") ctx.navDraft.value.userLinks[target.index] = normalizeLink(value);
     else if (target.type === "home-hero") ctx.homeDraft.value.hero = normalizeHome({ hero: value }).hero;
-    else if (target.type === "home-module") ctx.homeDraft.value.modules[target.index] = normalizeHomeModule(value, target.index);
+    else if (target.type === "home-module") {
+      const row = isRow(value) ? value : {};
+      if (isHomeSectionType(stringValue(row.type, "")) && isRow(row.content)) {
+        row.key = stringValue(row.content.id, stringValue(row.key, `${row.type || "module"}-${target.index + 1}`));
+        row.sort = numberValue(row.content.sort, numberValue(row.sort, target.index * 10));
+        row.enabled = row.content.enabled !== false;
+      }
+      ctx.homeDraft.value.modules[target.index] = normalizeHomeModule(row, target.index);
+    }
     else ctx.staticDraft.value.pages[target.index] = normalizeStaticPage(value, target.index);
   }
 
   function hydrateEditingDraft(target: EditingTarget) {
-    if (!ctx.editingDraft.value) ctx.editingDraft.value = {};
-    if (target.type === "nav-menu" && !Array.isArray(ctx.editingDraft.value.links)) ctx.editingDraft.value.links = [];
+    if (!ctx.editingDraft.value) ctx.editingDraft.value = emptyPatientSiteEditorDraft();
+    const draft = ctx.editingDraft.value;
+    if (target.type === "nav-menu" && !Array.isArray(draft.links)) draft.links = [];
     if (target.type === "home-hero") {
-      if (!ctx.editingDraft.value.primaryAction) ctx.editingDraft.value.primaryAction = { label: "", routeName: "patient-home" };
-      if (!ctx.editingDraft.value.secondaryAction) ctx.editingDraft.value.secondaryAction = { label: "", routeName: "patient-home" };
+      if (!draft.primaryAction) draft.primaryAction = { label: "", routeName: "patient-home" };
+      if (!draft.secondaryAction) draft.secondaryAction = { label: "", routeName: "patient-home" };
     }
     if (target.type === "home-module") {
-      if (!isRow(ctx.editingDraft.value.content)) ctx.editingDraft.value.content = {};
+      if (!isRow(draft.content)) draft.content = emptyPatientSiteEditorDraft().content;
       hydrateEditingHomeModuleContent();
     }
-    if (target.type === "static-page" && !Array.isArray(ctx.editingDraft.value.points)) ctx.editingDraft.value.points = [];
+    if (target.type === "static-page" && !Array.isArray(draft.points)) draft.points = [];
   }
 
   function hydrateEditingHomeModuleContent() {
     if (!ctx.editingDraft.value) return;
     const content = editingContent();
-    if (ctx.editingDraft.value.type === "notice") {
+    const type = stringValue(ctx.editingDraft.value.type, "");
+    if (isHomeSectionType(type)) {
+      hydrateEditingHomeSectionContent(type);
+    } else if (ctx.editingDraft.value.type === "notice") {
       content.level = stringValue(content.level, "info");
       content.text = stringValue(content.text, "");
     } else if (ctx.editingDraft.value.type === "quick_actions") {
@@ -104,15 +130,15 @@ export function createPatientSiteDraftActions(ctx: DraftActionContext) {
   }
 
   function editingContent() {
-    if (!ctx.editingDraft.value) ctx.editingDraft.value = {};
-    if (!isRow(ctx.editingDraft.value.content)) ctx.editingDraft.value.content = {};
-    return ctx.editingDraft.value.content as DataRow;
+    if (!ctx.editingDraft.value) ctx.editingDraft.value = emptyPatientSiteEditorDraft();
+    if (!isRow(ctx.editingDraft.value.content)) ctx.editingDraft.value.content = emptyPatientSiteEditorDraft().content;
+    return ctx.editingDraft.value.content as EditableRow;
   }
 
   function ensureContentAction(field: string, label: string, routeName: string) {
     const content = editingContent();
     if (!isRow(content[field])) content[field] = { label, routeName, enabled: true, sort: 0 };
-    const action = content[field] as DataRow;
+    const action = content[field] as EditableRow;
     action.label = stringValue(action.label, label);
     action.routeName = routeValue(action.routeName, routeName);
     action.enabled = action.enabled !== false;
@@ -123,7 +149,7 @@ export function createPatientSiteDraftActions(ctx: DraftActionContext) {
   function ensureObjectArray(field: string) {
     const content = editingContent();
     content[field] = Array.isArray(content[field]) ? (content[field] as unknown[]).filter(isRow) : [];
-    return content[field] as DataRow[];
+    return content[field] as EditableRow[];
   }
 
   function ensureStringArray(field: string) {
@@ -133,7 +159,7 @@ export function createPatientSiteDraftActions(ctx: DraftActionContext) {
   }
 
   function editingArray(field: string) {
-    if (!ctx.editingDraft.value) ctx.editingDraft.value = {};
+    if (!ctx.editingDraft.value) ctx.editingDraft.value = emptyPatientSiteEditorDraft();
     if (!Array.isArray(ctx.editingDraft.value[field])) ctx.editingDraft.value[field] = [];
     return ctx.editingDraft.value[field] as unknown[];
   }
@@ -170,8 +196,17 @@ export function createPatientSiteDraftActions(ctx: DraftActionContext) {
   }
 
   function addHomeModule(type: string, keyPrefix: string, content: PatientHomeModule["content"] = {}) {
-    ctx.homeDraft.value.modules.push({ type, key: `${keyPrefix}-${Date.now()}`, enabled: true, sort: nextSort(ctx.homeDraft.value.modules), content });
+    const key = `${keyPrefix}-${Date.now()}`;
+    const sort = nextSort(ctx.homeDraft.value.modules);
+    const moduleContent = isHomeSectionType(type)
+      ? { ...createDefaultPatientSiteSection(type), id: key, sort, enabled: true }
+      : content;
+    ctx.homeDraft.value.modules.push({ type, key, enabled: true, sort, content: moduleContent });
     ctx.openEditor({ type: "home-module", index: ctx.homeDraft.value.modules.length - 1 });
+  }
+
+  function isHomeSectionType(type: string): type is PatientSiteSectionType {
+    return isPatientSiteSectionType(type) && !legacyHomeModuleTypes.has(type);
   }
 
   async function previewCmsPage(page: PatientSitePageConfig) {
@@ -203,6 +238,47 @@ export function createPatientSiteDraftActions(ctx: DraftActionContext) {
     }
   }
 
+  async function previewSite() {
+    if (!ctx.auth.session) return;
+    ctx.saving.value = true;
+    ctx.status.value = "";
+    ctx.error.value = "";
+    try {
+      for (const key of configKeys) {
+        const normalized = resolvePatientSiteConfigSection(key, clone(ctx.drafts[key]), { preserveDisabled: true });
+        ctx.drafts[key] = normalized as never;
+        await api.savePatientSiteConfig({
+          configKey: key,
+          configJson: JSON.stringify(normalized),
+          remark: ctx.remarks[key] || "整站预览草稿",
+        });
+      }
+      await ctx.refreshHistory("patient_nav");
+      const token = await api.patientSiteSitePreviewToken();
+      window.open(`${patientPreviewOrigin()}?previewToken=${encodeURIComponent(token.token)}`, "_blank", "noopener");
+      ctx.status.value = "整站预览草稿已保存，并已打开患者端预览窗口。";
+    } catch (err) {
+      ctx.error.value = messageFrom(err);
+    } finally {
+      ctx.saving.value = false;
+    }
+  }
+
+  function hydrateEditingHomeSectionContent(type: PatientSiteSectionType) {
+    const existing = editingContent();
+    const draft = ctx.editingDraft.value;
+    if (!draft) return;
+    const section = normalizePatientSiteSection({
+      ...createDefaultPatientSiteSection(type),
+      ...existing,
+      id: stringValue(existing.id, stringValue(draft.key, `${type}-${Date.now()}`)),
+      type,
+      enabled: draft.enabled !== false,
+      sort: numberValue(draft.sort, 0),
+    });
+    draft.content = (section || createDefaultPatientSiteSection(type)) as PatientSiteEditorDraftContent;
+  }
+
   function addCmsPage() {
     ctx.pagesDraft.value.pages.push({
       routeName: "about-hospital",
@@ -223,6 +299,7 @@ export function createPatientSiteDraftActions(ctx: DraftActionContext) {
       label: "关于医院",
       title: "新静态页",
       intro: "",
+      contentSource: "static",
       enabled: true,
       sort: nextSort(ctx.staticDraft.value.pages),
       points: [],
@@ -241,7 +318,11 @@ export function createPatientSiteDraftActions(ctx: DraftActionContext) {
 
   function removeCmsPage(index: number) {
     const page = ctx.pagesDraft.value.pages[index];
-    if (page) page.enabled = false;
+    if (!page) return;
+    if (!window.confirm(`确认删除 CMS 页面「${page.title || page.label || page.slug || "未命名页面"}」？删除后会从当前编辑稿中禁用该页，保存草稿不会影响患者端，发布或保存并生效后才会更新正式页面。`)) return;
+    page.enabled = false;
+    ctx.status.value = "已删除 CMS 页面，保存草稿或发布后生效";
+    ctx.error.value = "";
   }
 
   function reorderCmsPage(fromIndex: number, toIndex: number) {
@@ -251,7 +332,11 @@ export function createPatientSiteDraftActions(ctx: DraftActionContext) {
 
   function removePageSection(pageIndex: number, sectionIndex: number) {
     const section = ctx.pagesDraft.value.pages[pageIndex]?.sections[sectionIndex];
-    if (section) section.enabled = false;
+    if (!section) return;
+    if (!window.confirm(`确认删除区块「${section.title || section.type}」？删除后会从当前编辑稿中禁用该区块，保存草稿不会影响患者端，发布或保存并生效后才会更新正式页面。`)) return;
+    section.enabled = false;
+    ctx.status.value = "已删除页面区块，保存草稿或发布后生效";
+    ctx.error.value = "";
   }
 
   function reorderPageSection(pageIndex: number, fromIndex: number, toIndex: number) {
@@ -273,6 +358,7 @@ export function createPatientSiteDraftActions(ctx: DraftActionContext) {
     addMenu,
     addUserLink,
     addHomeModule,
+    previewSite,
     previewCmsPage,
     addCmsPage,
     addStaticPage,

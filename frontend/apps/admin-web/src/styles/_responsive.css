@@ -59,11 +59,26 @@
   .patient-site-editor .config-grid.three,
   .patient-site-editor .config-grid.four,
   .patient-site-editor .config-grid.five,
+  .patient-site-editor .config-form-grid,
   .patient-config-modal .config-grid.two,
   .patient-config-modal .config-grid.three,
   .patient-config-modal .config-grid.four,
-  .patient-config-modal .config-grid.five {
+  .patient-config-modal .config-grid.five,
+  .patient-config-modal .config-form-grid,
+  .hospital-overview-grid,
+  .home-config-hero-grid,
+  .home-add-groups {
     grid-template-columns: 1fr;
+  }
+
+  .home-module-row {
+    grid-template-columns: 24px 34px minmax(0, 1fr);
+  }
+
+  .home-module-row .config-card-actions {
+    grid-column: 1 / -1;
+    flex-wrap: wrap;
+    justify-content: flex-start;
   }
 
   .patient-site-page .config-section-head,

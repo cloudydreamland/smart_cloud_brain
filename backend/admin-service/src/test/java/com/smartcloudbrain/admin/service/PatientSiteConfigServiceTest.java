@@ -1,6 +1,7 @@
 package com.smartcloudbrain.admin.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -14,11 +15,19 @@ import com.smartcloudbrain.admin.dto.admin.PatientSiteConfigHistoryResponse;
 import com.smartcloudbrain.admin.entity.PatientSiteConfig;
 import com.smartcloudbrain.admin.repository.PatientSiteConfigRepository;
 import com.smartcloudbrain.common.exception.BusinessException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -180,6 +189,16 @@ class PatientSiteConfigServiceTest {
   }
 
   @Test
+  void rejectsStaticPageCmsBindingWithoutSlug() {
+    PatientSiteConfig draft = config("patient_static_pages", "DRAFT", 1,
+        "{\"pages\":[{\"routeName\":\"about-hospital\",\"title\":\"Hospital\",\"contentSource\":\"cms-page\",\"points\":[]}]}");
+    when(repository.findFirstByConfigKeyAndStatusOrderByVersionDesc("patient_static_pages", "DRAFT"))
+        .thenReturn(Optional.of(draft));
+
+    assertThrows(BusinessException.class, () -> service.publish("patient_static_pages", "publish", 1L));
+  }
+
+  @Test
   void rejectsPublishWithMissingRouteNameInNavLinks() {
     PatientSiteConfig draft = config("patient_nav", "DRAFT", 1,
         "{\"brand\":{\"name\":\"智慧云脑\",\"homeRoute\":\"patient-home\"},\"menus\":[{\"key\":\"care\",\"label\":\"Care\",\"links\":[{\"label\":\"Book\"}]}]}");
@@ -200,9 +219,49 @@ class PatientSiteConfigServiceTest {
   }
 
   @Test
+  void publishesPatientHomeConfigWithLowCodeSectionModule() {
+    PatientSiteConfig draft = config("patient_home", "DRAFT", 1,
+        "{\"hero\":{\"title\":\"Home\"},\"modules\":[{\"type\":\"image_text\",\"key\":\"home-image-text\",\"content\":{\"text\":\"Image text\"}}]}");
+    when(repository.findFirstByConfigKeyAndStatusOrderByVersionDesc("patient_home", "DRAFT"))
+        .thenReturn(Optional.of(draft));
+    when(repository.findByConfigKeyAndStatusOrderByVersionDesc("patient_home", "PUBLISHED"))
+        .thenReturn(List.of());
+    when(repository.findByConfigKeyOrderByVersionDesc("patient_home")).thenReturn(List.of(draft));
+    when(repository.save(any(PatientSiteConfig.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+    Map<String, Object> published = service.publish("patient_home", "publish", 1L);
+
+    assertEquals("PUBLISHED", published.get("status"));
+  }
+
+  @Test
   void publishesPatientPagesConfigWithAllowedSections() {
     PatientSiteConfig draft = config("patient_pages", "DRAFT", 1,
         "{\"pages\":[{\"routeName\":\"about-hospital\",\"slug\":\"about-hospital\",\"label\":\"CMS\",\"title\":\"CMS\",\"intro\":\"Intro\",\"sections\":[{\"type\":\"notice\",\"text\":\"Notice\"},{\"type\":\"rich_text\",\"body\":\"Body\"},{\"type\":\"link_grid\",\"links\":[{\"label\":\"Contact\",\"routeName\":\"about-contact\"},{\"label\":\"CMS\",\"routeName\":\"cms-page\",\"slug\":\"about-hospital\"}]}]}]}");
+    when(repository.findFirstByConfigKeyAndStatusOrderByVersionDesc("patient_pages", "DRAFT"))
+        .thenReturn(Optional.of(draft));
+    when(repository.findByConfigKeyAndStatusOrderByVersionDesc("patient_pages", "PUBLISHED"))
+        .thenReturn(List.of());
+    when(repository.findByConfigKeyOrderByVersionDesc("patient_pages")).thenReturn(List.of(draft));
+    when(repository.save(any(PatientSiteConfig.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+    Map<String, Object> published = service.publish("patient_pages", "publish", 1L);
+
+    assertEquals("PUBLISHED", published.get("status"));
+  }
+
+  @Test
+  void publishesPatientPagesConfigWithLowCodeSections() {
+    PatientSiteConfig draft = config("patient_pages", "DRAFT", 1,
+        "{\"pages\":[{\"routeName\":\"about-hospital\",\"slug\":\"low-code\",\"label\":\"CMS\",\"title\":\"CMS\",\"intro\":\"Intro\",\"sections\":["
+            + "{\"type\":\"image_text\",\"text\":\"Image text\"},"
+            + "{\"type\":\"hero\",\"text\":\"Hero text\"},"
+            + "{\"type\":\"gallery\",\"images\":[{\"url\":\"https://cdn.example.com/a.jpg\",\"alt\":\"A\"}]},"
+            + "{\"type\":\"contact_panel\",\"text\":\"Contact\"},"
+            + "{\"type\":\"stats\",\"items\":[{\"label\":\"Patients\",\"value\":\"1000\"}]},"
+            + "{\"type\":\"doctor_list\",\"links\":[{\"label\":\"Doctors\",\"routeName\":\"doctor-experts\"}]},"
+            + "{\"type\":\"department_list\",\"links\":[{\"label\":\"Departments\",\"routeName\":\"doctor-centers\"}]}"
+            + "]}]}");
     when(repository.findFirstByConfigKeyAndStatusOrderByVersionDesc("patient_pages", "DRAFT"))
         .thenReturn(Optional.of(draft));
     when(repository.findByConfigKeyAndStatusOrderByVersionDesc("patient_pages", "PUBLISHED"))
@@ -307,6 +366,32 @@ class PatientSiteConfigServiceTest {
   }
 
   @Test
+  void publicConfigDoesNotExposeAdminRecordMetadata() {
+    when(repository.findByConfigKeyAndStatusOrderByVersionDesc("patient_nav", "PUBLISHED"))
+        .thenReturn(List.of(config("patient_nav", "PUBLISHED", 3, "{\"brand\":{\"name\":\"智慧云脑\",\"homeRoute\":\"patient-home\"},\"menus\":[],\"userLinks\":[]}")));
+    when(repository.findByConfigKeyAndStatusOrderByVersionDesc("patient_home", "PUBLISHED"))
+        .thenReturn(List.of(config("patient_home", "PUBLISHED", 4, "{\"hero\":{\"title\":\"Home\"},\"modules\":[]}")));
+    when(repository.findByConfigKeyAndStatusOrderByVersionDesc("patient_static_pages", "PUBLISHED"))
+        .thenReturn(List.of(config("patient_static_pages", "PUBLISHED", 5, "{\"pages\":[]}")));
+    when(repository.findByConfigKeyAndStatusOrderByVersionDesc("patient_pages", "PUBLISHED"))
+        .thenReturn(List.of(config("patient_pages", "PUBLISHED", 6, "{\"pages\":[]}")));
+    when(repository.findByConfigKeyAndStatusOrderByVersionDesc("patient_hospital_info", "PUBLISHED"))
+        .thenReturn(List.of(config("patient_hospital_info", "PUBLISHED", 7, "{\"name\":\"Hospital\",\"locations\":[]}")));
+    when(repository.findByConfigKeyAndStatusOrderByVersionDesc("patient_footer", "PUBLISHED"))
+        .thenReturn(List.of(config("patient_footer", "PUBLISHED", 8, "{\"brandName\":\"Footer\",\"links\":[],\"legalLinks\":[]}")));
+
+    Map<String, Object> publicConfig = service.publicConfig();
+
+    assertFalse(publicConfig.containsKey("configKey"));
+    assertFalse(publicConfig.containsKey("configJson"));
+    assertFalse(publicConfig.containsKey("createdBy"));
+    assertFalse(publicConfig.containsKey("updatedBy"));
+    assertTrue(((Map<?, ?>) publicConfig.get("nav")).containsKey("brand"));
+    assertFalse(((Map<?, ?>) publicConfig.get("nav")).containsKey("configJson"));
+    assertFalse(((Map<?, ?>) publicConfig.get("home")).containsKey("updatedBy"));
+  }
+
+  @Test
   void publicConfigInitializesMissingPublishedDefaults() {
     List<PatientSiteConfig> stored = new ArrayList<>();
     when(repository.findByConfigKeyAndStatusOrderByVersionDesc(any(), any())).thenAnswer(invocation -> {
@@ -369,8 +454,63 @@ class PatientSiteConfigServiceTest {
   }
 
   @Test
+  void sitePreviewTokenReadsMultipleDraftSectionsTogether() {
+    List<PatientSiteConfig> stored = List.of(
+        config("patient_nav", "PUBLISHED", 1, "{\"brand\":{\"name\":\"Published\",\"homeRoute\":\"patient-home\"},\"menus\":[],\"userLinks\":[]}"),
+        config("patient_nav", "DRAFT", 2, "{\"brand\":{\"name\":\"Draft Nav\",\"homeRoute\":\"patient-home\"},\"menus\":[],\"userLinks\":[]}"),
+        config("patient_home", "PUBLISHED", 1, "{\"hero\":{\"title\":\"Home\"},\"modules\":[]}"),
+        config("patient_static_pages", "PUBLISHED", 1, "{\"pages\":[]}"),
+        config("patient_pages", "PUBLISHED", 1, "{\"pages\":[]}"),
+        config("patient_pages", "DRAFT", 2, "{\"pages\":[{\"routeName\":\"about-hospital\",\"slug\":\"draft-page\",\"label\":\"Draft\",\"title\":\"Draft\",\"sections\":[]}]}"),
+        config("patient_hospital_info", "PUBLISHED", 1, "{\"name\":\"Hospital\",\"locations\":[]}"),
+        config("patient_footer", "PUBLISHED", 1, "{\"brandName\":\"Published\",\"links\":[],\"legalLinks\":[]}")
+    );
+    when(repository.findByConfigKeyAndStatusOrderByVersionDesc(any(), any())).thenAnswer(invocation -> {
+      String key = invocation.getArgument(0);
+      String status = invocation.getArgument(1);
+      return stored.stream()
+          .filter(config -> key.equals(config.getConfigKey()) && status.equals(config.getStatus()))
+          .toList();
+    });
+    when(repository.findByConfigKeyOrderByVersionDesc(any())).thenAnswer(invocation -> {
+      String key = invocation.getArgument(0);
+      return stored.stream().filter(config -> key.equals(config.getConfigKey())).toList();
+    });
+
+    Map<String, Object> token = service.createSitePreviewToken();
+    Map<String, Object> preview = service.previewConfig(String.valueOf(token.get("token")));
+
+    @SuppressWarnings("unchecked")
+    Map<String, Object> nav = (Map<String, Object>) preview.get("nav");
+    @SuppressWarnings("unchecked")
+    Map<String, Object> brand = (Map<String, Object>) nav.get("brand");
+    @SuppressWarnings("unchecked")
+    Map<String, Object> pages = (Map<String, Object>) preview.get("pages");
+    @SuppressWarnings("unchecked")
+    List<Map<String, Object>> pageList = (List<Map<String, Object>>) pages.get("pages");
+
+    assertEquals("site", token.get("scope"));
+    assertEquals("Draft Nav", brand.get("name"));
+    assertEquals("draft-page", pageList.get(0).get("slug"));
+  }
+
+  @Test
   void rejectsInvalidPreviewToken() {
     assertThrows(BusinessException.class, () -> service.previewConfig("bad.token"));
+  }
+
+  @Test
+  void rejectsExpiredPreviewToken() throws Exception {
+    Method previewToken = PatientSiteConfigService.class.getDeclaredMethod("previewToken", Map.class, long.class);
+    previewToken.setAccessible(true);
+    String token = (String) previewToken.invoke(service, Map.of("patient_pages", 1), 1L);
+
+    assertThrows(BusinessException.class, () -> service.previewConfig(token));
+  }
+
+  @Test
+  void backendPatientRoutesStayAlignedWithFrontendWhitelist() throws Exception {
+    assertEquals(frontendPatientRoutes(), backendPatientRoutes());
   }
 
   private PatientSiteConfig config(String key, String status, int version, String json) {
@@ -380,5 +520,34 @@ class PatientSiteConfigServiceTest {
     config.setVersion(version);
     config.setConfigJson(json);
     return config;
+  }
+
+  @SuppressWarnings("unchecked")
+  private Set<String> backendPatientRoutes() throws Exception {
+    Field routes = PatientSiteConfigService.class.getDeclaredField("ROUTES");
+    routes.setAccessible(true);
+    return new HashSet<>((Set<String>) routes.get(null));
+  }
+
+  private Set<String> frontendPatientRoutes() throws Exception {
+    String source = Files.readString(frontendRoutesFile());
+    Matcher matcher = Pattern.compile("\"([a-z0-9-]+)\"").matcher(source);
+    Set<String> routes = new HashSet<>();
+    while (matcher.find()) {
+      routes.add(matcher.group(1));
+    }
+    return routes;
+  }
+
+  private Path frontendRoutesFile() {
+    Path current = Path.of("").toAbsolutePath();
+    while (current != null) {
+      Path candidate = current.resolve("frontend/packages/shared-api/src/patientSiteRoutes.ts");
+      if (Files.exists(candidate)) {
+        return candidate;
+      }
+      current = current.getParent();
+    }
+    throw new IllegalStateException("frontend patientSiteRoutes.ts not found");
   }
 }

@@ -96,7 +96,7 @@ export function usePatientRecommendationEditor() {
   }
 
   async function remove(id?: number) {
-    if (!id || !window.confirm("确认删除该推荐内容？")) return;
+    if (!id || !window.confirm("确认删除该推荐内容？删除后患者端热门科室或推荐医生列表将不再展示该内容。")) return;
     saving.value = true;
     error.value = "";
     try {

@@ -96,6 +96,13 @@ function sectionSummary(section: PatientSiteSection) {
     cta: () => section.type === "cta" ? section.text || "未填写转化文案" : "",
     link_grid: () => section.type === "link_grid" ? `${section.links.length} 个链接` : "",
     department_links: () => section.type === "department_links" ? `${section.links.length} 个科室入口` : "",
+    image_text: () => section.type === "image_text" ? section.text || "未填写图文正文" : "",
+    hero: () => section.type === "hero" ? section.text || "未填写首屏说明" : "",
+    gallery: () => section.type === "gallery" ? `${section.images.length} 张图片` : "",
+    contact_panel: () => section.type === "contact_panel" ? section.text || "未填写联系说明" : "",
+    stats: () => section.type === "stats" ? `${section.items.length} 个指标` : "",
+    doctor_list: () => section.type === "doctor_list" ? `${section.links.length} 个医生入口` : "",
+    department_list: () => section.type === "department_list" ? `${section.links.length} 个科室入口` : "",
   };
   return sectionSummaryMap[section.type]();
 }
@@ -147,7 +154,7 @@ function openPageEditor(pageIndex: number, isNew = false) {
 
 function cancelPageEditor() {
   const state = editingPageState.value;
-  if (state?.isNew) props.removeCmsPage(state.index);
+  if (state?.isNew) props.pagesDraft.pages.splice(state.index, 1);
   editingPageState.value = null;
 }
 
@@ -166,7 +173,10 @@ function openSectionEditor(pageIndex: number, sectionIndex: number, isNew = fals
 
 function cancelSectionEditor() {
   const state = editingSectionState.value;
-  if (state?.isNew) props.removePageSection(state.pageIndex, state.sectionIndex);
+  if (state?.isNew) {
+    const sections = props.pagesDraft.pages[state.pageIndex]?.sections;
+    sections?.splice(state.sectionIndex, 1);
+  }
   editingSectionState.value = null;
 }
 
@@ -175,6 +185,11 @@ function saveSectionEditor() {
   if (!state || !props.pagesDraft.pages[state.pageIndex]?.sections[state.sectionIndex]) return;
   props.pagesDraft.pages[state.pageIndex].sections[state.sectionIndex] = clone(state.draft);
   editingSectionState.value = null;
+}
+
+function removeSeo() {
+  if (!editingPage.value?.seo || !window.confirm("确认移除 SEO 信息？移除后只会影响当前编辑稿，发布或保存并生效后才会更新正式页面。")) return;
+  editingPage.value.seo = undefined;
 }
 </script>
 
@@ -288,7 +303,7 @@ function saveSectionEditor() {
             <div class="nested-list-head">
               <strong>SEO</strong>
               <button v-if="!editingPage.seo" type="button" class="topbar-refresh" @click="editingPage.seo = {}">添加 SEO</button>
-              <button v-else type="button" class="danger-link" @click="editingPage.seo = undefined">移除 SEO</button>
+              <button v-else type="button" class="danger-link" @click="removeSeo">移除 SEO</button>
             </div>
             <div v-if="editingPage.seo" class="config-grid two">
               <label><span>SEO 标题</span><input v-model.trim="editingPage.seo.title" type="text"></label>

@@ -8,6 +8,12 @@ defineProps<{
 }>();
 
 const emptyLink = (): RouteTargetConfig => ({ label: "", routeName: "patient-home", enabled: true, sort: 0 });
+
+function removeLink(section: LinkGridSection, index: number) {
+  const link = section.links[index];
+  if (!link || !window.confirm(`确认删除链接「${link.label || "未命名链接"}」？删除后只会影响当前编辑稿，发布或保存并生效后才会更新正式页面。`)) return;
+  section.links.splice(index, 1);
+}
 </script>
 
 <template>
@@ -20,7 +26,7 @@ const emptyLink = (): RouteTargetConfig => ({ label: "", routeName: "patient-hom
       <div class="config-grid three">
         <RouteTargetEditor :model="link" prefix="link" :patient-route-options="patientRouteOptions" include-sort include-enabled />
       </div>
-      <button type="button" class="danger-link" @click="section.links.splice(linkIndex, 1)">删除链接</button>
+      <button type="button" class="danger-link" @click="removeLink(section, linkIndex)">删除链接</button>
     </div>
   </div>
 </template>

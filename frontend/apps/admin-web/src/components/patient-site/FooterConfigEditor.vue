@@ -75,7 +75,9 @@ function addDraftLink() {
 }
 
 function removeDraftLink(index: number) {
-  linkDraft.value[index].enabled = false;
+  const link = linkDraft.value[index];
+  if (!link || !window.confirm(`确认删除页脚链接「${link.label || "未命名链接"}」？删除后只会影响当前编辑稿，发布或保存并生效后才会更新正式页面。`)) return;
+  link.enabled = false;
 }
 
 function toggleDraftEnabled(item: RouteTargetConfig) {

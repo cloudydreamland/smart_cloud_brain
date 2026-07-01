@@ -60,6 +60,8 @@ export type StaticPageConfig = {
   label: string;
   title: string;
   intro: string;
+  contentSource?: "static" | "cms-page" | string;
+  slug?: string;
   enabled?: boolean;
   sort?: number;
   points: { title: string; text: string }[];

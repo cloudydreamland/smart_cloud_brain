@@ -1,3 +1,12 @@
+import type {
+  PatientFooterConfig,
+  PatientHomeConfig,
+  PatientHospitalInfoConfig,
+  PatientNavConfig,
+  PatientSiteConfig,
+} from "./patientSiteTypes";
+import type { PatientSiteConfigKey } from "./patientSiteResolver";
+
 export type Role = "PATIENT" | "DOCTOR" | "ADMIN";
 
 export type ApiResult<T> = { code: number; message: string; data: T };
@@ -165,7 +174,32 @@ export type PatientSiteConfigHistoryPage = {
   total: number;
   totalPages: number;
 };
-export type PatientSitePreviewToken = { token: string; configKey: string; version: number; expiresAt: number };
+export type PatientSitePublicConfigResponse = PatientSiteConfig;
+export type PatientSiteHomeResponse = {
+  nav: PatientNavConfig;
+  home: PatientHomeConfig;
+  hospitalInfo: PatientHospitalInfoConfig;
+  notices: PatientNotice[];
+  hotDepartments: PatientRecommendation[];
+  recommendedDoctors: PatientRecommendation[];
+  footer: PatientFooterConfig;
+};
+export type PatientSiteAdminConfigMap = {
+  patient_nav: PatientSiteConfigRecord;
+  patient_home: PatientSiteConfigRecord;
+  patient_static_pages: PatientSiteConfigRecord;
+  patient_pages: PatientSiteConfigRecord;
+  patient_hospital_info: PatientSiteConfigRecord;
+  patient_footer: PatientSiteConfigRecord;
+};
+export type PatientSitePreviewToken = {
+  token: string;
+  scope?: "config" | "site" | string;
+  configKey?: string;
+  version?: number;
+  versions?: Partial<Record<PatientSiteConfigKey, number>>;
+  expiresAt: number;
+};
 
 export class ApiError extends Error {
   constructor(public message: string, public code: number, public status: number) {

@@ -29,7 +29,14 @@ export type PatientSiteSection =
   | TimelineSection
   | CtaSection
   | LinkGridSection
-  | DepartmentLinksSection;
+  | DepartmentLinksSection
+  | ImageTextSection
+  | HeroSection
+  | GallerySection
+  | ContactPanelSection
+  | StatsSection
+  | DoctorListSection
+  | DepartmentListSection;
 
 export type PatientSiteSectionType = PatientSiteSection["type"];
 
@@ -111,10 +118,67 @@ export type DepartmentLinksSection = BaseSection & {
   links: RouteTargetConfig[];
 };
 
+export type ImageTextSection = BaseSection & {
+  type: "image_text";
+  text: string;
+  image?: PatientSiteImage;
+  imagePosition: "left" | "right";
+  primary?: RouteTargetConfig;
+};
+
+export type HeroSection = BaseSection & {
+  type: "hero";
+  eyebrow?: string;
+  text: string;
+  image?: PatientSiteImage;
+  primary?: RouteTargetConfig;
+  secondary?: RouteTargetConfig;
+};
+
+export type GallerySection = BaseSection & {
+  type: "gallery";
+  images: PatientSiteImage[];
+};
+
+export type ContactPanelSection = BaseSection & {
+  type: "contact_panel";
+  text: string;
+  phone?: string;
+  address?: string;
+  workHours?: string;
+  image?: PatientSiteImage;
+  primary?: RouteTargetConfig;
+};
+
+export type PatientSiteStatItem = {
+  label: string;
+  value: string;
+  caption?: string;
+};
+
+export type StatsSection = BaseSection & {
+  type: "stats";
+  items: PatientSiteStatItem[];
+};
+
+export type DoctorListSection = BaseSection & {
+  type: "doctor_list";
+  limit?: number;
+  fallbackNames: string[];
+  links: RouteTargetConfig[];
+};
+
+export type DepartmentListSection = BaseSection & {
+  type: "department_list";
+  limit?: number;
+  fallbackNames: string[];
+  links: RouteTargetConfig[];
+};
+
 export type SectionFieldSchema =
   | { key: string; label: string; kind: "text" | "textarea" | "number" | "boolean"; required?: boolean }
   | { key: string; label: string; kind: "select"; options: readonly string[]; required?: boolean }
-  | { key: string; label: string; kind: "route_target" | "route_target_list" | "image" | "card_list" | "faq_list" | "timeline_list" | "string_list"; required?: boolean };
+  | { key: string; label: string; kind: "route_target" | "route_target_list" | "image" | "image_list" | "card_list" | "faq_list" | "timeline_list" | "stat_list" | "string_list"; required?: boolean };
 
 export type SectionRegistryItem<T extends PatientSiteSection = PatientSiteSection> = {
   type: T["type"];

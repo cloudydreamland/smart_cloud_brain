@@ -612,7 +612,11 @@
 .cms-rich-text p,
 .cms-card p,
 .cms-cta p,
-.cms-timeline p {
+.cms-timeline p,
+.cms-image-text p,
+.cms-hero p,
+.cms-contact-panel p,
+.cms-stats p {
   margin: 0;
   color: var(--hospital-ink);
   line-height: 1.7;
@@ -629,7 +633,9 @@
 }
 
 .cms-card-grid__items,
-.cms-link-grid__items {
+.cms-link-grid__items,
+.cms-gallery__items,
+.cms-stats__items {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
@@ -778,14 +784,143 @@
   color: var(--hospital-blue);
 }
 
+.cms-image-text,
+.cms-hero,
+.cms-contact-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.85fr);
+  gap: 22px;
+  align-items: center;
+}
+
+.cms-image-text--left {
+  grid-template-columns: minmax(220px, 0.85fr) minmax(0, 1fr);
+}
+
+.cms-image-text--left > img {
+  order: -1;
+}
+
+.cms-image-text img,
+.cms-hero img,
+.cms-contact-panel img,
+.cms-gallery img {
+  width: 100%;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.cms-image-text img,
+.cms-hero img,
+.cms-contact-panel img {
+  aspect-ratio: 4 / 3;
+}
+
+.cms-image-text a,
+.cms-contact-panel a {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 38px;
+  align-items: center;
+  margin-top: 14px;
+  padding: 0 14px;
+  border: 1px solid var(--hospital-blue);
+  border-radius: 999px;
+  background: var(--hospital-blue);
+  color: var(--surface);
+}
+
+.cms-hero {
+  padding: 28px 0;
+}
+
+.cms-hero span {
+  color: var(--hospital-blue);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.cms-gallery figure,
+.cms-stats article {
+  margin: 0;
+  padding: 16px;
+  border: 1px solid var(--hospital-line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.cms-gallery img {
+  aspect-ratio: 16 / 10;
+}
+
+.cms-gallery figcaption {
+  margin-top: 8px;
+  color: var(--hospital-muted);
+  font-size: 14px;
+}
+
+.cms-contact-panel dl {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px 12px;
+  margin: 16px 0 0;
+}
+
+.cms-contact-panel dt {
+  color: var(--hospital-blue);
+  font-weight: 900;
+}
+
+.cms-contact-panel dd {
+  margin: 0;
+  color: var(--hospital-ink);
+}
+
+.cms-stats strong {
+  display: block;
+  color: var(--hospital-blue);
+  font-size: 30px;
+  line-height: 1;
+}
+
+.cms-stats span,
+.cms-resource-list span {
+  color: var(--hospital-ink);
+  font-weight: 850;
+}
+
+.cms-resource-list span {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  padding: 0 14px;
+  border: 1px solid var(--hospital-line);
+  border-radius: 999px;
+  background: var(--surface-alt);
+}
+
 @media (max-width: 980px) {
   .cms-card-grid__items,
-  .cms-link-grid__items {
+  .cms-link-grid__items,
+  .cms-gallery__items,
+  .cms-stats__items {
     grid-template-columns: 1fr;
   }
 
-  .cms-cta {
+  .cms-cta,
+  .cms-image-text,
+  .cms-image-text--left,
+  .cms-hero,
+  .cms-contact-panel {
+    grid-template-columns: 1fr;
     align-items: flex-start;
+  }
+
+  .cms-cta {
     flex-direction: column;
+  }
+
+  .cms-image-text--left > img {
+    order: 0;
   }
 }

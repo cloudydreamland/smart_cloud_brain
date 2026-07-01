@@ -13,6 +13,24 @@ const emptyLink = (): RouteTargetConfig => ({ label: "", routeName: "patient-hom
 function addCard(section: CardGridSection) {
   section.cards.push({ title: "新卡片", text: "" });
 }
+
+function removeCard(section: CardGridSection, index: number) {
+  const card = section.cards[index];
+  if (!card || !window.confirm(`确认删除卡片「${card.title || "未命名卡片"}」？删除后只会影响当前编辑稿，发布或保存并生效后才会更新正式页面。`)) return;
+  section.cards.splice(index, 1);
+}
+
+function clearCardImage(section: CardGridSection, index: number) {
+  const card = section.cards[index];
+  if (!card?.image || !window.confirm(`确认移除卡片「${card.title || "未命名卡片"}」的图片？移除后只会影响当前编辑稿。`)) return;
+  card.image = undefined;
+}
+
+function clearCardTarget(section: CardGridSection, index: number) {
+  const card = section.cards[index];
+  if (!card?.target || !window.confirm(`确认移除卡片「${card.title || "未命名卡片"}」的跳转目标？移除后只会影响当前编辑稿。`)) return;
+  card.target = undefined;
+}
 </script>
 
 <template>
@@ -30,7 +48,7 @@ function addCard(section: CardGridSection) {
       <div class="nested-list-head">
         <strong>图片</strong>
         <button v-if="!card.image" type="button" class="topbar-refresh" @click="card.image = { url: '', alt: '' }">添加图片</button>
-        <button v-else type="button" class="danger-link" @click="card.image = undefined">移除图片</button>
+        <button v-else type="button" class="danger-link" @click="clearCardImage(section, cardIndex)">移除图片</button>
       </div>
       <OssImageUploadField
         v-if="card.image"
@@ -45,12 +63,12 @@ function addCard(section: CardGridSection) {
       <div class="nested-list-head">
         <strong>跳转目标</strong>
         <button v-if="!card.target" type="button" class="topbar-refresh" @click="card.target = emptyLink()">添加目标</button>
-        <button v-else type="button" class="danger-link" @click="card.target = undefined">移除目标</button>
+        <button v-else type="button" class="danger-link" @click="clearCardTarget(section, cardIndex)">移除目标</button>
       </div>
       <div v-if="card.target" class="config-grid two">
         <RouteTargetEditor :model="card.target" prefix="target" :patient-route-options="patientRouteOptions" />
       </div>
-      <button type="button" class="danger-link" @click="section.cards.splice(cardIndex, 1)">删除卡片</button>
+      <button type="button" class="danger-link" @click="removeCard(section, cardIndex)">删除卡片</button>
     </div>
   </div>
 </template>
