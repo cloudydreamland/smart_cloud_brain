@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 
 import com.smartcloudbrain.ai.entity.PromptTemplate;
 import com.smartcloudbrain.ai.repository.PromptTemplateRepository;
+import com.smartcloudbrain.ai.repository.DepartmentRepository;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -15,9 +16,10 @@ class PromptTemplateServiceTest {
   @Test
   void resolvesCardiologyMedicalRecordPrompt() {
     PromptTemplateRepository repository = mock(PromptTemplateRepository.class);
+    DepartmentRepository departmentRepository = mock(DepartmentRepository.class);
     when(repository.findByTaskTypeAndDepartmentCodeAndEnabledOrderByIdDesc("MEDICAL_RECORD", "CARDIOLOGY", true))
         .thenReturn(List.of(template("MEDICAL_RECORD", "CARDIOLOGY", "CARDIOLOGY_MEDICAL_RECORD_v1", "focus on chest pain")));
-    PromptTemplateService service = new PromptTemplateService(repository);
+    PromptTemplateService service = new PromptTemplateService(repository, departmentRepository);
 
     var response = service.resolve("MEDICAL_RECORD", "CARDIOLOGY");
 
@@ -28,9 +30,10 @@ class PromptTemplateServiceTest {
   @Test
   void defaultsDepartmentWhenMissing() {
     PromptTemplateRepository repository = mock(PromptTemplateRepository.class);
+    DepartmentRepository departmentRepository = mock(DepartmentRepository.class);
     when(repository.findByTaskTypeAndDepartmentCodeAndEnabledOrderByIdDesc("TRIAGE", "GENERAL", true))
         .thenReturn(List.of(template("TRIAGE", "GENERAL", "GENERAL_TRIAGE_v1", "Recommend department")));
-    PromptTemplateService service = new PromptTemplateService(repository);
+    PromptTemplateService service = new PromptTemplateService(repository, departmentRepository);
 
     var response = service.resolve("TRIAGE", "");
 

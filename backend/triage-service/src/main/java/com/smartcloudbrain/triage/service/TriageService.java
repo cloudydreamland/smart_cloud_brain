@@ -8,8 +8,10 @@ import com.smartcloudbrain.common.redis.RedisRateLimiter;
 import com.smartcloudbrain.common.security.RoleType;
 import com.smartcloudbrain.triage.entity.TriageRecord;
 import com.smartcloudbrain.triage.entity.Patient;
+import com.smartcloudbrain.triage.entity.Department;
 import com.smartcloudbrain.triage.repository.PatientRepository;
 import com.smartcloudbrain.triage.repository.TriageRecordRepository;
+import com.smartcloudbrain.triage.repository.DepartmentRepository;
 import com.smartcloudbrain.common.security.AuthenticatedUser;
 import com.smartcloudbrain.common.security.CurrentUserService;
 import java.time.Duration;
@@ -26,6 +28,7 @@ public class TriageService {
   private final AiGatewayService aiGatewayService;
   private final TriageRecordRepository triageRecordRepository;
   private final PatientRepository patientRepository;
+  private final DepartmentRepository departmentRepository;
   private final CurrentUserService currentUserService;
   private final RedisRateLimiter redisRateLimiter;
 
@@ -33,12 +36,14 @@ public class TriageService {
       AiGatewayService aiGatewayService,
       TriageRecordRepository triageRecordRepository,
       PatientRepository patientRepository,
+      DepartmentRepository departmentRepository,
       CurrentUserService currentUserService,
       RedisRateLimiter redisRateLimiter
   ) {
     this.aiGatewayService = aiGatewayService;
     this.triageRecordRepository = triageRecordRepository;
     this.patientRepository = patientRepository;
+    this.departmentRepository = departmentRepository;
     this.currentUserService = currentUserService;
     this.redisRateLimiter = redisRateLimiter;
   }
@@ -66,7 +71,7 @@ public class TriageService {
     TriageRecord record = new TriageRecord();
     record.setPatientId(patientId);
     record.setChiefComplaint(request.chiefComplaint());
-    record.setRecommendedDepartment(response.recommendedDepartment());
+    record.setRecommendedDepartment(normalizeDepartmentName(response.recommendedDepartment(), response.departmentCode()));
     record.setRecommendedDoctorIds(response.recommendedDoctorIds().stream().map(String::valueOf).collect(Collectors.joining(",")));
     record.setReason(response.reason());
     record.setAiResultJson("""
@@ -115,6 +120,31 @@ public class TriageService {
     view.put("provider", response == null ? "" : response.provider());
     view.put("model", response == null ? "" : response.model());
     return view;
+  }
+
+  private String normalizeDepartmentName(String aiName, String departmentCode) {
+    if (aiName == null || aiName.isBlank()) {
+      return aiName;
+    }
+    // 1. Try matching by departmentCode (most reliable)
+    if (departmentCode != null && !departmentCode.isBlank()) {
+      return departmentRepository.findByCodeIgnoreCase(departmentCode)
+          .map(Department::getName)
+          .orElseGet(() -> normalizeByName(aiName));
+    }
+    // 2. Fallback to name-based matching
+    return normalizeByName(aiName);
+  }
+
+  private String normalizeByName(String aiName) {
+    if (aiName == null || aiName.isBlank()) {
+      return aiName;
+    }
+    return departmentRepository.findAllByOrderByIdAsc().stream()
+        .filter(d -> aiName.contains(d.getName()) || d.getName().contains(aiName))
+        .findFirst()
+        .map(Department::getName)
+        .orElse(aiName); // No match found — keep original, do NOT guess
   }
 }
 

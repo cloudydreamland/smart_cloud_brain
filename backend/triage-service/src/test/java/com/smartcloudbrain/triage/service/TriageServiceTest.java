@@ -16,8 +16,10 @@ import com.smartcloudbrain.common.security.AuthenticatedUser;
 import com.smartcloudbrain.common.security.CurrentUserService;
 import com.smartcloudbrain.common.security.RoleType;
 import com.smartcloudbrain.triage.entity.TriageRecord;
+import com.smartcloudbrain.triage.entity.Department;
 import com.smartcloudbrain.triage.repository.PatientRepository;
 import com.smartcloudbrain.triage.repository.TriageRecordRepository;
+import com.smartcloudbrain.triage.repository.DepartmentRepository;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -34,6 +36,7 @@ class TriageServiceTest {
   @Mock private AiGatewayService aiGatewayService;
   @Mock private TriageRecordRepository triageRecordRepository;
   @Mock private PatientRepository patientRepository;
+  @Mock private DepartmentRepository departmentRepository;
   @Mock private CurrentUserService currentUserService;
   @Mock private RedisRateLimiter redisRateLimiter;
   @InjectMocks private TriageService triageService;
@@ -47,8 +50,13 @@ class TriageServiceTest {
   void consultStoresAiRecommendedRecord() {
     when(currentUserService.require(RoleType.PATIENT)).thenReturn(new AuthenticatedUser(1L, RoleType.PATIENT, "Alice"));
     when(patientRepository.findById(1L)).thenReturn(Optional.empty());
+    Department cardio = new Department();
+    cardio.setId(1L);
+    cardio.setCode("CARDIOLOGY");
+    cardio.setName("心内科");
+    when(departmentRepository.findByCodeIgnoreCase("CARDIOLOGY")).thenReturn(Optional.of(cardio));
     when(aiGatewayService.triage(any())).thenReturn(new TriageResponse(
-        "Cardiology", "CARD", "senior", "LOW", 0.91, List.of(2L, 3L), "stable", false));
+        "Cardiology", "CARDIOLOGY", "senior", "LOW", 0.91, List.of(2L, 3L), "stable", false));
     when(triageRecordRepository.save(any(TriageRecord.class))).thenAnswer(invocation -> {
       TriageRecord record = invocation.getArgument(0);
       record.setId(10L);
@@ -58,7 +66,7 @@ class TriageServiceTest {
     Map<String, Object> result = triageService.consult(new TriageRequest(1L, "chest pain", "pain", null, null, null, null));
 
     assertEquals(10L, result.get("triageRecordId"));
-    assertEquals("Cardiology", result.get("recommendedDepartment"));
+    assertEquals("心内科", result.get("recommendedDepartment"));
     assertEquals("AI_RECOMMENDED", result.get("status"));
     assertEquals(List.of(2L, 3L), result.get("recommendedDoctorIds"));
   }
