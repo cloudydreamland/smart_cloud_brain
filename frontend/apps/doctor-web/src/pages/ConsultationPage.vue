@@ -139,6 +139,7 @@ async function loadDrugCatalog() {
   } catch {
     drugCatalog.value = [];
     drugCatalogError.value = "药品目录加载失败，请稍后重试。";
+    toastRef.value?.error("加载失败", drugCatalogError.value);
   } finally {
     drugCatalogLoading.value = false;
   }
@@ -159,11 +160,12 @@ async function completeRegistration() {
     await api.completeRegistration(record.medicalForm.registrationId);
     completeOpen.value = false;
     await workflow.refresh();
-  } catch {
+    await router.push({ name: "doctor-notifications" });
+  } catch (err) {
     completeOpen.value = false;
+    setError(formatApiError(err, "完成接诊失败，请稍后重试。"));
   } finally {
     completeLoading.value = false;
-    await router.push({ name: "doctor-notifications" });
   }
 }
 

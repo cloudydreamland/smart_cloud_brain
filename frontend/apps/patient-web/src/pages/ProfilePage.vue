@@ -64,7 +64,7 @@ async function save() {
           <div class="profile-section-title">身份信息</div>
           <div class="form-grid">
             <FormField label="姓名"><input v-model.trim="form.name" /></FormField>
-            <FormField label="性别"><select v-model="form.gender"><option value="">未说明</option><option value="MALE">男</option><option value="FEMALE">女</option><option value="UNKNOWN">未说明</option></select></FormField>
+            <FormField label="性别"><select v-model="form.gender"><option value="">未说明</option><option value="MALE">男</option><option value="FEMALE">女</option><option value="UNKNOWN">不清楚</option></select></FormField>
             <FormField label="年龄"><input v-model.number="form.age" type="number" min="0" max="130" /></FormField>
           </div>
           <FormField label="地址"><input v-model.trim="form.address" placeholder="常住地址或通信地址" /></FormField>

@@ -3,9 +3,9 @@
     <div class="admin-not-found-card">
       <h1 class="admin-not-found-title">404</h1>
       <p class="admin-not-found-message">页面不存在</p>
-      <a class="admin-not-found-link" href="/">
+      <RouterLink class="admin-not-found-link" to="/">
         返回首页
-      </a>
+      </RouterLink>
     </div>
   </div>
 </template>

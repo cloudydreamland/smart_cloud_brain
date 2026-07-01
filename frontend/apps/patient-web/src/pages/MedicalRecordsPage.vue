@@ -70,7 +70,7 @@ function recordId(item: MedicalRecord) {
     </header>
     <div class="panel-body stack">
       <ErrorState v-if="error" :message="error" />
-      <LoadingState v-if="(!loaded && loading) || detailLoading" />
+      <LoadingState v-if="!loaded && loading" />
       <div v-else-if="records.length" class="record-list">
         <article v-for="item in records" :key="String(recordId(item) || item.createdAt || '')" class="record-card">
           <div>
@@ -82,7 +82,7 @@ function recordId(item: MedicalRecord) {
               <span>{{ formatDateTime(item.createdAt, "时间待同步") }}</span>
             </div>
           </div>
-          <button type="button" @click="open(item)">查看详情</button>
+          <button type="button" :disabled="detailLoading" @click="open(item)">{{ detailLoading ? '加载中...' : '查看详情' }}</button>
         </article>
       </div>
       <EmptyState v-else title="暂无病历" message="医生保存病历后会显示在这里。" />

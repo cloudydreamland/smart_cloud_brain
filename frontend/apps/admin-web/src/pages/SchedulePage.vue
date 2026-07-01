@@ -1,22 +1,32 @@
 <script setup lang="ts">
 import { computed, inject, reactive, ref, watch, type Ref } from "vue";
 import { storeToRefs } from "pinia";
-import { aiSourceLabel, aiSourceTone, api, displayText, formatApiError, statusClass, toNumber, useAdminWorkflowStore, useAuthStore, usePagination, type Doctor, type Schedule, type ScheduleSaveRequest } from "@smart-cloud-brain/shared-api";
+import { aiSourceLabel, aiSourceTone, api, displayText, formatApiError, statusClass, toNumber, useAdminWorkflowStore, usePagination, type Doctor, type Schedule, type ScheduleSaveRequest } from "@smart-cloud-brain/shared-api";
 import { DatePicker, EmptyState, ErrorState, FormField, LoadingState, Modal, PaginationBar, ScbSelect, StatusTag, TimeRangePicker, Toast } from "@smart-cloud-brain/shared-ui";
+import ConfirmDialog from "@smart-cloud-brain/shared-ui/src/components/ConfirmDialog.vue";
 import DepartmentDoctorCascader from "../components/DepartmentDoctorCascader.vue";
 
 const emit = defineEmits<{ refresh: [] }>();
 const workflow = useAdminWorkflowStore();
 const { suggestions, doctors, departments } = storeToRefs(workflow);
+function toLocalDateStr(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+const DAY_MS = 86_400_000;
 const schedules = ref<Schedule[]>([]);
 const scheduleDoctorCache = ref<Doctor[]>([]);
-const generateForm = reactive({ startDate: new Date(Date.now() + 86400000).toISOString().slice(0, 10), days: 3 });
-const filter = reactive({ startDate: new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10), endDate: new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10), departmentId: 0, doctorId: 0, status: "" });
-const form = reactive<ScheduleSaveRequest>({ doctorId: 0, departmentId: 0, workDate: new Date(Date.now() + 86400000).toISOString().slice(0, 10), timeRange: "09:00-12:00", capacity: 20, status: "PUBLISHED" });
+const generateForm = reactive({ startDate: toLocalDateStr(new Date(Date.now() + DAY_MS)), days: 3 });
+const filter = reactive({ startDate: toLocalDateStr(new Date(Date.now() - 7 * DAY_MS)), endDate: toLocalDateStr(new Date(Date.now() + 30 * DAY_MS)), departmentId: 0, doctorId: 0, status: "" });
+const form = reactive<ScheduleSaveRequest>({ doctorId: 0, departmentId: 0, workDate: toLocalDateStr(new Date(Date.now() + DAY_MS)), timeRange: "09:00-12:00", capacity: 20, status: "PUBLISHED" });
 const loading = ref(false);
 const error = ref("");
-const toast = inject<Ref<InstanceType<typeof Toast>>>("toast");
+const toast = inject<Ref<InstanceType<typeof Toast>>>(("toast"));
 const editorOpen = ref(false);
+const cancelTarget = ref<Schedule | null>(null);
+const cancelConfirmOpen = ref(false);
 let scheduleRequestId = 0;
 const { currentPage: schedulePage, pageSize: schedulePageSize, total: scheduleTotal, pageRows: pagedSchedules } = usePagination(schedules, 8);
 const { currentPage: suggestionPage, pageSize: suggestionPageSize, total: suggestionTotal, pageRows: pagedSuggestions } = usePagination(suggestions, 5);
@@ -157,7 +167,15 @@ async function saveSchedule() {
   }
 }
 
-async function cancelSchedule(item: Schedule) {
+function requestCancel(item: Schedule) {
+  cancelTarget.value = item;
+  cancelConfirmOpen.value = true;
+}
+
+async function confirmCancel() {
+  const item = cancelTarget.value;
+  if (!item) return;
+  cancelConfirmOpen.value = false;
   loading.value = true;
   error.value = "";
   try {
@@ -231,7 +249,7 @@ watch(
                 <td>{{ displayText(item.capacity) }}</td>
                 <td>{{ displayText(item.booked, "0") }}</td>
                 <td><StatusTag :status="displayText(item.status)" :tone="statusClass(item.status)" /></td>
-                <td class="toolbar"><button type="button" class="action-btn" @click="openEditor(item)">编辑</button><button class="action-btn danger" type="button" :disabled="displayText(item.status) === 'CANCELLED'" @click="cancelSchedule(item)">取消排班</button></td>
+                <td class="toolbar"><button type="button" class="action-btn" @click="openEditor(item)">编辑</button><button class="action-btn danger" type="button" :disabled="displayText(item.status) === 'CANCELLED'" @click="requestCancel(item)">取消排班</button></td>
               </tr>
             </tbody>
           </table>
@@ -254,5 +272,6 @@ watch(
       </div>
       <template #footer><button type="button" @click="editorOpen = false">取消</button><button class="primary" type="button" :disabled="loading" @click="saveSchedule">保存</button></template>
     </Modal>
+    <ConfirmDialog :open="cancelConfirmOpen" title="确认取消排班" :description="`确定要取消 ${cancelTarget?.workDate} ${cancelTarget?.timeRange} 的排班吗？此操作不可撤销。`" confirm-text="确认取消" @confirm="confirmCancel" @close="cancelConfirmOpen = false" />
   </section>
 </template>
