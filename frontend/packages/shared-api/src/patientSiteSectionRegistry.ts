@@ -211,7 +211,7 @@ function normalizeDepartmentLinksSection(row: DataRow, index: number): Departmen
   };
 }
 
-function baseSection(row: DataRow, type: PatientSiteSectionType, index: number) {
+function baseSection<T extends PatientSiteSectionType>(row: DataRow, type: T, index: number): { id: string; type: T; title: string; enabled: boolean; sort: number } {
   return {
     id: text(row.id, sectionId(type)),
     type,

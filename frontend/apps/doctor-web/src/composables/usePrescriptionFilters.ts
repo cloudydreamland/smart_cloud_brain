@@ -3,13 +3,6 @@ import { displayText, type Prescription } from "@smart-cloud-brain/shared-api";
 
 export type PrescriptionFilterKey = "status" | "risk" | "sort";
 
-export const statusSegmentOptions = [
-  { value: "ALL", label: "全部" },
-  { value: "CONFIRMED", label: "生效" },
-  { value: "PENDING", label: "待审核" },
-  { value: "REJECTED", label: "已驳回" },
-];
-
 export const filterGroups = [
   {
     key: "status" as const,
