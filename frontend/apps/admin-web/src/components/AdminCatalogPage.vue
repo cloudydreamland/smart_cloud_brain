@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject, reactive, ref, type Ref } from "vue";
+import { computed, inject, onMounted, reactive, ref, type Ref } from "vue";
 import { storeToRefs } from "pinia";
 import {
   api,
@@ -267,7 +267,7 @@ async function save() {
   }
 }
 
-refresh(true, false);
+onMounted(() => refresh(true, false));
 </script>
 
 <template>

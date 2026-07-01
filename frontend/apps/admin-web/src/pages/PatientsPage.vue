@@ -21,6 +21,7 @@ const gender = ref("");
 const minAge = ref<number | undefined>();
 const maxAge = ref<number | undefined>();
 const loading = ref(false);
+const detailLoading = ref(false);
 const loaded = ref(false);
 const saving = ref(false);
 const error = ref("");
@@ -37,8 +38,7 @@ const form = reactive<PatientSaveRequest>({
   pastHistory: "",
 });
 
-const filtered = computed(() => rows.value);
-const { currentPage, pageSize, total, pageRows } = usePagination(filtered, 8);
+const { currentPage, pageSize, total, pageRows } = usePagination(rows, 8);
 
 const genderFilterOptions = [
   { value: "", label: "全部性别" },
@@ -52,9 +52,13 @@ const genderFormOptions = [
   { value: "FEMALE", label: "女" },
 ];
 
+let searchTimer: ReturnType<typeof setTimeout> | null = null;
 watch([keyword, gender, minAge, maxAge], () => {
-  currentPage.value = 1;
-  refresh();
+  if (searchTimer) clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    currentPage.value = 1;
+    refresh();
+  }, 300);
 });
 
 function asRows(value: unknown) {
@@ -82,7 +86,7 @@ async function refresh(silent = false, showLoading = true) {
 }
 
 async function openDetail(item: Patient) {
-  loading.value = true;
+  detailLoading.value = true;
   error.value = "";
   try {
     detail.value = await api.patientDetail(toNumber(item.id)) as PatientDetail;
@@ -90,7 +94,7 @@ async function openDetail(item: Patient) {
   } catch (err) {
     error.value = formatApiError(err, "加载患者详情失败");
   } finally {
-    loading.value = false;
+    detailLoading.value = false;
   }
 }
 
