@@ -10,6 +10,7 @@
 @import "./styles/_dashboard.css";
 @import "./styles/_analytics.css";
 @import "./styles/_responsive.css";
+@import "./styles/_auth.css";
 
 @tailwind base;
 @tailwind components;
