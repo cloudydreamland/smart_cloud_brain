@@ -191,6 +191,10 @@ onMounted(refresh);
   padding: 0 12px;
 }
 
+.summary-strip {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .recommended-tag {
   background: var(--primary-soft);
   color: var(--primary);
@@ -199,6 +203,10 @@ onMounted(refresh);
 @media (max-width: 720px) {
   .registration-filter-bar {
     grid-template-columns: 1fr;
+  }
+
+  .summary-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 </style>
