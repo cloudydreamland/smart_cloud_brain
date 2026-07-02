@@ -301,7 +301,7 @@
 }
 
 /* Submit Button */
-.submit-btn {
+.login-card .submit-btn {
   width: 100%;
   height: 48px;
   border: none;
@@ -317,7 +317,7 @@
   overflow: hidden;
   margin-top: 4px;
 }
-.submit-btn::after {
+.login-card .submit-btn::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -325,18 +325,20 @@
   opacity: 0;
   transition: opacity 0.3s ease;
 }
-.submit-btn:hover {
+.login-card .submit-btn:hover {
   transform: translateY(-1px);
   box-shadow: 0 6px 20px rgba(11, 95, 120, 0.3);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-strong) 100%);
+  color: var(--color-white);
 }
-.submit-btn:hover::after {
+.login-card .submit-btn:hover::after {
   opacity: 1;
 }
-.submit-btn:active {
+.login-card .submit-btn:active {
   transform: translateY(0);
   box-shadow: 0 2px 8px rgba(11, 95, 120, 0.2);
 }
-.submit-btn:disabled {
+.login-card .submit-btn:disabled {
   opacity: 0.65;
   cursor: not-allowed;
   transform: none;
@@ -344,10 +346,10 @@
 }
 
 /* Loading spinner */
-.submit-btn.loading {
+.login-card .submit-btn.loading {
   color: transparent;
 }
-.submit-btn.loading::before {
+.login-card .submit-btn.loading::before {
   content: "";
   position: absolute;
   width: 20px;
