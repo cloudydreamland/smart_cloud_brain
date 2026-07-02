@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
+import { ConfirmDialog } from "@smart-cloud-brain/shared-ui";
 import { formatDateTime } from "@smart-cloud-brain/shared-api";
 import type { PatientSiteConfigKey } from "@smart-cloud-brain/shared-api";
 import { usePatientSiteConfigEditor } from "../../composables/usePatientSiteConfigEditor";
+import { usePatientSiteConfirmHost } from "../../composables/patientSiteConfirm";
 import { patientSiteConfigStatusText } from "../../patientSitePresentation";
 import FooterConfigEditor from "./FooterConfigEditor.vue";
 import NavConfigEditor from "./NavConfigEditor.vue";
@@ -15,7 +17,8 @@ import StaticPagesEditor from "./StaticPagesEditor.vue";
 import PatientSiteEditorModal from "./PatientSiteEditorModal.vue";
 import PatientSiteHistoryPanel from "./PatientSiteHistoryPanel.vue";
 
-const editor = usePatientSiteConfigEditor();
+const patientSiteConfirm = usePatientSiteConfirmHost();
+const editor = usePatientSiteConfigEditor({ confirm: patientSiteConfirm.confirm });
 const {
   tabs,
   activeKey,
@@ -224,6 +227,15 @@ onMounted(editor.loadAll);
       :add-editing-location-item="editor.addEditingLocationItem"
       :add-editing-department-link="editor.addEditingDepartmentLink"
       :add-editing-fallback-name="editor.addEditingFallbackName"
+    />
+    <ConfirmDialog
+      :open="patientSiteConfirm.dialog.open"
+      :title="patientSiteConfirm.dialog.title"
+      :message="patientSiteConfirm.dialog.message"
+      :confirm-text="patientSiteConfirm.dialog.confirmText"
+      :tone="patientSiteConfirm.dialog.tone"
+      @close="patientSiteConfirm.closeDialog"
+      @confirm="patientSiteConfirm.confirmDialog"
     />
   </section>
 </template>

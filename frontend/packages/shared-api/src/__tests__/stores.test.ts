@@ -109,7 +109,7 @@ describe("workflow stores", () => {
     await store.refresh();
 
     expect(store.registrations).toHaveLength(1);
-    expect(store.drugs).toHaveLength(1);
+    expect(store.prescriptions).toHaveLength(1);
     expect(store.notifications).toHaveLength(1);
   });
 });

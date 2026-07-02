@@ -1,14 +1,21 @@
 <script setup lang="ts">
 import type { GallerySection } from "@smart-cloud-brain/shared-api";
+import { usePatientSiteConfirm } from "../../../composables/patientSiteConfirm";
 import OssImageUploadField from "../OssImageUploadField.vue";
 
 defineProps<{
   section: GallerySection;
 }>();
+const confirm = usePatientSiteConfirm();
 
-function removeImage(section: GallerySection, index: number) {
+async function removeImage(section: GallerySection, index: number) {
   const image = section.images[index];
-  if (!image || !window.confirm(`确认删除图片「${image.alt || image.objectKey || image.url || "未命名图片"}」？删除后只会影响当前编辑稿，发布或保存并生效后才会更新正式页面。`)) return;
+  if (!image || !(await confirm({
+    title: "确认删除图库图片",
+    message: `将从当前编辑稿中移除图片「${image.alt || image.objectKey || image.url || "未命名图片"}」。保存草稿不会影响患者端，保存并生效或发布后，对应页面区块才会不再展示该图片。`,
+    confirmText: "确认删除",
+    tone: "danger",
+  }))) return;
   section.images.splice(index, 1);
 }
 </script>

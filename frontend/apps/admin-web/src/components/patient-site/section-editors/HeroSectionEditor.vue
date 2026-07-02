@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { HeroSection, RouteTargetConfig } from "@smart-cloud-brain/shared-api";
+import { usePatientSiteConfirm } from "../../../composables/patientSiteConfirm";
 import OssImageUploadField from "../OssImageUploadField.vue";
 import RouteTargetEditor from "../RouteTargetEditor.vue";
 
@@ -9,9 +10,15 @@ defineProps<{
 }>();
 
 const emptyLink = (): RouteTargetConfig => ({ label: "", routeName: "patient-home", enabled: true, sort: 0 });
+const confirm = usePatientSiteConfirm();
 
-function clearImage(section: HeroSection) {
-  if (!section.image || !window.confirm("确认移除首屏图片？移除后只会影响当前编辑稿，发布或保存并生效后才会更新正式页面。")) return;
+async function clearImage(section: HeroSection) {
+  if (!section.image || !(await confirm({
+    title: "确认移除首屏图片",
+    message: "将从当前编辑稿中移除首屏图片配置。保存并生效或发布后，患者端对应页面才会更新展示。",
+    confirmText: "确认清空图片",
+    tone: "danger",
+  }))) return;
   section.image = undefined;
 }
 </script>

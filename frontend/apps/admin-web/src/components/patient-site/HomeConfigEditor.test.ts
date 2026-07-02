@@ -32,7 +32,7 @@ describe("HomeConfigEditor", () => {
   it("reorders homepage modules with drag and drop", async () => {
     const props = { ...baseProps, reorderHomeModule: vi.fn() };
     const wrapper = mount(HomeConfigEditor, { props });
-    const modules = wrapper.findAll(".home-module-card");
+    const modules = wrapper.findAll(".home-module-row");
 
     await modules[0].trigger("dragstart");
     await modules[1].trigger("drop");

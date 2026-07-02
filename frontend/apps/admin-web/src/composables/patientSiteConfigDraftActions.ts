@@ -32,6 +32,7 @@ import {
 } from "./patientSiteConfigEditorUtils";
 import type { ConfigDrafts, EditingTarget } from "./patientSiteConfigEditorState";
 import { emptyPatientSiteEditorDraft, type PatientSiteEditorDraft, type PatientSiteEditorDraftContent } from "./patientSiteEditorDraftTypes";
+import type { PatientSiteConfirm } from "./patientSiteConfirm";
 
 type ValueRef<T> = { value: T };
 type EditableRow = Record<string, unknown>;
@@ -49,6 +50,7 @@ type DraftActionContext = {
   staticDraft: ValueRef<PatientStaticPagesConfig>;
   pagesDraft: ValueRef<PatientSitePagesConfig>;
   validationErrors: Record<string, string[]>;
+  confirm: PatientSiteConfirm;
   openEditor: (target: EditingTarget) => void;
   refreshHistory: (key: PatientSiteConfigKey) => Promise<void>;
 };
@@ -316,13 +318,19 @@ export function createPatientSiteDraftActions(ctx: DraftActionContext) {
     page.sections.push(section);
   }
 
-  function removeCmsPage(index: number) {
+  async function removeCmsPage(index: number) {
     const page = ctx.pagesDraft.value.pages[index];
-    if (!page) return;
-    if (!window.confirm(`确认删除 CMS 页面「${page.title || page.label || page.slug || "未命名页面"}」？删除后会从当前编辑稿中禁用该页，保存草稿不会影响患者端，发布或保存并生效后才会更新正式页面。`)) return;
+    if (!page) return false;
+    if (!(await ctx.confirm({
+      title: "确认删除 CMS 页面",
+      message: `将从当前编辑稿中禁用 CMS 页面「${page.title || page.label || page.slug || "未命名页面"}」。保存草稿不会影响患者端，保存并生效或发布后，患者端才会停止读取这份页面配置。`,
+      confirmText: "确认删除",
+      tone: "danger",
+    }))) return false;
     page.enabled = false;
     ctx.status.value = "已删除 CMS 页面，保存草稿或发布后生效";
     ctx.error.value = "";
+    return true;
   }
 
   function reorderCmsPage(fromIndex: number, toIndex: number) {
@@ -330,13 +338,19 @@ export function createPatientSiteDraftActions(ctx: DraftActionContext) {
     resequenceSort(ctx.pagesDraft.value.pages);
   }
 
-  function removePageSection(pageIndex: number, sectionIndex: number) {
+  async function removePageSection(pageIndex: number, sectionIndex: number) {
     const section = ctx.pagesDraft.value.pages[pageIndex]?.sections[sectionIndex];
-    if (!section) return;
-    if (!window.confirm(`确认删除区块「${section.title || section.type}」？删除后会从当前编辑稿中禁用该区块，保存草稿不会影响患者端，发布或保存并生效后才会更新正式页面。`)) return;
+    if (!section) return false;
+    if (!(await ctx.confirm({
+      title: "确认删除页面区块",
+      message: `将从当前编辑稿中禁用页面区块「${section.title || section.type}」。保存草稿不会影响患者端，保存并生效或发布后，患者端对应页面才会不再展示该区块。`,
+      confirmText: "确认删除",
+      tone: "danger",
+    }))) return false;
     section.enabled = false;
     ctx.status.value = "已删除页面区块，保存草稿或发布后生效";
     ctx.error.value = "";
+    return true;
   }
 
   function reorderPageSection(pageIndex: number, fromIndex: number, toIndex: number) {

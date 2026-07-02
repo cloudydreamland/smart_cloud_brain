@@ -1,6 +1,7 @@
 import { mount } from "@vue/test-utils";
 import { describe, expect, it, vi } from "vitest";
 import { ref } from "vue";
+import { patientSiteConfirmKey, type PatientSiteConfirm } from "../../composables/patientSiteConfirm";
 import OssImageUploadField from "./OssImageUploadField.vue";
 
 const uploadImage = vi.fn();
@@ -14,6 +15,17 @@ vi.mock("../../composables/useOssImageUpload", () => ({
 }));
 
 describe("OssImageUploadField", () => {
+  function mountWithConfirm(props: Record<string, unknown>, confirm: PatientSiteConfirm) {
+    return mount(OssImageUploadField, {
+      props,
+      global: {
+        provide: {
+          [patientSiteConfirmKey as symbol]: confirm,
+        },
+      },
+    });
+  }
+
   it("emits uploaded asset and v-model writeback fields", async () => {
     uploadImage.mockResolvedValueOnce({
       url: "https://cdn.example.com/patient-site/demo.webp",
@@ -39,44 +51,44 @@ describe("OssImageUploadField", () => {
   });
 
   it("clears image url, object key and alt together", async () => {
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
-    const wrapper = mount(OssImageUploadField, {
-      props: {
+    const confirm = vi.fn(async () => true);
+    const wrapper = mountWithConfirm(
+      {
         label: "图片",
         imageUrl: "https://cdn.example.com/old.webp",
         imageAlt: "旧图",
         objectKey: "patient-site/old.webp",
       },
-    });
+      confirm,
+    );
 
     await wrapper.find("button.danger-link").trigger("click");
 
-    expect(confirm).toHaveBeenCalledWith(expect.stringContaining("确认清空图片"));
+    expect(confirm).toHaveBeenCalledWith(expect.objectContaining({ title: "确认清空图片", confirmText: "确认清空图片" }));
     expect(wrapper.emitted("cleared")).toHaveLength(1);
     expect(wrapper.emitted("update:imageUrl")?.[0]).toEqual([""]);
     expect(wrapper.emitted("update:objectKey")?.[0]).toEqual([""]);
     expect(wrapper.emitted("update:imageAlt")?.[0]).toEqual([""]);
-    confirm.mockRestore();
   });
 
   it("keeps image fields when clearing is cancelled", async () => {
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
-    const wrapper = mount(OssImageUploadField, {
-      props: {
+    const confirm = vi.fn(async () => false);
+    const wrapper = mountWithConfirm(
+      {
         label: "品牌 Logo",
         imageUrl: "https://cdn.example.com/logo.webp",
         imageAlt: "Logo",
         objectKey: "patient-site/logo.webp",
       },
-    });
+      confirm,
+    );
 
     await wrapper.find("button.danger-link").trigger("click");
 
-    expect(confirm).toHaveBeenCalledWith(expect.stringContaining("确认清空品牌 Logo"));
+    expect(confirm).toHaveBeenCalledWith(expect.objectContaining({ title: "确认清空品牌 Logo" }));
     expect(wrapper.emitted("cleared")).toBeUndefined();
     expect(wrapper.emitted("update:imageUrl")).toBeUndefined();
     expect(wrapper.emitted("update:objectKey")).toBeUndefined();
     expect(wrapper.emitted("update:imageAlt")).toBeUndefined();
-    confirm.mockRestore();
   });
 });

@@ -3,6 +3,7 @@ import { computed } from "vue";
 import { isPatientSiteSectionType, type RouteTargetConfig } from "@smart-cloud-brain/shared-api";
 import type { PatientSiteEditorDraft } from "../../composables/patientSiteEditorDraftTypes";
 import type { EditingTarget, homeModuleTypeOptions } from "../../composables/usePatientSiteConfigEditor";
+import { usePatientSiteConfirm } from "../../composables/patientSiteConfirm";
 import { ScbSelect } from "@smart-cloud-brain/shared-ui";
 import { patientSiteFieldLabel } from "../../patientSitePresentation";
 import OssImageUploadField from "./OssImageUploadField.vue";
@@ -34,6 +35,7 @@ const routeSelectOptions = computed(() =>
 const homeModuleTypeSelectOptions = computed(() =>
   props.homeModuleTypeOptions.map((t) => ({ value: t.value, label: t.label }))
 );
+const confirm = usePatientSiteConfirm();
 const contentSourceOptions = [
   { value: "static", label: "静态内容" },
   { value: "cms-page", label: "绑定 CMS 页面" },
@@ -45,49 +47,54 @@ function isSectionHomeModuleType(type?: string) {
 }
 
 function confirmDraftRemove(target: string) {
-  return window.confirm(`确认删除${target}？删除后只会影响当前编辑稿，发布或保存并生效后才会更新正式页面。`);
+  return confirm({
+    title: `确认删除${target}`,
+    message: `将从当前编辑稿中禁用或移除${target}。保存草稿不会影响患者端，保存并生效或发布后才会更新正式页面。`,
+    confirmText: "确认删除",
+    tone: "danger",
+  });
 }
 
-function removeLink(index: number) {
+async function removeLink(index: number) {
   const link = props.editingDraft.links[index];
-  if (!link || !confirmDraftRemove(`链接「${link.label || "未命名链接"}」`)) return;
+  if (!link || !(await confirmDraftRemove(`链接「${link.label || "未命名链接"}」`))) return;
   link.enabled = false;
 }
 
-function removeFeature() {
+async function removeFeature() {
   const feature = props.editingDraft.feature;
-  if (!feature || !confirmDraftRemove(`特色入口「${feature.label || "未命名入口"}」`)) return;
+  if (!feature || !(await confirmDraftRemove(`特色入口「${feature.label || "未命名入口"}」`))) return;
   feature.enabled = false;
 }
 
-function removeContentItem(index: number, targetName: string) {
+async function removeContentItem(index: number, targetName: string) {
   const item = props.editingDraft.content.items[index];
   const label = item?.label || item?.title || targetName;
-  if (!item || !confirmDraftRemove(`${targetName}「${label}」`)) return;
+  if (!item || !(await confirmDraftRemove(`${targetName}「${label}」`))) return;
   props.editingDraft.content.items.splice(index, 1);
 }
 
-function disableContentItem(index: number) {
+async function disableContentItem(index: number) {
   const item = props.editingContentItems()[index];
-  if (!item || !confirmDraftRemove(`快捷入口「${item.label || "未命名入口"}」`)) return;
+  if (!item || !(await confirmDraftRemove(`快捷入口「${item.label || "未命名入口"}」`))) return;
   item.enabled = false;
 }
 
-function removeFallbackName(index: number) {
+async function removeFallbackName(index: number) {
   const name = props.editingDraft.content.fallbackNames[index];
-  if (!name || !confirmDraftRemove(`科室名「${name}」`)) return;
+  if (!name || !(await confirmDraftRemove(`科室名「${name}」`))) return;
   props.editingDraft.content.fallbackNames.splice(index, 1);
 }
 
-function removePoint(index: number) {
+async function removePoint(index: number) {
   const point = props.editingDraft.points[index];
-  if (!point || !confirmDraftRemove(`页面要点「${point.title || "未命名要点"}」`)) return;
+  if (!point || !(await confirmDraftRemove(`页面要点「${point.title || "未命名要点"}」`))) return;
   props.editingDraft.points.splice(index, 1);
 }
 
-function removePrimary() {
+async function removePrimary() {
   const primary = props.editingDraft.primary;
-  if (!primary || !confirmDraftRemove(`主按钮「${primary.label || "未命名按钮"}」`)) return;
+  if (!primary || !(await confirmDraftRemove(`主按钮「${primary.label || "未命名按钮"}」`))) return;
   primary.enabled = false;
 }
 </script>

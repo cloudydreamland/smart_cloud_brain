@@ -32,6 +32,7 @@ import {
   validateConfig,
 } from "./patientSiteConfigEditorUtils";
 import { createPatientSiteDraftActions } from "./patientSiteConfigDraftActions";
+import type { PatientSiteConfirm } from "./patientSiteConfirm";
 import {
   configTabs,
   emptyDrafts,
@@ -53,8 +54,13 @@ const emptyHistoryPage = () => createEmptyHistoryPage(historyPageSize);
 const allowedHomeModules = new Set(homeModuleTypeOptions.map((item) => item.value));
 const templates = clone(patientSiteConfigTemplates) as ConfigDrafts;
 
-export function usePatientSiteConfigEditor() {
+type PatientSiteConfigEditorOptions = {
+  confirm?: PatientSiteConfirm;
+};
+
+export function usePatientSiteConfigEditor(options: PatientSiteConfigEditorOptions = {}) {
   const auth = useAuthStore();
+  const confirm = options.confirm || (async () => false);
   const activeKey = ref<ConfigKey>("patient_nav");
   const loading = ref(false);
   const saving = ref(false);
@@ -111,6 +117,7 @@ export function usePatientSiteConfigEditor() {
     staticDraft,
     pagesDraft,
     validationErrors,
+    confirm,
     openEditor,
     refreshHistory: (key) => refreshHistory(key),
   });
@@ -220,8 +227,12 @@ export function usePatientSiteConfigEditor() {
     }
   }
 
-  function useTemplate() {
-    if (!window.confirm("这会将当前编辑内容改为完整默认模板；保存并生效后会写入数据库成为当前真实配置。是否继续？")) return;
+  async function useTemplate() {
+    if (!(await confirm({
+      title: "使用默认模板",
+      message: "将用完整默认模板覆盖当前编辑稿。此操作不会立即影响患者端，只有保存并生效或发布后才会更新正式页面。",
+      confirmText: "确认使用模板",
+    }))) return;
     setDraft(activeKey.value, templates[activeKey.value]);
     status.value = "已填入默认模板；保存草稿不会影响患者端，保存并生效或发布后才会更新正式页面";
     error.value = "";
@@ -256,36 +267,46 @@ export function usePatientSiteConfigEditor() {
     error.value = "";
   }
 
-  function confirmRemove(message: string) {
-    return window.confirm(`${message}。删除后会从当前编辑稿中禁用该项，保存草稿不会影响患者端，发布或保存并生效后才会更新正式页面。是否继续？`);
+  function confirmRemove(target: string) {
+    return confirm({
+      title: `确认删除${target}`,
+      message: `将从当前编辑稿中禁用或移除${target}。保存草稿不会影响患者端，保存并生效或发布后才会更新正式页面。`,
+      confirmText: "确认删除",
+      tone: "danger",
+    });
   }
 
-  function removeMenu(index: number) {
+  async function removeMenu(index: number) {
     const menu = navDraft.value.menus[index];
-    if (!menu || !confirmRemove(`确认删除导航菜单「${menu.label || "未命名菜单"}」`)) return;
+    if (!menu || !(await confirmRemove(`导航菜单「${menu.label || "未命名菜单"}」`))) return;
     menu.enabled = false;
     status.value = "已删除导航菜单，保存草稿或发布后生效";
     error.value = "";
   }
 
-  function removeUserLink(index: number) {
+  async function removeUserLink(index: number) {
     const link = navDraft.value.userLinks[index];
-    if (!link || !confirmRemove(`确认删除用户入口「${link.label || "未命名入口"}」`)) return;
+    if (!link || !(await confirmRemove(`用户入口「${link.label || "未命名入口"}」`))) return;
     link.enabled = false;
     status.value = "已删除用户入口，保存草稿或发布后生效";
     error.value = "";
   }
 
-  function removeHomeModule(module: PatientHomeModule) {
-    if (!confirmRemove("确认删除首页模块")) return;
+  async function removeHomeModule(module: PatientHomeModule) {
+    if (!(await confirmRemove("首页模块"))) return;
     module.enabled = false;
     status.value = "已删除首页模块，保存草稿或发布后生效";
     error.value = "";
   }
 
-  function removeStaticPage(index: number) {
+  async function removeStaticPage(index: number) {
     const page = staticDraft.value.pages[index];
-    if (!page || !confirmRemove(`确认删除静态页「${page.title || page.label || page.routeName}」`)) return;
+    if (!page || !(await confirm({
+      title: "确认删除静态页",
+      message: `将从当前编辑稿中移除静态页「${page.title || page.label || page.routeName}」。保存并生效或发布后，患者端对应页面入口将不再展示这份内容。`,
+      confirmText: "确认删除",
+      tone: "danger",
+    }))) return;
     page.enabled = false;
     status.value = "已删除静态页，保存草稿或发布后生效";
     error.value = "";
@@ -297,7 +318,7 @@ export function usePatientSiteConfigEditor() {
     if (!payload) return;
     const remark = publishRemark();
     if (!remark) return;
-    if (!confirmPublish("保存并生效", remark, payload.configJson)) return;
+    if (!(await confirmPublish("saveAndApply", remark, payload.configJson))) return;
     saving.value = true;
     status.value = "";
     try {
@@ -345,7 +366,7 @@ export function usePatientSiteConfigEditor() {
     if (!auth.session) return;
     const remark = publishRemark();
     if (!remark) return;
-    if (!confirmPublish("发布最新草稿", remark, latest[activeKey.value]?.configJson || "")) return;
+    if (!(await confirmPublish("publishDraft", remark, latest[activeKey.value]?.configJson || ""))) return;
     saving.value = true;
     status.value = "";
     error.value = "";
@@ -365,7 +386,12 @@ export function usePatientSiteConfigEditor() {
 
   async function rollbackTo(record: PatientSiteConfigRecord) {
     if (!auth.session || typeof record.configJson !== "string") return;
-    if (!window.confirm(`确认回滚到版本 ${record.version || "-"}？这会生成一个新的已发布版本。`)) return;
+    if (!(await confirm({
+      title: `确认回滚版本 ${record.version || "-"}`,
+      message: "将把选中的历史版本恢复为正式配置，患者端页面会使用该版本内容。当前正式版本会保留在版本记录中。",
+      confirmText: "确认回滚",
+      tone: "danger",
+    }))) return;
     saving.value = true;
     status.value = "";
     error.value = "";
@@ -415,9 +441,16 @@ export function usePatientSiteConfigEditor() {
     return remark;
   }
 
-  function confirmPublish(action: string, remark: string, nextConfigJson: string) {
+  function confirmPublish(action: "saveAndApply" | "publishDraft", remark: string, nextConfigJson: string) {
     const label = activeTab.value?.label || activeKey.value;
-    return window.confirm(`${action}「${label}」配置？这会更新患者端正式公开页面，影响模块：${label}。本次备注：${remark}\n\n变更摘要：${publishChangeSummary(nextConfigJson)}`);
+    const isSaveAndApply = action === "saveAndApply";
+    return confirm({
+      title: isSaveAndApply ? "确认保存并生效" : "确认发布最新草稿",
+      message: `${isSaveAndApply
+        ? "将把当前配置保存为正式版本，患者端页面会立即读取这次配置。请确认导航、页面内容和跳转入口已经检查无误。"
+        : "将把当前草稿发布为新的正式版本，患者端页面会切换到该版本。发布后仍可通过版本记录回滚。"}\n\n配置范围：${label}\n本次备注：${remark}\n变更摘要：${publishChangeSummary(nextConfigJson)}`,
+      confirmText: isSaveAndApply ? "确认保存并生效" : "确认发布",
+    });
   }
 
   function publishChangeSummary(nextConfigJson: string) {

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { LinkGridSection, RouteTargetConfig } from "@smart-cloud-brain/shared-api";
+import { usePatientSiteConfirm } from "../../../composables/patientSiteConfirm";
 import RouteTargetEditor from "../RouteTargetEditor.vue";
 
 defineProps<{
@@ -8,10 +9,16 @@ defineProps<{
 }>();
 
 const emptyLink = (): RouteTargetConfig => ({ label: "", routeName: "patient-home", enabled: true, sort: 0 });
+const confirm = usePatientSiteConfirm();
 
-function removeLink(section: LinkGridSection, index: number) {
+async function removeLink(section: LinkGridSection, index: number) {
   const link = section.links[index];
-  if (!link || !window.confirm(`确认删除链接「${link.label || "未命名链接"}」？删除后只会影响当前编辑稿，发布或保存并生效后才会更新正式页面。`)) return;
+  if (!link || !(await confirm({
+    title: "确认删除链接",
+    message: `将从当前编辑稿中移除链接「${link.label || "未命名链接"}」。保存草稿不会影响患者端，保存并生效或发布后，对应页面区块才会不再展示该链接。`,
+    confirmText: "确认删除",
+    tone: "danger",
+  }))) return;
   section.links.splice(index, 1);
 }
 </script>

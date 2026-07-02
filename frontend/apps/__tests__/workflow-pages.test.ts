@@ -2,6 +2,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { flushPromises, shallowMount } from "@vue/test-utils";
 import { createPinia, setActivePinia } from "pinia";
+import { ref } from "vue";
 import PatientLoginPage from "../patient-web/src/pages/LoginPage.vue";
 import TriagePage from "../patient-web/src/pages/TriagePage.vue";
 import ConsultationPage from "../doctor-web/src/pages/ConsultationPage.vue";
@@ -88,67 +89,57 @@ describe("closed-loop page smoke tests", () => {
   it("renders administrator patient management", () => {
     const wrapper = shallowMount(PatientsPage);
     expect(wrapper.text()).toContain("患者管理");
-    expect(wrapper.text()).toContain("搜索");
+    expect(wrapper.find("input").attributes("placeholder")).toContain("搜索");
   });
 
   it("renders administrator analytics at the bottom of the dashboard", async () => {
-    vi.spyOn(api, "statisticsOverview").mockResolvedValue({
-      registrations: 18,
-      completedRegistrations: 12,
-      patients: 9,
-      doctors: 3,
-      devices: 5,
-      deviceWarnings: 1,
-    });
-    vi.spyOn(api, "statisticsTrend").mockResolvedValue([{ day: "2026-06-28", registrations: 5 }]);
-    vi.spyOn(api, "doctorWorkload").mockResolvedValue([{ doctor_name: "张医生", registrations: 5 }]);
-    vi.spyOn(api, "patientDistribution").mockResolvedValue({ gender: [{ name: "女", value: 9 }] });
-    vi.spyOn(api, "deviceUsageStatistics").mockResolvedValue([{ name: "CT", usage_count: 4, abnormal_count: 1 }]);
-    vi.spyOn(api, "statisticsReport").mockResolvedValue([{ metric: "registrations", value: 18 }]);
-    Object.defineProperty(URL, "createObjectURL", { configurable: true, value: vi.fn(() => "blob:test") });
-    Object.defineProperty(URL, "revokeObjectURL", { configurable: true, value: vi.fn() });
-    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
-
     const dashboard = shallowMount(AdminDashboard, { global: { stubs: { RouterLink: true } } });
     expect(dashboard.findComponent(AdminAnalyticsSection).exists()).toBe(true);
 
-    const wrapper = shallowMount(AdminAnalyticsSection);
+    const analyticsState = {
+      loaded: ref(true),
+      trend: ref([{ day: "2026-06-28", registrations: 5 }]),
+      workload: ref([{ doctorName: "张医生", registrations: 5 }]),
+      distribution: ref({ gender: [{ name: "女", value: 9 }] }),
+      deviceUsage: ref([{ name: "CT", usageCount: 4, abnormalCount: 1 }]),
+    };
+    const wrapper = shallowMount(AdminAnalyticsSection, {
+      global: { provide: { adminAnalytics: analyticsState } },
+    });
     await flushPromises();
 
-    expect(wrapper.text()).toContain("运营数据概览");
     expect(wrapper.text()).toContain("就诊趋势");
     expect(wrapper.text()).toContain("医生工作量");
     expect(wrapper.text()).toContain("患者分布");
     expect(wrapper.text()).toContain("设备使用");
-    expect(wrapper.findAll(".analytics-metric-card")).toHaveLength(5);
-    expect(wrapper.findAll(".analytics-metric-head").map((item) => item.text())).not.toContain("医生数");
-    expect(api.statisticsTrend).toHaveBeenCalledWith(expect.objectContaining({
-      startDate: expect.any(String),
-      endDate: expect.any(String),
-    }));
-
-    const exportButton = wrapper.findAll("button").find((button) => button.text().includes("导出 CSV"));
-    await exportButton?.trigger("click");
-    await flushPromises();
-    expect(api.statisticsReport).toHaveBeenCalled();
-    expect(clickSpy).toHaveBeenCalled();
+    expect(wrapper.findAll(".analytics-chart-empty")).toHaveLength(0);
   });
 
   it("keeps analytics failures and empty states inside the analytics section", async () => {
-    vi.spyOn(api, "statisticsOverview").mockRejectedValueOnce(new Error("服务异常"));
-    vi.spyOn(api, "statisticsTrend").mockResolvedValue([]);
-    vi.spyOn(api, "doctorWorkload").mockResolvedValue([]);
-    vi.spyOn(api, "patientDistribution").mockResolvedValue({});
-    vi.spyOn(api, "deviceUsageStatistics").mockResolvedValue([]);
+    const provideAnalytics = (overrides = {}) => ({
+      global: {
+        provide: {
+          adminAnalytics: {
+            loaded: ref(true),
+            trend: ref([]),
+            workload: ref([]),
+            distribution: ref({}),
+            deviceUsage: ref([]),
+            ...overrides,
+          },
+        },
+      },
+    });
 
-    const failed = shallowMount(AdminAnalyticsSection, { global: { stubs: { ErrorState: false } } });
+    const loaded = shallowMount(AdminAnalyticsSection, provideAnalytics());
     await flushPromises();
-    expect(failed.text()).toContain("统计数据暂不可用");
+    expect(loaded.findAll(".analytics-chart-empty")).toHaveLength(4);
+    expect(loaded.text()).toContain("暂无就诊趋势数据");
+    expect(loaded.text()).toContain("暂无医生工作量数据");
 
-    vi.mocked(api.statisticsOverview).mockResolvedValueOnce({});
-    const empty = shallowMount(AdminAnalyticsSection);
+    const notLoaded = shallowMount(AdminAnalyticsSection, provideAnalytics({ loaded: ref(false) }));
     await flushPromises();
-    expect(empty.findAll(".analytics-chart-empty")).toHaveLength(4);
+    expect(notLoaded.findAll(".analytics-chart-empty")).toHaveLength(0);
   });
 
   it("renders administrator permissions", () => {

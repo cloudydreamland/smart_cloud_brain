@@ -1,13 +1,20 @@
 <script setup lang="ts">
 import type { StatsSection } from "@smart-cloud-brain/shared-api";
+import { usePatientSiteConfirm } from "../../../composables/patientSiteConfirm";
 
 defineProps<{
   section: StatsSection;
 }>();
+const confirm = usePatientSiteConfirm();
 
-function removeStat(section: StatsSection, index: number) {
+async function removeStat(section: StatsSection, index: number) {
   const item = section.items[index];
-  if (!item || !window.confirm(`确认删除指标「${item.label || item.value || "未命名指标"}」？删除后只会影响当前编辑稿，发布或保存并生效后才会更新正式页面。`)) return;
+  if (!item || !(await confirm({
+    title: "确认删除指标",
+    message: `将从当前编辑稿中移除指标「${item.label || item.value || "未命名指标"}」。保存草稿不会影响患者端，保存并生效或发布后，对应页面区块才会不再展示该指标。`,
+    confirmText: "确认删除",
+    tone: "danger",
+  }))) return;
   section.items.splice(index, 1);
 }
 </script>
