@@ -13,15 +13,18 @@ import com.smartcloudbrain.registration.entity.Doctor;
 import com.smartcloudbrain.registration.entity.Patient;
 import com.smartcloudbrain.registration.entity.PatientVisitor;
 import com.smartcloudbrain.registration.entity.Registration;
+import com.smartcloudbrain.registration.entity.RegistrationOrder;
 import com.smartcloudbrain.registration.repository.AppointmentSlotRepository;
 import com.smartcloudbrain.registration.repository.DepartmentRepository;
 import com.smartcloudbrain.registration.repository.DoctorRepository;
 import com.smartcloudbrain.registration.repository.PatientRepository;
 import com.smartcloudbrain.registration.repository.PatientVisitorRepository;
+import com.smartcloudbrain.registration.repository.RegistrationOrderRepository;
 import com.smartcloudbrain.registration.repository.RegistrationRepository;
 import com.smartcloudbrain.registration.event.DomainEventPublisher;
 import com.smartcloudbrain.common.security.AuthenticatedUser;
 import com.smartcloudbrain.common.security.CurrentUserService;
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
@@ -40,6 +43,7 @@ public class RegistrationService {
   private final PatientVisitorRepository patientVisitorRepository;
   private final DepartmentRepository departmentRepository;
   private final AppointmentSlotRepository appointmentSlotRepository;
+  private final RegistrationOrderRepository registrationOrderRepository;
   private final CurrentUserService currentUserService;
   private final RedisRateLimiter redisRateLimiter;
   private final RedisIdempotencyGuard redisIdempotencyGuard;
@@ -53,6 +57,7 @@ public class RegistrationService {
       PatientVisitorRepository patientVisitorRepository,
       DepartmentRepository departmentRepository,
       AppointmentSlotRepository appointmentSlotRepository,
+      RegistrationOrderRepository registrationOrderRepository,
       CurrentUserService currentUserService,
       RedisRateLimiter redisRateLimiter,
       RedisIdempotencyGuard redisIdempotencyGuard,
@@ -65,6 +70,7 @@ public class RegistrationService {
     this.patientVisitorRepository = patientVisitorRepository;
     this.departmentRepository = departmentRepository;
     this.appointmentSlotRepository = appointmentSlotRepository;
+    this.registrationOrderRepository = registrationOrderRepository;
     this.currentUserService = currentUserService;
     this.redisRateLimiter = redisRateLimiter;
     this.redisIdempotencyGuard = redisIdempotencyGuard;
@@ -101,8 +107,8 @@ public class RegistrationService {
     AppointmentSlot slot = appointmentSlotRepository.findByIdForUpdate(request.slotId())
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
     SubjectSnapshot subject = resolveSubject(request, user);
-    if (registrationRepository.existsByOwnerPatientIdAndSubjectTypeAndSubjectIdAndSlotIdAndStatusNot(
-        user.userId(), subject.type(), subject.id(), slot.getId(), "CANCELLED")) {
+    if (registrationRepository.existsByOwnerPatientIdAndSubjectTypeAndSubjectIdAndSlotIdAndStatusNotIn(
+        user.userId(), subject.type(), subject.id(), slot.getId(), List.of("CANCELLED", "REFUNDED"))) {
       throw new BusinessException(ErrorCode.CONFLICT);
     }
     if (!"AVAILABLE".equalsIgnoreCase(slot.getStatus())
@@ -138,11 +144,12 @@ public class RegistrationService {
     registration.setTriageRecordId(request.triageRecordId());
     registration.setSlotId(slot.getId());
     registration.setAppointmentTime(slot.getStartTime());
-    registration.setStatus("CREATED");
+    registration.setStatus(RegistrationStatus.PENDING_PAYMENT.name());
     registration.setUpdatedAt(LocalDateTime.now());
     Registration saved = registrationRepository.save(registration);
+    RegistrationOrder order = createOrder(saved);
     publishRegistrationCreated(saved, user);
-    return registrationView(saved);
+    return registrationView(saved, order, user);
   }
 
   public List<Map<String, Object>> list() {
@@ -155,12 +162,115 @@ public class RegistrationService {
     } else {
       registrations = registrationRepository.findAll();
     }
-    return registrations.stream().map(this::registrationView).toList();
+    return registrations.stream().map(registration -> registrationView(registration, user)).toList();
   }
 
   @CacheEvict(cacheNames = "registration:slots", allEntries = true)
   @Transactional
   public Map<String, Object> cancel(Long registrationId) {
+    AuthenticatedUser user = currentUserService.get();
+    Registration registration = requireOperableRegistration(registrationId, user);
+    RegistrationStatus status = RegistrationStatus.from(registration.getStatus());
+    if (!status.canCancel()) {
+      throw new BusinessException(400, "registration cannot be cancelled in current status");
+    }
+    RegistrationOrder order = orderFor(registration).orElse(null);
+    LocalDateTime now = LocalDateTime.now();
+    if (status == RegistrationStatus.PAID) {
+      registration.setStatus(RegistrationStatus.REFUNDING.name());
+      updateOrder(order, PaymentStatus.REFUNDING, null, null);
+    } else {
+      registration.setStatus(RegistrationStatus.CANCELLED.name());
+      updateOrder(order, PaymentStatus.CLOSED, null, now);
+    }
+    registration.setUpdatedAt(now);
+    Registration saved = registrationRepository.save(registration);
+    restoreSlotCapacity(saved.getSlotId());
+    publishRegistrationCancelled(saved, user);
+    return registrationView(saved, order, user);
+  }
+
+  @Transactional
+  public Map<String, Object> pay(Long registrationId) {
+    AuthenticatedUser user = currentUserService.require(RoleType.PATIENT);
+    Registration registration = requireOperableRegistration(registrationId, user);
+    RegistrationStatus status = RegistrationStatus.from(registration.getStatus());
+    if (!status.canPay()) {
+      throw new BusinessException(400, "registration cannot be paid in current status");
+    }
+    RegistrationOrder order = requireOrder(registration);
+    if (PaymentStatus.from(order.getPaymentStatus()) != PaymentStatus.UNPAID) {
+      throw new BusinessException(400, "order cannot be paid in current status");
+    }
+    LocalDateTime now = LocalDateTime.now();
+    registration.setStatus(RegistrationStatus.PAID.name());
+    registration.setUpdatedAt(now);
+    updateOrder(order, PaymentStatus.PAID, now, null);
+    Registration saved = registrationRepository.save(registration);
+    publishRegistrationStatusChanged(saved, user, DomainEventNames.REGISTRATION_PAID, "REGISTRATION_PAID");
+    return registrationView(saved, order, user);
+  }
+
+  @Transactional
+  public Map<String, Object> checkIn(Long registrationId) {
+    AuthenticatedUser user = currentUserService.get();
+    Registration registration = requireOperableRegistration(registrationId, user);
+    if (!RegistrationStatus.from(registration.getStatus()).canCheckIn()) {
+      throw new BusinessException(400, "registration cannot check in in current status");
+    }
+    return transition(registration, user, RegistrationStatus.CHECKED_IN, DomainEventNames.REGISTRATION_CHECKED_IN, "REGISTRATION_CHECKED_IN");
+  }
+
+  @Transactional
+  public Map<String, Object> joinQueue(Long registrationId) {
+    AuthenticatedUser user = currentUserService.require(RoleType.DOCTOR);
+    Registration registration = requireOperableRegistration(registrationId, user);
+    if (!RegistrationStatus.from(registration.getStatus()).canJoinQueue()) {
+      throw new BusinessException(400, "registration cannot join queue in current status");
+    }
+    return transition(registration, user, RegistrationStatus.WAITING, DomainEventNames.REGISTRATION_WAITING, "REGISTRATION_WAITING");
+  }
+
+  @Transactional
+  public Map<String, Object> call(Long registrationId) {
+    AuthenticatedUser user = currentUserService.require(RoleType.DOCTOR);
+    Registration registration = requireOperableRegistration(registrationId, user);
+    if (!RegistrationStatus.from(registration.getStatus()).canCall()) {
+      throw new BusinessException(400, "registration cannot be called in current status");
+    }
+    return transition(registration, user, RegistrationStatus.CALLED, DomainEventNames.REGISTRATION_CALLED, "REGISTRATION_CALLED");
+  }
+
+  @Transactional
+  public Map<String, Object> startConsultation(Long registrationId) {
+    AuthenticatedUser user = currentUserService.require(RoleType.DOCTOR);
+    Registration registration = requireOperableRegistration(registrationId, user);
+    if (!RegistrationStatus.from(registration.getStatus()).canStartConsultation()) {
+      throw new BusinessException(400, "registration cannot start consultation in current status");
+    }
+    return transition(registration, user, RegistrationStatus.IN_CONSULTATION, DomainEventNames.REGISTRATION_STARTED, "REGISTRATION_STARTED");
+  }
+
+  @Transactional
+  public Map<String, Object> refund(Long registrationId) {
+    AuthenticatedUser user = currentUserService.get();
+    Registration registration = requireOperableRegistration(registrationId, user);
+    if (!RegistrationStatus.from(registration.getStatus()).canRefund()) {
+      throw new BusinessException(400, "registration cannot be refunded in current status");
+    }
+    RegistrationOrder order = requireOrder(registration);
+    LocalDateTime now = LocalDateTime.now();
+    registration.setStatus(RegistrationStatus.REFUNDED.name());
+    registration.setUpdatedAt(now);
+    updateOrder(order, PaymentStatus.REFUNDED, null, now);
+    Registration saved = registrationRepository.save(registration);
+    publishRegistrationStatusChanged(saved, user, DomainEventNames.REGISTRATION_REFUNDED, "REGISTRATION_REFUNDED");
+    return registrationView(saved, order, user);
+  }
+
+  @CacheEvict(cacheNames = "registration:slots", allEntries = true)
+  @Transactional
+  private Map<String, Object> cancelLegacy(Long registrationId) {
     AuthenticatedUser user = currentUserService.get();
     Registration registration = registrationRepository.findById(registrationId)
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
@@ -187,6 +297,16 @@ public class RegistrationService {
   @Transactional
   public Map<String, Object> complete(Long registrationId) {
     AuthenticatedUser user = currentUserService.require(RoleType.DOCTOR);
+    Registration registration = requireOperableRegistration(registrationId, user);
+    if (!RegistrationStatus.from(registration.getStatus()).canComplete()) {
+      throw new BusinessException(400, "registration cannot be completed in current status");
+    }
+    return transition(registration, user, RegistrationStatus.COMPLETED, DomainEventNames.REGISTRATION_COMPLETED, "REGISTRATION_COMPLETED");
+  }
+
+  @Transactional
+  private Map<String, Object> completeLegacy(Long registrationId) {
+    AuthenticatedUser user = currentUserService.require(RoleType.DOCTOR);
     Registration registration = registrationRepository.findById(registrationId)
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
     if (!registration.getDoctorId().equals(user.userId())) {
@@ -206,6 +326,14 @@ public class RegistrationService {
   }
 
   public Map<String, Object> registrationView(Registration registration) {
+    return registrationView(registration, orderFor(registration).orElse(null), currentUserService.get());
+  }
+
+  private Map<String, Object> registrationView(Registration registration, AuthenticatedUser user) {
+    return registrationView(registration, orderFor(registration).orElse(null), user);
+  }
+
+  private Map<String, Object> registrationView(Registration registration, RegistrationOrder order, AuthenticatedUser user) {
     Patient patient = patientRepository.findById(registration.getPatientId()).orElse(null);
     Doctor doctor = doctorRepository.findById(registration.getDoctorId()).orElse(null);
     Department department = departmentRepository.findById(registration.getDepartmentId()).orElse(null);
@@ -238,6 +366,14 @@ public class RegistrationService {
     view.put("slotId", registration.getSlotId() == null ? 0L : registration.getSlotId());
     view.put("status", registration.getStatus());
     view.put("triageRecordId", registration.getTriageRecordId() == null ? 0L : registration.getTriageRecordId());
+    view.put("orderId", order == null ? 0L : order.getId());
+    view.put("orderNo", order == null ? "" : text(order.getOrderNo(), ""));
+    view.put("amount", order == null || order.getAmount() == null ? BigDecimal.ZERO : order.getAmount());
+    view.put("paymentStatus", order == null ? fallbackPaymentStatus(registration).name() : PaymentStatus.from(order.getPaymentStatus()).name());
+    view.put("paymentMethod", order == null ? "" : text(order.getPaymentMethod(), ""));
+    view.put("paidAt", order == null || order.getPaidAt() == null ? "" : order.getPaidAt().toString());
+    view.put("closedAt", order == null || order.getClosedAt() == null ? "" : order.getClosedAt().toString());
+    view.putAll(actionFlags(registration, user));
     return view;
   }
 
@@ -291,6 +427,99 @@ public class RegistrationService {
   private record SubjectSnapshot(Long id, String type, String name, String relationship, String gender, Integer age) {
   }
 
+  private RegistrationOrder createOrder(Registration registration) {
+    RegistrationOrder order = new RegistrationOrder();
+    order.setOrderNo("REG-" + registration.getId() + "-" + System.currentTimeMillis());
+    order.setRegistrationId(registration.getId());
+    order.setOwnerPatientId(ownerPatientId(registration));
+    order.setSubjectType(subjectType(registration));
+    order.setSubjectId(subjectId(registration));
+    order.setAmount(BigDecimal.ZERO);
+    order.setPaymentStatus(PaymentStatus.UNPAID.name());
+    order.setPaymentMethod("MOCK");
+    order.setUpdatedAt(LocalDateTime.now());
+    return registrationOrderRepository.save(order);
+  }
+
+  private java.util.Optional<RegistrationOrder> orderFor(Registration registration) {
+    if (registration == null || registration.getId() == null) {
+      return java.util.Optional.empty();
+    }
+    return registrationOrderRepository.findFirstByRegistrationIdOrderByIdDesc(registration.getId());
+  }
+
+  private RegistrationOrder requireOrder(Registration registration) {
+    return orderFor(registration).orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+  }
+
+  private void updateOrder(RegistrationOrder order, PaymentStatus status, LocalDateTime paidAt, LocalDateTime closedAt) {
+    if (order == null) {
+      return;
+    }
+    order.setPaymentStatus(status.name());
+    if (paidAt != null) {
+      order.setPaidAt(paidAt);
+    }
+    if (closedAt != null) {
+      order.setClosedAt(closedAt);
+    }
+    order.setUpdatedAt(LocalDateTime.now());
+    registrationOrderRepository.save(order);
+  }
+
+  private Registration requireOperableRegistration(Long registrationId, AuthenticatedUser user) {
+    Registration registration = registrationRepository.findById(registrationId)
+        .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+    if (user.role() == RoleType.PATIENT && !ownerPatientId(registration).equals(user.userId())) {
+      throw new BusinessException(ErrorCode.FORBIDDEN);
+    }
+    if (user.role() == RoleType.DOCTOR && !registration.getDoctorId().equals(user.userId())) {
+      throw new BusinessException(ErrorCode.FORBIDDEN);
+    }
+    return registration;
+  }
+
+  private Map<String, Object> transition(
+      Registration registration,
+      AuthenticatedUser user,
+      RegistrationStatus nextStatus,
+      String eventType,
+      String action
+  ) {
+    registration.setStatus(nextStatus.name());
+    registration.setUpdatedAt(LocalDateTime.now());
+    Registration saved = registrationRepository.save(registration);
+    publishRegistrationStatusChanged(saved, user, eventType, action);
+    return registrationView(saved, user);
+  }
+
+  private Map<String, Object> actionFlags(Registration registration, AuthenticatedUser user) {
+    RegistrationStatus status = RegistrationStatus.from(registration.getStatus());
+    boolean owner = user.role() == RoleType.PATIENT && ownerPatientId(registration).equals(user.userId());
+    boolean doctor = user.role() == RoleType.DOCTOR && registration.getDoctorId().equals(user.userId());
+    boolean admin = user.role() == RoleType.ADMIN;
+    Map<String, Object> flags = new LinkedHashMap<>();
+    flags.put("canPay", owner && status.canPay());
+    flags.put("canCancel", (owner || admin) && status.canCancel());
+    flags.put("canCheckIn", (owner || doctor || admin) && status.canCheckIn());
+    flags.put("canJoinQueue", (doctor || admin) && status.canJoinQueue());
+    flags.put("canCall", (doctor || admin) && status.canCall());
+    flags.put("canStartConsultation", (doctor || admin) && status.canStartConsultation());
+    flags.put("canComplete", (doctor || admin) && status.canComplete());
+    flags.put("canRefund", (owner || admin) && status.canRefund());
+    return flags;
+  }
+
+  private PaymentStatus fallbackPaymentStatus(Registration registration) {
+    return switch (RegistrationStatus.from(registration.getStatus())) {
+      case PENDING_PAYMENT -> PaymentStatus.UNPAID;
+      case CANCELLED -> PaymentStatus.CLOSED;
+      case REFUNDING -> PaymentStatus.REFUNDING;
+      case REFUNDED -> PaymentStatus.REFUNDED;
+      default -> PaymentStatus.PAID;
+    };
+  }
+
   private void restoreSlotCapacity(Long slotId) {
     if (slotId == null) {
       return;
@@ -321,6 +550,18 @@ public class RegistrationService {
     domainEventPublisher.publishNotification(DomainEventNames.REGISTRATION_CANCELLED, payload);
     domainEventPublisher.publishAudit(DomainEventNames.REGISTRATION_CANCELLED, auditPayload(
         user, "REGISTRATION_CANCELLED", "REGISTRATION", registration.getId(), payload));
+  }
+
+  private void publishRegistrationStatusChanged(
+      Registration registration,
+      AuthenticatedUser user,
+      String eventType,
+      String action
+  ) {
+    Map<String, Object> payload = registrationPayload(registration, action, "", "");
+    payload.put("status", registration.getStatus());
+    domainEventPublisher.publishAudit(eventType, auditPayload(
+        user, action, "REGISTRATION", registration.getId(), payload));
   }
 
   private Map<String, Object> registrationPayload(Registration registration, String type, String title, String content) {

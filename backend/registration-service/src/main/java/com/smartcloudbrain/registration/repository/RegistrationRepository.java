@@ -1,6 +1,7 @@
 package com.smartcloudbrain.registration.repository;
 
 import com.smartcloudbrain.registration.entity.Registration;
+import java.util.Collection;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -15,6 +16,13 @@ public interface RegistrationRepository extends JpaRepository<Registration, Long
       Long subjectId,
       Long slotId,
       String status
+  );
+  boolean existsByOwnerPatientIdAndSubjectTypeAndSubjectIdAndSlotIdAndStatusNotIn(
+      Long ownerPatientId,
+      String subjectType,
+      Long subjectId,
+      Long slotId,
+      Collection<String> statuses
   );
 }
 

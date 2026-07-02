@@ -24,7 +24,7 @@ public class DoctorWorkspaceService {
         """, doctorId));
     view.put("pendingRegistrations", count("""
         SELECT COUNT(*) FROM registration
-        WHERE doctor_id = ? AND status IN ('CREATED', 'CHECKED_IN', 'IN_PROGRESS')
+        WHERE doctor_id = ? AND status IN ('CHECKED_IN', 'WAITING', 'CALLED', 'IN_CONSULTATION')
         """, doctorId));
     view.put("completedRegistrations", count("""
         SELECT COUNT(*) FROM registration
@@ -60,6 +60,10 @@ public class DoctorWorkspaceService {
                r.slot_id AS "slotId",
                r.appointment_time AS "appointmentTime",
                r.status,
+               CASE WHEN r.status = 'CHECKED_IN' THEN TRUE ELSE FALSE END AS "canJoinQueue",
+               CASE WHEN r.status = 'WAITING' THEN TRUE ELSE FALSE END AS "canCall",
+               CASE WHEN r.status = 'CALLED' THEN TRUE ELSE FALSE END AS "canStartConsultation",
+               CASE WHEN r.status = 'IN_CONSULTATION' THEN TRUE ELSE FALSE END AS "canComplete",
                t.chief_complaint AS "chiefComplaint",
                t.recommended_department AS "recommendedDepartment",
                t.reason AS "triageReason",
@@ -69,7 +73,7 @@ public class DoctorWorkspaceService {
         LEFT JOIN department dep ON dep.id = r.department_id
         LEFT JOIN triage_record t ON t.id = r.triage_record_id
         WHERE r.doctor_id = ?
-          AND r.status IN ('CREATED', 'CHECKED_IN', 'IN_PROGRESS')
+          AND r.status IN ('CHECKED_IN', 'WAITING', 'CALLED', 'IN_CONSULTATION')
         ORDER BY r.appointment_time ASC, r.id ASC
         """, doctorId);
   }

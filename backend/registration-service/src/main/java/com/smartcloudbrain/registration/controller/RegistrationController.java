@@ -45,6 +45,36 @@ public class RegistrationController {
     return Result.success(registrationService.cancel(request.get("registrationId")));
   }
 
+  @PostMapping("/pay")
+  public Result<?> pay(@RequestBody Map<String, Long> request) {
+    return Result.success(registrationService.pay(request.get("registrationId")));
+  }
+
+  @PostMapping("/check-in")
+  public Result<?> checkIn(@RequestBody Map<String, Long> request) {
+    return Result.success(registrationService.checkIn(request.get("registrationId")));
+  }
+
+  @PostMapping("/join-queue")
+  public Result<?> joinQueue(@RequestBody Map<String, Long> request) {
+    return Result.success(registrationService.joinQueue(request.get("registrationId")));
+  }
+
+  @PostMapping("/call")
+  public Result<?> call(@RequestBody Map<String, Long> request) {
+    return Result.success(registrationService.call(request.get("registrationId")));
+  }
+
+  @PostMapping("/start-consultation")
+  public Result<?> startConsultation(@RequestBody Map<String, Long> request) {
+    return Result.success(registrationService.startConsultation(request.get("registrationId")));
+  }
+
+  @PostMapping("/refund")
+  public Result<?> refund(@RequestBody Map<String, Long> request) {
+    return Result.success(registrationService.refund(request.get("registrationId")));
+  }
+
   @PostMapping("/complete")
   public Result<?> complete(@RequestBody Map<String, Long> request) {
     return Result.success(registrationService.complete(request.get("registrationId")));
