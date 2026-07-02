@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface MedicalRecordRepository extends JpaRepository<MedicalRecord, Long> {
   List<MedicalRecord> findByPatientId(Long patientId, Sort sort);
+  List<MedicalRecord> findByOwnerPatientId(Long ownerPatientId, Sort sort);
   List<MedicalRecord> findByDoctorId(Long doctorId, Sort sort);
   List<MedicalRecord> findAll(Sort sort);
   Optional<MedicalRecord> findByRegistrationId(Long registrationId);

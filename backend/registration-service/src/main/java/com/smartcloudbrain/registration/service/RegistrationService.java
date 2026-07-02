@@ -100,7 +100,9 @@ public class RegistrationService {
     }
     AppointmentSlot slot = appointmentSlotRepository.findByIdForUpdate(request.slotId())
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
-    if (registrationRepository.existsByPatientIdAndSlotIdAndStatusNot(user.userId(), slot.getId(), "CANCELLED")) {
+    SubjectSnapshot subject = resolveSubject(request, user);
+    if (registrationRepository.existsByOwnerPatientIdAndSubjectTypeAndSubjectIdAndSlotIdAndStatusNot(
+        user.userId(), subject.type(), subject.id(), slot.getId(), "CANCELLED")) {
       throw new BusinessException(ErrorCode.CONFLICT);
     }
     if (!"AVAILABLE".equalsIgnoreCase(slot.getStatus())
@@ -116,15 +118,21 @@ public class RegistrationService {
     }
     slot.setUpdatedAt(LocalDateTime.now());
     appointmentSlotRepository.save(slot);
-    VisitorSnapshot visitor = resolveVisitor(request, user);
     Registration registration = new Registration();
     registration.setPatientId(user.userId());
-    registration.setVisitorId(visitor.id());
-    registration.setVisitorType(visitor.type());
-    registration.setVisitorName(visitor.name());
-    registration.setVisitorRelationship(visitor.relationship());
-    registration.setVisitorGender(visitor.gender());
-    registration.setVisitorAge(visitor.age());
+    registration.setOwnerPatientId(user.userId());
+    registration.setSubjectType(subject.type());
+    registration.setSubjectId(subject.id());
+    registration.setSubjectName(subject.name());
+    registration.setSubjectRelationship(subject.relationship());
+    registration.setSubjectGender(subject.gender());
+    registration.setSubjectAge(subject.age());
+    registration.setVisitorId(subject.id());
+    registration.setVisitorType(subject.type());
+    registration.setVisitorName(subject.name());
+    registration.setVisitorRelationship(subject.relationship());
+    registration.setVisitorGender(subject.gender());
+    registration.setVisitorAge(subject.age());
     registration.setDoctorId(doctor.getId());
     registration.setDepartmentId(request.departmentId());
     registration.setTriageRecordId(request.triageRecordId());
@@ -141,7 +149,7 @@ public class RegistrationService {
     AuthenticatedUser user = currentUserService.get();
     List<Registration> registrations;
     if (user.role() == RoleType.PATIENT) {
-      registrations = registrationRepository.findByPatientId(user.userId());
+      registrations = registrationRepository.findByOwnerPatientId(user.userId());
     } else if (user.role() == RoleType.DOCTOR) {
       registrations = registrationRepository.findByDoctorId(user.userId());
     } else {
@@ -156,7 +164,7 @@ public class RegistrationService {
     AuthenticatedUser user = currentUserService.get();
     Registration registration = registrationRepository.findById(registrationId)
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
-    if (user.role() == RoleType.PATIENT && !registration.getPatientId().equals(user.userId())) {
+    if (user.role() == RoleType.PATIENT && !ownerPatientId(registration).equals(user.userId())) {
       throw new BusinessException(ErrorCode.FORBIDDEN);
     }
     if (user.role() == RoleType.DOCTOR && !registration.getDoctorId().equals(user.userId())) {
@@ -201,17 +209,24 @@ public class RegistrationService {
     Patient patient = patientRepository.findById(registration.getPatientId()).orElse(null);
     Doctor doctor = doctorRepository.findById(registration.getDoctorId()).orElse(null);
     Department department = departmentRepository.findById(registration.getDepartmentId()).orElse(null);
-    String patientName = text(registration.getVisitorName(), patient == null ? "" : patient.getName());
-    String patientGender = text(registration.getVisitorGender(), patient == null ? "" : patient.getGender());
-    Integer patientAge = registration.getVisitorAge() == null && patient != null ? patient.getAge() : registration.getVisitorAge();
+    String patientName = text(registration.getSubjectName(), text(registration.getVisitorName(), patient == null ? "" : patient.getName()));
+    String patientGender = text(registration.getSubjectGender(), text(registration.getVisitorGender(), patient == null ? "" : patient.getGender()));
+    Integer patientAge = registration.getSubjectAge() == null
+        ? (registration.getVisitorAge() == null && patient != null ? patient.getAge() : registration.getVisitorAge())
+        : registration.getSubjectAge();
     Map<String, Object> view = new LinkedHashMap<>();
     view.put("registrationId", registration.getId());
     view.put("patientId", registration.getPatientId());
+    view.put("ownerPatientId", ownerPatientId(registration));
+    view.put("subjectType", subjectType(registration));
+    view.put("subjectId", subjectId(registration));
+    view.put("subjectName", patientName);
+    view.put("subjectRelationship", text(registration.getSubjectRelationship(), text(registration.getVisitorRelationship(), "本人")));
     view.put("patientName", patientName);
     view.put("patientAge", patientAge);
     view.put("patientGender", patientGender);
-    view.put("visitorId", registration.getVisitorId() == null ? registration.getPatientId() : registration.getVisitorId());
-    view.put("visitorType", text(registration.getVisitorType(), "ACCOUNT"));
+    view.put("visitorId", subjectId(registration));
+    view.put("visitorType", subjectType(registration));
     view.put("visitorName", patientName);
     view.put("visitorRelationship", text(registration.getVisitorRelationship(), "本人"));
     view.put("doctorId", registration.getDoctorId());
@@ -226,22 +241,54 @@ public class RegistrationService {
     return view;
   }
 
-  private VisitorSnapshot resolveVisitor(CreateRegistrationRequest request, AuthenticatedUser user) {
+  private SubjectSnapshot resolveSubject(CreateRegistrationRequest request, AuthenticatedUser user) {
     Patient patient = patientRepository.findById(user.userId())
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
-    if (!"VISITOR".equalsIgnoreCase(text(request.visitorType(), "")) || request.visitorId() == null) {
-      return new VisitorSnapshot(patient.getId(), "ACCOUNT", patient.getName(), "本人", patient.getGender(), patient.getAge());
+    String requestedType = text(request.subjectType(), "");
+    Long requestedId = request.subjectId();
+    if (requestedType.isBlank()) {
+      requestedType = text(request.visitorType(), "");
+      requestedId = request.visitorId();
     }
-    PatientVisitor visitor = patientVisitorRepository.findByIdAndOwnerPatientId(request.visitorId(), user.userId())
-        .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
-    return new VisitorSnapshot(visitor.getId(), "VISITOR", visitor.getName(), visitor.getRelationship(), visitor.getGender(), visitor.getAge());
+    requestedType = requestedType.isBlank() ? "ACCOUNT" : requestedType.trim().toUpperCase();
+    if ("ACCOUNT".equals(requestedType)) {
+      Long subjectId = requestedId == null ? user.userId() : requestedId;
+      if (!subjectId.equals(user.userId())) {
+        throw new BusinessException(ErrorCode.FORBIDDEN);
+      }
+      return new SubjectSnapshot(patient.getId(), "ACCOUNT", patient.getName(), "本人", patient.getGender(), patient.getAge());
+    }
+    if (!"VISITOR".equals(requestedType) || requestedId == null) {
+      throw new BusinessException(ErrorCode.BAD_REQUEST);
+    }
+    PatientVisitor visitor = patientVisitorRepository.findByIdAndOwnerPatientId(requestedId, user.userId())
+        .orElseThrow(() -> new BusinessException(ErrorCode.FORBIDDEN));
+    return new SubjectSnapshot(visitor.getId(), "VISITOR", visitor.getName(), visitor.getRelationship(), visitor.getGender(), visitor.getAge());
   }
 
   private String text(String value, String fallback) {
     return value == null || value.isBlank() ? fallback : value;
   }
 
-  private record VisitorSnapshot(Long id, String type, String name, String relationship, String gender, Integer age) {
+  private Long ownerPatientId(Registration registration) {
+    return registration.getOwnerPatientId() == null ? registration.getPatientId() : registration.getOwnerPatientId();
+  }
+
+  private String subjectType(Registration registration) {
+    return text(registration.getSubjectType(), text(registration.getVisitorType(), "ACCOUNT"));
+  }
+
+  private Long subjectId(Registration registration) {
+    if (registration.getSubjectId() != null) {
+      return registration.getSubjectId();
+    }
+    if (registration.getVisitorId() != null) {
+      return registration.getVisitorId();
+    }
+    return ownerPatientId(registration);
+  }
+
+  private record SubjectSnapshot(Long id, String type, String name, String relationship, String gender, Integer age) {
   }
 
   private void restoreSlotCapacity(Long slotId) {
@@ -280,6 +327,11 @@ public class RegistrationService {
     Map<String, Object> payload = new LinkedHashMap<>();
     payload.put("doctorId", registration.getDoctorId());
     payload.put("patientId", registration.getPatientId());
+    payload.put("ownerPatientId", ownerPatientId(registration));
+    payload.put("subjectType", subjectType(registration));
+    payload.put("subjectId", subjectId(registration));
+    payload.put("subjectName", text(registration.getSubjectName(), text(registration.getVisitorName(), "")));
+    payload.put("subjectRelationship", text(registration.getSubjectRelationship(), text(registration.getVisitorRelationship(), "")));
     payload.put("registrationId", registration.getId());
     payload.put("triageRecordId", registration.getTriageRecordId() == null ? 0L : registration.getTriageRecordId());
     payload.put("type", type);

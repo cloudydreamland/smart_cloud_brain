@@ -9,9 +9,23 @@ public record TriageRequest(
     Integer age,
     String gender,
     String allergyHistory,
-    String pastHistory
+    String pastHistory,
+    String subjectType,
+    Long subjectId
 ) {
   public TriageRequest(Long patientId, String chiefComplaint) {
-    this(patientId, chiefComplaint, "", null, "", "", "");
+    this(patientId, chiefComplaint, "", null, "", "", "", null, null);
+  }
+
+  public TriageRequest(
+      Long patientId,
+      String chiefComplaint,
+      String symptoms,
+      Integer age,
+      String gender,
+      String allergyHistory,
+      String pastHistory
+  ) {
+    this(patientId, chiefComplaint, symptoms, age, gender, allergyHistory, pastHistory, null, null);
   }
 }

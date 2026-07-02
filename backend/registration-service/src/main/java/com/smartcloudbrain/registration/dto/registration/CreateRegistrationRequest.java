@@ -10,7 +10,9 @@ public record CreateRegistrationRequest(
     Long triageRecordId,
     Long slotId,
     Long visitorId,
-    String visitorType
+    String visitorType,
+    String subjectType,
+    Long subjectId
 ) {
   public CreateRegistrationRequest(
       Long doctorId,
@@ -19,7 +21,19 @@ public record CreateRegistrationRequest(
       Long triageRecordId,
       Long slotId
   ) {
-    this(doctorId, departmentId, appointmentTime, triageRecordId, slotId, null, null);
+    this(doctorId, departmentId, appointmentTime, triageRecordId, slotId, null, null, null, null);
+  }
+
+  public CreateRegistrationRequest(
+      Long doctorId,
+      Long departmentId,
+      LocalDateTime appointmentTime,
+      Long triageRecordId,
+      Long slotId,
+      Long visitorId,
+      String visitorType
+  ) {
+    this(doctorId, departmentId, appointmentTime, triageRecordId, slotId, visitorId, visitorType, null, null);
   }
 }
 

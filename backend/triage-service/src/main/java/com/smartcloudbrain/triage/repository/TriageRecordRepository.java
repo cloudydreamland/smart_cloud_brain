@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface TriageRecordRepository extends JpaRepository<TriageRecord, Long> {
   List<TriageRecord> findByPatientId(Long patientId);
+  List<TriageRecord> findByOwnerPatientId(Long ownerPatientId);
   List<TriageRecord> findByAssignedDoctorId(Long assignedDoctorId);
   List<TriageRecord> findAllByOrderByIdDesc();
 }

@@ -8,8 +8,10 @@ import com.smartcloudbrain.common.redis.RedisRateLimiter;
 import com.smartcloudbrain.common.security.RoleType;
 import com.smartcloudbrain.triage.entity.TriageRecord;
 import com.smartcloudbrain.triage.entity.Patient;
+import com.smartcloudbrain.triage.entity.PatientVisitor;
 import com.smartcloudbrain.triage.entity.Department;
 import com.smartcloudbrain.triage.repository.PatientRepository;
+import com.smartcloudbrain.triage.repository.PatientVisitorRepository;
 import com.smartcloudbrain.triage.repository.TriageRecordRepository;
 import com.smartcloudbrain.triage.repository.DepartmentRepository;
 import com.smartcloudbrain.common.security.AuthenticatedUser;
@@ -28,6 +30,7 @@ public class TriageService {
   private final AiGatewayService aiGatewayService;
   private final TriageRecordRepository triageRecordRepository;
   private final PatientRepository patientRepository;
+  private final PatientVisitorRepository patientVisitorRepository;
   private final DepartmentRepository departmentRepository;
   private final CurrentUserService currentUserService;
   private final RedisRateLimiter redisRateLimiter;
@@ -36,6 +39,7 @@ public class TriageService {
       AiGatewayService aiGatewayService,
       TriageRecordRepository triageRecordRepository,
       PatientRepository patientRepository,
+      PatientVisitorRepository patientVisitorRepository,
       DepartmentRepository departmentRepository,
       CurrentUserService currentUserService,
       RedisRateLimiter redisRateLimiter
@@ -43,6 +47,7 @@ public class TriageService {
     this.aiGatewayService = aiGatewayService;
     this.triageRecordRepository = triageRecordRepository;
     this.patientRepository = patientRepository;
+    this.patientVisitorRepository = patientVisitorRepository;
     this.departmentRepository = departmentRepository;
     this.currentUserService = currentUserService;
     this.redisRateLimiter = redisRateLimiter;
@@ -54,22 +59,31 @@ public class TriageService {
     if (!redisRateLimiter.allow("rate:triage:user:" + user.userId(), 10, Duration.ofMinutes(1))) {
       throw new BusinessException(429, "triage requests too frequent");
     }
-    Long patientId = request.patientId() == null ? user.userId() : request.patientId();
-    if (!patientId.equals(user.userId())) {
+    Long legacyPatientId = request.patientId() == null ? user.userId() : request.patientId();
+    if (!legacyPatientId.equals(user.userId())) {
       throw new BusinessException(ErrorCode.FORBIDDEN);
     }
-    Patient patient = patientRepository.findById(patientId).orElse(null);
+    SubjectSnapshot subject = resolveSubject(request, user.userId());
     TriageResponse response = aiGatewayService.triage(new TriageRequest(
-        patientId,
+        user.userId(),
         request.chiefComplaint(),
         request.symptoms(),
-        patient == null ? request.age() : patient.getAge(),
-        patient == null ? request.gender() : patient.getGender(),
-        patient == null ? request.allergyHistory() : patient.getAllergyHistory(),
-        patient == null ? request.pastHistory() : patient.getPastHistory()
+        subject.age() == null ? request.age() : subject.age(),
+        text(subject.gender(), request.gender()),
+        text(subject.allergyHistory(), request.allergyHistory()),
+        text(subject.pastHistory(), request.pastHistory()),
+        subject.type(),
+        subject.id()
     ));
     TriageRecord record = new TriageRecord();
-    record.setPatientId(patientId);
+    record.setPatientId(user.userId());
+    record.setOwnerPatientId(user.userId());
+    record.setSubjectType(subject.type());
+    record.setSubjectId(subject.id());
+    record.setSubjectName(subject.name());
+    record.setSubjectRelationship(subject.relationship());
+    record.setSubjectGender(subject.gender());
+    record.setSubjectAge(subject.age());
     record.setChiefComplaint(request.chiefComplaint());
     record.setRecommendedDepartment(normalizeDepartmentName(response.recommendedDepartment(), response.departmentCode()));
     record.setRecommendedDoctorIds(response.recommendedDoctorIds().stream().map(String::valueOf).collect(Collectors.joining(",")));
@@ -93,7 +107,7 @@ public class TriageService {
     AuthenticatedUser user = currentUserService.get();
     List<TriageRecord> records;
     if (user.role() == RoleType.PATIENT) {
-      records = triageRecordRepository.findByPatientId(user.userId());
+      records = triageRecordRepository.findByOwnerPatientId(user.userId());
     } else if (user.role() == RoleType.DOCTOR) {
       records = triageRecordRepository.findByAssignedDoctorId(user.userId());
     } else {
@@ -106,6 +120,11 @@ public class TriageService {
     Map<String, Object> view = new LinkedHashMap<>();
     view.put("triageRecordId", record.getId());
     view.put("patientId", record.getPatientId());
+    view.put("ownerPatientId", ownerPatientId(record));
+    view.put("subjectType", subjectType(record));
+    view.put("subjectId", subjectId(record));
+    view.put("subjectName", text(record.getSubjectName(), ""));
+    view.put("subjectRelationship", text(record.getSubjectRelationship(), subjectType(record).equals("ACCOUNT") ? "本人" : ""));
     view.put("chiefComplaint", record.getChiefComplaint());
     view.put("recommendedDepartment", record.getRecommendedDepartment() == null ? "" : record.getRecommendedDepartment());
     view.put("departmentCode", response == null ? "" : response.departmentCode());
@@ -120,6 +139,71 @@ public class TriageService {
     view.put("provider", response == null ? "" : response.provider());
     view.put("model", response == null ? "" : response.model());
     return view;
+  }
+
+  private SubjectSnapshot resolveSubject(TriageRequest request, Long ownerPatientId) {
+    String requestedType = text(request.subjectType(), "").isBlank() ? "ACCOUNT" : request.subjectType().trim().toUpperCase();
+    if ("ACCOUNT".equals(requestedType)) {
+      Long subjectId = request.subjectId() == null ? ownerPatientId : request.subjectId();
+      if (!subjectId.equals(ownerPatientId)) {
+        throw new BusinessException(ErrorCode.FORBIDDEN);
+      }
+      Patient patient = patientRepository.findById(ownerPatientId)
+          .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+      return new SubjectSnapshot(
+          "ACCOUNT",
+          patient.getId(),
+          text(patient.getName(), ""),
+          "本人",
+          patient.getGender(),
+          patient.getAge(),
+          patient.getAllergyHistory(),
+          patient.getPastHistory()
+      );
+    }
+    if (!"VISITOR".equals(requestedType) || request.subjectId() == null) {
+      throw new BusinessException(ErrorCode.BAD_REQUEST);
+    }
+    PatientVisitor visitor = patientVisitorRepository.findByIdAndOwnerPatientId(request.subjectId(), ownerPatientId)
+        .orElseThrow(() -> new BusinessException(ErrorCode.FORBIDDEN));
+    return new SubjectSnapshot(
+        "VISITOR",
+        visitor.getId(),
+        text(visitor.getName(), ""),
+        text(visitor.getRelationship(), "家属"),
+        visitor.getGender(),
+        visitor.getAge(),
+        visitor.getAllergyHistory(),
+        visitor.getPastHistory()
+    );
+  }
+
+  private Long ownerPatientId(TriageRecord record) {
+    return record.getOwnerPatientId() == null ? record.getPatientId() : record.getOwnerPatientId();
+  }
+
+  private String subjectType(TriageRecord record) {
+    return text(record.getSubjectType(), "ACCOUNT");
+  }
+
+  private Long subjectId(TriageRecord record) {
+    return record.getSubjectId() == null ? ownerPatientId(record) : record.getSubjectId();
+  }
+
+  private String text(String value, String fallback) {
+    return value == null || value.isBlank() ? fallback : value;
+  }
+
+  private record SubjectSnapshot(
+      String type,
+      Long id,
+      String name,
+      String relationship,
+      String gender,
+      Integer age,
+      String allergyHistory,
+      String pastHistory
+  ) {
   }
 
   private String normalizeDepartmentName(String aiName, String departmentCode) {

@@ -66,17 +66,26 @@ public class TriageDeskService {
   }
 
   private Map<String, Object> triageView(TriageRecord record) {
-    return Map.of(
-        "triageRecordId", record.getId(),
-        "patientId", record.getPatientId(),
-        "chiefComplaint", record.getChiefComplaint(),
-        "recommendedDepartment", record.getRecommendedDepartment() == null ? "" : record.getRecommendedDepartment(),
-        "recommendedDoctorIds", record.getRecommendedDoctorIds() == null ? "" : record.getRecommendedDoctorIds(),
-        "assignedDoctorId", record.getAssignedDoctorId() == null ? 0L : record.getAssignedDoctorId(),
-        "reason", record.getReason() == null ? "" : record.getReason(),
-        "status", record.getStatus(),
-        "createdAt", record.getCreatedAt() == null ? "" : record.getCreatedAt().toString()
-    );
+    Map<String, Object> view = new LinkedHashMap<>();
+    view.put("triageRecordId", record.getId());
+    view.put("patientId", record.getPatientId());
+    view.put("ownerPatientId", record.getOwnerPatientId() == null ? record.getPatientId() : record.getOwnerPatientId());
+    view.put("subjectType", text(record.getSubjectType(), "ACCOUNT"));
+    view.put("subjectId", record.getSubjectId() == null ? record.getPatientId() : record.getSubjectId());
+    view.put("subjectName", text(record.getSubjectName(), ""));
+    view.put("subjectRelationship", text(record.getSubjectRelationship(), "ACCOUNT".equals(text(record.getSubjectType(), "ACCOUNT")) ? "本人" : ""));
+    view.put("chiefComplaint", record.getChiefComplaint());
+    view.put("recommendedDepartment", record.getRecommendedDepartment() == null ? "" : record.getRecommendedDepartment());
+    view.put("recommendedDoctorIds", record.getRecommendedDoctorIds() == null ? "" : record.getRecommendedDoctorIds());
+    view.put("assignedDoctorId", record.getAssignedDoctorId() == null ? 0L : record.getAssignedDoctorId());
+    view.put("reason", record.getReason() == null ? "" : record.getReason());
+    view.put("status", record.getStatus());
+    view.put("createdAt", record.getCreatedAt() == null ? "" : record.getCreatedAt().toString());
+    return view;
+  }
+
+  private String text(String value, String fallback) {
+    return value == null || value.isBlank() ? fallback : value;
   }
 
   private void publishAssignEvents(TriageRecord record, Long doctorId) {

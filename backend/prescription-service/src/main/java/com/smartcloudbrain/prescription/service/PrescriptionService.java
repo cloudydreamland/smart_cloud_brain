@@ -129,6 +129,13 @@ public class PrescriptionService {
     }
     Prescription prescription = new Prescription();
     prescription.setPatientId(request.patientId());
+    prescription.setOwnerPatientId(ownerPatientId(medicalRecord));
+    prescription.setSubjectType(subjectType(medicalRecord));
+    prescription.setSubjectId(subjectId(medicalRecord));
+    prescription.setSubjectName(text(medicalRecord.getSubjectName(), ""));
+    prescription.setSubjectRelationship(text(medicalRecord.getSubjectRelationship(), "本人"));
+    prescription.setSubjectGender(medicalRecord.getSubjectGender());
+    prescription.setSubjectAge(medicalRecord.getSubjectAge());
     prescription.setDoctorId(user.userId());
     prescription.setMedicalRecordId(request.medicalRecordId());
     prescription.setRegistrationId(medicalRecord.getRegistrationId());
@@ -162,7 +169,7 @@ public class PrescriptionService {
     AuthenticatedUser user = currentUserService.get();
     List<Prescription> prescriptions;
     if (user.role() == RoleType.PATIENT) {
-      prescriptions = prescriptionRepository.findByPatientId(user.userId());
+      prescriptions = prescriptionRepository.findByOwnerPatientId(user.userId());
     } else if (user.role() == RoleType.DOCTOR) {
       prescriptions = prescriptionRepository.findByDoctorId(user.userId());
     } else {
@@ -175,7 +182,7 @@ public class PrescriptionService {
     Prescription prescription = prescriptionRepository.findById(id)
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
     AuthenticatedUser user = currentUserService.get();
-    if (user.role() == RoleType.PATIENT && !prescription.getPatientId().equals(user.userId())) {
+    if (user.role() == RoleType.PATIENT && !ownerPatientId(prescription).equals(user.userId())) {
       throw new BusinessException(ErrorCode.FORBIDDEN);
     }
     if (user.role() == RoleType.DOCTOR && !prescription.getDoctorId().equals(user.userId())) {
@@ -214,23 +221,28 @@ public class PrescriptionService {
         ))
         .toList();
     String patientName = "";
-    if (prescription.getPatientId() != null) {
-      patientName = patientRepository.findById(prescription.getPatientId())
+    if (ownerPatientId(prescription) != null) {
+      patientName = patientRepository.findById(ownerPatientId(prescription))
           .map(Patient::getName)
           .orElse("");
     }
-    return Map.of(
-        "prescriptionId", prescription.getId(),
-        "patientId", prescription.getPatientId(),
-        "patientName", patientName == null ? "" : patientName,
-        "doctorId", prescription.getDoctorId(),
-        "medicalRecordId", prescription.getMedicalRecordId() == null ? 0L : prescription.getMedicalRecordId(),
-        "registrationId", prescription.getRegistrationId() == null ? 0L : prescription.getRegistrationId(),
-        "riskLevel", prescription.getRiskLevel() == null ? "" : prescription.getRiskLevel(),
-        "status", prescription.getStatus(),
-        "items", items,
-        "createdAt", prescription.getCreatedAt() == null ? "" : prescription.getCreatedAt().toString()
-    );
+    Map<String, Object> view = new LinkedHashMap<>();
+    view.put("prescriptionId", prescription.getId());
+    view.put("patientId", prescription.getPatientId());
+    view.put("ownerPatientId", ownerPatientId(prescription));
+    view.put("subjectType", subjectType(prescription));
+    view.put("subjectId", subjectId(prescription));
+    view.put("subjectName", text(prescription.getSubjectName(), patientName == null ? "" : patientName));
+    view.put("subjectRelationship", text(prescription.getSubjectRelationship(), "本人"));
+    view.put("patientName", text(prescription.getSubjectName(), patientName == null ? "" : patientName));
+    view.put("doctorId", prescription.getDoctorId());
+    view.put("medicalRecordId", prescription.getMedicalRecordId() == null ? 0L : prescription.getMedicalRecordId());
+    view.put("registrationId", prescription.getRegistrationId() == null ? 0L : prescription.getRegistrationId());
+    view.put("riskLevel", prescription.getRiskLevel() == null ? "" : prescription.getRiskLevel());
+    view.put("status", prescription.getStatus());
+    view.put("items", items);
+    view.put("createdAt", prescription.getCreatedAt() == null ? "" : prescription.getCreatedAt().toString());
+    return view;
   }
 
   private void publishRiskNotification(Long doctorId, Long patientId, Long prescriptionId, PrescriptionCheckResponse response) {
@@ -385,5 +397,33 @@ public class PrescriptionService {
 
   private String nullToEmpty(String value) {
     return value == null ? "" : value;
+  }
+
+  private Long ownerPatientId(MedicalRecord record) {
+    return record.getOwnerPatientId() == null ? record.getPatientId() : record.getOwnerPatientId();
+  }
+
+  private Long ownerPatientId(Prescription prescription) {
+    return prescription.getOwnerPatientId() == null ? prescription.getPatientId() : prescription.getOwnerPatientId();
+  }
+
+  private String subjectType(MedicalRecord record) {
+    return text(record.getSubjectType(), "ACCOUNT");
+  }
+
+  private String subjectType(Prescription prescription) {
+    return text(prescription.getSubjectType(), "ACCOUNT");
+  }
+
+  private Long subjectId(MedicalRecord record) {
+    return record.getSubjectId() == null ? ownerPatientId(record) : record.getSubjectId();
+  }
+
+  private Long subjectId(Prescription prescription) {
+    return prescription.getSubjectId() == null ? ownerPatientId(prescription) : prescription.getSubjectId();
+  }
+
+  private String text(String value, String fallback) {
+    return value == null || value.isBlank() ? fallback : value;
   }
 }

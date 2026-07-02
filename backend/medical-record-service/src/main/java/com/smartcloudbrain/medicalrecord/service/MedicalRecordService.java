@@ -51,6 +51,13 @@ public class MedicalRecordService {
     MedicalRecord record = medicalRecordRepository.findByRegistrationId(request.registrationId()).orElseGet(MedicalRecord::new);
     record.setRegistrationId(registration.getId());
     record.setPatientId(registration.getPatientId());
+    record.setOwnerPatientId(ownerPatientId(registration));
+    record.setSubjectType(subjectType(registration));
+    record.setSubjectId(subjectId(registration));
+    record.setSubjectName(subjectName(registration));
+    record.setSubjectRelationship(text(registration.getSubjectRelationship(), "本人"));
+    record.setSubjectGender(registration.getSubjectGender());
+    record.setSubjectAge(registration.getSubjectAge());
     record.setDoctorId(user.role() == RoleType.DOCTOR ? user.userId() : registration.getDoctorId());
     record.setChiefComplaint(request.chiefComplaint());
     record.setPresentIllness(request.presentIllness());
@@ -67,7 +74,7 @@ public class MedicalRecordService {
     Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
     List<MedicalRecord> records;
     if (user.role() == RoleType.PATIENT) {
-      records = medicalRecordRepository.findByPatientId(user.userId(), sort);
+      records = medicalRecordRepository.findByOwnerPatientId(user.userId(), sort);
     } else if (user.role() == RoleType.DOCTOR) {
       records = medicalRecordRepository.findByDoctorId(user.userId(), sort);
     } else {
@@ -78,7 +85,7 @@ public class MedicalRecordService {
 
   public List<Map<String, Object>> recordsByPatient(Long patientId) {
     Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
-    return medicalRecordRepository.findByPatientId(patientId, sort).stream()
+    return medicalRecordRepository.findByOwnerPatientId(patientId, sort).stream()
         .map(this::recordView)
         .toList();
   }
@@ -86,7 +93,7 @@ public class MedicalRecordService {
   public Map<String, Object> detail(Long id) {
     MedicalRecord record = medicalRecordRepository.findById(id).orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
     AuthenticatedUser user = currentUserService.get();
-    if (user.role() == RoleType.PATIENT && !record.getPatientId().equals(user.userId())) {
+    if (user.role() == RoleType.PATIENT && !ownerPatientId(record).equals(user.userId())) {
       throw new BusinessException(ErrorCode.FORBIDDEN);
     }
     if (user.role() == RoleType.DOCTOR && !record.getDoctorId().equals(user.userId())) {
@@ -111,17 +118,20 @@ public class MedicalRecordService {
     if (!registration.getDoctorId().equals(user.userId())) {
       throw new BusinessException(ErrorCode.FORBIDDEN);
     }
-    Patient patient = patientRepository.findById(registration.getPatientId()).orElse(null);
+    Patient patient = patientRepository.findById(ownerPatientId(registration)).orElse(null);
+    String subjectName = subjectName(registration);
+    Integer subjectAge = registration.getSubjectAge() == null && patient != null ? patient.getAge() : registration.getSubjectAge();
+    String subjectGender = text(registration.getSubjectGender(), patient == null ? "" : patient.getGender());
     return new MedicalRecordGenerateRequest(
         registration.getId(),
         request.departmentCode(),
         request.dialogueText(),
-        registration.getPatientId(),
-        patient == null ? "" : patient.getName(),
-        patient == null ? null : patient.getAge(),
-        patient == null ? "" : patient.getGender(),
-        patient == null ? "" : patient.getAllergyHistory(),
-        patient == null ? "" : patient.getPastHistory(),
+        ownerPatientId(registration),
+        subjectName,
+        subjectAge,
+        subjectGender,
+        "ACCOUNT".equals(subjectType(registration)) && patient != null ? patient.getAllergyHistory() : "",
+        "ACCOUNT".equals(subjectType(registration)) && patient != null ? patient.getPastHistory() : "",
         registration.getDoctorId(),
         "",
         registration.getAppointmentTime() == null ? "" : registration.getAppointmentTime().toString()
@@ -129,12 +139,17 @@ public class MedicalRecordService {
   }
 
   public Map<String, Object> recordView(MedicalRecord record) {
-    Patient patient = patientRepository.findById(record.getPatientId()).orElse(null);
+    Patient patient = patientRepository.findById(ownerPatientId(record)).orElse(null);
     Map<String, Object> view = new LinkedHashMap<>();
     view.put("medicalRecordId", record.getId());
     view.put("registrationId", record.getRegistrationId());
     view.put("patientId", record.getPatientId());
-    view.put("patientName", patient == null ? "" : patient.getName());
+    view.put("ownerPatientId", ownerPatientId(record));
+    view.put("subjectType", subjectType(record));
+    view.put("subjectId", subjectId(record));
+    view.put("subjectName", text(record.getSubjectName(), patient == null ? "" : patient.getName()));
+    view.put("subjectRelationship", text(record.getSubjectRelationship(), "本人"));
+    view.put("patientName", text(record.getSubjectName(), patient == null ? "" : patient.getName()));
     view.put("doctorId", record.getDoctorId());
     view.put("chiefComplaint", record.getChiefComplaint());
     view.put("presentIllness", record.getPresentIllness() == null ? "" : record.getPresentIllness());
@@ -145,6 +160,38 @@ public class MedicalRecordService {
     view.put("aiGenerated", Boolean.TRUE.equals(record.getAiGenerated()));
     view.put("createdAt", record.getCreatedAt() == null ? "" : record.getCreatedAt().toString());
     return view;
+  }
+
+  private Long ownerPatientId(Registration registration) {
+    return registration.getOwnerPatientId() == null ? registration.getPatientId() : registration.getOwnerPatientId();
+  }
+
+  private Long ownerPatientId(MedicalRecord record) {
+    return record.getOwnerPatientId() == null ? record.getPatientId() : record.getOwnerPatientId();
+  }
+
+  private String subjectType(Registration registration) {
+    return text(registration.getSubjectType(), "ACCOUNT");
+  }
+
+  private String subjectType(MedicalRecord record) {
+    return text(record.getSubjectType(), "ACCOUNT");
+  }
+
+  private Long subjectId(Registration registration) {
+    return registration.getSubjectId() == null ? ownerPatientId(registration) : registration.getSubjectId();
+  }
+
+  private Long subjectId(MedicalRecord record) {
+    return record.getSubjectId() == null ? ownerPatientId(record) : record.getSubjectId();
+  }
+
+  private String subjectName(Registration registration) {
+    return text(registration.getSubjectName(), "");
+  }
+
+  private String text(String value, String fallback) {
+    return value == null || value.isBlank() ? fallback : value;
   }
 }
 
