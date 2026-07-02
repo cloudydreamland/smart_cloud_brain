@@ -15,7 +15,7 @@ const error = ref("");
 const toast = inject<Ref<InstanceType<typeof Toast>>>("toast");
 const confirmOpen = ref(false);
 const latestTriage = computed(() => triageHistory.value[0] ?? null);
-const slotState = useDoctorSlots(slots, registrations, departments, latestTriage);
+const slotState = useDoctorSlots(slots, registrations, departments, latestTriage, triageHistory);
 
 async function refresh() {
   loading.value = true;
@@ -56,9 +56,11 @@ async function confirmAppointment() {
       departmentId: toNumber(slotState.selectedSlot.value.departmentId),
       appointmentTime: slotState.selectedSlot.value.startTime || "",
       slotId: toNumber(slotState.selectedSlot.value.slotId) || null,
-      triageRecordId: toNumber(triageHistory.value[0]?.triageRecordId, 0) || null,
+      triageRecordId: toNumber(slotState.selectedTriage.value?.triageRecordId, 0) || null,
       visitorId: toNumber(visitor.id) || null,
       visitorType: visitor.visitorType || "ACCOUNT",
+      subjectId: toNumber(visitor.id) || null,
+      subjectType: visitor.visitorType || "ACCOUNT",
     });
     await workflow.refreshAuthenticated();
     confirmOpen.value = false;

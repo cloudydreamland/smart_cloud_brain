@@ -8,6 +8,7 @@ import type {
 import type { PatientSiteConfigKey } from "./patientSiteResolver";
 
 export type Role = "PATIENT" | "DOCTOR" | "ADMIN";
+export type SubjectType = "ACCOUNT" | "VISITOR";
 
 export type ApiResult<T> = { code: number; message: string; data: T };
 export type Session = { token: string; userId: number; role: Role; name: string; departmentName?: string };
@@ -18,10 +19,16 @@ export type PatientRegisterRequest = {
   name: string; phone: string; email: string; emailCode: string; password: string; gender?: string; age?: number;
 };
 export type PatientEmailCodeRequest = { email: string; phone?: string; purpose?: "REGISTER" | string };
-export type TriageRequest = { patientId?: number; chiefComplaint: string };
+export type TriageRequest = {
+  patientId?: number;
+  chiefComplaint: string;
+  subjectType?: SubjectType | string;
+  subjectId?: number | null;
+};
 export type RegistrationCreateRequest = {
   doctorId: number; departmentId: number; appointmentTime: string;
   triageRecordId?: number | null; slotId?: number | null; visitorId?: number | null; visitorType?: string | null;
+  subjectType?: SubjectType | string | null; subjectId?: number | null;
 };
 export type MedicalRecordGenerateRequest = { registrationId: number; departmentCode?: string; dialogueText: string };
 export type MedicalRecordSaveRequest = {
@@ -267,6 +274,11 @@ export interface Patient {
 export interface Registration {
   registrationId: number;
   patientId: number;
+  ownerPatientId?: number;
+  subjectType?: SubjectType | string;
+  subjectId?: number;
+  subjectName?: string;
+  subjectRelationship?: string;
   patientName?: string;
   patientAge?: number;
   patientGender?: string;
@@ -290,6 +302,11 @@ export interface Registration {
 export interface TriageRecord {
   triageRecordId: number;
   patientId: number;
+  ownerPatientId?: number;
+  subjectType?: SubjectType | string;
+  subjectId?: number;
+  subjectName?: string;
+  subjectRelationship?: string;
   patientName?: string;
   chiefComplaint?: string;
   departmentCode?: string;
@@ -313,6 +330,11 @@ export interface MedicalRecord {
   medicalRecordId: number;
   registrationId: number;
   patientId?: number;
+  ownerPatientId?: number;
+  subjectType?: SubjectType | string;
+  subjectId?: number;
+  subjectName?: string;
+  subjectRelationship?: string;
   patientName?: string;
   doctorId?: number;
   chiefComplaint: string;
@@ -331,6 +353,11 @@ export interface Prescription {
   prescriptionId: number;
   registrationId?: number;
   patientId?: number;
+  ownerPatientId?: number;
+  subjectType?: SubjectType | string;
+  subjectId?: number;
+  subjectName?: string;
+  subjectRelationship?: string;
   patientName?: string;
   doctorId?: number;
   medicalRecordId?: number;

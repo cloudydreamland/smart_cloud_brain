@@ -53,6 +53,11 @@ function recordId(item: MedicalRecord) {
   return Number.isFinite(value) && value > 0 ? value : 0;
 }
 
+function subjectText(item: MedicalRecord) {
+  const relation = item.subjectRelationship || (item.subjectType === "VISITOR" ? "家属" : "本人");
+  return `${item.subjectName || item.patientName || "就诊人"}（${relation}）`;
+}
+
 </script>
 
 <template>
@@ -76,7 +81,7 @@ function recordId(item: MedicalRecord) {
           <div>
             <span class="record-kicker">病历 #{{ String(item.medicalRecordId) }}</span>
             <h3>{{ item.diagnosis || "诊断待同步" }}</h3>
-            <p>{{ item.chiefComplaint || "暂无主诉记录" }}</p>
+            <p>{{ subjectText(item) }} · {{ item.chiefComplaint || "暂无主诉记录" }}</p>
             <div class="record-meta">
               <span>{{ item.aiGenerated ? "AI草稿经医生确认" : "医生录入" }}</span>
               <span>{{ formatDateTime(item.createdAt, "时间待同步") }}</span>

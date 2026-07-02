@@ -16,11 +16,29 @@ type DoctorGroup = {
   periods: { key: string; label: string; slots: AppointmentSlot[] }[];
 };
 
+type TriageLike = {
+  triageRecordId?: number | string;
+  recommendedDepartment?: string;
+  assignedDoctorId?: number | string;
+  subjectType?: string;
+  subjectId?: number | string;
+};
+
+type RegistrationLike = {
+  status?: string;
+  appointmentTime?: string;
+  subjectType?: string;
+  subjectId?: number | string;
+  visitorType?: string;
+  visitorId?: number | string;
+};
+
 export function useDoctorSlots(
   slots: Ref<AppointmentSlot[]>,
-  registrations: Ref<{ status?: string; appointmentTime?: string }[]>,
+  registrations: Ref<RegistrationLike[]>,
   departments: Ref<Department[]>,
-  latestTriage: Readonly<Ref<{ recommendedDepartment?: string; assignedDoctorId?: number | string } | null>>
+  latestTriage: Readonly<Ref<TriageLike | null>>,
+  triageHistory?: Ref<TriageLike[]>
 ) {
   const selectedDate = ref("");
   const selectedDepartmentId = ref("");
@@ -30,10 +48,16 @@ export function useDoctorSlots(
   const visitorLoading = ref(false);
   const filtersTouched = ref(false);
 
-  const recommendedDepartment = computed(() => latestTriage.value?.recommendedDepartment || "");
-  const assignedDoctorId = computed(() => toNumber(latestTriage.value?.assignedDoctorId, 0));
   const selectedDepartment = computed(() => departments.value.find((item) => String(item.id) === selectedDepartmentId.value) ?? null);
   const selectedVisitor = computed(() => visitors.value.find((item) => visitorKey(item) === selectedVisitorKey.value) ?? visitors.value[0] ?? null);
+  const selectedTriage = computed(() => {
+    if (!triageHistory?.value?.length || !selectedVisitor.value) return latestTriage.value;
+    return [...triageHistory.value]
+      .filter((record) => subjectMatches(record, selectedVisitor.value))
+      .sort((left, right) => toNumber(right.triageRecordId, 0) - toNumber(left.triageRecordId, 0))[0] ?? null;
+  });
+  const recommendedDepartment = computed(() => selectedTriage.value?.recommendedDepartment || "");
+  const assignedDoctorId = computed(() => toNumber(selectedTriage.value?.assignedDoctorId, 0));
   const departmentOptions = computed(() => [
     { label: "全部科室", value: "" },
     ...departments.value.map((item) => ({ label: departmentLabel(item), value: String(item.id) })),
@@ -44,6 +68,7 @@ export function useDoctorSlots(
     const times = new Set<string>();
     registrations.value.forEach((reg) => {
       if (reg.status === "CANCELLED") return;
+      if (selectedVisitor.value && !subjectMatches(reg, selectedVisitor.value)) return;
       if (reg.appointmentTime) times.add(reg.appointmentTime);
     });
     return times;
@@ -142,6 +167,7 @@ export function useDoctorSlots(
     departmentOptions,
     visitorOptions,
     recommendedDepartment,
+    selectedTriage,
     recommendedSlotIds,
     displaySlots,
     dateGroups,
@@ -160,6 +186,14 @@ export function useDoctorSlots(
 
 export function visitorKey(visitor: Patient) {
   return `${visitor.visitorType || "ACCOUNT"}:${String(visitor.id)}`;
+}
+
+function subjectMatches(row: TriageLike | RegistrationLike, visitor: Patient) {
+  const rowType = (row.subjectType || row.visitorType || "ACCOUNT").toUpperCase();
+  const rowId = String(row.subjectId ?? row.visitorId ?? "");
+  const visitorType = (visitor.visitorType || "ACCOUNT").toUpperCase();
+  if (rowType === "ACCOUNT" && !rowId) return visitorType === "ACCOUNT";
+  return rowType === visitorType && rowId === String(visitor.id);
 }
 
 function visitorLabel(visitor: Patient) {

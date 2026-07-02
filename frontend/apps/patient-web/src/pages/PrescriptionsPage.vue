@@ -42,6 +42,11 @@ async function openDetail(item: Prescription) {
   }
 }
 
+function subjectText(item: Prescription) {
+  const relation = item.subjectRelationship || (item.subjectType === "VISITOR" ? "家属" : "本人");
+  return `${item.subjectName || item.patientName || "就诊人"}（${relation}）`;
+}
+
 onMounted(() => refresh(true, false));
 </script>
 
@@ -53,7 +58,7 @@ onMounted(() => refresh(true, false));
       <LoadingState v-if="!loaded && loading" />
       <div v-else-if="prescriptions.length" class="list">
         <article v-for="item in pageRows" :key="String(item.prescriptionId)" class="list-row">
-          <div class="row-main"><strong>处方 #{{ String(item.prescriptionId) }}</strong><p>{{ formatDateTime(item.createdAt) }} · {{ statusText(item.status) }}</p></div>
+          <div class="row-main"><strong>处方 #{{ String(item.prescriptionId) }}</strong><p>{{ subjectText(item) }} · {{ formatDateTime(item.createdAt) }} · {{ statusText(item.status) }}</p></div>
           <div class="toolbar">
             <StatusTag :status="statusText(item.riskLevel, '未审核')" :tone="statusClass(item.riskLevel)" />
             <button type="button" :disabled="detailLoading" @click="openDetail(item)">{{ detailLoading ? '加载中...' : '详情' }}</button>

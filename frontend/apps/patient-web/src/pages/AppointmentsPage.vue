@@ -97,7 +97,7 @@ onMounted(refresh);
         <article v-for="item in pageRows" :key="String(item.registrationId)" class="list-row">
           <div class="row-main">
             <strong>#{{ String(item.registrationId) }} {{ item.departmentName || "" }} · {{ item.doctorName || "" }}</strong>
-            <p>就诊人：{{ item.visitorName || item.patientName || "本人" }} · 创建时间：{{ formatDateTime(item.createdAt, "暂无") }} · 就诊时间：{{ formatDateTime(item.appointmentTime, "待定") }}</p>
+            <p>就诊人：{{ item.subjectName || item.visitorName || item.patientName || "本人" }}{{ item.subjectRelationship ? `（${item.subjectRelationship}）` : "" }} · 创建时间：{{ formatDateTime(item.createdAt, "暂无") }} · 就诊时间：{{ formatDateTime(item.appointmentTime, "待定") }}</p>
           </div>
           <div class="toolbar">
             <StatusTag :status="statusText(item.status)" :tone="statusClass(item.status)" />

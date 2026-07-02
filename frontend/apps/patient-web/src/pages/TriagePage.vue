@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from "vue";
+import { computed, onMounted, reactive, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
-import { aiSourceLabel, aiSourceTone, api, formatApiError, statusClass, statusText, usePagination, usePatientWorkflowStore, type TriageRecord } from "@smart-cloud-brain/shared-api";
+import { aiSourceLabel, aiSourceTone, api, formatApiError, statusClass, statusText, toNumber, usePagination, usePatientWorkflowStore, type Patient, type TriageRecord } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, FormField, LoadingState, PaginationBar, StatusTag, Toast } from "@smart-cloud-brain/shared-ui";
 import TriageResultModal from "../components/TriageResultModal.vue";
 
@@ -11,15 +11,24 @@ const workflow = usePatientWorkflowStore();
 const { triageHistory, triage } = storeToRefs(workflow);
 const form = reactive({ symptoms: "", duration: "", severity: "MEDIUM", extra: "" });
 const loading = ref(false);
+const visitorLoading = ref(false);
 const error = ref("");
 const toast = ref<InstanceType<typeof Toast>>();
 const resultOpen = ref(false);
+const visitors = ref<Patient[]>([]);
+const selectedSubjectKey = ref("");
 watch(resultOpen, (open) => {
   if (!open) Object.assign(form, { symptoms: "", duration: "", severity: "MEDIUM", extra: "" });
 });
 const canSubmit = computed(() => form.symptoms.trim().length > 0);
 const severityLabels: Record<string, string> = { LOW: "轻度", MEDIUM: "中度", HIGH: "重度或明显加重" };
 const { currentPage, pageSize, total, pageRows } = usePagination(triageHistory, 5);
+const selectedSubject = computed(() => visitors.value.find((item) => visitorKey(item) === selectedSubjectKey.value) ?? null);
+const visitorOptions = computed(() => visitors.value.map((item) => ({ label: visitorLabel(item), value: visitorKey(item) })));
+
+watch(visitors, (rows) => {
+  if (!selectedSubjectKey.value && rows.length) selectedSubjectKey.value = visitorKey(rows[0]);
+}, { immediate: true });
 
 function complaint() {
   return [
@@ -35,10 +44,18 @@ async function submit() {
     error.value = "请先填写主要症状。";
     return;
   }
+  if (!selectedSubject.value) {
+    error.value = "请选择就诊人。";
+    return;
+  }
   loading.value = true;
   error.value = "";
   try {
-    triage.value = await api.triage({ chiefComplaint: complaint() });
+    triage.value = await api.triage({
+      chiefComplaint: complaint(),
+      subjectType: selectedSubject.value.visitorType || "ACCOUNT",
+      subjectId: toNumber(selectedSubject.value.id) || null,
+    });
     await workflow.refreshAuthenticated();
     toast.value?.success("分诊已提交", "请根据推荐科室继续选择号源。");
     resultOpen.value = true;
@@ -48,6 +65,34 @@ async function submit() {
     loading.value = false;
   }
 }
+
+async function loadVisitors() {
+  visitorLoading.value = true;
+  try {
+    visitors.value = await api.patientVisitors();
+  } catch (err) {
+    visitors.value = [];
+    error.value = formatApiError(err, "就诊人加载失败");
+  } finally {
+    visitorLoading.value = false;
+  }
+}
+
+function visitorKey(visitor: Patient) {
+  return `${visitor.visitorType || "ACCOUNT"}:${String(visitor.id)}`;
+}
+
+function visitorLabel(visitor: Patient) {
+  const relation = visitor.visitorType === "ACCOUNT" ? "本人" : visitor.relationship || "就诊人";
+  return `${visitor.name || "未命名就诊人"}（${relation}）`;
+}
+
+function subjectLabel(record: TriageRecord) {
+  const relation = record.subjectRelationship || (record.subjectType === "VISITOR" ? "家属" : "本人");
+  return `${record.subjectName || record.patientName || "就诊人"}（${relation}）`;
+}
+
+onMounted(loadVisitors);
 </script>
 
 <template>
@@ -56,6 +101,13 @@ async function submit() {
       <header class="panel-header"><div class="panel-title"><p class="eyebrow">智能分诊</p><h2>填写本次主要症状</h2><p>请描述症状、持续时间和变化情况。</p></div></header>
       <div class="panel-body stack">
         <ErrorState v-if="error" :message="error" />
+        <FormField label="就诊人">
+          <select v-model="selectedSubjectKey" :disabled="visitorLoading">
+            <option v-for="visitor in visitorOptions" :key="String(visitor.value)" :value="String(visitor.value)">
+              {{ visitor.label }}
+            </option>
+          </select>
+        </FormField>
         <FormField label="主要症状"><textarea v-model.trim="form.symptoms" rows="5" /></FormField>
         <div class="form-grid">
           <FormField label="持续时间"><input v-model.trim="form.duration" placeholder="例如：2 天" /></FormField>
@@ -79,7 +131,7 @@ async function submit() {
             </span>
             <h3>{{ triage.recommendedDepartment || "待确认" }}</h3>
             <p>{{ triage.reason || "暂无说明" }}</p>
-            <button type="button" class="primary" style="margin-top: 12px" @click="router.push({ name: 'patient-doctors' })">查看号源</button>
+            <button type="button" class="primary result-action" @click="router.push({ name: 'patient-doctors' })">查看号源</button>
           </div>
           <EmptyState v-else title="暂无分诊结果" />
         </div>
@@ -88,7 +140,7 @@ async function submit() {
         <header class="panel-header"><div class="panel-title"><h2>历史分诊</h2><p>用于回看最近症状和推荐记录。</p></div></header>
         <div class="list">
           <article v-for="item in pageRows" :key="String(item.triageRecordId)" class="list-row">
-            <div class="row-main"><strong>{{ item.recommendedDepartment || "待确认" }}</strong><p>{{ item.chiefComplaint || "" }}</p></div>
+            <div class="row-main"><strong>{{ item.recommendedDepartment || "待确认" }}</strong><p>{{ subjectLabel(item) }} · {{ item.chiefComplaint || "" }}</p></div>
             <StatusTag :status="statusText(item.status)" :tone="statusClass(item.status)" />
           </article>
           <PaginationBar v-model="currentPage" :total="total" :page-size="pageSize" />
@@ -100,3 +152,9 @@ async function submit() {
     <TriageResultModal :open="resultOpen" :result="triage" @close="resultOpen = false" @doctors="router.push({ name: 'patient-doctors' })" />
   </section>
 </template>
+
+<style scoped>
+.result-action {
+  margin-top: 12px;
+}
+</style>
