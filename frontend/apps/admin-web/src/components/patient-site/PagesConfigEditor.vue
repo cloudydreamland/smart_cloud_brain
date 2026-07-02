@@ -2,6 +2,7 @@
 import { computed, ref } from "vue";
 import type { PatientSitePagesConfig, PatientSiteSection, PatientSiteSectionType } from "@smart-cloud-brain/shared-api";
 import { ScbSelect } from "@smart-cloud-brain/shared-ui";
+import { usePatientSiteConfirm } from "../../composables/patientSiteConfirm";
 import { patientSiteFieldLabel } from "../../patientSitePresentation";
 import PageSectionFieldsEditor from "./PageSectionFieldsEditor.vue";
 
@@ -15,10 +16,10 @@ const props = defineProps<{
   sectionTypeOptions: { type: PatientSiteSectionType; label: string }[];
   toggleEnabled: (item: { enabled?: boolean }) => void;
   addCmsPage: () => void;
-  removeCmsPage: (index: number) => void;
+  removeCmsPage: (index: number) => boolean | Promise<boolean>;
   previewCmsPage: (page: PatientSitePagesConfig["pages"][number]) => void;
   addPageSection: (pageIndex: number, type: PatientSiteSectionType) => void;
-  removePageSection: (pageIndex: number, sectionIndex: number) => void;
+  removePageSection: (pageIndex: number, sectionIndex: number) => boolean | Promise<boolean>;
   reorderCmsPage: (fromIndex: number, toIndex: number) => void;
   reorderPageSection: (pageIndex: number, fromIndex: number, toIndex: number) => void;
 }>();
@@ -31,6 +32,7 @@ const draggedPageIndex = ref<number | null>(null);
 const draggedSection = ref<{ pageIndex: number; sectionIndex: number } | null>(null);
 const editingPageState = ref<EditingPageState | null>(null);
 const editingSectionState = ref<EditingSectionState | null>(null);
+const confirm = usePatientSiteConfirm();
 
 const editingPage = computed(() => editingPageState.value?.draft || null);
 const editingSection = computed(() => editingSectionState.value?.draft || null);
@@ -113,8 +115,9 @@ function addCmsPageAndOpen() {
   if (props.pagesDraft.pages.length > nextIndex) openPageEditor(nextIndex, true);
 }
 
-function removeCmsPageAndClose(pageIndex: number) {
-  props.removeCmsPage(pageIndex);
+async function removeCmsPageAndClose(pageIndex: number) {
+  const removed = await props.removeCmsPage(pageIndex);
+  if (!removed) return;
   if (editingPageState.value?.index === pageIndex) editingPageState.value = null;
   else if (editingPageState.value && editingPageState.value.index > pageIndex) editingPageState.value.index -= 1;
   if (editingSectionState.value?.pageIndex === pageIndex) editingSectionState.value = null;
@@ -131,8 +134,9 @@ function addPageSectionAndOpen(pageIndex: number, type: PatientSiteSectionType) 
   if (page.sections.length > nextIndex) openSectionEditor(pageIndex, nextIndex, true);
 }
 
-function removePageSectionAndClose(pageIndex: number, sectionIndex: number) {
-  props.removePageSection(pageIndex, sectionIndex);
+async function removePageSectionAndClose(pageIndex: number, sectionIndex: number) {
+  const removed = await props.removePageSection(pageIndex, sectionIndex);
+  if (!removed) return;
   if (
     editingSectionState.value?.pageIndex === pageIndex &&
     editingSectionState.value.sectionIndex === sectionIndex
@@ -187,8 +191,13 @@ function saveSectionEditor() {
   editingSectionState.value = null;
 }
 
-function removeSeo() {
-  if (!editingPage.value?.seo || !window.confirm("确认移除 SEO 信息？移除后只会影响当前编辑稿，发布或保存并生效后才会更新正式页面。")) return;
+async function removeSeo() {
+  if (!editingPage.value?.seo || !(await confirm({
+    title: "确认移除 SEO 信息",
+    message: "将从当前编辑稿中移除该 CMS 页面的 SEO 标题和描述。保存草稿不会影响患者端，保存并生效或发布后，患者端页面的搜索展示信息才会更新。",
+    confirmText: "确认删除",
+    tone: "danger",
+  }))) return;
   editingPage.value.seo = undefined;
 }
 </script>

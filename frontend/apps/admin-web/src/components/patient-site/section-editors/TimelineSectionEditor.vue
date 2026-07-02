@@ -1,15 +1,22 @@
 <script setup lang="ts">
 import type { TimelineSection } from "@smart-cloud-brain/shared-api";
+import { usePatientSiteConfirm } from "../../../composables/patientSiteConfirm";
 
 defineProps<{ section: TimelineSection }>();
+const confirm = usePatientSiteConfirm();
 
 function addTimeline(section: TimelineSection) {
   section.items.push({ title: "新步骤", text: "" });
 }
 
-function removeTimeline(section: TimelineSection, index: number) {
+async function removeTimeline(section: TimelineSection, index: number) {
   const item = section.items[index];
-  if (!item || !window.confirm(`确认删除步骤「${item.title || "未命名步骤"}」？删除后只会影响当前编辑稿，发布或保存并生效后才会更新正式页面。`)) return;
+  if (!item || !(await confirm({
+    title: "确认删除步骤",
+    message: `将从当前编辑稿中移除步骤「${item.title || "未命名步骤"}」。保存草稿不会影响患者端，保存并生效或发布后，对应页面区块才会不再展示该步骤。`,
+    confirmText: "确认删除",
+    tone: "danger",
+  }))) return;
   section.items.splice(index, 1);
 }
 </script>

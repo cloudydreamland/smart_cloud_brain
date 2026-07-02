@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { DepartmentListSection, DoctorListSection, RouteTargetConfig } from "@smart-cloud-brain/shared-api";
+import { usePatientSiteConfirm } from "../../../composables/patientSiteConfirm";
 import RouteTargetEditor from "../RouteTargetEditor.vue";
 
 defineProps<{
@@ -8,16 +9,27 @@ defineProps<{
 }>();
 
 const emptyLink = (): RouteTargetConfig => ({ label: "", routeName: "patient-home", enabled: true, sort: 0 });
+const confirm = usePatientSiteConfirm();
 
-function removeLink(section: DoctorListSection | DepartmentListSection, index: number) {
+async function removeLink(section: DoctorListSection | DepartmentListSection, index: number) {
   const link = section.links[index];
-  if (!link || !window.confirm(`确认删除入口「${link.label || "未命名入口"}」？删除后只会影响当前编辑稿，发布或保存并生效后才会更新正式页面。`)) return;
+  if (!link || !(await confirm({
+    title: "确认删除固定入口",
+    message: `将从当前编辑稿中移除入口「${link.label || "未命名入口"}」。保存草稿不会影响患者端，保存并生效或发布后，对应列表区块才会不再展示该入口。`,
+    confirmText: "确认删除",
+    tone: "danger",
+  }))) return;
   section.links.splice(index, 1);
 }
 
-function removeFallbackName(section: DoctorListSection | DepartmentListSection, index: number) {
+async function removeFallbackName(section: DoctorListSection | DepartmentListSection, index: number) {
   const name = section.fallbackNames[index];
-  if (!name || !window.confirm(`确认删除名称「${name}」？删除后只会影响当前编辑稿，发布或保存并生效后才会更新正式页面。`)) return;
+  if (!name || !(await confirm({
+    title: "确认删除默认名称",
+    message: `将从当前编辑稿中移除默认名称「${name}」。保存草稿不会影响患者端，保存并生效或发布后，对应列表区块才会更新。`,
+    confirmText: "确认删除",
+    tone: "danger",
+  }))) return;
   section.fallbackNames.splice(index, 1);
 }
 </script>

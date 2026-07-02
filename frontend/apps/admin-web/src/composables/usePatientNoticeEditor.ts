@@ -1,5 +1,6 @@
 import { onMounted, ref } from "vue";
 import { adminApi, ApiError, type PatientNotice, type PatientNoticeSaveRequest } from "@smart-cloud-brain/shared-api";
+import { usePatientSiteConfirm } from "./patientSiteConfirm";
 
 const emptyNotice = (): PatientNoticeSaveRequest => ({
   title: "",
@@ -20,6 +21,7 @@ export function usePatientNoticeEditor() {
   const saving = ref(false);
   const status = ref("");
   const error = ref("");
+  const confirm = usePatientSiteConfirm();
 
   async function load() {
     loading.value = true;
@@ -57,7 +59,7 @@ export function usePatientNoticeEditor() {
     try {
       await adminApi.savePatientSiteNotice(normalizeNotice(editing.value));
       editing.value = null;
-      status.value = "公告已保存，患者端公开接口会自动过滤禁用和过期公告";
+      status.value = "公告已保存，患者端会自动过滤禁用和过期公告";
       await load();
     } catch (err) {
       error.value = messageFrom(err);
@@ -67,7 +69,12 @@ export function usePatientNoticeEditor() {
   }
 
   async function remove(id?: number) {
-    if (!id || !window.confirm("确认删除该公告？删除后患者端公开公告列表将不再展示该内容。")) return;
+    if (!id || !(await confirm({
+      title: "确认删除公告",
+      message: "将删除该公告。删除后患者端公开公告列表将不再展示该内容。",
+      confirmText: "确认删除",
+      tone: "danger",
+    }))) return;
     saving.value = true;
     error.value = "";
     try {

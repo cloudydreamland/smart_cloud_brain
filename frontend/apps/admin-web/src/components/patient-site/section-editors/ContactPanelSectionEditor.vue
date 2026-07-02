@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { ContactPanelSection, RouteTargetConfig } from "@smart-cloud-brain/shared-api";
+import { usePatientSiteConfirm } from "../../../composables/patientSiteConfirm";
 import OssImageUploadField from "../OssImageUploadField.vue";
 import RouteTargetEditor from "../RouteTargetEditor.vue";
 
@@ -9,14 +10,25 @@ defineProps<{
 }>();
 
 const emptyLink = (): RouteTargetConfig => ({ label: "", routeName: "patient-home", enabled: true, sort: 0 });
+const confirm = usePatientSiteConfirm();
 
-function clearImage(section: ContactPanelSection) {
-  if (!section.image || !window.confirm("确认移除联系面板图片？移除后只会影响当前编辑稿，发布或保存并生效后才会更新正式页面。")) return;
+async function clearImage(section: ContactPanelSection) {
+  if (!section.image || !(await confirm({
+    title: "确认移除联系面板图片",
+    message: "将从当前编辑稿中移除联系面板的图片配置。保存并生效或发布后，患者端对应区块才会更新展示。",
+    confirmText: "确认清空图片",
+    tone: "danger",
+  }))) return;
   section.image = undefined;
 }
 
-function clearPrimary(section: ContactPanelSection) {
-  if (!section.primary || !window.confirm(`确认移除行动入口「${section.primary.label || "未命名入口"}」？移除后只会影响当前编辑稿，发布或保存并生效后才会更新正式页面。`)) return;
+async function clearPrimary(section: ContactPanelSection) {
+  if (!section.primary || !(await confirm({
+    title: "确认移除行动入口",
+    message: `将从当前编辑稿中移除行动入口「${section.primary.label || "未命名入口"}」。保存并生效或发布后，患者端对应区块才会不再展示该入口。`,
+    confirmText: "确认删除",
+    tone: "danger",
+  }))) return;
   section.primary = undefined;
 }
 </script>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { CardGridSection, RouteTargetConfig } from "@smart-cloud-brain/shared-api";
+import { usePatientSiteConfirm } from "../../../composables/patientSiteConfirm";
 import OssImageUploadField from "../OssImageUploadField.vue";
 import RouteTargetEditor from "../RouteTargetEditor.vue";
 
@@ -9,26 +10,42 @@ defineProps<{
 }>();
 
 const emptyLink = (): RouteTargetConfig => ({ label: "", routeName: "patient-home", enabled: true, sort: 0 });
+const confirm = usePatientSiteConfirm();
 
 function addCard(section: CardGridSection) {
   section.cards.push({ title: "新卡片", text: "" });
 }
 
-function removeCard(section: CardGridSection, index: number) {
+async function removeCard(section: CardGridSection, index: number) {
   const card = section.cards[index];
-  if (!card || !window.confirm(`确认删除卡片「${card.title || "未命名卡片"}」？删除后只会影响当前编辑稿，发布或保存并生效后才会更新正式页面。`)) return;
+  if (!card || !(await confirm({
+    title: "确认删除卡片",
+    message: `将从当前编辑稿中移除卡片「${card.title || "未命名卡片"}」。保存草稿不会影响患者端，保存并生效或发布后，对应页面区块才会不再展示该卡片。`,
+    confirmText: "确认删除",
+    tone: "danger",
+  }))) return;
   section.cards.splice(index, 1);
 }
 
-function clearCardImage(section: CardGridSection, index: number) {
+async function clearCardImage(section: CardGridSection, index: number) {
   const card = section.cards[index];
-  if (!card?.image || !window.confirm(`确认移除卡片「${card.title || "未命名卡片"}」的图片？移除后只会影响当前编辑稿。`)) return;
+  if (!card?.image || !(await confirm({
+    title: "确认移除卡片图片",
+    message: `将从当前编辑稿中移除卡片「${card.title || "未命名卡片"}」的图片配置。保存并生效或发布后，患者端才会更新展示。`,
+    confirmText: "确认清空图片",
+    tone: "danger",
+  }))) return;
   card.image = undefined;
 }
 
-function clearCardTarget(section: CardGridSection, index: number) {
+async function clearCardTarget(section: CardGridSection, index: number) {
   const card = section.cards[index];
-  if (!card?.target || !window.confirm(`确认移除卡片「${card.title || "未命名卡片"}」的跳转目标？移除后只会影响当前编辑稿。`)) return;
+  if (!card?.target || !(await confirm({
+    title: "确认移除跳转目标",
+    message: `将从当前编辑稿中移除卡片「${card.title || "未命名卡片"}」的跳转入口。保存并生效或发布后，患者端才会更新该卡片的跳转行为。`,
+    confirmText: "确认删除",
+    tone: "danger",
+  }))) return;
   card.target = undefined;
 }
 </script>

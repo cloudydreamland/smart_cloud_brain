@@ -1,5 +1,6 @@
 import { mount } from "@vue/test-utils";
 import { describe, expect, it, vi } from "vitest";
+import { patientSiteConfirmKey, type PatientSiteConfirm } from "../../composables/patientSiteConfirm";
 import { homeModuleTypeOptions, type EditingTarget } from "../../composables/usePatientSiteConfigEditor";
 import { emptyPatientSiteEditorDraft, type PatientSiteEditorDraft } from "../../composables/patientSiteEditorDraftTypes";
 import PatientSiteEditorModal from "./PatientSiteEditorModal.vue";
@@ -13,7 +14,11 @@ function draft(): PatientSiteEditorDraft {
   };
 }
 
-function mountModal(editingDraft = draft(), editingTarget: EditingTarget = { type: "nav-menu", index: 0 }) {
+function mountModal(
+  editingDraft = draft(),
+  editingTarget: EditingTarget = { type: "nav-menu", index: 0 },
+  confirm: PatientSiteConfirm = async () => true,
+) {
   return mount(PatientSiteEditorModal, {
     props: {
       title: "编辑菜单",
@@ -34,6 +39,9 @@ function mountModal(editingDraft = draft(), editingTarget: EditingTarget = { typ
       addEditingFallbackName: vi.fn(),
     },
     global: {
+      provide: {
+        [patientSiteConfirmKey as symbol]: confirm,
+      },
       stubs: {
         ScbSelect: true,
         RouteTargetEditor: { props: ["model", "prefix", "patientRouteOptions", "includeSort", "includeEnabled"], template: "<div />" },
@@ -46,26 +54,24 @@ function mountModal(editingDraft = draft(), editingTarget: EditingTarget = { typ
 
 describe("PatientSiteEditorModal", () => {
   it("keeps a menu link when delete confirmation is cancelled", async () => {
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+    const confirm = vi.fn(async () => false);
     const editingDraft = draft();
-    const wrapper = mountModal(editingDraft);
+    const wrapper = mountModal(editingDraft, { type: "nav-menu", index: 0 }, confirm);
 
     await wrapper.find("button.danger-link").trigger("click");
 
-    expect(confirm).toHaveBeenCalledWith(expect.stringContaining("确认删除链接"));
+    expect(confirm).toHaveBeenCalledWith(expect.objectContaining({ title: "确认删除链接「预约挂号」" }));
     expect(editingDraft.links[0].enabled).toBe(true);
-    confirm.mockRestore();
   });
 
   it("disables a menu link after delete confirmation", async () => {
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
+    const confirm = vi.fn(async () => true);
     const editingDraft = draft();
-    const wrapper = mountModal(editingDraft);
+    const wrapper = mountModal(editingDraft, { type: "nav-menu", index: 0 }, confirm);
 
     await wrapper.find("button.danger-link").trigger("click");
 
     expect(editingDraft.links[0].enabled).toBe(false);
-    confirm.mockRestore();
   });
 
   it("exposes CMS binding slug input for static public pages", async () => {

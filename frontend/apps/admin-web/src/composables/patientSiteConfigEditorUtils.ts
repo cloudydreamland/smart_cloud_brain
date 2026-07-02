@@ -69,8 +69,8 @@ export function messageFrom(err: unknown) {
 
 export function loadMessageFrom(err: unknown) {
   const message = messageFrom(err);
-  if (/internal server error/i.test(message)) return "配置表可能尚未初始化，请执行数据库迁移或重新初始化演示库。";
-  return `${message}。请确认患者端配置接口和数据库迁移已正常运行。`;
+  if (/internal server error/i.test(message)) return "配置表可能尚未初始化，请完成配置数据初始化后重试。";
+  return `${message}。请确认患者端配置服务已正常运行。`;
 }
 
 export async function loadHistory(key: PatientSiteConfigKey, page: number, pageSize: number): Promise<PatientSiteConfigHistoryPage> {

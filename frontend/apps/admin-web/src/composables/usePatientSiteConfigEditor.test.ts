@@ -138,8 +138,8 @@ describe("usePatientSiteConfigEditor", () => {
   });
 
   it("keeps low-code delete targets unchanged when the confirmation is cancelled", async () => {
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
-    const editor = usePatientSiteConfigEditor();
+    const confirm = vi.fn(async () => false);
+    const editor = usePatientSiteConfigEditor({ confirm });
 
     await editor.loadAll();
     const homeModule = editor.homeDraft.value.modules[0];
@@ -150,10 +150,10 @@ describe("usePatientSiteConfigEditor", () => {
     const cmsPage = editor.pagesDraft.value.pages[cmsPageIndex];
     const cmsSection = cmsPage.sections[0];
 
-    editor.removeHomeModule(homeModule);
-    editor.removeStaticPage(0);
-    editor.removeCmsPage(cmsPageIndex);
-    editor.removePageSection(cmsPageIndex, 0);
+    await editor.removeHomeModule(homeModule);
+    await editor.removeStaticPage(0);
+    await editor.removeCmsPage(cmsPageIndex);
+    await editor.removePageSection(cmsPageIndex, 0);
 
     expect(confirm).toHaveBeenCalledTimes(4);
     expect(homeModule.enabled).not.toBe(false);
@@ -161,7 +161,6 @@ describe("usePatientSiteConfigEditor", () => {
     expect(cmsPage.enabled).not.toBe(false);
     expect(cmsSection.enabled).not.toBe(false);
 
-    confirm.mockRestore();
   });
 
   it("saves all config drafts before opening a site preview session", async () => {
@@ -187,30 +186,30 @@ describe("usePatientSiteConfigEditor", () => {
   });
 
   it("does not publish current edits when the confirmation is cancelled", async () => {
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
-    const editor = usePatientSiteConfigEditor();
+    const confirm = vi.fn(async () => false);
+    const editor = usePatientSiteConfigEditor({ confirm });
 
     await editor.loadAll();
     await editor.saveAndApply();
 
-    expect(confirm).toHaveBeenCalledWith(expect.stringContaining("保存并生效"));
+    expect(confirm).toHaveBeenCalledWith(expect.objectContaining({ title: "确认保存并生效" }));
     expect(mocks.savePublishedPatientSiteConfig).not.toHaveBeenCalled();
-
-    confirm.mockRestore();
   });
 
   it("does not publish a draft when the confirmation is cancelled", async () => {
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
-    const editor = usePatientSiteConfigEditor();
+    const confirm = vi.fn(async () => false);
+    const editor = usePatientSiteConfigEditor({ confirm });
 
     await editor.loadAll();
     await editor.publishDraft();
 
-    expect(confirm).toHaveBeenCalledWith(expect.stringContaining("发布最新草稿"));
-    expect(confirm).toHaveBeenCalledWith(expect.stringContaining("变更摘要"));
-    expect(confirm).toHaveBeenCalledWith(expect.stringContaining("$.brand.name"));
+    expect(confirm).toHaveBeenCalledWith(expect.objectContaining({
+      title: "确认发布最新草稿",
+      message: expect.stringContaining("变更摘要"),
+    }));
+    expect(confirm).toHaveBeenCalledWith(expect.objectContaining({
+      message: expect.stringContaining("$.brand.name"),
+    }));
     expect(mocks.publishPatientSiteConfig).not.toHaveBeenCalled();
-
-    confirm.mockRestore();
   });
 });

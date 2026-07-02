@@ -1,6 +1,7 @@
 import { mount } from "@vue/test-utils";
 import { describe, expect, it, vi } from "vitest";
 import type { FaqSection } from "@smart-cloud-brain/shared-api";
+import { patientSiteConfirmKey, type PatientSiteConfirm } from "../../../composables/patientSiteConfirm";
 import FaqSectionEditor from "./FaqSectionEditor.vue";
 
 function faqSection(): FaqSection {
@@ -15,26 +16,35 @@ function faqSection(): FaqSection {
 }
 
 describe("FaqSectionEditor", () => {
+  function mountEditor(section: FaqSection, confirm: PatientSiteConfirm) {
+    return mount(FaqSectionEditor, {
+      props: { section },
+      global: {
+        provide: {
+          [patientSiteConfirmKey as symbol]: confirm,
+        },
+      },
+    });
+  }
+
   it("keeps the question when delete confirmation is cancelled", async () => {
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+    const confirm = vi.fn(async () => false);
     const section = faqSection();
-    const wrapper = mount(FaqSectionEditor, { props: { section } });
+    const wrapper = mountEditor(section, confirm);
 
     await wrapper.find("button.danger-link").trigger("click");
 
-    expect(confirm).toHaveBeenCalledWith(expect.stringContaining("确认删除问答"));
+    expect(confirm).toHaveBeenCalledWith(expect.objectContaining({ title: "确认删除问答" }));
     expect(section.items).toHaveLength(1);
-    confirm.mockRestore();
   });
 
   it("removes the question after delete confirmation", async () => {
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
+    const confirm = vi.fn(async () => true);
     const section = faqSection();
-    const wrapper = mount(FaqSectionEditor, { props: { section } });
+    const wrapper = mountEditor(section, confirm);
 
     await wrapper.find("button.danger-link").trigger("click");
 
     expect(section.items).toHaveLength(0);
-    confirm.mockRestore();
   });
 });

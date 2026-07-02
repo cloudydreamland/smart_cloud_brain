@@ -2,6 +2,7 @@
 import { computed, nextTick, ref } from "vue";
 import { IconMapPin, IconPencil, IconPlus, IconTrash } from "@tabler/icons-vue";
 import type { PatientHospitalInfoConfig, PatientHospitalLocationConfig } from "@smart-cloud-brain/shared-api";
+import { usePatientSiteConfirm } from "../../composables/patientSiteConfirm";
 import OssImageUploadField from "./OssImageUploadField.vue";
 
 const props = defineProps<{
@@ -17,6 +18,7 @@ const editingLocationIndex = ref<number | null>(null);
 const modalCard = ref<HTMLElement>();
 const baseDraft = ref<HospitalBaseDraft>(emptyBaseDraft());
 const locationDraft = ref<PatientHospitalLocationConfig>(emptyLocationDraft());
+const confirm = usePatientSiteConfirm();
 
 const enabledLocations = computed(() => props.hospitalDraft.locations.filter((location) => location.enabled !== false).length);
 const disabledLocations = computed(() => props.hospitalDraft.locations.length - enabledLocations.value);
@@ -97,9 +99,14 @@ function saveModal() {
   closeModal();
 }
 
-function removeLocation(index: number) {
+async function removeLocation(index: number) {
   const location = props.hospitalDraft.locations[index];
-  if (!location || !window.confirm(`确认删除院区「${location.name || "未命名院区"}」？删除后只会影响当前编辑稿，发布或保存并生效后才会更新正式页面。`)) return;
+  if (!location || !(await confirm({
+    title: "确认删除院区",
+    message: `将从当前编辑稿中禁用院区「${location.name || "未命名院区"}」。保存草稿不会影响患者端，保存并生效或发布后，患者端医院信息才会不再展示该院区。`,
+    confirmText: "确认删除",
+    tone: "danger",
+  }))) return;
   location.enabled = false;
 }
 

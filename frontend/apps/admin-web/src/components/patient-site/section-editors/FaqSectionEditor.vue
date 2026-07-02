@@ -1,15 +1,22 @@
 <script setup lang="ts">
 import type { FaqSection } from "@smart-cloud-brain/shared-api";
+import { usePatientSiteConfirm } from "../../../composables/patientSiteConfirm";
 
 defineProps<{ section: FaqSection }>();
+const confirm = usePatientSiteConfirm();
 
 function addFaq(section: FaqSection) {
   section.items.push({ question: "新问题", answer: "" });
 }
 
-function removeFaq(section: FaqSection, index: number) {
+async function removeFaq(section: FaqSection, index: number) {
   const item = section.items[index];
-  if (!item || !window.confirm(`确认删除问答「${item.question || "未命名问题"}」？删除后只会影响当前编辑稿，发布或保存并生效后才会更新正式页面。`)) return;
+  if (!item || !(await confirm({
+    title: "确认删除问答",
+    message: `将从当前编辑稿中移除问答「${item.question || "未命名问题"}」。保存草稿不会影响患者端，保存并生效或发布后，对应页面区块才会不再展示该问答。`,
+    confirmText: "确认删除",
+    tone: "danger",
+  }))) return;
   section.items.splice(index, 1);
 }
 </script>
