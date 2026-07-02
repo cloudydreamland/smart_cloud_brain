@@ -2,6 +2,7 @@
 import { computed, ref } from "vue";
 import { IconPencil, IconPlus, IconTrash } from "@tabler/icons-vue";
 import type { PatientFooterConfig, RouteTargetConfig } from "@smart-cloud-brain/shared-api";
+import { usePatientSiteConfirm } from "../../composables/patientSiteConfirm";
 import RouteTargetEditor from "./RouteTargetEditor.vue";
 
 type LinkGroup = "links" | "legalLinks";
@@ -17,6 +18,7 @@ const props = defineProps<{
 const activeModal = ref<FooterModal | null>(null);
 const baseDraft = ref<FooterBaseDraft>(emptyBaseDraft());
 const linkDraft = ref<RouteTargetConfig[]>([]);
+const confirm = usePatientSiteConfirm();
 
 const routeLabelMap = computed(() => new Map(props.patientRouteOptions.map((route) => [route.name, route.label])));
 const modalTitle = computed(() => {
@@ -74,8 +76,15 @@ function addDraftLink() {
   });
 }
 
-function removeDraftLink(index: number) {
-  linkDraft.value[index].enabled = false;
+async function removeDraftLink(index: number) {
+  const link = linkDraft.value[index];
+  if (!link || !(await confirm({
+    title: "确认删除页脚链接",
+    message: `将从当前编辑稿中禁用页脚链接「${link.label || "未命名链接"}」。保存草稿不会影响患者端，保存并生效或发布后，患者端页脚才会不再展示该入口。`,
+    confirmText: "确认删除",
+    tone: "danger",
+  }))) return;
+  link.enabled = false;
 }
 
 function toggleDraftEnabled(item: RouteTargetConfig) {

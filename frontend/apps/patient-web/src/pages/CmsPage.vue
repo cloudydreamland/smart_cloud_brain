@@ -1,20 +1,17 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted } from "vue";
+import { computed, onMounted } from "vue";
 import { RouterLink, useRoute } from "vue-router";
 import type { PatientSiteSection } from "@smart-cloud-brain/shared-api";
 import PatientSiteSectionRenderer from "../components/cms/PatientSiteSectionRenderer.vue";
+import { withPatientPreview } from "../site-config/routeTarget";
 import { usePatientSiteConfig } from "../site-config/usePatientSiteConfig";
 
 const route = useRoute();
-const { config, loading, load, loadPreview, clearPreview } = usePatientSiteConfig();
+const { config, loading, activePreviewToken, load, loadPreview } = usePatientSiteConfig();
 
 onMounted(() => {
   if (previewToken.value) void loadPreview(previewToken.value);
   else void load();
-});
-
-onUnmounted(() => {
-  if (previewToken.value) clearPreview();
 });
 
 const slug = computed(() => {
@@ -25,7 +22,11 @@ const slug = computed(() => {
 const page = computed(() =>
   config.value.pages.pages.find((item) => item.slug === slug.value && (isPreview.value || item.enabled !== false)),
 );
-const previewToken = computed(() => String(route.query.previewToken || ""));
+const previewQueryToken = computed(() => {
+  const value = route.query.previewToken;
+  return typeof value === "string" ? value : "";
+});
+const previewToken = computed(() => previewQueryToken.value || activePreviewToken.value);
 const isPreview = computed(() => Boolean(previewToken.value));
 
 const visibleSections = computed(() => page.value?.sections.filter((section) => isPreview.value || section.enabled !== false) || []);
@@ -43,12 +44,12 @@ function sectionAnchor(section: PatientSiteSection, index: number) {
 <template>
   <main class="public-info-page cms-page">
     <header class="resource-header">
-      <RouterLink class="scb-brand" :to="{ name: 'patient-home' }" aria-label="智慧云脑首页">
+      <RouterLink class="scb-brand" :to="withPatientPreview({ name: 'patient-home' }, previewToken)" aria-label="智慧云脑首页">
         <span>智慧<br />云脑</span>
         <i></i><i></i>
       </RouterLink>
       <nav aria-label="当前位置">
-        <RouterLink :to="{ name: 'patient-home' }">首页</RouterLink>
+        <RouterLink :to="withPatientPreview({ name: 'patient-home' }, previewToken)">首页</RouterLink>
         <span>/</span>
         <span>{{ page?.label || "专题页" }}</span>
       </nav>
@@ -85,8 +86,8 @@ function sectionAnchor(section: PatientSiteSection, index: number) {
     </div>
 
     <section v-else class="resource-search-page cms-page-empty">
-      <RouterLink :to="{ name: 'patient-home' }">返回首页</RouterLink>
-      <RouterLink :to="{ name: 'public-search' }">搜索患者资料</RouterLink>
+      <RouterLink :to="withPatientPreview({ name: 'patient-home' }, previewToken)">返回首页</RouterLink>
+      <RouterLink :to="withPatientPreview({ name: 'public-search' }, previewToken)">搜索患者资料</RouterLink>
     </section>
   </main>
 </template>

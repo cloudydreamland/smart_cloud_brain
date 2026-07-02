@@ -5,6 +5,7 @@ import { storeToRefs } from "pinia";
 import {
   api,
   displayText,
+  formatApiError,
   toNumber,
   type Drug,
   type DrugItem,
@@ -36,7 +37,7 @@ const emit = defineEmits<{ refresh: [] }>();
 const auth = useAuthStore();
 const workflow = useDoctorWorkflowStore();
 const router = useRouter();
-const { registrations, triageRecords, streamText, streamStatus } = storeToRefs(workflow);
+const { registrations, triageRecords, streamText } = storeToRefs(workflow);
 const displayRegistrations = liveRows(registrations);
 const displayTriage = liveRows(triageRecords);
 const error = ref("");
@@ -348,7 +349,7 @@ onMounted(loadDrugCatalog);
     </div>
 
     <PatientContextDrawer :open="contextOpen" :registration="registration" :triage="triage" @close="contextOpen = false" />
-    <AiRecordPreviewModal :open="previewOpen" :text="streamText" @close="previewOpen = false" @confirm="previewOpen = false; if (record.lastDraft.value) record.applyDraft(record.lastDraft.value)" />
+    <AiRecordPreviewModal :open="previewOpen" :text="streamText" @close="previewOpen = false" @confirm="() => { previewOpen = false; if (record.lastDraft.value) record.applyDraft(record.lastDraft.value) }" />
     <SaveRecordConfirmModal :open="saveConfirmOpen" :busy="record.recordLoading.value" @close="saveConfirmOpen = false" @confirm="async () => { const id = await record.saveRecord(); if (id) { prescription.prescription.medicalRecordId = id; saveConfirmOpen = false; } }" />
     <PrescriptionRiskModal :open="riskOpen" :result="prescription.checkResult.value" @close="riskOpen = false" @confirm="async () => { const ok = await prescription.createPrescription(); if (ok) riskOpen = false; }" />
     <HighRiskConfirmModal :open="highRiskOpen" :busy="prescription.prescriptionLoading.value" @close="highRiskOpen = false" @confirm="async () => { const ok = await prescription.createPrescription(); if (ok) { riskOpen = false; highRiskOpen = false; } }" />

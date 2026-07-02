@@ -1,6 +1,7 @@
 import {
   api,
   ApiError,
+  isPatientSiteSectionType,
   resolvePatientSiteConfigSection,
   validatePatientSitePagesConfig,
   type DataRow,
@@ -19,6 +20,8 @@ import {
 } from "@smart-cloud-brain/shared-api";
 import { isAllowedPatientRoute, patientRouteOptions } from "../patientSiteRoutes";
 import type { EditingTarget } from "./usePatientSiteConfigEditor";
+
+const legacyHomeModuleTypes = new Set(["notice", "quick_actions", "intro", "locations", "featured_departments", "static_content"]);
 
 export function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
@@ -66,23 +69,8 @@ export function messageFrom(err: unknown) {
 
 export function loadMessageFrom(err: unknown) {
   const message = messageFrom(err);
-  if (/internal server error/i.test(message)) return "配置表可能尚未初始化，请执行数据库迁移或重新初始化演示库。";
-  return `${message}。请确认患者端配置接口和数据库迁移已正常运行。`;
-}
-
-export function configSectionFromPublic(source: unknown, key: PatientSiteConfigKey) {
-  const row = isRow(source) ? source : {};
-  if (key === "patient_nav") return row.nav;
-  if (key === "patient_home") return row.home;
-  if (key === "patient_pages") return row.pages;
-  if (key === "patient_hospital_info") return row.hospitalInfo;
-  if (key === "patient_footer") return row.footer;
-  return row.staticPages;
-}
-
-export async function loadEffectiveSection(key: PatientSiteConfigKey) {
-  const section = configSectionFromPublic(await api.patientSiteConfig(), key);
-  return isRow(section) ? section : {};
+  if (/internal server error/i.test(message)) return "配置表可能尚未初始化，请完成配置数据初始化后重试。";
+  return `${message}。请确认患者端配置服务已正常运行。`;
 }
 
 export async function loadHistory(key: PatientSiteConfigKey, page: number, pageSize: number): Promise<PatientSiteConfigHistoryPage> {
@@ -172,6 +160,8 @@ export function normalizeStaticPage(value: unknown, index = 0): StaticPageConfig
     label: stringValue(row.label, ""),
     title: stringValue(row.title, ""),
     intro: stringValue(row.intro, ""),
+    contentSource: row.contentSource === "cms-page" ? "cms-page" : "static",
+    slug: typeof row.slug === "string" && row.slug.trim() ? row.slug.trim().toLowerCase() : undefined,
     points: Array.isArray(row.points) ? row.points.map(normalizePoint) : [],
     primary: isRow(row.primary) ? normalizeLink(row.primary) : undefined,
   };
@@ -273,6 +263,18 @@ function validateHome(home: PatientHomeConfig, errors: string[], allowedHomeModu
       const items = Array.isArray(module.content?.items) ? module.content.items : [];
       items.forEach((item, itemIndex) => validateLink(item as RouteTargetConfig, `modules[${moduleIndex}].content.items[${itemIndex}]`, errors));
     }
+    if (module.type && isPatientSiteSectionType(module.type) && !legacyHomeModuleTypes.has(module.type)) {
+      const sectionErrors = validatePatientSitePagesConfig({
+        pages: [{
+          routeName: "about-hospital",
+          label: "首页模块",
+          title: "首页模块",
+          intro: "",
+          sections: [{ ...module.content, type: module.type, id: module.key, sort: module.sort, enabled: module.enabled } as never],
+        }],
+      });
+      errors.push(...sectionErrors.map((item) => `modules[${moduleIndex}].content.${item}`));
+    }
   });
 }
 
@@ -281,6 +283,7 @@ function validateStaticPages(staticPages: PatientStaticPagesConfig, errors: stri
     requireRoute(page.routeName, `pages[${pageIndex}].routeName`, errors);
     requireText(page.label, `pages[${pageIndex}].label 不能为空`, errors);
     requireText(page.title, `pages[${pageIndex}].title 不能为空`, errors);
+    if (page.contentSource === "cms-page") requireText(page.slug, `pages[${pageIndex}].slug 在绑定 CMS 页面时必填`, errors);
     page.points.forEach((point, pointIndex) => {
       requireText(point.title, `pages[${pageIndex}].points[${pointIndex}].title 不能为空`, errors);
       requireText(point.text, `pages[${pageIndex}].points[${pointIndex}].text 不能为空`, errors);

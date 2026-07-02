@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { useOssImageUpload, type UploadedImageAsset } from "../../composables/useOssImageUpload";
+import { usePatientSiteConfirm } from "../../composables/patientSiteConfirm";
 
 const props = defineProps<{
   imageUrl?: string;
@@ -13,12 +14,15 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   uploaded: [value: UploadedImageAsset];
+  "update:imageUrl": [value: string];
+  "update:objectKey": [value: string];
   "update:imageAlt": [value: string];
   cleared: [];
 }>();
 
 const inputRef = ref<HTMLInputElement | null>(null);
 const { uploading, error, uploadImage } = useOssImageUpload();
+const confirm = usePatientSiteConfirm();
 const hasImage = computed(() => Boolean(props.imageUrl));
 
 function chooseFile() {
@@ -32,12 +36,24 @@ async function onFileChange(event: Event) {
   input.value = "";
   if (!file) return;
   const asset = await uploadImage(file);
-  if (asset) emit("uploaded", asset);
+  if (!asset) return;
+  emit("uploaded", asset);
+  emit("update:imageUrl", asset.url);
+  emit("update:objectKey", asset.objectKey);
 }
 
-function clearImage() {
+async function clearImage() {
   if (props.disabled || uploading.value) return;
+  if (!(await confirm({
+    title: `确认清空${props.label}`,
+    message: "将清空当前配置里的图片地址、对象标识和图片说明。已上传到对象存储的文件不会自动删除。",
+    confirmText: "确认清空图片",
+    tone: "danger",
+  }))) return;
   emit("cleared");
+  emit("update:imageUrl", "");
+  emit("update:objectKey", "");
+  emit("update:imageAlt", "");
 }
 </script>
 

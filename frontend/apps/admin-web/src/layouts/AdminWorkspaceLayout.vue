@@ -5,6 +5,7 @@ import { storeToRefs } from "pinia";
 import { statusText, useAdminWorkflowStore, useAuthStore } from "@smart-cloud-brain/shared-api";
 import { useRoute } from "vue-router";
 import { CollapsibleSidebar, Toast } from "@smart-cloud-brain/shared-ui";
+import { clearAdminPermissionCache, hasAdminPermission, loadAdminPermissions, PATIENT_SITE_MANAGE_PERMISSION } from "../adminPermissions";
 
 const route = useRoute();
 const auth = useAuthStore();
@@ -13,36 +14,52 @@ const router = useRouter();
 const { session, permissionError } = storeToRefs(auth);
 const { departments, doctors, triageDesk } = storeToRefs(workflow);
 const loading = ref(false);
-const difyUrl = import.meta.env.VITE_DIFY_URL || "";
+const permissions = ref<Set<string>>(new Set());
+const difyUrl = import.meta.env.VITE_DIFY_URL || "http://localhost";
 let unbind: (() => void) | null = null;
 
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 provide("toast", toastRef);
 
+type AdminNavItem = { label: string; to: string; badge?: number; permission?: string };
+
 const highRisk = computed(() => triageDesk.value.filter((item) => ["MANUAL_REQUIRED", "HIGH"].includes(String(item.status))).length);
-const navGroups = computed(() => [
-  { label: "运维入口", items: [
-    { label: "工作台", to: "/" },
-    { label: "科室", to: "/departments", badge: departments.value.length },
-    { label: "医生", to: "/doctors", badge: doctors.value.length },
-    { label: "患者", to: "/patients" },
-    { label: "药品", to: "/drugs" },
-    { label: "排班", to: "/schedule" },
-    { label: "分诊台", to: "/triage-desk", badge: highRisk.value },
-    { label: "账户权限", to: "/accounts" },
-    { label: "权限", to: "/permissions" },
-    { label: "设备", to: "/devices" },
-  ] },
-  { label: "配置", items: [
-    { label: "患者端配置", to: "/patient-site" },
-    { label: "邮箱配置", to: "/email-config" },
-  ] },
-]);
+const deniedMessage = computed(() => {
+  const denied = typeof route.query.denied === "string" ? route.query.denied : "";
+  return denied ? `当前账号缺少 ${denied} 权限，无法访问对应功能。` : "";
+});
+const navGroups = computed(() => {
+  const groups: Array<{ label: string; items: AdminNavItem[] }> = [
+    { label: "运维入口", items: [
+      { label: "工作台", to: "/" },
+      { label: "科室", to: "/departments", badge: departments.value.length },
+      { label: "医生", to: "/doctors", badge: doctors.value.length },
+      { label: "患者", to: "/patients" },
+      { label: "药品", to: "/drugs" },
+      { label: "排班", to: "/schedule" },
+      { label: "分诊台", to: "/triage-desk", badge: highRisk.value },
+      { label: "账户权限", to: "/accounts" },
+      { label: "权限", to: "/permissions" },
+      { label: "设备", to: "/devices" },
+    ] },
+    { label: "配置", items: [
+      { label: "患者端配置", to: "/patient-site", permission: PATIENT_SITE_MANAGE_PERMISSION },
+      { label: "邮箱配置", to: "/email-config" },
+    ] },
+  ];
+  return groups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => hasAdminPermission(permissions.value, item.permission)),
+    }))
+    .filter((group) => group.items.length);
+});
 
 async function refresh(silent = false, showLoading = true) {
   if (!session.value || !auth.requireRole("ADMIN")) return;
   if (showLoading) loading.value = true;
   try {
+    permissions.value = await loadAdminPermissions();
     await workflow.refresh();
     if (!silent) toastRef.value?.success("数据已刷新", "所有模块数据已同步最新状态。");
   } catch {
@@ -52,6 +69,7 @@ async function refresh(silent = false, showLoading = true) {
   }
 }
 function logout() {
+  clearAdminPermissionCache();
   auth.logout();
   router.push({ name: "admin-login" });
 }
@@ -95,7 +113,10 @@ onBeforeUnmount(() => unbind?.());
         </div>
       </header>
 
-      <div class="admin-notices"><div v-if="permissionError" class="notice error">{{ permissionError }}</div></div>
+      <div class="admin-notices">
+        <div v-if="permissionError" class="notice error">{{ permissionError }}</div>
+        <div v-else-if="deniedMessage" class="notice error">{{ deniedMessage }}</div>
+      </div>
       <RouterView @refresh="refresh" />
     </div>
     <Toast ref="toastRef" />

@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { defaultPatientSiteConfig, type PatientFooterConfig } from "@smart-cloud-brain/shared-api";
-import { toPatientRoute } from "../site-config/routeTarget";
+import { toPatientRoute, withPatientPreview } from "../site-config/routeTarget";
 import { usePatientSiteConfig } from "../site-config/usePatientSiteConfig";
 
-const { config } = usePatientSiteConfig();
+const { config, activePreviewToken } = usePatientSiteConfig();
 
 const footer = computed<PatientFooterConfig>(() => {
   const current = config.value.footer;
@@ -19,7 +19,7 @@ const legalLinks = computed(() => footer.value.legalLinks.filter((link) => link.
   <footer class="site-footer">
     <div class="site-footer-grid">
       <section>
-        <RouterLink class="scb-brand" :to="{ name: 'patient-home' }" aria-label="智慧云脑首页">
+        <RouterLink class="scb-brand" :to="withPatientPreview({ name: 'patient-home' }, activePreviewToken)" aria-label="智慧云脑首页">
           <span>{{ footer.brandName }}</span>
           <i></i><i></i>
         </RouterLink>

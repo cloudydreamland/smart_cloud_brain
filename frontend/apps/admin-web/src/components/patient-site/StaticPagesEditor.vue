@@ -41,7 +41,10 @@ defineEmits<{
       <article v-for="{ page, index } in pages" :key="`${page.routeName}-${index}`" class="config-card config-summary-card">
         <div>
           <strong>{{ page.title || "未命名页面" }}</strong>
-          <p>页面入口：{{ page.routeName }} · 显示名称：{{ page.label || "无分组" }} · {{ page.points?.length || 0 }} 个要点</p>
+          <p>
+            页面入口：{{ page.routeName }} · 显示名称：{{ page.label || "无分组" }} · {{ page.points?.length || 0 }} 个要点
+            <template v-if="page.contentSource === 'cms-page'"> · 绑定 CMS：{{ page.slug || "未填写" }}</template>
+          </p>
           <small>{{ page.intro || "未填写说明" }}</small>
         </div>
         <div class="config-card-actions">

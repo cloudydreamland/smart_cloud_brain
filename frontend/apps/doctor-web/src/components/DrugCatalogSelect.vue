@@ -278,7 +278,7 @@ onBeforeUnmount(() => {
         @keydown.down.prevent="move(1)"
         @keydown.up.prevent="move(-1)"
         @keydown.enter.prevent="chooseActive"
-        @keydown.esc.prevent="closeList"
+        @keydown.esc.prevent="closeList()"
       />
       <button
         v-if="modelValue"

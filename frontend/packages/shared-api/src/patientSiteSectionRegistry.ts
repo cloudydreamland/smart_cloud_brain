@@ -1,9 +1,15 @@
 import { isAllowedPatientRoute } from "./patientSiteRoutes";
 import type {
   CardGridSection,
+  ContactPanelSection,
   CtaSection,
   DepartmentLinksSection,
+  DepartmentListSection,
+  DoctorListSection,
   FaqSection,
+  GallerySection,
+  HeroSection,
+  ImageTextSection,
   LinkGridSection,
   NoticeSection,
   PatientSiteCard,
@@ -12,9 +18,11 @@ import type {
   PatientSitePagesConfig,
   PatientSiteSection,
   PatientSiteSectionType,
+  PatientSiteStatItem,
   PatientSiteTimelineItem,
   RichTextSection,
   SectionRegistryItem,
+  StatsSection,
   TimelineSection,
 } from "./patientSitePageTypes";
 import type { RouteTargetConfig } from "./patientSiteTypes";
@@ -32,7 +40,7 @@ export const patientSiteSectionRegistry: {
       { key: "level", label: "提示级别", kind: "select", options: ["info", "warning", "success"], required: true },
       { key: "text", label: "正文", kind: "textarea", required: true },
     ],
-    createDefault: () => ({ id: sectionId("notice"), type: "notice", enabled: true, sort: 10, level: "info", text: "请填写提示内容。" }),
+    createDefault: (): NoticeSection => ({ id: sectionId("notice"), type: "notice", enabled: true, sort: 10, level: "info", text: "请填写提示内容。" }),
   },
   rich_text: {
     type: "rich_text",
@@ -42,7 +50,7 @@ export const patientSiteSectionRegistry: {
       { key: "title", label: "标题", kind: "text" },
       { key: "body", label: "正文", kind: "textarea", required: true },
     ],
-    createDefault: () => ({ id: sectionId("rich_text"), type: "rich_text", enabled: true, sort: 20, title: "正文标题", body: "请填写正文内容。" }),
+    createDefault: (): RichTextSection => ({ id: sectionId("rich_text"), type: "rich_text", enabled: true, sort: 20, title: "正文标题", body: "请填写正文内容。" }),
   },
   card_grid: {
     type: "card_grid",
@@ -52,7 +60,7 @@ export const patientSiteSectionRegistry: {
       { key: "title", label: "标题", kind: "text" },
       { key: "cards", label: "卡片", kind: "card_list", required: true },
     ],
-    createDefault: () => ({ id: sectionId("card_grid"), type: "card_grid", enabled: true, sort: 30, title: "重点内容", cards: [] }),
+    createDefault: (): CardGridSection => ({ id: sectionId("card_grid"), type: "card_grid", enabled: true, sort: 30, title: "重点内容", cards: [] }),
   },
   faq: {
     type: "faq",
@@ -62,7 +70,7 @@ export const patientSiteSectionRegistry: {
       { key: "title", label: "标题", kind: "text" },
       { key: "items", label: "问答", kind: "faq_list", required: true },
     ],
-    createDefault: () => ({ id: sectionId("faq"), type: "faq", enabled: true, sort: 40, title: "常见问题", items: [] }),
+    createDefault: (): FaqSection => ({ id: sectionId("faq"), type: "faq", enabled: true, sort: 40, title: "常见问题", items: [] }),
   },
   timeline: {
     type: "timeline",
@@ -72,7 +80,7 @@ export const patientSiteSectionRegistry: {
       { key: "title", label: "标题", kind: "text" },
       { key: "items", label: "步骤", kind: "timeline_list", required: true },
     ],
-    createDefault: () => ({ id: sectionId("timeline"), type: "timeline", enabled: true, sort: 50, title: "服务流程", items: [] }),
+    createDefault: (): TimelineSection => ({ id: sectionId("timeline"), type: "timeline", enabled: true, sort: 50, title: "服务流程", items: [] }),
   },
   cta: {
     type: "cta",
@@ -84,7 +92,7 @@ export const patientSiteSectionRegistry: {
       { key: "primary", label: "主按钮", kind: "route_target" },
       { key: "secondary", label: "次按钮", kind: "route_target" },
     ],
-    createDefault: () => ({ id: sectionId("cta"), type: "cta", enabled: true, sort: 60, title: "需要帮助？", text: "请选择下一步服务。" }),
+    createDefault: (): CtaSection => ({ id: sectionId("cta"), type: "cta", enabled: true, sort: 60, title: "需要帮助？", text: "请选择下一步服务。" }),
   },
   link_grid: {
     type: "link_grid",
@@ -94,7 +102,7 @@ export const patientSiteSectionRegistry: {
       { key: "title", label: "标题", kind: "text" },
       { key: "links", label: "链接", kind: "route_target_list", required: true },
     ],
-    createDefault: () => ({ id: sectionId("link_grid"), type: "link_grid", enabled: true, sort: 70, title: "相关入口", links: [] }),
+    createDefault: (): LinkGridSection => ({ id: sectionId("link_grid"), type: "link_grid", enabled: true, sort: 70, title: "相关入口", links: [] }),
   },
   department_links: {
     type: "department_links",
@@ -106,7 +114,93 @@ export const patientSiteSectionRegistry: {
       { key: "fallbackNames", label: "默认科室名", kind: "string_list" },
       { key: "links", label: "固定链接", kind: "route_target_list" },
     ],
-    createDefault: () => ({ id: sectionId("department_links"), type: "department_links", enabled: true, sort: 80, title: "科室导航", limit: 12, fallbackNames: [], links: [] }),
+    createDefault: (): DepartmentLinksSection => ({ id: sectionId("department_links"), type: "department_links", enabled: true, sort: 80, title: "科室导航", limit: 12, fallbackNames: [], links: [] }),
+  },
+  image_text: {
+    type: "image_text",
+    label: "图文混排",
+    description: "用于展示图片、说明文字和一个行动入口。",
+    fields: [
+      { key: "title", label: "标题", kind: "text" },
+      { key: "text", label: "正文", kind: "textarea", required: true },
+      { key: "image", label: "图片", kind: "image" },
+      { key: "imagePosition", label: "图片位置", kind: "select", options: ["left", "right"], required: true },
+      { key: "primary", label: "行动入口", kind: "route_target" },
+    ],
+    createDefault: () => ({ id: sectionId("image_text"), type: "image_text", enabled: true, sort: 90, title: "图文内容", text: "请填写图文说明。", imagePosition: "left" }),
+  },
+  hero: {
+    type: "hero",
+    label: "页面首屏",
+    description: "用于 CMS 页面顶部的主标题、导语、图片和主按钮。",
+    fields: [
+      { key: "eyebrow", label: "眉题", kind: "text" },
+      { key: "title", label: "标题", kind: "text" },
+      { key: "text", label: "说明", kind: "textarea", required: true },
+      { key: "image", label: "图片", kind: "image" },
+      { key: "primary", label: "主按钮", kind: "route_target" },
+      { key: "secondary", label: "次按钮", kind: "route_target" },
+    ],
+    createDefault: () => ({ id: sectionId("hero"), type: "hero", enabled: true, sort: 100, title: "页面标题", text: "请填写页面首屏说明。" }),
+  },
+  gallery: {
+    type: "gallery",
+    label: "图片组",
+    description: "用于展示院区、环境、活动或服务图片。",
+    fields: [
+      { key: "title", label: "标题", kind: "text" },
+      { key: "images", label: "图片", kind: "image_list", required: true },
+    ],
+    createDefault: () => ({ id: sectionId("gallery"), type: "gallery", enabled: true, sort: 110, title: "图片展示", images: [] }),
+  },
+  contact_panel: {
+    type: "contact_panel",
+    label: "联系面板",
+    description: "用于展示电话、地址、服务时间和联系入口。",
+    fields: [
+      { key: "title", label: "标题", kind: "text" },
+      { key: "text", label: "说明", kind: "textarea", required: true },
+      { key: "phone", label: "电话", kind: "text" },
+      { key: "address", label: "地址", kind: "text" },
+      { key: "workHours", label: "服务时间", kind: "text" },
+      { key: "image", label: "图片", kind: "image" },
+      { key: "primary", label: "行动入口", kind: "route_target" },
+    ],
+    createDefault: () => ({ id: sectionId("contact_panel"), type: "contact_panel", enabled: true, sort: 120, title: "联系方式", text: "请填写联系说明。" }),
+  },
+  stats: {
+    type: "stats",
+    label: "指标数字",
+    description: "用于展示服务能力、运营数据或学科指标。",
+    fields: [
+      { key: "title", label: "标题", kind: "text" },
+      { key: "items", label: "指标", kind: "stat_list", required: true },
+    ],
+    createDefault: () => ({ id: sectionId("stats"), type: "stats", enabled: true, sort: 130, title: "关键指标", items: [] }),
+  },
+  doctor_list: {
+    type: "doctor_list",
+    label: "医生列表",
+    description: "用于配置推荐医生入口或医生姓名兜底展示。",
+    fields: [
+      { key: "title", label: "标题", kind: "text" },
+      { key: "limit", label: "数量上限", kind: "number" },
+      { key: "fallbackNames", label: "医生姓名", kind: "string_list" },
+      { key: "links", label: "固定入口", kind: "route_target_list" },
+    ],
+    createDefault: () => ({ id: sectionId("doctor_list"), type: "doctor_list", enabled: true, sort: 140, title: "推荐医生", limit: 6, fallbackNames: [], links: [] }),
+  },
+  department_list: {
+    type: "department_list",
+    label: "科室列表",
+    description: "用于配置推荐科室入口或科室名称兜底展示。",
+    fields: [
+      { key: "title", label: "标题", kind: "text" },
+      { key: "limit", label: "数量上限", kind: "number" },
+      { key: "fallbackNames", label: "科室名称", kind: "string_list" },
+      { key: "links", label: "固定入口", kind: "route_target_list" },
+    ],
+    createDefault: () => ({ id: sectionId("department_list"), type: "department_list", enabled: true, sort: 150, title: "推荐科室", limit: 8, fallbackNames: [], links: [] }),
   },
 };
 
@@ -153,7 +247,14 @@ export function normalizePatientSiteSection(source: unknown, index = 0): Patient
   if (type === "timeline") return normalizeTimelineSection(row, index);
   if (type === "cta") return normalizeCtaSection(row, index);
   if (type === "link_grid") return normalizeLinkGridSection(row, index);
-  return normalizeDepartmentLinksSection(row, index);
+  if (type === "department_links") return normalizeDepartmentLinksSection(row, index);
+  if (type === "image_text") return normalizeImageTextSection(row, index);
+  if (type === "hero") return normalizeHeroSection(row, index);
+  if (type === "gallery") return normalizeGallerySection(row, index);
+  if (type === "contact_panel") return normalizeContactPanelSection(row, index);
+  if (type === "stats") return normalizeStatsSection(row, index);
+  if (type === "doctor_list") return normalizeDoctorListSection(row, index);
+  return normalizeDepartmentListSection(row, index);
 }
 
 export function validatePatientSitePagesConfig(config: PatientSitePagesConfig): string[] {
@@ -211,7 +312,67 @@ function normalizeDepartmentLinksSection(row: DataRow, index: number): Departmen
   };
 }
 
-function baseSection(row: DataRow, type: PatientSiteSectionType, index: number) {
+function normalizeImageTextSection(row: DataRow, index: number): ImageTextSection {
+  const imagePosition = text(row.imagePosition, "left");
+  return {
+    ...baseSection(row, "image_text", index),
+    text: text(row.text, ""),
+    image: normalizeImage(row.image),
+    imagePosition: imagePosition === "right" ? "right" : "left",
+    primary: normalizeRouteTarget(row.primary),
+  };
+}
+
+function normalizeHeroSection(row: DataRow, index: number): HeroSection {
+  return {
+    ...baseSection(row, "hero", index),
+    eyebrow: text(row.eyebrow, ""),
+    text: text(row.text, ""),
+    image: normalizeImage(row.image),
+    primary: normalizeRouteTarget(row.primary),
+    secondary: normalizeRouteTarget(row.secondary),
+  };
+}
+
+function normalizeGallerySection(row: DataRow, index: number): GallerySection {
+  return { ...baseSection(row, "gallery", index), images: normalizeArray(row.images, normalizeImage) };
+}
+
+function normalizeContactPanelSection(row: DataRow, index: number): ContactPanelSection {
+  return {
+    ...baseSection(row, "contact_panel", index),
+    text: text(row.text, ""),
+    phone: text(row.phone, ""),
+    address: text(row.address, ""),
+    workHours: text(row.workHours, ""),
+    image: normalizeImage(row.image),
+    primary: normalizeRouteTarget(row.primary),
+  };
+}
+
+function normalizeStatsSection(row: DataRow, index: number): StatsSection {
+  return { ...baseSection(row, "stats", index), items: normalizeArray(row.items, normalizeStatItem) };
+}
+
+function normalizeDoctorListSection(row: DataRow, index: number): DoctorListSection {
+  return {
+    ...baseSection(row, "doctor_list", index),
+    limit: numberValue(row.limit, 6),
+    fallbackNames: normalizeStringList(row.fallbackNames),
+    links: normalizeArray(row.links, normalizeRouteTarget),
+  };
+}
+
+function normalizeDepartmentListSection(row: DataRow, index: number): DepartmentListSection {
+  return {
+    ...baseSection(row, "department_list", index),
+    limit: numberValue(row.limit, 8),
+    fallbackNames: normalizeStringList(row.fallbackNames),
+    links: normalizeArray(row.links, normalizeRouteTarget),
+  };
+}
+
+function baseSection<T extends PatientSiteSectionType>(row: DataRow, type: T, index: number): { id: string; type: T; title: string; enabled: boolean; sort: number } {
   return {
     id: text(row.id, sectionId(type)),
     type,
@@ -247,6 +408,13 @@ function normalizeTimelineItem(source: unknown): PatientSiteTimelineItem | undef
   const title = text(row.title, "");
   const itemText = text(row.text, "");
   return title && itemText ? { title, text: itemText, time: text(row.time, "") } : undefined;
+}
+
+function normalizeStatItem(source: unknown): PatientSiteStatItem | undefined {
+  const row = isRecord(source) ? source : {};
+  const label = text(row.label, "");
+  const value = text(row.value, "");
+  return label && value ? { label, value, caption: text(row.caption, "") } : undefined;
 }
 
 function normalizeImage(source: unknown) {
@@ -305,6 +473,17 @@ function validateSection(section: PatientSiteSection, path: string) {
   if (section.type === "link_grid" && !section.links.length) errors.push(`${path}.links 至少需要 1 项`);
   if (section.type === "link_grid") section.links.forEach((link, index) => validateRouteTarget(link, `${path}.links[${index}]`, errors));
   if (section.type === "department_links") section.links.forEach((link, index) => validateRouteTarget(link, `${path}.links[${index}]`, errors));
+  if (section.type === "image_text") requireText(section.text, `${path}.text`, errors);
+  if (section.type === "image_text" && section.primary) validateRouteTarget(section.primary, `${path}.primary`, errors);
+  if (section.type === "hero") requireText(section.text, `${path}.text`, errors);
+  if (section.type === "hero" && section.primary) validateRouteTarget(section.primary, `${path}.primary`, errors);
+  if (section.type === "hero" && section.secondary) validateRouteTarget(section.secondary, `${path}.secondary`, errors);
+  if (section.type === "gallery" && !section.images.length) errors.push(`${path}.images 至少需要 1 项`);
+  if (section.type === "contact_panel") requireText(section.text, `${path}.text`, errors);
+  if (section.type === "contact_panel" && section.primary) validateRouteTarget(section.primary, `${path}.primary`, errors);
+  if (section.type === "stats" && !section.items.length) errors.push(`${path}.items 至少需要 1 项`);
+  if (section.type === "doctor_list") section.links.forEach((link, index) => validateRouteTarget(link, `${path}.links[${index}]`, errors));
+  if (section.type === "department_list") section.links.forEach((link, index) => validateRouteTarget(link, `${path}.links[${index}]`, errors));
   return errors;
 }
 

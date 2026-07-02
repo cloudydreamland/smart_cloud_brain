@@ -7,6 +7,7 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     globals: true,
+    setupFiles: ["./src/test-setup.ts"],
     include: [
       "packages/**/*.{test,spec}.{ts,js}",
       "apps/**/*.{test,spec}.{ts,js}",
@@ -22,9 +23,13 @@ export default defineConfig({
       reporter: ["text", "html", "json-summary", "lcov"],
       reportsDirectory: "coverage",
       include: [
-        "packages/shared-api/src/api.ts",
-        "packages/shared-api/src/formatters.ts",
-        "packages/shared-api/src/stores/*.ts",
+        "packages/shared-api/src/**/*.ts",
+        "packages/shared-ui/src/components/*.vue",
+        "apps/admin-web/src/composables/*.ts",
+        "apps/admin-web/src/patientSitePresentation.ts",
+        "apps/patient-web/src/site-config/*.ts",
+        "apps/patient-web/src/composables/*.ts",
+        "apps/patient-web/src/components/cms/*.ts",
       ],
       exclude: [
         "**/*.d.ts",
@@ -35,15 +40,27 @@ export default defineConfig({
         "**/router/**",
       ],
       thresholds: {
-        lines: 80,
-        functions: 80,
-        branches: 80,
-        statements: 80,
+        lines: 70,
+        functions: 65,
+        branches: 70,
+        statements: 70,
         "packages/shared-api/src/stores/*.ts": {
           lines: 100,
           functions: 100,
           branches: 100,
           statements: 100,
+        },
+        "packages/shared-api/src/**/*.ts": {
+          lines: 80,
+          functions: 80,
+          branches: 80,
+          statements: 80,
+        },
+        "packages/shared-ui/src/components/*.vue": {
+          lines: 80,
+          functions: 60,
+          branches: 60,
+          statements: 80,
         },
       },
     },

@@ -7,6 +7,7 @@ import {
   type PatientRecommendationSaveRequest,
   type PatientRecommendationType,
 } from "@smart-cloud-brain/shared-api";
+import { usePatientSiteConfirm } from "./patientSiteConfirm";
 
 type TargetOption = { id: number; label: string };
 
@@ -31,6 +32,7 @@ export function usePatientRecommendationEditor() {
   const saving = ref(false);
   const status = ref("");
   const error = ref("");
+  const confirm = usePatientSiteConfirm();
 
   const targetOptions = computed(() => (activeType.value === "DEPARTMENT" ? departmentTargets.value : doctorTargets.value));
 
@@ -96,7 +98,12 @@ export function usePatientRecommendationEditor() {
   }
 
   async function remove(id?: number) {
-    if (!id || !window.confirm("确认删除该推荐内容？")) return;
+    if (!id || !(await confirm({
+      title: "确认删除推荐内容",
+      message: "将删除该推荐内容。删除后患者端热门科室或推荐医生列表将不再展示该内容。",
+      confirmText: "确认删除",
+      tone: "danger",
+    }))) return;
     saving.value = true;
     error.value = "";
     try {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, provide } from "vue";
+import { computed, onMounted, provide, ref } from "vue";
 import { storeToRefs } from "pinia";
 import {
   aiTaskLabel,
@@ -12,15 +12,21 @@ import { StatusTag } from "@smart-cloud-brain/shared-ui";
 import { useAdminAnalytics } from "../composables/useAdminAnalytics";
 import AdminAnalyticsOverview from "../components/AdminAnalyticsOverview.vue";
 import AdminAnalyticsSection from "../components/AdminAnalyticsSection.vue";
+import { hasAdminPermission, loadAdminPermissions, PATIENT_SITE_MANAGE_PERMISSION } from "../adminPermissions";
 
 const workflow = useAdminWorkflowStore();
 const { schedules, aiLogs } = storeToRefs(workflow);
+const permissions = ref<Set<string>>(new Set());
+const canManagePatientSite = computed(() => hasAdminPermission(permissions.value, PATIENT_SITE_MANAGE_PERMISSION));
 
 const analytics = useAdminAnalytics();
 provide("adminAnalytics", analytics);
 
 onMounted(() => {
-  analytics.refresh(true);
+  void loadAdminPermissions().then((items) => {
+    permissions.value = items;
+  });
+  analytics.refresh();
 });
 </script>
 
@@ -72,7 +78,7 @@ onMounted(() => {
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
             权限管理
           </RouterLink>
-          <RouterLink class="quick-btn" to="/patient-site">
+          <RouterLink v-if="canManagePatientSite" class="quick-btn" to="/patient-site">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
             患者端配置
           </RouterLink>

@@ -2,12 +2,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   ApiError,
   api,
+  createDefaultPatientSiteSection,
   fieldText,
   formatApiError,
   gatewayBase,
   medicalRecordStreamUrl,
   normalizePatientSiteConfig,
   normalizePatientSitePagesConfig,
+  patientSiteSectionRegistry,
   notificationWebSocketUrl,
   patientSiteSectionTypes,
   request,
@@ -120,6 +122,13 @@ describe("shared api business logic", () => {
       "cta",
       "link_grid",
       "department_links",
+      "image_text",
+      "hero",
+      "gallery",
+      "contact_panel",
+      "stats",
+      "doctor_list",
+      "department_list",
     ]);
 
     const config = normalizePatientSitePagesConfig({
@@ -134,18 +143,58 @@ describe("shared api business logic", () => {
             { id: "b", type: "rich_text", sort: 20, body: "正文" },
             { id: "a", type: "notice", sort: 10, level: "warning", text: "提醒" },
             { id: "bad", type: "unknown", text: "bad" },
-            { id: "links", type: "link_grid", links: [{ label: "联系", routeName: "about-contact" }, { label: "专题", routeName: "cms-page", slug: "hospital-intro" }, { label: "Bad", routeName: "bad-route" }] },
+            { id: "links", type: "link_grid", sort: 40, links: [{ label: "联系", routeName: "about-contact" }, { label: "专题", routeName: "cms-page", slug: "hospital-intro" }, { label: "Bad", routeName: "bad-route" }] },
+            { id: "stats", type: "stats", sort: 30, items: [{ label: "服务患者", value: "1000+" }] },
           ],
         },
       ],
     });
 
     expect(config.pages).toHaveLength(1);
-    expect(config.pages[0].sections.map((section) => section.type)).toEqual(["notice", "rich_text", "link_grid"]);
+    expect(config.pages[0].sections.map((section) => section.type)).toEqual(["notice", "rich_text", "stats", "link_grid"]);
     const linkGrid = config.pages[0].sections.find((section) => section.type === "link_grid");
     expect(linkGrid?.type === "link_grid" && linkGrid.links).toHaveLength(2);
     expect(linkGrid?.type === "link_grid" && linkGrid.links[1].slug).toBe("hospital-intro");
     expect(validatePatientSitePagesConfig(config)).toEqual([]);
+  });
+
+  it("keeps every CMS section type backed by registry metadata and defaults", () => {
+    patientSiteSectionTypes.forEach((type) => {
+      const registryItem = patientSiteSectionRegistry[type];
+      const section = createDefaultPatientSiteSection(type);
+
+      expect(registryItem.type).toBe(type);
+      expect(registryItem.label).toBeTruthy();
+      expect(registryItem.description).toBeTruthy();
+      expect(registryItem.fields.length).toBeGreaterThan(0);
+      expect(section.type).toBe(type);
+      expect(section.id).toContain(type);
+      expect(normalizePatientSitePagesConfig({
+        pages: [{ routeName: "about-hospital", label: "测试页面", title: "测试页面", sections: [section] }],
+      }).pages[0].sections[0].type).toBe(type);
+    });
+  });
+
+  it("normalizes low-code section modules inside patient home config", () => {
+    const config = normalizePatientSiteConfig({
+      home: {
+        hero: { title: "Home" },
+        modules: [
+          {
+            type: "image_text",
+            key: "home-image-text",
+            sort: 30,
+            content: { title: "图文", text: "首页图文内容", imagePosition: "right" },
+          },
+          { type: "unknown", key: "bad", content: { text: "bad" } },
+        ],
+      },
+    }, { preserveDisabled: true });
+
+    expect(config.home.modules).toHaveLength(1);
+    expect(config.home.modules[0].type).toBe("image_text");
+    expect(config.home.modules[0].content?.text).toBe("首页图文内容");
+    expect(config.home.modules[0].content?.imagePosition).toBe("right");
   });
 
   it("preserves uploaded patient site image fields while normalizing", () => {
@@ -176,6 +225,26 @@ describe("shared api business logic", () => {
     expect(config.home.hero.backgroundImageUrl).toBe("https://cdn.example.com/hero.jpg");
     expect(config.home.hero.backgroundImageAlt).toBe("首页背景");
     expect(config.home.hero.backgroundObjectKey).toBe("patient-site/home/hero.jpg");
+  });
+
+  it("preserves static page CMS bindings while normalizing", () => {
+    const config = normalizePatientSiteConfig({
+      staticPages: {
+        pages: [
+          {
+            routeName: "about-hospital",
+            label: "医院",
+            title: "医院介绍",
+            contentSource: "cms-page",
+            slug: "Hospital-Intro",
+            points: [],
+          },
+        ],
+      },
+    }, { preserveDisabled: true });
+
+    expect(config.staticPages.pages[0].contentSource).toBe("cms-page");
+    expect(config.staticPages.pages[0].slug).toBe("hospital-intro");
   });
 
   it("preserves CMS card image object keys while normalizing", () => {

@@ -36,7 +36,7 @@
       <p v-if="error" class="text-xs text-[var(--danger)]">{{ error }}</p>
       <p v-else-if="hint" class="text-xs text-[var(--subtle)]">{{ hint }}</p>
       <p v-if="maxlength" class="text-xs text-[var(--subtle)] ml-auto">
-        {{ modelValue.length }}/{{ maxlength }}
+        {{ (modelValue ?? '').length }}/{{ maxlength }}
       </p>
     </div>
   </div>

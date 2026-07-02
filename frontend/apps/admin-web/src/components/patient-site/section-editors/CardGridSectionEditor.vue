@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { CardGridSection, RouteTargetConfig } from "@smart-cloud-brain/shared-api";
+import { usePatientSiteConfirm } from "../../../composables/patientSiteConfirm";
 import OssImageUploadField from "../OssImageUploadField.vue";
 import RouteTargetEditor from "../RouteTargetEditor.vue";
 
@@ -9,9 +10,43 @@ defineProps<{
 }>();
 
 const emptyLink = (): RouteTargetConfig => ({ label: "", routeName: "patient-home", enabled: true, sort: 0 });
+const confirm = usePatientSiteConfirm();
 
 function addCard(section: CardGridSection) {
   section.cards.push({ title: "新卡片", text: "" });
+}
+
+async function removeCard(section: CardGridSection, index: number) {
+  const card = section.cards[index];
+  if (!card || !(await confirm({
+    title: "确认删除卡片",
+    message: `将从当前编辑稿中移除卡片「${card.title || "未命名卡片"}」。保存草稿不会影响患者端，保存并生效或发布后，对应页面区块才会不再展示该卡片。`,
+    confirmText: "确认删除",
+    tone: "danger",
+  }))) return;
+  section.cards.splice(index, 1);
+}
+
+async function clearCardImage(section: CardGridSection, index: number) {
+  const card = section.cards[index];
+  if (!card?.image || !(await confirm({
+    title: "确认移除卡片图片",
+    message: `将从当前编辑稿中移除卡片「${card.title || "未命名卡片"}」的图片配置。保存并生效或发布后，患者端才会更新展示。`,
+    confirmText: "确认清空图片",
+    tone: "danger",
+  }))) return;
+  card.image = undefined;
+}
+
+async function clearCardTarget(section: CardGridSection, index: number) {
+  const card = section.cards[index];
+  if (!card?.target || !(await confirm({
+    title: "确认移除跳转目标",
+    message: `将从当前编辑稿中移除卡片「${card.title || "未命名卡片"}」的跳转入口。保存并生效或发布后，患者端才会更新该卡片的跳转行为。`,
+    confirmText: "确认删除",
+    tone: "danger",
+  }))) return;
+  card.target = undefined;
 }
 </script>
 
@@ -30,7 +65,7 @@ function addCard(section: CardGridSection) {
       <div class="nested-list-head">
         <strong>图片</strong>
         <button v-if="!card.image" type="button" class="topbar-refresh" @click="card.image = { url: '', alt: '' }">添加图片</button>
-        <button v-else type="button" class="danger-link" @click="card.image = undefined">移除图片</button>
+        <button v-else type="button" class="danger-link" @click="clearCardImage(section, cardIndex)">移除图片</button>
       </div>
       <OssImageUploadField
         v-if="card.image"
@@ -45,12 +80,12 @@ function addCard(section: CardGridSection) {
       <div class="nested-list-head">
         <strong>跳转目标</strong>
         <button v-if="!card.target" type="button" class="topbar-refresh" @click="card.target = emptyLink()">添加目标</button>
-        <button v-else type="button" class="danger-link" @click="card.target = undefined">移除目标</button>
+        <button v-else type="button" class="danger-link" @click="clearCardTarget(section, cardIndex)">移除目标</button>
       </div>
       <div v-if="card.target" class="config-grid two">
         <RouteTargetEditor :model="card.target" prefix="target" :patient-route-options="patientRouteOptions" />
       </div>
-      <button type="button" class="danger-link" @click="section.cards.splice(cardIndex, 1)">删除卡片</button>
+      <button type="button" class="danger-link" @click="removeCard(section, cardIndex)">删除卡片</button>
     </div>
   </div>
 </template>

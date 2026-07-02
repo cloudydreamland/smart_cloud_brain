@@ -97,11 +97,13 @@
   font-size: 12px;
 }
 
+.home-module-card[draggable="true"],
 .page-editor-card[draggable="true"],
 .page-section-card[draggable="true"] {
   cursor: grab;
 }
 
+.home-module-card.dragging,
 .page-editor-card.dragging,
 .page-section-card.dragging {
   border-color: var(--primary);

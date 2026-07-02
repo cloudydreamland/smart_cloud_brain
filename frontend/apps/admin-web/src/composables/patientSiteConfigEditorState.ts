@@ -8,6 +8,7 @@ import type {
   PatientStaticPagesConfig,
   RouteTargetConfig,
 } from "@smart-cloud-brain/shared-api";
+import { patientSiteSectionRegistry, patientSiteSectionTypes } from "@smart-cloud-brain/shared-api";
 import { homeModuleTypeLabel } from "../patientSitePresentation";
 
 export type ConfigKey = PatientSiteConfigKey;
@@ -38,14 +39,21 @@ export const configTabs: ConfigTab[] = [
   { key: "patient_footer", label: "页脚配置", description: "页脚品牌、联系方式、常用入口和法律链接。" },
 ];
 
-export const homeModuleTypeOptions = [
+const legacyHomeModuleTypeOptions = [
   { value: "notice", label: homeModuleTypeLabel("notice") },
   { value: "quick_actions", label: homeModuleTypeLabel("quick_actions") },
   { value: "intro", label: homeModuleTypeLabel("intro") },
   { value: "locations", label: homeModuleTypeLabel("locations") },
   { value: "featured_departments", label: homeModuleTypeLabel("featured_departments") },
   { value: "static_content", label: homeModuleTypeLabel("static_content") },
-] as const;
+];
+
+export const homeModuleTypeOptions = [
+  ...legacyHomeModuleTypeOptions,
+  ...patientSiteSectionTypes
+    .filter((type) => !legacyHomeModuleTypeOptions.some((option) => option.value === type))
+    .map((type) => ({ value: type, label: patientSiteSectionRegistry[type].label })),
+];
 
 const emptyAction = (): RouteTargetConfig => ({ label: "", routeName: "" });
 

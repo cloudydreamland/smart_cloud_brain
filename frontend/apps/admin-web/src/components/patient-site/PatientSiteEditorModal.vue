@@ -1,19 +1,20 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import type { RouteTargetConfig } from "@smart-cloud-brain/shared-api";
+import { isPatientSiteSectionType, type RouteTargetConfig } from "@smart-cloud-brain/shared-api";
+import type { PatientSiteEditorDraft } from "../../composables/patientSiteEditorDraftTypes";
 import type { EditingTarget, homeModuleTypeOptions } from "../../composables/usePatientSiteConfigEditor";
+import { usePatientSiteConfirm } from "../../composables/patientSiteConfirm";
 import { ScbSelect } from "@smart-cloud-brain/shared-ui";
 import { patientSiteFieldLabel } from "../../patientSitePresentation";
 import OssImageUploadField from "./OssImageUploadField.vue";
+import PageSectionFieldsEditor from "./PageSectionFieldsEditor.vue";
 import RouteTargetEditor from "./RouteTargetEditor.vue";
-
-type Draft = any;
 
 const props = defineProps<{
   title: string;
   description: string;
   editingTarget: EditingTarget;
-  editingDraft: Draft;
+  editingDraft: PatientSiteEditorDraft;
   patientRouteOptions: readonly { name: string; label: string }[];
   homeModuleTypeOptions: typeof homeModuleTypeOptions;
   closeEditor: () => void;
@@ -34,6 +35,68 @@ const routeSelectOptions = computed(() =>
 const homeModuleTypeSelectOptions = computed(() =>
   props.homeModuleTypeOptions.map((t) => ({ value: t.value, label: t.label }))
 );
+const confirm = usePatientSiteConfirm();
+const contentSourceOptions = [
+  { value: "static", label: "静态内容" },
+  { value: "cms-page", label: "绑定 CMS 页面" },
+];
+const legacyHomeModuleTypes = new Set(["notice", "quick_actions", "intro", "locations", "featured_departments", "static_content"]);
+
+function isSectionHomeModuleType(type?: string) {
+  return Boolean(type && isPatientSiteSectionType(type) && !legacyHomeModuleTypes.has(type));
+}
+
+function confirmDraftRemove(target: string) {
+  return confirm({
+    title: `确认删除${target}`,
+    message: `将从当前编辑稿中禁用或移除${target}。保存草稿不会影响患者端，保存并生效或发布后才会更新正式页面。`,
+    confirmText: "确认删除",
+    tone: "danger",
+  });
+}
+
+async function removeLink(index: number) {
+  const link = props.editingDraft.links[index];
+  if (!link || !(await confirmDraftRemove(`链接「${link.label || "未命名链接"}」`))) return;
+  link.enabled = false;
+}
+
+async function removeFeature() {
+  const feature = props.editingDraft.feature;
+  if (!feature || !(await confirmDraftRemove(`特色入口「${feature.label || "未命名入口"}」`))) return;
+  feature.enabled = false;
+}
+
+async function removeContentItem(index: number, targetName: string) {
+  const item = props.editingDraft.content.items[index];
+  const label = item?.label || item?.title || targetName;
+  if (!item || !(await confirmDraftRemove(`${targetName}「${label}」`))) return;
+  props.editingDraft.content.items.splice(index, 1);
+}
+
+async function disableContentItem(index: number) {
+  const item = props.editingContentItems()[index];
+  if (!item || !(await confirmDraftRemove(`快捷入口「${item.label || "未命名入口"}」`))) return;
+  item.enabled = false;
+}
+
+async function removeFallbackName(index: number) {
+  const name = props.editingDraft.content.fallbackNames[index];
+  if (!name || !(await confirmDraftRemove(`科室名「${name}」`))) return;
+  props.editingDraft.content.fallbackNames.splice(index, 1);
+}
+
+async function removePoint(index: number) {
+  const point = props.editingDraft.points[index];
+  if (!point || !(await confirmDraftRemove(`页面要点「${point.title || "未命名要点"}」`))) return;
+  props.editingDraft.points.splice(index, 1);
+}
+
+async function removePrimary() {
+  const primary = props.editingDraft.primary;
+  if (!primary || !(await confirmDraftRemove(`主按钮「${primary.label || "未命名按钮"}」`))) return;
+  primary.enabled = false;
+}
 </script>
 
 <template>
@@ -87,14 +150,14 @@ const homeModuleTypeSelectOptions = computed(() =>
                 <RouteTargetEditor :model="link" prefix="link" :patient-route-options="patientRouteOptions" include-sort include-enabled />
                 <label><span>说明</span><input v-model.trim="link.description" type="text"></label>
               </div>
-              <button type="button" class="danger-link" @click="editingDraft.links[linkIndex].enabled = false">删除</button>
+              <button type="button" class="danger-link" @click="removeLink(linkIndex)">删除</button>
             </div>
           </div>
           <div class="nested-list">
             <div class="nested-list-head">
               <strong>特色入口</strong>
               <button v-if="!editingDraft.feature" type="button" class="topbar-refresh" @click="editingDraft.feature = { label: '特色入口', routeName: 'patient-home', enabled: true, sort: 0 }">添加入口</button>
-              <button v-else type="button" class="danger-link" @click="editingDraft.feature.enabled = false">删除入口</button>
+              <button v-else type="button" class="danger-link" @click="removeFeature">删除入口</button>
             </div>
             <div v-if="editingDraft.feature" class="config-grid three">
               <RouteTargetEditor :model="editingDraft.feature" prefix="feature" :patient-route-options="patientRouteOptions" include-sort />
@@ -140,7 +203,12 @@ const homeModuleTypeSelectOptions = computed(() =>
             <label><span>{{ patientSiteFieldLabel("sort") }}</span><input v-model.number="editingDraft.sort" type="number"></label>
             <label class="check-field"><input v-model="editingDraft.enabled" type="checkbox"><span>{{ patientSiteFieldLabel("enabled") }}</span></label>
           </div>
-          <div v-if="editingDraft.type === 'notice'" class="config-grid two">
+          <PageSectionFieldsEditor
+            v-if="isSectionHomeModuleType(editingDraft.type)"
+            :section="editingDraft.content"
+            :patient-route-options="patientRouteOptions"
+          />
+          <div v-else-if="editingDraft.type === 'notice'" class="config-grid two">
             <label><span>提示级别</span><input v-model.trim="editingDraft.content.level" type="text"></label>
             <label><span>提示正文</span><input v-model.trim="editingDraft.content.text" type="text"></label>
           </div>
@@ -153,7 +221,7 @@ const homeModuleTypeSelectOptions = computed(() =>
               <div class="config-grid four">
                 <RouteTargetEditor :model="item" prefix="item" :patient-route-options="patientRouteOptions" include-sort include-enabled />
               </div>
-              <button type="button" class="danger-link" @click="editingContentItems()[itemIndex].enabled = false">删除</button>
+              <button type="button" class="danger-link" @click="disableContentItem(itemIndex)">删除</button>
             </div>
           </div>
           <div v-else class="nested-list">
@@ -197,7 +265,7 @@ const homeModuleTypeSelectOptions = computed(() =>
                   @update:image-alt="item.alt = $event"
                   @cleared="() => { item.imageUrl = ''; item.imageObjectKey = ''; item.alt = ''; }"
                 />
-                <button type="button" class="danger-link" @click="editingDraft.content.items.splice(itemIndex, 1)">删除</button>
+                <button type="button" class="danger-link" @click="removeContentItem(itemIndex, '院区')">删除</button>
               </div>
             </div>
             <div v-if="editingDraft.type === 'featured_departments'" class="nested-list">
@@ -209,7 +277,7 @@ const homeModuleTypeSelectOptions = computed(() =>
                 <div class="config-grid four">
                   <RouteTargetEditor :model="item" prefix="item" :patient-route-options="patientRouteOptions" include-sort include-enabled />
                 </div>
-                <button type="button" class="danger-link" @click="editingDraft.content.items.splice(itemIndex, 1)">删除</button>
+                <button type="button" class="danger-link" @click="removeContentItem(itemIndex, '备用入口')">删除</button>
               </div>
               <div class="nested-list-head">
                 <strong>默认科室名</strong>
@@ -217,7 +285,7 @@ const homeModuleTypeSelectOptions = computed(() =>
               </div>
               <div v-for="(_name, nameIndex) in editingDraft.content.fallbackNames" :key="`editing-fallback-${nameIndex}`" class="config-row-card">
                 <label><span>科室名</span><input v-model.trim="editingDraft.content.fallbackNames[nameIndex]" type="text"></label>
-                <button type="button" class="danger-link" @click="editingDraft.content.fallbackNames.splice(nameIndex, 1)">删除</button>
+                <button type="button" class="danger-link" @click="removeFallbackName(nameIndex)">删除</button>
               </div>
             </div>
           </div>
@@ -236,6 +304,14 @@ const homeModuleTypeSelectOptions = computed(() =>
           <div class="config-grid two">
             <label><span>{{ patientSiteFieldLabel("title") }}</span><input v-model.trim="editingDraft.title" type="text"></label>
             <label><span>页面简介</span><input v-model.trim="editingDraft.intro" type="text"></label>
+            <label>
+              <span>{{ patientSiteFieldLabel("contentSource") }}</span>
+              <ScbSelect v-model="editingDraft.contentSource" :options="contentSourceOptions" close-on-scroll />
+            </label>
+            <label v-if="editingDraft.contentSource === 'cms-page'">
+              <span>{{ patientSiteFieldLabel("slug") }}</span>
+              <input v-model.trim="editingDraft.slug" type="text" placeholder="例如：hospital-intro">
+            </label>
           </div>
           <div class="nested-list">
             <div class="nested-list-head">
@@ -247,14 +323,14 @@ const homeModuleTypeSelectOptions = computed(() =>
                 <label><span>要点标题</span><input v-model.trim="point.title" type="text"></label>
                 <label><span>要点说明</span><input v-model.trim="point.text" type="text"></label>
               </div>
-              <button type="button" class="danger-link" @click="editingDraft.points.splice(pointIndex, 1)">删除</button>
+              <button type="button" class="danger-link" @click="removePoint(pointIndex)">删除</button>
             </div>
           </div>
           <div class="nested-list">
             <div class="nested-list-head">
               <strong>主按钮</strong>
               <button v-if="!editingDraft.primary" type="button" class="topbar-refresh" @click="editingDraft.primary = { label: '返回首页', routeName: 'patient-home' }">添加主按钮</button>
-              <button v-else type="button" class="danger-link" @click="editingDraft.primary.enabled = false">删除主按钮</button>
+              <button v-else type="button" class="danger-link" @click="removePrimary">删除主按钮</button>
             </div>
             <div v-if="editingDraft.primary" class="config-grid two">
               <RouteTargetEditor :model="editingDraft.primary" prefix="primary" :patient-route-options="patientRouteOptions" />

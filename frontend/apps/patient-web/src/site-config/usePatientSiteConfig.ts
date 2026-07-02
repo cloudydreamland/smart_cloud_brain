@@ -1,5 +1,5 @@
 import { ref } from "vue";
-import { api, normalizePatientSiteConfig, type DataRow, type PatientSiteConfig } from "@smart-cloud-brain/shared-api";
+import { api, normalizePatientSiteConfig, type PatientSiteConfig } from "@smart-cloud-brain/shared-api";
 
 const loading = ref(false);
 const config = ref<PatientSiteConfig>(normalizeConfig({}));
@@ -13,14 +13,18 @@ type LoadOptions = {
   keepCurrentOnError?: boolean;
 };
 
+type PlainRecord = Record<string, unknown>;
+type NormalizeOptions = { preserveDisabled?: boolean };
+
 async function loadConfig(options: LoadOptions = {}) {
   if (pending) return pending;
   loading.value = true;
   const request = activePreviewToken.value ? api.patientSitePreviewConfig(activePreviewToken.value) : api.patientSiteConfig();
   pending = request
     .then((remote) => {
-      config.value = normalizeConfig(remote);
-      disabledStaticPageRouteNames.value = collectDisabledStaticPageRouteNames(remote);
+      const isPreview = Boolean(activePreviewToken.value);
+      config.value = normalizeConfig(remote, { preserveDisabled: isPreview });
+      disabledStaticPageRouteNames.value = isPreview ? new Set() : collectDisabledStaticPageRouteNames(remote);
     })
     .catch(() => {
       if (!options.keepCurrentOnError) {
@@ -50,6 +54,10 @@ export function usePatientSiteConfig() {
   return { config, disabledStaticPageRouteNames, loading, activePreviewToken, load, loadHome, loadPreview, clearPreview, refresh: load };
 }
 
+export function getActivePatientSitePreviewToken() {
+  return activePreviewToken.value;
+}
+
 export function startPatientSiteConfigAutoRefresh(intervalMs = 5000) {
   if (typeof window === "undefined" || typeof document === "undefined" || autoRefreshTimer) return;
 
@@ -67,8 +75,8 @@ export function startPatientSiteConfigAutoRefresh(intervalMs = 5000) {
   }
 }
 
-export function normalizeConfig(source: unknown): PatientSiteConfig {
-  return normalizePatientSiteConfig(source);
+export function normalizeConfig(source: unknown, options: NormalizeOptions = {}): PatientSiteConfig {
+  return normalizePatientSiteConfig(source, options);
 }
 
 async function loadHomeConfig() {
@@ -88,11 +96,11 @@ function collectDisabledStaticPageRouteNames(source: unknown) {
   const pages = Array.isArray(staticPages.pages) ? staticPages.pages : [];
   return new Set(
     pages
-      .filter((page): page is DataRow => isRow(page) && page.enabled === false && typeof page.routeName === "string")
+      .filter((page): page is PlainRecord => isRow(page) && page.enabled === false && typeof page.routeName === "string")
       .map((page) => String(page.routeName)),
   );
 }
 
-function isRow(value: unknown): value is DataRow {
+function isRow(value: unknown): value is PlainRecord {
   return Boolean(value && typeof value === "object" && !Array.isArray(value));
 }

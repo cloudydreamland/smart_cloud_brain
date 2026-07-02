@@ -12,9 +12,10 @@ const props = withDefaults(defineProps<{
 });
 
 const emit = defineEmits<{ "update:modelValue": [value: number] }>();
-const pageCount = computed(() => Math.max(1, Math.ceil(props.total / Math.max(1, props.pageSize))));
-const start = computed(() => props.total ? (props.modelValue - 1) * props.pageSize + 1 : 0);
-const end = computed(() => Math.min(props.total, props.modelValue * props.pageSize));
+const pageSize = computed(() => props.pageSize ?? 8);
+const pageCount = computed(() => Math.max(1, Math.ceil(props.total / Math.max(1, pageSize.value))));
+const start = computed(() => props.total ? (props.modelValue - 1) * pageSize.value + 1 : 0);
+const end = computed(() => Math.min(props.total, props.modelValue * pageSize.value));
 
 /** 生成页码按钮列表（含省略号） */
 const pageNumbers = computed(() => {

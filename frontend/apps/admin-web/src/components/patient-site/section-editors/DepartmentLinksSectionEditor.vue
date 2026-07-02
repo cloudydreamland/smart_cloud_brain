@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { DepartmentLinksSection, RouteTargetConfig } from "@smart-cloud-brain/shared-api";
+import { usePatientSiteConfirm } from "../../../composables/patientSiteConfirm";
 import RouteTargetEditor from "../RouteTargetEditor.vue";
 
 defineProps<{
@@ -8,6 +9,29 @@ defineProps<{
 }>();
 
 const emptyLink = (): RouteTargetConfig => ({ label: "", routeName: "patient-home", enabled: true, sort: 0 });
+const confirm = usePatientSiteConfirm();
+
+async function removeLink(section: DepartmentLinksSection, index: number) {
+  const link = section.links[index];
+  if (!link || !(await confirm({
+    title: "确认删除科室链接",
+    message: `将从当前编辑稿中移除科室链接「${link.label || "未命名链接"}」。保存草稿不会影响患者端，保存并生效或发布后，对应页面区块才会不再展示该链接。`,
+    confirmText: "确认删除",
+    tone: "danger",
+  }))) return;
+  section.links.splice(index, 1);
+}
+
+async function removeFallbackName(section: DepartmentLinksSection, index: number) {
+  const name = section.fallbackNames[index];
+  if (!name || !(await confirm({
+    title: "确认删除默认科室名",
+    message: `将从当前编辑稿中移除默认科室名「${name}」。保存草稿不会影响患者端，保存并生效或发布后，对应页面区块才会更新。`,
+    confirmText: "确认删除",
+    tone: "danger",
+  }))) return;
+  section.fallbackNames.splice(index, 1);
+}
 </script>
 
 <template>
@@ -23,7 +47,7 @@ const emptyLink = (): RouteTargetConfig => ({ label: "", routeName: "patient-hom
       <div class="config-grid three">
         <RouteTargetEditor :model="link" prefix="link" :patient-route-options="patientRouteOptions" include-sort include-enabled />
       </div>
-      <button type="button" class="danger-link" @click="section.links.splice(linkIndex, 1)">删除链接</button>
+      <button type="button" class="danger-link" @click="removeLink(section, linkIndex)">删除链接</button>
     </div>
     <div class="nested-list-head">
       <strong>默认科室名</strong>
@@ -31,7 +55,7 @@ const emptyLink = (): RouteTargetConfig => ({ label: "", routeName: "patient-hom
     </div>
     <div v-for="(_name, nameIndex) in section.fallbackNames" :key="`fallback-name-${nameIndex}`" class="config-row-card">
       <label><span>科室名</span><input v-model.trim="section.fallbackNames[nameIndex]" type="text"></label>
-      <button type="button" class="danger-link" @click="section.fallbackNames.splice(nameIndex, 1)">删除科室</button>
+      <button type="button" class="danger-link" @click="removeFallbackName(section, nameIndex)">删除科室</button>
     </div>
   </div>
 </template>

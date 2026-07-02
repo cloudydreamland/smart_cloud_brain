@@ -44,9 +44,12 @@ import {
   type PatientRegisterRequest,
   type PatientSiteConfigRecord,
   type PatientSiteConfigHistoryPage,
+  type PatientSiteAdminConfigMap,
   type PatientSiteConfigPublishRequest,
   type PatientSiteConfigSaveRequest,
+  type PatientSiteHomeResponse,
   type PatientSitePreviewToken,
+  type PatientSitePublicConfigResponse,
   type PrescriptionCheckRequest,
   type PrescriptionCheckResult,
   type PrescriptionCreateRequest,
@@ -145,6 +148,12 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
 const get = <T>(path: string) => request<T>(path, jsonOptions("GET"));
 const post = <T>(path: string, body?: unknown) => request<T>(path, jsonOptions("POST", body));
 
+function getAdminPatientSiteConfig(): Promise<PatientSiteAdminConfigMap>;
+function getAdminPatientSiteConfig(configKey: string): Promise<PatientSiteConfigRecord>;
+function getAdminPatientSiteConfig(configKey?: string) {
+  return get<PatientSiteAdminConfigMap | PatientSiteConfigRecord>(`/admin/patient-site/config${query({ configKey })}`);
+}
+
 export const authApi = {
   registerPatient: (body: PatientRegisterRequest) => post<DataRow>("/patient/register", body),
   sendPatientEmailCode: (body: PatientEmailCodeRequest) => post<DataRow>("/patient/email-code/send", body),
@@ -156,9 +165,9 @@ export const authApi = {
 
 export const patientApi = {
   info: () => get<Patient>("/patient/info"),
-  siteConfig: () => get<DataRow>("/patient-site/config"),
-  homeConfig: () => get<DataRow>("/patient-site/home"),
-  sitePreviewConfig: (previewToken: string) => get<DataRow>(`/patient-site/preview${query({ token: previewToken })}`),
+  siteConfig: () => get<PatientSitePublicConfigResponse>("/patient-site/config"),
+  homeConfig: () => get<PatientSiteHomeResponse>("/patient-site/home"),
+  sitePreviewConfig: (previewToken: string) => get<PatientSitePublicConfigResponse>(`/patient-site/preview${query({ token: previewToken })}`),
   notices: () => get<PatientNotice[]>("/patient-site/notices"),
   recommendations: (type: PatientRecommendationType) => get<PatientRecommendation[]>(`/patient-site/recommendations${query({ type })}`),
   departments: () => get<Department[]>("/doctor/department/list"),
@@ -245,7 +254,7 @@ export const adminApi = {
   emailConfig: () => get<EmailConfig>("/admin/system/email-config"),
   saveEmailConfig: (body: EmailConfigSaveRequest) => post<EmailConfig>("/admin/system/email-config", body),
   testEmailConfig: (body: EmailConfigTestRequest) => post<DataRow>("/admin/system/email-config/test", body),
-  patientSiteConfig: (configKey?: string) => get<DataRow>(`/admin/patient-site/config${query({ configKey })}`),
+  patientSiteConfig: getAdminPatientSiteConfig,
   savePatientSiteConfig: (body: PatientSiteConfigSaveRequest) => post<PatientSiteConfigRecord>("/admin/patient-site/save", body),
   savePublishedPatientSiteConfig: (body: PatientSiteConfigSaveRequest) => post<PatientSiteConfigRecord>("/admin/patient-site/save-published", body),
   publishPatientSiteConfig: (body: PatientSiteConfigPublishRequest) => post<PatientSiteConfigRecord>("/admin/patient-site/publish", body),
@@ -254,6 +263,7 @@ export const adminApi = {
     get<PatientSiteConfigHistoryPage>(`/admin/patient-site/history${query({ configKey, page, pageSize })}`),
   patientSitePreviewToken: (configKey: string, version?: number) =>
     post<PatientSitePreviewToken>(`/admin/patient-site/preview-token${query({ configKey, version })}`, undefined),
+  patientSiteSitePreviewToken: () => post<PatientSitePreviewToken>("/admin/patient-site/site-preview-token", undefined),
   patientSiteNotices: () => get<PatientNotice[]>("/admin/patient-site/notices"),
   savePatientSiteNotice: (body: PatientNoticeSaveRequest) => post<PatientNotice>("/admin/patient-site/notices/save", body),
   deletePatientSiteNotice: (id: number) => post<PatientNotice>("/admin/patient-site/notices/delete", { id }),
@@ -309,6 +319,7 @@ export const api = {
   publishPatientSiteConfig: adminApi.publishPatientSiteConfig,
   patientSiteConfigHistory: adminApi.patientSiteConfigHistory,
   patientSitePreviewToken: adminApi.patientSitePreviewToken,
+  patientSiteSitePreviewToken: adminApi.patientSiteSitePreviewToken,
 };
 
 export function gatewayBase() {

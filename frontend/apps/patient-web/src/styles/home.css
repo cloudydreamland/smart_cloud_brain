@@ -116,6 +116,11 @@
   border-bottom: 1px solid #e2e7ef;
 }
 
+.home-cms-sections {
+  display: grid;
+  gap: 32px;
+}
+
 .home-conditions,
 .home-split {
   display: grid;

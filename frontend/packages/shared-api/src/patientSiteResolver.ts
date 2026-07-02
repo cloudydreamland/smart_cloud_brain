@@ -1,5 +1,10 @@
 import { isAllowedPatientRoute } from "./patientSiteRoutes";
-import { normalizePatientSitePagesConfig } from "./patientSiteSectionRegistry";
+import {
+  isPatientSiteSectionType,
+  normalizePatientSitePagesConfig,
+  normalizePatientSiteSection,
+  patientSiteSectionTypes,
+} from "./patientSiteSectionRegistry";
 import type {
   PatientHomeConfig,
   PatientHomeModule,
@@ -13,7 +18,7 @@ import type {
   RouteTargetConfig,
   StaticPageConfig,
 } from "./patientSiteTypes";
-import type { PatientSitePagesConfig } from "./patientSitePageTypes";
+import type { PatientSitePagesConfig, PatientSiteSection } from "./patientSitePageTypes";
 import type { DataRow } from "./types";
 
 export type PatientSiteConfigKey = "patient_nav" | "patient_home" | "patient_static_pages" | "patient_pages" | "patient_hospital_info" | "patient_footer";
@@ -22,7 +27,8 @@ type ResolveOptions = {
   preserveDisabled?: boolean;
 };
 
-const allowedHomeModules = new Set(["notice", "quick_actions", "intro", "locations", "featured_departments", "static_content"]);
+const legacyHomeModules = new Set(["notice", "quick_actions", "intro", "locations", "featured_departments", "static_content"]);
+const allowedHomeModules = new Set([...legacyHomeModules, ...patientSiteSectionTypes]);
 const emptyPatientSiteConfig: PatientSiteConfig = {
   nav: { brand: { name: "", homeRoute: "" }, menus: [], userLinks: [] },
   home: { hero: { title: "", enabled: false }, modules: [] },
@@ -139,6 +145,7 @@ function normalizeModule(
   const type = text(row.type, "");
   if (!allowedHomeModules.has(type)) return undefined;
   const content = normalizeModuleContent(type, row.content, options);
+  if (!content) return undefined;
   return {
     type,
     key: text(row.key, `${type || "module"}-${index + 1}`),
@@ -152,8 +159,11 @@ function normalizeModuleContent(
   type: string,
   source: unknown,
   options: ResolveOptions,
-): Record<string, unknown> {
+): Record<string, unknown> | undefined {
   const content = isRecord(source) ? source : {};
+  if (isPatientSiteSectionType(type) && !legacyHomeModules.has(type)) {
+    return normalizeHomeSectionContent(type, content);
+  }
   if (type === "quick_actions") {
     return {
       ...content,
@@ -167,6 +177,16 @@ function normalizeModuleContent(
     };
   }
   return { ...content };
+}
+
+function normalizeHomeSectionContent(type: string, content: DataRow) {
+  const section = normalizePatientSiteSection({ ...content, type });
+  return section ? sectionContent(section) : undefined;
+}
+
+function sectionContent(section: PatientSiteSection): Record<string, unknown> {
+  const { id: _id, type: _type, enabled: _enabled, sort: _sort, ...content } = section;
+  return content;
 }
 
 function normalizeStaticPages(source: unknown, options: ResolveOptions): PatientStaticPagesConfig {
@@ -242,6 +262,8 @@ function normalizePage(
     label: text(row.label, ""),
     title,
     intro: text(row.intro, ""),
+    contentSource: contentSource(row.contentSource),
+    slug: slugValue(row.slug),
     enabled: row.enabled === false ? false : true,
     sort: numberValue(row.sort, index * 10),
     points: normalizeArray(row.points, (item) => normalizePoint(item)),
@@ -318,6 +340,10 @@ function optionalText(value: unknown) {
 
 function slugValue(value: unknown) {
   return typeof value === "string" && value.trim() ? value.trim().toLowerCase() : undefined;
+}
+
+function contentSource(value: unknown) {
+  return value === "cms-page" ? "cms-page" : "static";
 }
 
 function numberValue(value: unknown, fallback: number) {

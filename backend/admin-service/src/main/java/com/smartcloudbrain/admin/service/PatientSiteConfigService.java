@@ -41,17 +41,24 @@ public class PatientSiteConfigService {
       "patient-home", "patient-dashboard", "patient-triage", "patient-doctors", "patient-appointments",
       "patient-records", "patient-prescriptions", "patient-reports", "patient-invoices", "patient-messages",
       "patient-profile", "patient-visitors", "public-search", "public-departments", "public-conditions",
-      "public-guide", "public-research", "service-internet-clinic", "service-exam-booking", "service-inpatient",
+      "public-giving", "public-guide", "public-locations", "public-professionals", "public-research",
+      "service-internet-clinic", "service-exam-booking", "service-inpatient",
       "service-emergency", "service-international", "doctor-experts", "doctor-centers", "doctor-schedules",
       "library-symptoms", "library-drugs", "library-tests", "library-rehab", "library-articles",
       "ai-symptom", "ai-record-summary", "ai-medication", "ai-assessment", "about-hospital",
       "about-news", "about-careers", "about-contact", "cms-page"
   );
-  private static final Set<String> HOME_MODULES = Set.of(
+  private static final Set<String> LEGACY_HOME_MODULES = Set.of(
       "notice", "quick_actions", "intro", "locations", "featured_departments", "static_content"
   );
   private static final Set<String> SECTION_TYPES = Set.of(
-      "notice", "rich_text", "card_grid", "faq", "timeline", "cta", "link_grid", "department_links"
+      "notice", "rich_text", "card_grid", "faq", "timeline", "cta", "link_grid", "department_links",
+      "image_text", "hero", "gallery", "contact_panel", "stats", "doctor_list", "department_list"
+  );
+  private static final Set<String> HOME_MODULES = Set.of(
+      "notice", "quick_actions", "intro", "locations", "featured_departments", "static_content",
+      "rich_text", "card_grid", "faq", "timeline", "cta", "link_grid", "department_links",
+      "image_text", "hero", "gallery", "contact_panel", "stats", "doctor_list", "department_list"
   );
 
   private final PatientSiteConfigRepository repository;
@@ -212,13 +219,31 @@ public class PatientSiteConfigService {
     String key = requireConfigKey(configKey);
     PatientSiteConfig preview = selectPreviewConfig(key, version);
     long expiresAt = Instant.now().plusSeconds(15 * 60).getEpochSecond();
-    String payload = key + "|" + preview.getVersion() + "|" + expiresAt;
-    String encodedPayload = Base64.getUrlEncoder().withoutPadding().encodeToString(payload.getBytes(StandardCharsets.UTF_8));
-    String signature = sign(encodedPayload);
+    String token = previewToken(Map.of(key, preview.getVersion()), expiresAt);
     Map<String, Object> view = new LinkedHashMap<>();
-    view.put("token", encodedPayload + "." + signature);
+    view.put("token", token);
+    view.put("scope", "config");
     view.put("configKey", key);
     view.put("version", preview.getVersion());
+    view.put("versions", Map.of(key, preview.getVersion()));
+    view.put("expiresAt", expiresAt);
+    return view;
+  }
+
+  @Transactional
+  public Map<String, Object> createSitePreviewToken() {
+    ensurePublishedDefaults();
+    Map<String, Integer> versions = new LinkedHashMap<>();
+    for (String key : CONFIG_KEYS) {
+      PatientSiteConfig preview = selectPreviewConfig(key, null);
+      versions.put(key, preview.getVersion());
+    }
+    long expiresAt = Instant.now().plusSeconds(15 * 60).getEpochSecond();
+    String token = previewToken(versions, expiresAt);
+    Map<String, Object> view = new LinkedHashMap<>();
+    view.put("token", token);
+    view.put("scope", "site");
+    view.put("versions", versions);
     view.put("expiresAt", expiresAt);
     return view;
   }
@@ -226,13 +251,15 @@ public class PatientSiteConfigService {
   @Transactional
   public Map<String, Object> previewConfig(String token) {
     PreviewPayload payload = parsePreviewToken(token);
-    PatientSiteConfig preview = repository.findByConfigKeyOrderByVersionDesc(payload.configKey()).stream()
-        .filter(row -> Integer.valueOf(payload.version()).equals(row.getVersion()))
-        .findFirst()
-        .orElseThrow(() -> new BusinessException(404, "Preview config version not found"));
-    JsonNode override = parseObject(preview.getConfigJson());
     Map<String, Object> view = publicConfig();
-    view.put(publicField(payload.configKey()), objectMapper.convertValue(override, Object.class));
+    for (Map.Entry<String, Integer> entry : payload.versions().entrySet()) {
+      PatientSiteConfig preview = repository.findByConfigKeyOrderByVersionDesc(entry.getKey()).stream()
+          .filter(row -> entry.getValue().equals(row.getVersion()))
+          .findFirst()
+          .orElseThrow(() -> new BusinessException(404, "Preview config version not found"));
+      JsonNode override = parseObject(preview.getConfigJson());
+      view.put(publicField(entry.getKey()), objectMapper.convertValue(override, Object.class));
+    }
     return view;
   }
 
@@ -476,6 +503,8 @@ public class PatientSiteConfigService {
           requireText(item, "label", "patient_home.modules[].content.items[].label");
           requireRouteName(item, "patient_home.modules[].content.items[].routeName");
         }
+      } else if (!LEGACY_HOME_MODULES.contains(type) && SECTION_TYPES.contains(type)) {
+        validateSection(module.path("content"), type);
       }
     }
   }
@@ -484,6 +513,9 @@ public class PatientSiteConfigService {
     for (JsonNode page : array(root.path("pages"), "patient_static_pages.pages")) {
       requireText(page, "routeName", "patient_static_pages.pages[].routeName");
       requireText(page, "title", "patient_static_pages.pages[].title");
+      if ("cms-page".equals(page.path("contentSource").asText(""))) {
+        requireText(page, "slug", "patient_static_pages.pages[].slug");
+      }
       if (page.path("primary").isObject()) {
         requireText(page.path("primary"), "label", "patient_static_pages.pages[].primary.label");
         requireRouteName(page.path("primary"), "patient_static_pages.pages[].primary.routeName");
@@ -534,6 +566,22 @@ public class PatientSiteConfigService {
         validateRouteTargets(section.path("links"), "patient_pages.pages[].sections[].links");
       }
       case "department_links" -> validateRouteTargets(section.path("links"), "patient_pages.pages[].sections[].links");
+      case "image_text" -> {
+        requireText(section, "text", "patient_pages.pages[].sections[].text");
+        validateOptionalAction(section.path("primary"), "patient_pages.pages[].sections[].primary");
+      }
+      case "hero" -> {
+        requireText(section, "text", "patient_pages.pages[].sections[].text");
+        validateOptionalAction(section.path("primary"), "patient_pages.pages[].sections[].primary");
+        validateOptionalAction(section.path("secondary"), "patient_pages.pages[].sections[].secondary");
+      }
+      case "gallery" -> validateImages(section.path("images"), "patient_pages.pages[].sections[].images");
+      case "contact_panel" -> {
+        requireText(section, "text", "patient_pages.pages[].sections[].text");
+        validateOptionalAction(section.path("primary"), "patient_pages.pages[].sections[].primary");
+      }
+      case "stats" -> validateStats(section.path("items"), "patient_pages.pages[].sections[].items");
+      case "doctor_list", "department_list" -> validateRouteTargets(section.path("links"), "patient_pages.pages[].sections[].links");
       default -> throw new BusinessException(400, "Unsupported patient page section type: " + type);
     }
   }
@@ -567,6 +615,22 @@ public class PatientSiteConfigService {
     for (JsonNode item : array(items, path)) {
       requireText(item, "title", path + "[].title");
       requireText(item, "text", path + "[].text");
+    }
+  }
+
+  private void validateImages(JsonNode images, String path) {
+    requireNonEmptyArray(images, path);
+    for (JsonNode image : array(images, path)) {
+      requireText(image, "url", path + "[].url");
+      requireText(image, "alt", path + "[].alt");
+    }
+  }
+
+  private void validateStats(JsonNode items, String path) {
+    requireNonEmptyArray(items, path);
+    for (JsonNode item : array(items, path)) {
+      requireText(item, "label", path + "[].label");
+      requireText(item, "value", path + "[].value");
     }
   }
 
@@ -632,6 +696,9 @@ public class PatientSiteConfigService {
     } catch (IllegalArgumentException ex) {
       throw new BusinessException(401, "Preview token is invalid");
     }
+    if (payloadText.trim().startsWith("{")) {
+      return parseJsonPreviewPayload(payloadText);
+    }
     String[] values = payloadText.split("\\|", 3);
     if (values.length != 3) {
       throw new BusinessException(401, "Preview token is invalid");
@@ -648,7 +715,45 @@ public class PatientSiteConfigService {
     if (Instant.now().getEpochSecond() > expiresAt) {
       throw new BusinessException(401, "Preview token is expired");
     }
-    return new PreviewPayload(configKey, version);
+    return new PreviewPayload(Map.of(configKey, version));
+  }
+
+  private PreviewPayload parseJsonPreviewPayload(String payloadText) {
+    JsonNode root;
+    try {
+      root = objectMapper.readTree(payloadText);
+    } catch (Exception ex) {
+      throw new BusinessException(401, "Preview token is invalid");
+    }
+    long expiresAt = root.path("expiresAt").asLong(0);
+    if (Instant.now().getEpochSecond() > expiresAt) {
+      throw new BusinessException(401, "Preview token is expired");
+    }
+    JsonNode versionsNode = root.path("versions");
+    if (!versionsNode.isObject()) {
+      throw new BusinessException(401, "Preview token is invalid");
+    }
+    Map<String, Integer> versions = new LinkedHashMap<>();
+    versionsNode.fields().forEachRemaining(entry -> {
+      String key = requireConfigKey(entry.getKey());
+      int version = entry.getValue().asInt(0);
+      if (version <= 0) {
+        throw new BusinessException(401, "Preview token is invalid");
+      }
+      versions.put(key, version);
+    });
+    if (versions.isEmpty()) {
+      throw new BusinessException(401, "Preview token is invalid");
+    }
+    return new PreviewPayload(versions);
+  }
+
+  private String previewToken(Map<String, Integer> versions, long expiresAt) {
+    Map<String, Object> payload = new LinkedHashMap<>();
+    payload.put("versions", versions);
+    payload.put("expiresAt", expiresAt);
+    String encodedPayload = Base64.getUrlEncoder().withoutPadding().encodeToString(compactValue(payload).getBytes(StandardCharsets.UTF_8));
+    return encodedPayload + "." + sign(encodedPayload);
   }
 
   private String sign(String payload) {
@@ -710,9 +815,17 @@ public class PatientSiteConfigService {
     }
   }
 
+  private String compactValue(Object value) {
+    try {
+      return objectMapper.writeValueAsString(value);
+    } catch (Exception ex) {
+      throw new BusinessException(500, "Preview token payload must be serializable JSON");
+    }
+  }
+
   private boolean isBlank(String value) {
     return value == null || value.isBlank();
   }
 
-  private record PreviewPayload(String configKey, int version) {}
+  private record PreviewPayload(Map<String, Integer> versions) {}
 }

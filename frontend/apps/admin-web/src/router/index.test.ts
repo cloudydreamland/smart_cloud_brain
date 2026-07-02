@@ -8,4 +8,11 @@ describe("admin routes", () => {
 
     expect(resolved.name).toBe("not-found");
   });
+
+  it("requires patient-site manage permission for the patient site editor", () => {
+    const resolved = router.resolve("/patient-site");
+
+    expect(resolved.name).toBe("admin-patient-site");
+    expect(resolved.meta.permission).toBe("patient-site:manage");
+  });
 });

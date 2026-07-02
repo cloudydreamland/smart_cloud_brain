@@ -1,26 +1,28 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
-import { useRouter } from "vue-router";
-import { api, type Department, type Doctor, type PatientNotice, type PatientRecommendation } from "@smart-cloud-brain/shared-api";
-import { toPatientRoute } from "../site-config/routeTarget";
+import { useRoute, useRouter } from "vue-router";
+import {
+  api,
+  type Department,
+  type Doctor,
+  type PatientNotice,
+  type PatientRecommendation,
+} from "@smart-cloud-brain/shared-api";
+import PatientSiteSectionRenderer from "../components/cms/PatientSiteSectionRenderer.vue";
+import { actionValue, contentArray, contentOf, homeModuleToSection, isRouteAction, isSectionHomeModule, numberValue, onImageError, recommendationDescription, recommendationKey, record, textValue } from "../site-config/homePageHelpers";
+import { toPatientRoute, withPatientPreview } from "../site-config/routeTarget";
 import { usePatientSiteConfig } from "../site-config/usePatientSiteConfig";
-import type { PatientHomeModule, RouteTargetConfig } from "../site-config/types";
-
-type HomeLocation = {
-  title: string;
-  meta: string;
-  imageUrl: string;
-  alt: string;
-};
+import type { PatientHomeModule } from "../site-config/types";
 
 const router = useRouter();
+const route = useRoute();
 const departments = ref<Department[]>([]);
 const doctors = ref<Doctor[]>([]);
 const portalNotices = ref<PatientNotice[]>([]);
 const hotDepartments = ref<PatientRecommendation[]>([]);
 const recommendedDoctors = ref<PatientRecommendation[]>([]);
 const conditionQuery = ref("");
-const { config, loadHome } = usePatientSiteConfig();
+const { config, loadHome, loadPreview } = usePatientSiteConfig();
 
 const hero = computed(() => config.value.home.hero);
 const heroStyle = computed(() => {
@@ -28,8 +30,13 @@ const heroStyle = computed(() => {
   return imageUrl ? { "--hero-bg": `url("${imageUrl.replace(/"/g, '\\"')}")` } : undefined;
 });
 const homeModules = computed(() => config.value.home.modules);
-const notice = computed(() => homeModules.value.find((module) => module.type === "notice"));
+const previewToken = computed(() => {
+  const value = route.query.previewToken;
+  return typeof value === "string" ? value : "";
+});
+const notice = computed(() => moduleByType("notice"));
 const noticeText = computed(() => {
+  if (!notice.value) return "";
   const firstNotice = portalNotices.value[0];
   if (firstNotice) return `${firstNotice.title}：${firstNotice.content}`;
   return String(notice.value?.content?.text || "");
@@ -37,6 +44,7 @@ const noticeText = computed(() => {
 const introModule = computed(() => moduleByType("intro"));
 const locationsModule = computed(() => moduleByType("locations"));
 const featuredDepartmentsModule = computed(() => moduleByType("featured_departments"));
+const doctorListModule = computed(() => moduleByType("doctor_list"));
 const staticContentModule = computed(() => moduleByType("static_content"));
 
 const quickActions = computed(() => {
@@ -48,7 +56,13 @@ const quickActions = computed(() => {
 const introContent = computed(() => contentOf(introModule.value));
 const locationsContent = computed(() => contentOf(locationsModule.value));
 const featuredDepartmentsContent = computed(() => contentOf(featuredDepartmentsModule.value));
+const doctorListContent = computed(() => contentOf(doctorListModule.value));
 const staticContent = computed(() => contentOf(staticContentModule.value));
+const sectionHomeModules = computed(() =>
+  homeModules.value
+    .filter((module) => module.enabled !== false && isSectionHomeModule(module) && module.type !== "doctor_list")
+    .map((module) => homeModuleToSection(module)),
+);
 
 const introAction = computed(() =>
   actionValue(introContent.value.action, { label: "进入患者服务", routeName: "patient-dashboard" }),
@@ -74,10 +88,12 @@ const locationItems = computed(() => {
 });
 
 const featuredDepartmentLimit = computed(() => numberValue(featuredDepartmentsContent.value.limit, 12));
+const recommendedDoctorLimit = computed(() => numberValue(doctorListContent.value.limit, 6));
 const featuredDepartments = computed(() => {
   if (hotDepartments.value.length) return hotDepartments.value.slice(0, featuredDepartmentLimit.value);
   return departments.value.slice(0, featuredDepartmentLimit.value);
 });
+const displayedRecommendedDoctors = computed(() => recommendedDoctors.value.slice(0, recommendedDoctorLimit.value));
 const configuredDepartmentLinks = computed(() => contentArray(featuredDepartmentsModule.value, "items").filter(isRouteAction));
 const fallbackDepartmentNames = computed(() => {
   const names = contentArray(featuredDepartmentsModule.value, "fallbackNames")
@@ -85,70 +101,38 @@ const fallbackDepartmentNames = computed(() => {
     .map((item) => item.trim());
   return names.length ? names : [];
 });
+const fallbackDoctorNames = computed(() =>
+  contentArray(doctorListModule.value, "fallbackNames")
+    .filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+    .map((item) => item.trim()),
+);
 
 function moduleByType(type: string): PatientHomeModule | undefined {
-  return homeModules.value.find((module) => module.type === type);
-}
-
-function contentOf(module: PatientHomeModule | undefined): Record<string, unknown> {
-  return record(module?.content);
-}
-
-function contentArray(module: PatientHomeModule | undefined, key: string): unknown[] {
-  const value = contentOf(module)[key];
-  return Array.isArray(value) ? value : [];
-}
-
-function record(value: unknown): Record<string, unknown> {
-  return Boolean(value && typeof value === "object" && !Array.isArray(value)) ? value as Record<string, unknown> : {};
-}
-
-function textValue(value: unknown, fallback: string) {
-  return typeof value === "string" && value.trim() ? value.trim() : fallback;
-}
-
-function numberValue(value: unknown, fallback: number) {
-  return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : fallback;
-}
-
-function actionValue(value: unknown, fallback: RouteTargetConfig): RouteTargetConfig {
-  return isRouteAction(value) ? value : fallback;
-}
-
-function isRouteAction(value: unknown): value is RouteTargetConfig {
-  if (!value || typeof value !== "object" || !("label" in value) || !("routeName" in value)) return false;
-  const link = value as RouteTargetConfig;
-  return link.routeName !== "cms-page" || Boolean(link.slug);
+  return homeModules.value.find((module) => module.type === type && module.enabled !== false);
 }
 
 function goSearch(q = "") {
   const queryText = q.trim();
-  router.push({ name: "public-search", query: queryText ? { q: queryText } : {} });
+  router.push(withPatientPreview({ name: "public-search", query: queryText ? { q: queryText } : {} }, previewToken.value));
 }
 
 function recommendationTitle(item: PatientRecommendation | Department | Doctor) {
   return String(("title" in item && item.title) || ("targetName" in item && item.targetName) || ("name" in item && item.name) || "科室");
 }
 
-function recommendationDescription(item: PatientRecommendation) {
-  return item.description || item.departmentName || item.specialty || "";
-}
-
-function recommendationKey(item: PatientRecommendation | Department | Doctor) {
-  return String(("id" in item && item.id) || ("targetId" in item && item.targetId) || ("name" in item && item.name) || recommendationTitle(item));
-}
-
-function onImageError(event: Event) {
-  const image = event.target instanceof HTMLImageElement ? event.target : null;
-  if (image) image.hidden = true;
-}
-
 onMounted(async () => {
-  const homeConfig = await loadHome();
-  const homeRow = record(homeConfig);
-  portalNotices.value = Array.isArray(homeRow.notices) ? homeRow.notices as PatientNotice[] : [];
-  hotDepartments.value = Array.isArray(homeRow.hotDepartments) ? homeRow.hotDepartments as PatientRecommendation[] : [];
-  recommendedDoctors.value = Array.isArray(homeRow.recommendedDoctors) ? homeRow.recommendedDoctors as PatientRecommendation[] : [];
+  if (previewToken.value) {
+    await loadPreview(previewToken.value);
+    portalNotices.value = [];
+    hotDepartments.value = [];
+    recommendedDoctors.value = [];
+  } else {
+    const homeConfig = await loadHome();
+    const homeRow = record(homeConfig);
+    portalNotices.value = Array.isArray(homeRow.notices) ? homeRow.notices as PatientNotice[] : [];
+    hotDepartments.value = Array.isArray(homeRow.hotDepartments) ? homeRow.hotDepartments as PatientRecommendation[] : [];
+    recommendedDoctors.value = Array.isArray(homeRow.recommendedDoctors) ? homeRow.recommendedDoctors as PatientRecommendation[] : [];
+  }
   try {
     const [departmentRows, doctorRows] = await Promise.all([api.departments(), api.doctors()]);
     departments.value = departmentRows;
@@ -186,6 +170,14 @@ onMounted(async () => {
       </RouterLink>
     </section>
 
+    <section v-if="sectionHomeModules.length" class="home-section home-cms-sections">
+      <PatientSiteSectionRenderer
+        v-for="section in sectionHomeModules"
+        :key="section.id || `${section.type}-${section.sort || 0}`"
+        :section="section"
+      />
+    </section>
+
     <section class="home-section home-conditions">
       <div>
         <p class="home-eyebrow">按首字母查找疾病百科</p>
@@ -193,7 +185,7 @@ onMounted(async () => {
           <RouterLink
             v-for="letter in ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','#']"
             :key="letter"
-            :to="{ name: 'public-conditions', query: { letter } }"
+            :to="withPatientPreview({ name: 'public-conditions', query: { letter } }, previewToken)"
           >
             {{ letter }}
           </RouterLink>
@@ -254,7 +246,7 @@ onMounted(async () => {
         <RouterLink
           v-for="dept in featuredDepartments"
           :key="recommendationKey(dept)"
-          :to="{ name: 'public-search', query: { q: recommendationTitle(dept) } }"
+          :to="withPatientPreview({ name: 'public-search', query: { q: recommendationTitle(dept) } }, previewToken)"
         >
           {{ recommendationTitle(dept) }} <span>→</span>
         </RouterLink>
@@ -264,28 +256,39 @@ onMounted(async () => {
           </RouterLink>
         </template>
         <template v-else-if="!featuredDepartments.length">
-          <RouterLink v-for="name in fallbackDepartmentNames" :key="name" :to="{ name: 'public-search', query: { q: name } }">
+          <RouterLink v-for="name in fallbackDepartmentNames" :key="name" :to="withPatientPreview({ name: 'public-search', query: { q: name } }, previewToken)">
             {{ name }} <span>→</span>
           </RouterLink>
         </template>
       </div>
     </section>
 
-    <section v-if="recommendedDoctors.length" class="home-section">
+    <section v-if="doctorListModule && (displayedRecommendedDoctors.length || fallbackDoctorNames.length)" class="home-section">
       <div class="home-section-head">
-        <h2>推荐医生</h2>
+        <h2>{{ textValue(doctorListContent.title, "推荐医生") }}</h2>
         <p>根据管理端配置优先展示推荐专家，患者可继续通过搜索查看完整医生团队。</p>
       </div>
       <div class="home-doctor-grid">
         <RouterLink
-          v-for="doctor in recommendedDoctors"
+          v-for="doctor in displayedRecommendedDoctors"
           :key="recommendationKey(doctor)"
-          :to="{ name: 'public-search', query: { q: recommendationTitle(doctor) } }"
+          :to="withPatientPreview({ name: 'public-search', query: { q: recommendationTitle(doctor) } }, previewToken)"
         >
           <img v-if="doctor.imageUrl" :src="doctor.imageUrl" :alt="recommendationTitle(doctor)" @error="onImageError">
           <span>
             <strong>{{ recommendationTitle(doctor) }}</strong>
             <small>{{ recommendationDescription(doctor) }}</small>
+          </span>
+        </RouterLink>
+        <RouterLink
+          v-for="name in fallbackDoctorNames"
+          v-show="!displayedRecommendedDoctors.length"
+          :key="name"
+          :to="withPatientPreview({ name: 'public-search', query: { q: name } }, previewToken)"
+        >
+          <span>
+            <strong>{{ name }}</strong>
+            <small>管理端配置的推荐医生</small>
           </span>
         </RouterLink>
       </div>

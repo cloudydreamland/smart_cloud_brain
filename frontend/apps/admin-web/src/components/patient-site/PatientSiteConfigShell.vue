@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
+import { ConfirmDialog } from "@smart-cloud-brain/shared-ui";
 import { formatDateTime } from "@smart-cloud-brain/shared-api";
 import type { PatientSiteConfigKey } from "@smart-cloud-brain/shared-api";
 import { usePatientSiteConfigEditor } from "../../composables/usePatientSiteConfigEditor";
+import { usePatientSiteConfirmHost } from "../../composables/patientSiteConfirm";
 import { patientSiteConfigStatusText } from "../../patientSitePresentation";
 import FooterConfigEditor from "./FooterConfigEditor.vue";
 import NavConfigEditor from "./NavConfigEditor.vue";
@@ -15,11 +17,13 @@ import StaticPagesEditor from "./StaticPagesEditor.vue";
 import PatientSiteEditorModal from "./PatientSiteEditorModal.vue";
 import PatientSiteHistoryPanel from "./PatientSiteHistoryPanel.vue";
 
-const editor = usePatientSiteConfigEditor();
+const patientSiteConfirm = usePatientSiteConfirmHost();
+const editor = usePatientSiteConfigEditor({ confirm: patientSiteConfirm.confirm });
 const {
   tabs,
   activeKey,
   activeRecord,
+  activeEditingSource,
   activeErrors,
   activeHistories,
   loading,
@@ -91,6 +95,10 @@ onMounted(editor.loadAll);
               <dd>{{ activeRecord?.status ? patientSiteConfigStatusText(activeRecord.status) : "未保存" }}</dd>
             </div>
             <div>
+              <dt>编辑来源</dt>
+              <dd>{{ activeEditingSource ? patientSiteConfigStatusText(activeEditingSource) : "未保存" }}</dd>
+            </div>
+            <div>
               <dt>版本</dt>
               <dd>{{ activeRecord?.version || "-" }}</dd>
             </div>
@@ -105,7 +113,9 @@ onMounted(editor.loadAll);
           </label>
           <div v-if="isConfigPanel" class="patient-site-side-actions">
             <button type="button" class="topbar-refresh" :disabled="loading" @click="editor.loadConfig()">重新加载</button>
+            <button type="button" class="topbar-refresh" :disabled="saving" @click="editor.loadPublishedConfig">载入发布版</button>
             <button type="button" class="topbar-refresh" @click="editor.useTemplate">使用模板</button>
+            <button type="button" class="topbar-refresh" :disabled="saving" @click="editor.previewSite">预览整站</button>
             <button type="button" class="quick-btn publish" :disabled="saving" @click="editor.saveAndApply">保存并生效</button>
           </div>
           <PatientSiteHistoryPanel
@@ -144,6 +154,7 @@ onMounted(editor.loadAll);
           <HomeConfigEditor
             v-else-if="activePanel === 'patient_home'"
             :home-draft="homeDraft"
+            :section-type-options="sectionTypeOptions"
             :module-summary="editor.moduleSummary"
             :toggle-enabled="editor.toggleEnabled"
             :open-editor="editor.openEditor"
@@ -153,6 +164,8 @@ onMounted(editor.loadAll);
             :add-locations-module="editor.addLocationsModule"
             :add-featured-departments-module="editor.addFeaturedDepartmentsModule"
             :add-static-content-module="editor.addStaticContentModule"
+            :add-home-section-module="editor.addHomeSectionModule"
+            :reorder-home-module="editor.reorderHomeModule"
             :remove-home-module="editor.removeHomeModule"
           />
           <HospitalInfoConfigEditor
@@ -214,6 +227,15 @@ onMounted(editor.loadAll);
       :add-editing-location-item="editor.addEditingLocationItem"
       :add-editing-department-link="editor.addEditingDepartmentLink"
       :add-editing-fallback-name="editor.addEditingFallbackName"
+    />
+    <ConfirmDialog
+      :open="patientSiteConfirm.dialog.open"
+      :title="patientSiteConfirm.dialog.title"
+      :message="patientSiteConfirm.dialog.message"
+      :confirm-text="patientSiteConfirm.dialog.confirmText"
+      :tone="patientSiteConfirm.dialog.tone"
+      @close="patientSiteConfirm.closeDialog"
+      @confirm="patientSiteConfirm.confirmDialog"
     />
   </section>
 </template>

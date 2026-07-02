@@ -68,8 +68,7 @@
 
 .patient-config-modal input,
 .patient-config-modal textarea,
-.patient-config-modal select,
-.patient-config-modal .scb-select {
+.patient-config-modal select {
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -78,10 +77,19 @@
 }
 
 .patient-config-modal input,
-.patient-config-modal select,
-.patient-config-modal .scb-select {
+.patient-config-modal select {
   height: 36px;
   padding: 0 10px;
+}
+
+.patient-config-modal .scb-select {
+  width: 100%;
+  min-width: 0;
+}
+
+.patient-config-modal .scb-select-trigger {
+  height: 36px;
+  border-radius: 8px;
 }
 
 .patient-config-modal textarea {
