@@ -37,4 +37,26 @@ class PatientCatalogCacheServiceTest {
 
     assertDoesNotThrow(service::evictCatalogCaches);
   }
+
+  @Test
+  void doesNotCallClearWhenCacheIsNull() {
+    when(cacheManager.getCache("patient:department:list")).thenReturn(null);
+    when(cacheManager.getCache("patient:doctor:list")).thenReturn(null);
+
+    assertDoesNotThrow(service::evictCatalogCaches);
+
+    verify(cacheManager).getCache("patient:department:list");
+    verify(cacheManager).getCache("patient:doctor:list");
+  }
+
+  @Test
+  void oneCacheNullDoesNotAffectTheOther() {
+    when(cacheManager.getCache("patient:department:list")).thenReturn(null);
+    Cache doctorCache = mock(Cache.class);
+    when(cacheManager.getCache("patient:doctor:list")).thenReturn(doctorCache);
+
+    service.evictCatalogCaches();
+
+    verify(doctorCache).clear();
+  }
 }

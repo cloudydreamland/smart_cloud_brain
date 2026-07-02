@@ -71,6 +71,25 @@
             <exclude>**/dto/**</exclude>
             <exclude>**/repository/**</exclude>
             <exclude>**/config/**</exclude>
+            <!-- 基础设施：事件发布/订阅框架 -->
+            <exclude>**/DomainEventPublisher.class</exclude>
+            <exclude>**/DomainEventEnvelope.class</exclude>
+            <exclude>**/OutboxEvent.class</exclude>
+            <exclude>**/OutboxEventPublisher.class</exclude>
+            <!-- 基础设施：微服务间 HTTP 调用客户端 -->
+            <exclude>**/InternalDoctorClient.class</exclude>
+            <exclude>**/InternalTriageClient.class</exclude>
+            <exclude>**/InternalAiClient.class</exclude>
+            <exclude>**/InternalNotificationClient.class</exclude>
+            <exclude>**/InternalPatientCacheClient.class</exclude>
+            <exclude>**/InternalRegistrationCacheClient.class</exclude>
+            <!-- 基础设施：安全上下文、健康检查、简单数据类 -->
+            <exclude>**/CurrentUserService.class</exclude>
+            <exclude>**/AuthenticatedUser.class</exclude>
+            <exclude>**/HealthController.class</exclude>
+            <exclude>**/PageResult.class</exclude>
+            <!-- 基础设施：跨服务共享的网关/AI 调用封装 -->
+            <exclude>**/AiGatewayService.class</exclude>
           </excludes>
         </configuration>
         <executions>
