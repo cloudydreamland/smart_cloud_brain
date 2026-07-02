@@ -72,7 +72,7 @@ class MedicalRecordServiceTest {
         .thenReturn(new AuthenticatedUser(1L, RoleType.PATIENT, "患者"))
         .thenReturn(new AuthenticatedUser(2L, RoleType.DOCTOR, "医生"))
         .thenReturn(new AuthenticatedUser(9L, RoleType.ADMIN, "管理员"));
-    when(medicalRecordRepository.findByPatientId(eq(1L), any(Sort.class))).thenReturn(List.of(record));
+    when(medicalRecordRepository.findByOwnerPatientId(eq(1L), any(Sort.class))).thenReturn(List.of(record));
     when(medicalRecordRepository.findByDoctorId(eq(2L), any(Sort.class))).thenReturn(List.of(record));
     when(medicalRecordRepository.findAll(any(Sort.class))).thenReturn(List.of(record));
     when(patientRepository.findById(1L)).thenReturn(Optional.empty());
@@ -140,6 +140,11 @@ class MedicalRecordServiceTest {
     Registration registration = new Registration();
     registration.setId(20L);
     registration.setPatientId(1L);
+    registration.setOwnerPatientId(1L);
+    registration.setSubjectType("ACCOUNT");
+    registration.setSubjectId(1L);
+    registration.setSubjectName("患者");
+    registration.setSubjectRelationship("本人");
     registration.setDoctorId(2L);
     registration.setAppointmentTime(LocalDateTime.of(2026, 6, 21, 9, 0));
     return registration;
@@ -150,6 +155,11 @@ class MedicalRecordServiceTest {
     record.setId(30L);
     record.setRegistrationId(20L);
     record.setPatientId(1L);
+    record.setOwnerPatientId(1L);
+    record.setSubjectType("ACCOUNT");
+    record.setSubjectId(1L);
+    record.setSubjectName("患者");
+    record.setSubjectRelationship("本人");
     record.setDoctorId(2L);
     record.setChiefComplaint("胸痛");
     record.setDiagnosis("待查");

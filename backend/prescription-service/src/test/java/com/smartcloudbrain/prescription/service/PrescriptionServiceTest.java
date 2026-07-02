@@ -136,6 +136,9 @@ class PrescriptionServiceTest {
         List.of(new DrugItem("阿司匹林", "100mg", "每日一次", "口服", null, null))));
 
     assertEquals("CONFIRMED", result.get("status"));
+    assertEquals(1L, result.get("ownerPatientId"));
+    assertEquals("ACCOUNT", result.get("subjectType"));
+    assertEquals(1L, result.get("subjectId"));
     assertEquals(1, ((List<?>) result.get("items")).size());
     verify(outboxEventPublisher, times(2)).enqueue(any(), any(), any());
   }
@@ -148,7 +151,7 @@ class PrescriptionServiceTest {
         .thenReturn(new AuthenticatedUser(2L, RoleType.DOCTOR, "医生"))
         .thenReturn(new AuthenticatedUser(9L, RoleType.ADMIN, "管理员"))
         .thenReturn(new AuthenticatedUser(3L, RoleType.DOCTOR, "其他医生"));
-    when(prescriptionRepository.findByPatientId(1L)).thenReturn(List.of(prescription));
+    when(prescriptionRepository.findByOwnerPatientId(1L)).thenReturn(List.of(prescription));
     when(prescriptionRepository.findByDoctorId(2L)).thenReturn(List.of(prescription));
     when(prescriptionRepository.findAll()).thenReturn(List.of(prescription));
     when(prescriptionRepository.findById(50L)).thenReturn(Optional.of(prescription));
@@ -202,6 +205,11 @@ class PrescriptionServiceTest {
     Prescription prescription = new Prescription();
     prescription.setId(50L);
     prescription.setPatientId(1L);
+    prescription.setOwnerPatientId(1L);
+    prescription.setSubjectType("ACCOUNT");
+    prescription.setSubjectId(1L);
+    prescription.setSubjectName("患者");
+    prescription.setSubjectRelationship("本人");
     prescription.setDoctorId(2L);
     prescription.setMedicalRecordId(null);
     prescription.setRegistrationId(null);

@@ -73,7 +73,7 @@ class RegistrationServiceTest {
     when(doctorRepository.findById(2L)).thenReturn(Optional.of(doctor));
     when(departmentRepository.findById(3L)).thenReturn(Optional.of(department));
     when(appointmentSlotRepository.findByIdForUpdate(4L)).thenReturn(Optional.of(slot));
-    when(registrationRepository.existsByPatientIdAndSlotIdAndStatusNot(1L, 4L, "CANCELLED")).thenReturn(false);
+    when(registrationRepository.existsByOwnerPatientIdAndSubjectTypeAndSubjectIdAndSlotIdAndStatusNot(1L, "ACCOUNT", 1L, 4L, "CANCELLED")).thenReturn(false);
     when(patientRepository.findById(1L)).thenReturn(Optional.of(patient(1L, "patient")));
     when(registrationRepository.save(any(Registration.class))).thenAnswer(invocation -> {
       Registration registration = invocation.getArgument(0);
@@ -88,6 +88,9 @@ class RegistrationServiceTest {
     assertEquals(slot.getStartTime().toString(), result.get("appointmentTime"));
     assertEquals("patient", result.get("visitorName"));
     assertEquals("ACCOUNT", result.get("visitorType"));
+    assertEquals(1L, result.get("ownerPatientId"));
+    assertEquals(1L, result.get("subjectId"));
+    assertEquals("ACCOUNT", result.get("subjectType"));
     assertEquals(0, slot.getRemainingCapacity());
     assertEquals("FULL", slot.getStatus());
     verify(appointmentSlotRepository).save(slot);
@@ -117,12 +120,13 @@ class RegistrationServiceTest {
     when(doctorRepository.findById(2L)).thenReturn(Optional.of(doctor));
     when(departmentRepository.findById(3L)).thenReturn(Optional.of(department));
     when(appointmentSlotRepository.findByIdForUpdate(4L)).thenReturn(Optional.of(slot));
-    when(registrationRepository.existsByPatientIdAndSlotIdAndStatusNot(1L, 4L, "CANCELLED")).thenReturn(true);
+    when(patientRepository.findById(1L)).thenReturn(Optional.of(patient(1L, "patient")));
+    when(registrationRepository.existsByOwnerPatientIdAndSubjectTypeAndSubjectIdAndSlotIdAndStatusNot(1L, "ACCOUNT", 1L, 4L, "CANCELLED")).thenReturn(true);
 
     assertThrows(BusinessException.class,
         () -> registrationService.create(new CreateRegistrationRequest(2L, 3L, LocalDateTime.now(), null, 4L)));
 
-    when(registrationRepository.existsByPatientIdAndSlotIdAndStatusNot(1L, 4L, "CANCELLED")).thenReturn(false);
+    when(registrationRepository.existsByOwnerPatientIdAndSubjectTypeAndSubjectIdAndSlotIdAndStatusNot(1L, "ACCOUNT", 1L, 4L, "CANCELLED")).thenReturn(false);
     slot.setStatus("FULL");
     assertThrows(BusinessException.class,
         () -> registrationService.create(new CreateRegistrationRequest(2L, 3L, LocalDateTime.now(), null, 4L)));
@@ -139,7 +143,7 @@ class RegistrationServiceTest {
     when(doctorRepository.findById(2L)).thenReturn(Optional.of(doctor));
     when(departmentRepository.findById(3L)).thenReturn(Optional.of(department));
     when(appointmentSlotRepository.findByIdForUpdate(4L)).thenReturn(Optional.of(slot));
-    when(registrationRepository.existsByPatientIdAndSlotIdAndStatusNot(1L, 4L, "CANCELLED")).thenReturn(false);
+    when(registrationRepository.existsByOwnerPatientIdAndSubjectTypeAndSubjectIdAndSlotIdAndStatusNot(1L, "VISITOR", 8L, 4L, "CANCELLED")).thenReturn(false);
     when(patientRepository.findById(1L)).thenReturn(Optional.of(account));
     when(patientVisitorRepository.findByIdAndOwnerPatientId(8L, 1L)).thenReturn(Optional.of(visitor));
     when(registrationRepository.save(any(Registration.class))).thenAnswer(invocation -> {
@@ -153,7 +157,28 @@ class RegistrationServiceTest {
     assertEquals(7L, result.get("registrationId"));
     assertEquals(8L, result.get("visitorId"));
     assertEquals("VISITOR", result.get("visitorType"));
+    assertEquals(1L, result.get("ownerPatientId"));
+    assertEquals(8L, result.get("subjectId"));
+    assertEquals("VISITOR", result.get("subjectType"));
     assertEquals("child", result.get("patientName"));
+  }
+
+  @Test
+  void rejectsVisitorThatDoesNotBelongToOwner() {
+    Doctor doctor = doctor(2L);
+    Department department = department(3L);
+    AppointmentSlot slot = slot(4L, 2L, 3L, 2, "AVAILABLE");
+    when(currentUserService.require(RoleType.PATIENT)).thenReturn(new AuthenticatedUser(1L, RoleType.PATIENT, "patient"));
+    when(doctorRepository.findById(2L)).thenReturn(Optional.of(doctor));
+    when(departmentRepository.findById(3L)).thenReturn(Optional.of(department));
+    when(appointmentSlotRepository.findByIdForUpdate(4L)).thenReturn(Optional.of(slot));
+    when(patientRepository.findById(1L)).thenReturn(Optional.of(patient(1L, "account")));
+    when(patientVisitorRepository.findByIdAndOwnerPatientId(99L, 1L)).thenReturn(Optional.empty());
+
+    assertThrows(BusinessException.class,
+        () -> registrationService.create(new CreateRegistrationRequest(2L, 3L, LocalDateTime.now(), null, 4L, null, null, "VISITOR", 99L)));
+
+    verify(registrationRepository, never()).save(any(Registration.class));
   }
 
   @Test
@@ -210,7 +235,7 @@ class RegistrationServiceTest {
   void listScopesByRoleAndFiltersSlots() {
     Registration patientRegistration = registration(1L, 1L, 2L, 3L, null, "CREATED");
     when(currentUserService.get()).thenReturn(new AuthenticatedUser(1L, RoleType.PATIENT, "patient"));
-    when(registrationRepository.findByPatientId(1L)).thenReturn(List.of(patientRegistration));
+    when(registrationRepository.findByOwnerPatientId(1L)).thenReturn(List.of(patientRegistration));
     assertEquals(1, registrationService.list().size());
 
     when(currentUserService.get()).thenReturn(new AuthenticatedUser(2L, RoleType.DOCTOR, "doctor"));
@@ -304,6 +329,11 @@ class RegistrationServiceTest {
     Registration registration = new Registration();
     registration.setId(id);
     registration.setPatientId(patientId);
+    registration.setOwnerPatientId(patientId);
+    registration.setSubjectType("ACCOUNT");
+    registration.setSubjectId(patientId);
+    registration.setSubjectName("patient");
+    registration.setSubjectRelationship("本人");
     registration.setDoctorId(doctorId);
     registration.setDepartmentId(departmentId);
     registration.setSlotId(slotId);

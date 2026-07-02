@@ -17,7 +17,10 @@ import com.smartcloudbrain.common.security.CurrentUserService;
 import com.smartcloudbrain.common.security.RoleType;
 import com.smartcloudbrain.triage.entity.TriageRecord;
 import com.smartcloudbrain.triage.entity.Department;
+import com.smartcloudbrain.triage.entity.Patient;
+import com.smartcloudbrain.triage.entity.PatientVisitor;
 import com.smartcloudbrain.triage.repository.PatientRepository;
+import com.smartcloudbrain.triage.repository.PatientVisitorRepository;
 import com.smartcloudbrain.triage.repository.TriageRecordRepository;
 import com.smartcloudbrain.triage.repository.DepartmentRepository;
 import java.util.List;
@@ -36,6 +39,7 @@ class TriageServiceTest {
   @Mock private AiGatewayService aiGatewayService;
   @Mock private TriageRecordRepository triageRecordRepository;
   @Mock private PatientRepository patientRepository;
+  @Mock private PatientVisitorRepository patientVisitorRepository;
   @Mock private DepartmentRepository departmentRepository;
   @Mock private CurrentUserService currentUserService;
   @Mock private RedisRateLimiter redisRateLimiter;
@@ -49,7 +53,7 @@ class TriageServiceTest {
   @Test
   void consultStoresAiRecommendedRecord() {
     when(currentUserService.require(RoleType.PATIENT)).thenReturn(new AuthenticatedUser(1L, RoleType.PATIENT, "Alice"));
-    when(patientRepository.findById(1L)).thenReturn(Optional.empty());
+    when(patientRepository.findById(1L)).thenReturn(Optional.of(patient(1L, "Alice")));
     Department cardio = new Department();
     cardio.setId(1L);
     cardio.setCode("CARDIOLOGY");
@@ -69,12 +73,15 @@ class TriageServiceTest {
     assertEquals("心内科", result.get("recommendedDepartment"));
     assertEquals("AI_RECOMMENDED", result.get("status"));
     assertEquals(List.of(2L, 3L), result.get("recommendedDoctorIds"));
+    assertEquals(1L, result.get("ownerPatientId"));
+    assertEquals("ACCOUNT", result.get("subjectType"));
+    assertEquals(1L, result.get("subjectId"));
   }
 
   @Test
   void consultMarksDegradedAiResponseForManualHandling() {
     when(currentUserService.require(RoleType.PATIENT)).thenReturn(new AuthenticatedUser(1L, RoleType.PATIENT, "Alice"));
-    when(patientRepository.findById(1L)).thenReturn(Optional.empty());
+    when(patientRepository.findById(1L)).thenReturn(Optional.of(patient(1L, "Alice")));
     when(aiGatewayService.triage(any())).thenReturn(new TriageResponse("General", "GEN", List.of(), "fallback", true));
     when(triageRecordRepository.save(any(TriageRecord.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -93,11 +100,36 @@ class TriageServiceTest {
   }
 
   @Test
+  void consultStoresVisitorSubject() {
+    PatientVisitor visitor = visitor(8L, 1L, "Child");
+    when(currentUserService.require(RoleType.PATIENT)).thenReturn(new AuthenticatedUser(1L, RoleType.PATIENT, "Alice"));
+    when(patientVisitorRepository.findByIdAndOwnerPatientId(8L, 1L)).thenReturn(Optional.of(visitor));
+    when(aiGatewayService.triage(any())).thenReturn(new TriageResponse("General", "GEN", List.of(), "ok", false));
+    when(triageRecordRepository.save(any(TriageRecord.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+    Map<String, Object> result = triageService.consult(new TriageRequest(1L, "fever", "fever", null, null, null, null, "VISITOR", 8L));
+
+    assertEquals("VISITOR", result.get("subjectType"));
+    assertEquals(8L, result.get("subjectId"));
+    assertEquals("Child", result.get("subjectName"));
+    assertEquals("家属", result.get("subjectRelationship"));
+  }
+
+  @Test
+  void consultRejectsVisitorFromAnotherOwner() {
+    when(currentUserService.require(RoleType.PATIENT)).thenReturn(new AuthenticatedUser(1L, RoleType.PATIENT, "Alice"));
+    when(patientVisitorRepository.findByIdAndOwnerPatientId(99L, 1L)).thenReturn(Optional.empty());
+
+    assertThrows(BusinessException.class,
+        () -> triageService.consult(new TriageRequest(1L, "fever", "fever", null, null, null, null, "VISITOR", 99L)));
+  }
+
+  @Test
   void listUsesRoleScope() {
     TriageRecord own = record(1L, 1L);
     TriageRecord other = record(2L, 2L);
     when(currentUserService.get()).thenReturn(new AuthenticatedUser(1L, RoleType.PATIENT, "Alice"));
-    when(triageRecordRepository.findByPatientId(1L)).thenReturn(List.of(own));
+    when(triageRecordRepository.findByOwnerPatientId(1L)).thenReturn(List.of(own));
 
     assertEquals(1, triageService.list().size());
 
@@ -116,8 +148,33 @@ class TriageServiceTest {
     TriageRecord record = new TriageRecord();
     record.setId(id);
     record.setPatientId(patientId);
+    record.setOwnerPatientId(patientId);
+    record.setSubjectType("ACCOUNT");
+    record.setSubjectId(patientId);
+    record.setSubjectName("patient");
+    record.setSubjectRelationship("本人");
     record.setChiefComplaint("fever");
     record.setStatus("AI_RECOMMENDED");
     return record;
+  }
+
+  private static Patient patient(Long id, String name) {
+    Patient patient = new Patient();
+    patient.setId(id);
+    patient.setName(name);
+    patient.setGender("FEMALE");
+    patient.setAge(30);
+    return patient;
+  }
+
+  private static PatientVisitor visitor(Long id, Long ownerPatientId, String name) {
+    PatientVisitor visitor = new PatientVisitor();
+    visitor.setId(id);
+    visitor.setOwnerPatientId(ownerPatientId);
+    visitor.setName(name);
+    visitor.setRelationship("家属");
+    visitor.setGender("MALE");
+    visitor.setAge(6);
+    return visitor;
   }
 }
