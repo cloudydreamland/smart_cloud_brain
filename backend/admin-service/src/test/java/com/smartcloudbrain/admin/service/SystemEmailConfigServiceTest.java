@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -39,6 +40,8 @@ class SystemEmailConfigServiceTest {
   @Mock private InternalNotificationClient notificationClient;
   @InjectMocks private SystemEmailConfigService service;
 
+  // ── getConfig ──────────────────────────────────────────────
+
   @Test
   void getConfigReturnsDefaultWhenNoRowExists() {
     when(jdbcTemplate.queryForList(anyString())).thenReturn(List.of());
@@ -48,6 +51,12 @@ class SystemEmailConfigServiceTest {
     assertEquals("", result.get("host"));
     assertEquals(465, result.get("port"));
     assertFalse((Boolean) result.get("enabled"));
+    assertFalse((Boolean) result.get("passwordSet"));
+    assertEquals("", result.get("username"));
+    assertEquals("", result.get("fromAddress"));
+    assertEquals("", result.get("fromName"));
+    assertTrue((Boolean) result.get("sslEnabled"));
+    assertFalse((Boolean) result.get("starttlsEnabled"));
   }
 
   @Test
@@ -61,6 +70,57 @@ class SystemEmailConfigServiceTest {
     assertTrue((Boolean) result.get("passwordSet"));
     assertTrue((Boolean) result.get("enabled"));
   }
+
+  @Test
+  void getConfigHandlesNullValuesGracefully() {
+    Map<String, Object> sparseRow = new LinkedHashMap<>();
+    sparseRow.put("host", null);
+    sparseRow.put("port", null);
+    sparseRow.put("username", null);
+    sparseRow.put("password_cipher", null);
+    sparseRow.put("from_address", null);
+    sparseRow.put("from_name", null);
+    sparseRow.put("ssl_enabled", null);
+    sparseRow.put("starttls_enabled", null);
+    sparseRow.put("enabled", null);
+    when(jdbcTemplate.queryForList(anyString())).thenReturn(List.of(sparseRow));
+
+    Map<String, Object> result = service.getConfig();
+
+    assertEquals("", result.get("host"));
+    assertEquals(465, result.get("port"));  // fallback for non-parseable
+    assertEquals("", result.get("username"));
+    assertFalse((Boolean) result.get("passwordSet"));
+    assertEquals("", result.get("fromAddress"));
+    assertEquals("", result.get("fromName"));
+    assertFalse((Boolean) result.get("sslEnabled"));
+    assertFalse((Boolean) result.get("starttlsEnabled"));
+    assertFalse((Boolean) result.get("enabled"));
+  }
+
+  @Test
+  void getConfigHandlesNonNumberPortString() {
+    Map<String, Object> row = new LinkedHashMap<>();
+    row.put("host", "smtp.test.com");
+    row.put("port", "not_a_number");
+    row.put("username", "user");
+    row.put("password_cipher", "encrypted");
+    row.put("from_address", "from@test.com");
+    row.put("from_name", "Test");
+    row.put("ssl_enabled", "true");
+    row.put("starttls_enabled", "false");
+    row.put("enabled", "yes");
+    when(jdbcTemplate.queryForList(anyString())).thenReturn(List.of(row));
+
+    Map<String, Object> result = service.getConfig();
+
+    assertEquals(465, result.get("port"));    // fallback
+    assertTrue((Boolean) result.get("sslEnabled"));  // Boolean.parseBoolean("true")
+    assertFalse((Boolean) result.get("starttlsEnabled"));
+    assertFalse((Boolean) result.get("enabled"));    // Boolean.parseBoolean("yes") is false
+  }
+
+  // ── save: update path ──────────────────────────────────────
 
   @Test
   void saveUpdatesExistingConfig() {
@@ -80,6 +140,80 @@ class SystemEmailConfigServiceTest {
     verify(jdbcTemplate).update(anyString(), any(Object[].class));
     assertEquals("smtp.example.com", result.get("host"));
   }
+
+  @Test
+  void saveKeepsExistingCipherWhenPasswordIsBlank() {
+    when(jdbcTemplate.queryForList(anyString())).thenReturn(List.of(existingRow()));
+    doReturn(1).when(jdbcTemplate).update(anyString(), any(Object[].class));
+
+    EmailConfigSaveRequest request = new EmailConfigSaveRequest(
+        "smtp.test.com", 587, "user", "   ",
+        "from@test.com", "Test", true, false, true
+    );
+    AuthenticatedUser user = new AuthenticatedUser(1L, RoleType.ADMIN, "admin");
+
+    service.save(request, user);
+
+    // Should NOT call encrypt since password is blank
+    verify(textCryptoService, never()).encrypt(anyString());
+  }
+
+  @Test
+  void saveKeepsExistingCipherWhenPasswordIsNull() {
+    when(jdbcTemplate.queryForList(anyString())).thenReturn(List.of(existingRow()));
+    doReturn(1).when(jdbcTemplate).update(anyString(), any(Object[].class));
+
+    EmailConfigSaveRequest request = new EmailConfigSaveRequest(
+        "smtp.test.com", 587, "user", null,
+        "from@test.com", "Test", true, false, true
+    );
+    AuthenticatedUser user = new AuthenticatedUser(1L, RoleType.ADMIN, "admin");
+
+    service.save(request, user);
+
+    verify(textCryptoService, never()).encrypt(anyString());
+  }
+
+  @Test
+  void saveDefaultsPortTo465WhenNull() {
+    when(jdbcTemplate.queryForList(anyString())).thenReturn(List.of(existingRow()));
+    doReturn(1).when(jdbcTemplate).update(anyString(), any(Object[].class));
+
+    EmailConfigSaveRequest request = new EmailConfigSaveRequest(
+        "smtp.test.com", null, "user", "secret",
+        "from@test.com", "Test", true, false, true
+    );
+    AuthenticatedUser user = new AuthenticatedUser(1L, RoleType.ADMIN, "admin");
+
+    service.save(request, user);
+
+    // Should succeed (port defaults to 465)
+    verify(jdbcTemplate).update(anyString(), any(Object[].class));
+  }
+
+  // ── save: insert path ──────────────────────────────────────
+
+  @Test
+  void saveInsertsWhenNoExistingRow() {
+    when(jdbcTemplate.queryForList(anyString())).thenReturn(List.of());
+    when(textCryptoService.encrypt("newpass")).thenReturn("encrypted_newpass");
+    // First update (UPDATE SET ...) returns 0, triggering INSERT path
+    doReturn(0).doReturn(1).when(jdbcTemplate).update(anyString(), any(Object[].class));
+
+    EmailConfigSaveRequest request = new EmailConfigSaveRequest(
+        "smtp.new.com", 465, "newuser", "newpass",
+        "new@new.com", "NewName", true, false, true
+    );
+    AuthenticatedUser user = new AuthenticatedUser(2L, RoleType.ADMIN, "newadmin");
+
+    service.save(request, user);
+
+    // Should call update twice: once for UPDATE (returns 0), once for INSERT
+    verify(jdbcTemplate, org.mockito.Mockito.times(2)).update(anyString(), any(Object[].class));
+    verify(textCryptoService).encrypt("newpass");
+  }
+
+  // ── save: port validation ──────────────────────────────────
 
   @Test
   void saveThrowsWhenPortIsInvalid() {
@@ -104,6 +238,36 @@ class SystemEmailConfigServiceTest {
   }
 
   @Test
+  void saveThrowsWhenPortIsNegative() {
+    EmailConfigSaveRequest request = new EmailConfigSaveRequest(
+        "smtp.test.com", -1, "user", "secret",
+        "from@test.com", "Test", true, false, true
+    );
+    AuthenticatedUser user = new AuthenticatedUser(1L, RoleType.ADMIN, "admin");
+
+    assertThrows(BusinessException.class, () -> service.save(request, user));
+  }
+
+  @Test
+  void saveAcceptsPort65535() {
+    when(jdbcTemplate.queryForList(anyString())).thenReturn(List.of(existingRow()));
+    when(textCryptoService.encrypt("secret")).thenReturn("encrypted_secret");
+    doReturn(1).when(jdbcTemplate).update(anyString(), any(Object[].class));
+
+    EmailConfigSaveRequest request = new EmailConfigSaveRequest(
+        "smtp.test.com", 65535, "user", "secret",
+        "from@test.com", "Test", true, false, true
+    );
+    AuthenticatedUser user = new AuthenticatedUser(1L, RoleType.ADMIN, "admin");
+
+    service.save(request, user);
+
+    verify(jdbcTemplate).update(anyString(), any(Object[].class));
+  }
+
+  // ── sendTest ───────────────────────────────────────────────
+
+  @Test
   void sendTestDelegatesToNotificationClient() {
     Map<String, Object> response = Map.of("sent", true);
     when(notificationClient.sendEmail(eq("test@example.com"), anyString(), anyString()))
@@ -115,6 +279,8 @@ class SystemEmailConfigServiceTest {
     assertEquals(true, result.get("sent"));
     verify(notificationClient).sendEmail(eq("test@example.com"), anyString(), anyString());
   }
+
+  // ── helpers ────────────────────────────────────────────────
 
   private Map<String, Object> existingRow() {
     Map<String, Object> row = new LinkedHashMap<>();
