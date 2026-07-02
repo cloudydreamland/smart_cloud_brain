@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -25,12 +26,14 @@ import com.smartcloudbrain.registration.entity.Doctor;
 import com.smartcloudbrain.registration.entity.Patient;
 import com.smartcloudbrain.registration.entity.PatientVisitor;
 import com.smartcloudbrain.registration.entity.Registration;
+import com.smartcloudbrain.registration.entity.RegistrationOrder;
 import com.smartcloudbrain.registration.event.DomainEventPublisher;
 import com.smartcloudbrain.registration.repository.AppointmentSlotRepository;
 import com.smartcloudbrain.registration.repository.DepartmentRepository;
 import com.smartcloudbrain.registration.repository.DoctorRepository;
 import com.smartcloudbrain.registration.repository.PatientRepository;
 import com.smartcloudbrain.registration.repository.PatientVisitorRepository;
+import com.smartcloudbrain.registration.repository.RegistrationOrderRepository;
 import com.smartcloudbrain.registration.repository.RegistrationRepository;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -52,6 +55,7 @@ class RegistrationServiceTest {
   @Mock private PatientVisitorRepository patientVisitorRepository;
   @Mock private DepartmentRepository departmentRepository;
   @Mock private AppointmentSlotRepository appointmentSlotRepository;
+  @Mock private RegistrationOrderRepository registrationOrderRepository;
   @Mock private CurrentUserService currentUserService;
   @Mock private RedisRateLimiter redisRateLimiter;
   @Mock private RedisIdempotencyGuard redisIdempotencyGuard;
@@ -62,6 +66,14 @@ class RegistrationServiceTest {
   @BeforeEach
   void setUp() {
     lenient().when(redisRateLimiter.allow(anyString(), anyInt(), any())).thenReturn(true);
+    lenient().when(registrationOrderRepository.findFirstByRegistrationIdOrderByIdDesc(anyLong())).thenReturn(Optional.empty());
+    lenient().when(registrationOrderRepository.save(any(RegistrationOrder.class))).thenAnswer(invocation -> {
+      RegistrationOrder order = invocation.getArgument(0);
+      if (order.getId() == null) {
+        order.setId(50L);
+      }
+      return order;
+    });
   }
 
   @Test
@@ -73,7 +85,7 @@ class RegistrationServiceTest {
     when(doctorRepository.findById(2L)).thenReturn(Optional.of(doctor));
     when(departmentRepository.findById(3L)).thenReturn(Optional.of(department));
     when(appointmentSlotRepository.findByIdForUpdate(4L)).thenReturn(Optional.of(slot));
-    when(registrationRepository.existsByOwnerPatientIdAndSubjectTypeAndSubjectIdAndSlotIdAndStatusNot(1L, "ACCOUNT", 1L, 4L, "CANCELLED")).thenReturn(false);
+    when(registrationRepository.existsByOwnerPatientIdAndSubjectTypeAndSubjectIdAndSlotIdAndStatusNotIn(1L, "ACCOUNT", 1L, 4L, List.of("CANCELLED", "REFUNDED"))).thenReturn(false);
     when(patientRepository.findById(1L)).thenReturn(Optional.of(patient(1L, "patient")));
     when(registrationRepository.save(any(Registration.class))).thenAnswer(invocation -> {
       Registration registration = invocation.getArgument(0);
@@ -84,6 +96,9 @@ class RegistrationServiceTest {
     var result = registrationService.create(new CreateRegistrationRequest(2L, 3L, LocalDateTime.now(), 10L, 4L));
 
     assertEquals(6L, result.get("registrationId"));
+    assertEquals("PENDING_PAYMENT", result.get("status"));
+    assertEquals("UNPAID", result.get("paymentStatus"));
+    assertEquals("MOCK", result.get("paymentMethod"));
     assertEquals(4L, result.get("slotId"));
     assertEquals(slot.getStartTime().toString(), result.get("appointmentTime"));
     assertEquals("patient", result.get("visitorName"));
@@ -121,12 +136,12 @@ class RegistrationServiceTest {
     when(departmentRepository.findById(3L)).thenReturn(Optional.of(department));
     when(appointmentSlotRepository.findByIdForUpdate(4L)).thenReturn(Optional.of(slot));
     when(patientRepository.findById(1L)).thenReturn(Optional.of(patient(1L, "patient")));
-    when(registrationRepository.existsByOwnerPatientIdAndSubjectTypeAndSubjectIdAndSlotIdAndStatusNot(1L, "ACCOUNT", 1L, 4L, "CANCELLED")).thenReturn(true);
+    when(registrationRepository.existsByOwnerPatientIdAndSubjectTypeAndSubjectIdAndSlotIdAndStatusNotIn(1L, "ACCOUNT", 1L, 4L, List.of("CANCELLED", "REFUNDED"))).thenReturn(true);
 
     assertThrows(BusinessException.class,
         () -> registrationService.create(new CreateRegistrationRequest(2L, 3L, LocalDateTime.now(), null, 4L)));
 
-    when(registrationRepository.existsByOwnerPatientIdAndSubjectTypeAndSubjectIdAndSlotIdAndStatusNot(1L, "ACCOUNT", 1L, 4L, "CANCELLED")).thenReturn(false);
+    when(registrationRepository.existsByOwnerPatientIdAndSubjectTypeAndSubjectIdAndSlotIdAndStatusNotIn(1L, "ACCOUNT", 1L, 4L, List.of("CANCELLED", "REFUNDED"))).thenReturn(false);
     slot.setStatus("FULL");
     assertThrows(BusinessException.class,
         () -> registrationService.create(new CreateRegistrationRequest(2L, 3L, LocalDateTime.now(), null, 4L)));
@@ -143,7 +158,7 @@ class RegistrationServiceTest {
     when(doctorRepository.findById(2L)).thenReturn(Optional.of(doctor));
     when(departmentRepository.findById(3L)).thenReturn(Optional.of(department));
     when(appointmentSlotRepository.findByIdForUpdate(4L)).thenReturn(Optional.of(slot));
-    when(registrationRepository.existsByOwnerPatientIdAndSubjectTypeAndSubjectIdAndSlotIdAndStatusNot(1L, "VISITOR", 8L, 4L, "CANCELLED")).thenReturn(false);
+    when(registrationRepository.existsByOwnerPatientIdAndSubjectTypeAndSubjectIdAndSlotIdAndStatusNotIn(1L, "VISITOR", 8L, 4L, List.of("CANCELLED", "REFUNDED"))).thenReturn(false);
     when(patientRepository.findById(1L)).thenReturn(Optional.of(account));
     when(patientVisitorRepository.findByIdAndOwnerPatientId(8L, 1L)).thenReturn(Optional.of(visitor));
     when(registrationRepository.save(any(Registration.class))).thenAnswer(invocation -> {
@@ -197,6 +212,32 @@ class RegistrationServiceTest {
   }
 
   @Test
+  void mockPayMovesRegistrationToPaid() {
+    Registration registration = registration(9L, 1L, 2L, 3L, 4L, "PENDING_PAYMENT");
+    RegistrationOrder order = order(50L, 9L, "UNPAID");
+    when(currentUserService.require(RoleType.PATIENT)).thenReturn(new AuthenticatedUser(1L, RoleType.PATIENT, "patient"));
+    when(registrationRepository.findById(9L)).thenReturn(Optional.of(registration));
+    when(registrationOrderRepository.findFirstByRegistrationIdOrderByIdDesc(9L)).thenReturn(Optional.of(order));
+    when(registrationRepository.save(registration)).thenReturn(registration);
+
+    var result = registrationService.pay(9L);
+
+    assertEquals("PAID", result.get("status"));
+    assertEquals("PAID", result.get("paymentStatus"));
+    verify(registrationOrderRepository).save(order);
+    verify(domainEventPublisher).publishAudit(eq(DomainEventNames.REGISTRATION_PAID), any());
+  }
+
+  @Test
+  void patientCannotCancelAfterCheckedIn() {
+    Registration registration = registration(9L, 1L, 2L, 3L, 4L, "CHECKED_IN");
+    when(currentUserService.get()).thenReturn(new AuthenticatedUser(1L, RoleType.PATIENT, "patient"));
+    when(registrationRepository.findById(9L)).thenReturn(Optional.of(registration));
+
+    assertThrows(BusinessException.class, () -> registrationService.cancel(9L));
+  }
+
+  @Test
   void cancelRestoresSlotCapacity() {
     Registration registration = registration(9L, 1L, 2L, 3L, 4L, "CREATED");
     AppointmentSlot slot = slot(4L, 2L, 3L, 0, "FULL");
@@ -217,7 +258,7 @@ class RegistrationServiceTest {
 
   @Test
   void doctorCompletesOwnRegistrationAndCannotCompleteCancelled() {
-    Registration registration = registration(9L, 1L, 2L, 3L, null, "CREATED");
+    Registration registration = registration(9L, 1L, 2L, 3L, null, "IN_CONSULTATION");
     when(currentUserService.require(RoleType.DOCTOR)).thenReturn(new AuthenticatedUser(2L, RoleType.DOCTOR, "doctor"));
     when(registrationRepository.findById(9L)).thenReturn(Optional.of(registration));
     when(registrationRepository.save(registration)).thenReturn(registration);
@@ -261,13 +302,13 @@ class RegistrationServiceTest {
   }
 
   @Test
-  void cancellationIsIdempotentAndHandlesMissingSlotData() {
+  void cancellationRejectsTerminalStatusAndHandlesMissingSlotData() {
     Registration registration = registration(9L, 1L, 2L, 3L, null, "CANCELLED");
     when(currentUserService.get()).thenReturn(new AuthenticatedUser(1L, RoleType.PATIENT, "patient"));
     when(registrationRepository.findById(9L)).thenReturn(Optional.of(registration));
     when(registrationRepository.save(registration)).thenReturn(registration);
 
-    assertEquals("CANCELLED", registrationService.cancel(9L).get("status"));
+    assertThrows(BusinessException.class, () -> registrationService.cancel(9L));
 
     registration.setStatus("CREATED");
     assertEquals("CANCELLED", registrationService.cancel(9L).get("status"));
@@ -340,5 +381,17 @@ class RegistrationServiceTest {
     registration.setAppointmentTime(LocalDateTime.now().plusHours(1));
     registration.setStatus(status);
     return registration;
+  }
+
+  private static RegistrationOrder order(Long id, Long registrationId, String paymentStatus) {
+    RegistrationOrder order = new RegistrationOrder();
+    order.setId(id);
+    order.setRegistrationId(registrationId);
+    order.setOwnerPatientId(1L);
+    order.setSubjectType("ACCOUNT");
+    order.setSubjectId(1L);
+    order.setPaymentStatus(paymentStatus);
+    order.setPaymentMethod("MOCK");
+    return order;
   }
 }

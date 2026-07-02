@@ -5,6 +5,8 @@ import { createPinia, setActivePinia } from "pinia";
 import { nextTick, ref } from "vue";
 import PatientLoginPage from "../patient-web/src/pages/LoginPage.vue";
 import TriagePage from "../patient-web/src/pages/TriagePage.vue";
+import AppointmentsPage from "../patient-web/src/pages/AppointmentsPage.vue";
+import QueuePage from "../doctor-web/src/pages/QueuePage.vue";
 import ConsultationPage from "../doctor-web/src/pages/ConsultationPage.vue";
 import AdminAnalyticsSection from "../admin-web/src/components/AdminAnalyticsSection.vue";
 import AdminDashboard from "../admin-web/src/pages/AdminDashboard.vue";
@@ -13,7 +15,7 @@ import AccountsPage from "../admin-web/src/pages/AccountsPage.vue";
 import DevicesPage from "../admin-web/src/pages/DevicesPage.vue";
 import PatientsPage from "../admin-web/src/pages/PatientsPage.vue";
 import PermissionsPage from "../admin-web/src/pages/PermissionsPage.vue";
-import { api, useDoctorWorkflowStore } from "../../packages/shared-api/src/index";
+import { api, useDoctorWorkflowStore, usePatientWorkflowStore } from "../../packages/shared-api/src/index";
 import { useDoctorSlots } from "../patient-web/src/composables/useDoctorSlots";
 
 vi.mock("../admin-web/src/echarts", () => ({
@@ -125,6 +127,56 @@ describe("closed-loop page smoke tests", () => {
     expect(state.recommendedDepartment.value).toBe("儿科");
     expect(state.isSlotBooked({ slotId: 2, startTime: "2026-07-03T10:00:00", endTime: "", doctorId: 2, departmentId: 4, capacity: 1, remainingCapacity: 1, status: "AVAILABLE" })).toBe(true);
     expect(state.isSlotBooked({ slotId: 1, startTime: "2026-07-03T09:00:00", endTime: "", doctorId: 2, departmentId: 3, capacity: 1, remainingCapacity: 1, status: "AVAILABLE" })).toBe(false);
+  });
+
+  it("shows patient appointment actions from backend flags", async () => {
+    const workflow = usePatientWorkflowStore();
+    workflow.registrations = [
+      { registrationId: 1, patientId: 1, patientName: "患者", status: "PENDING_PAYMENT", canPay: true, amount: 0 },
+      { registrationId: 2, patientId: 1, patientName: "患者", status: "PAID", canCheckIn: true, canCancel: true, amount: 0 },
+    ];
+    vi.spyOn(workflow, "refreshAuthenticated").mockResolvedValue(undefined);
+    const paySpy = vi.spyOn(api, "payRegistration").mockResolvedValue({ registrationId: 1, patientId: 1, status: "PAID" });
+
+    const wrapper = mount(AppointmentsPage, {
+      global: {
+        stubs: {
+          StatusTag: true,
+          SegmentedControl: true,
+          PaginationBar: true,
+          CancelAppointmentModal: true,
+          Toast: true,
+          RouterLink: true,
+        },
+      },
+    });
+    await flushPromises();
+
+    expect(wrapper.text()).toContain("去支付");
+    expect(wrapper.text()).toContain("签到");
+    await wrapper.findAll("button").find((button) => button.text() === "去支付")?.trigger("click");
+    await flushPromises();
+    expect(paySpy).toHaveBeenCalledWith(1);
+  });
+
+  it("keeps doctor queue limited to processable registration statuses", async () => {
+    const workflow = useDoctorWorkflowStore();
+    workflow.registrations = [
+      { registrationId: 1, patientId: 1, patientName: "候诊患者", status: "WAITING", canCall: true },
+      { registrationId: 2, patientId: 2, patientName: "未支付患者", status: "PENDING_PAYMENT" },
+    ];
+    vi.spyOn(workflow, "refresh").mockResolvedValue(undefined);
+
+    const wrapper = shallowMount(QueuePage, {
+      global: {
+        provide: { toast: ref(null) },
+        stubs: { PaginationBar: true, RouterLink: true },
+      },
+    });
+    await flushPromises();
+
+    expect(wrapper.text()).toContain("候诊患者");
+    expect(wrapper.text()).not.toContain("未支付患者");
   });
 
   it("renders doctor consultation", () => {

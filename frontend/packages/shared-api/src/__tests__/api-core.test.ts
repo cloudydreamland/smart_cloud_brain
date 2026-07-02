@@ -157,6 +157,7 @@ describe("shared api utilities and stores", () => {
       if (url.includes("/patient/info")) return ok({ id: 1, name: "Alice" });
       if (url.includes("/triage/list")) return ok([{ triageRecordId: 1 }]);
       if (url.includes("/registration/slots")) return ok([{ slotId: 1 }]);
+      if (url.includes("/doctor/queue")) return ok([{ registrationId: 1 }]);
       if (url.includes("/registration/list")) return ok([{ registrationId: 1 }]);
       if (url.includes("/medical-record/list")) return ok([{ medicalRecordId: 1 }]);
       if (url.includes("/prescription/list")) return ok([{ prescriptionId: 1 }]);
