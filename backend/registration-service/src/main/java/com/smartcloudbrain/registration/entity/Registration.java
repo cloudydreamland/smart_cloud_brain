@@ -11,6 +11,18 @@ public class Registration extends BaseEntity {
 
   @Column(name = "patient_id")
   private Long patientId;
+  @Column(name = "visitor_id")
+  private Long visitorId;
+  @Column(name = "visitor_type")
+  private String visitorType;
+  @Column(name = "visitor_name")
+  private String visitorName;
+  @Column(name = "visitor_relationship")
+  private String visitorRelationship;
+  @Column(name = "visitor_gender")
+  private String visitorGender;
+  @Column(name = "visitor_age")
+  private Integer visitorAge;
   @Column(name = "doctor_id")
   private Long doctorId;
   @Column(name = "department_id")
@@ -31,6 +43,54 @@ public class Registration extends BaseEntity {
 
   public void setPatientId(Long patientId) {
     this.patientId = patientId;
+  }
+
+  public Long getVisitorId() {
+    return visitorId;
+  }
+
+  public void setVisitorId(Long visitorId) {
+    this.visitorId = visitorId;
+  }
+
+  public String getVisitorType() {
+    return visitorType;
+  }
+
+  public void setVisitorType(String visitorType) {
+    this.visitorType = visitorType;
+  }
+
+  public String getVisitorName() {
+    return visitorName;
+  }
+
+  public void setVisitorName(String visitorName) {
+    this.visitorName = visitorName;
+  }
+
+  public String getVisitorRelationship() {
+    return visitorRelationship;
+  }
+
+  public void setVisitorRelationship(String visitorRelationship) {
+    this.visitorRelationship = visitorRelationship;
+  }
+
+  public String getVisitorGender() {
+    return visitorGender;
+  }
+
+  public void setVisitorGender(String visitorGender) {
+    this.visitorGender = visitorGender;
+  }
+
+  public Integer getVisitorAge() {
+    return visitorAge;
+  }
+
+  public void setVisitorAge(Integer visitorAge) {
+    this.visitorAge = visitorAge;
   }
 
   public Long getDoctorId() {

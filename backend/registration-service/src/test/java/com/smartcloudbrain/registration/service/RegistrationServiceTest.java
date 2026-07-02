@@ -22,12 +22,15 @@ import com.smartcloudbrain.registration.dto.registration.CreateRegistrationReque
 import com.smartcloudbrain.registration.entity.AppointmentSlot;
 import com.smartcloudbrain.registration.entity.Department;
 import com.smartcloudbrain.registration.entity.Doctor;
+import com.smartcloudbrain.registration.entity.Patient;
+import com.smartcloudbrain.registration.entity.PatientVisitor;
 import com.smartcloudbrain.registration.entity.Registration;
 import com.smartcloudbrain.registration.event.DomainEventPublisher;
 import com.smartcloudbrain.registration.repository.AppointmentSlotRepository;
 import com.smartcloudbrain.registration.repository.DepartmentRepository;
 import com.smartcloudbrain.registration.repository.DoctorRepository;
 import com.smartcloudbrain.registration.repository.PatientRepository;
+import com.smartcloudbrain.registration.repository.PatientVisitorRepository;
 import com.smartcloudbrain.registration.repository.RegistrationRepository;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -46,6 +49,7 @@ class RegistrationServiceTest {
   @Mock private RegistrationRepository registrationRepository;
   @Mock private DoctorRepository doctorRepository;
   @Mock private PatientRepository patientRepository;
+  @Mock private PatientVisitorRepository patientVisitorRepository;
   @Mock private DepartmentRepository departmentRepository;
   @Mock private AppointmentSlotRepository appointmentSlotRepository;
   @Mock private CurrentUserService currentUserService;
@@ -70,6 +74,7 @@ class RegistrationServiceTest {
     when(departmentRepository.findById(3L)).thenReturn(Optional.of(department));
     when(appointmentSlotRepository.findByIdForUpdate(4L)).thenReturn(Optional.of(slot));
     when(registrationRepository.existsByPatientIdAndSlotIdAndStatusNot(1L, 4L, "CANCELLED")).thenReturn(false);
+    when(patientRepository.findById(1L)).thenReturn(Optional.of(patient(1L, "patient")));
     when(registrationRepository.save(any(Registration.class))).thenAnswer(invocation -> {
       Registration registration = invocation.getArgument(0);
       registration.setId(6L);
@@ -81,6 +86,8 @@ class RegistrationServiceTest {
     assertEquals(6L, result.get("registrationId"));
     assertEquals(4L, result.get("slotId"));
     assertEquals(slot.getStartTime().toString(), result.get("appointmentTime"));
+    assertEquals("patient", result.get("visitorName"));
+    assertEquals("ACCOUNT", result.get("visitorType"));
     assertEquals(0, slot.getRemainingCapacity());
     assertEquals("FULL", slot.getStatus());
     verify(appointmentSlotRepository).save(slot);
@@ -119,6 +126,34 @@ class RegistrationServiceTest {
     slot.setStatus("FULL");
     assertThrows(BusinessException.class,
         () -> registrationService.create(new CreateRegistrationRequest(2L, 3L, LocalDateTime.now(), null, 4L)));
+  }
+
+  @Test
+  void createsRegistrationForSelectedVisitor() {
+    Doctor doctor = doctor(2L);
+    Department department = department(3L);
+    AppointmentSlot slot = slot(4L, 2L, 3L, 2, "AVAILABLE");
+    Patient account = patient(1L, "account");
+    PatientVisitor visitor = visitor(8L, 1L, "child");
+    when(currentUserService.require(RoleType.PATIENT)).thenReturn(new AuthenticatedUser(1L, RoleType.PATIENT, "patient"));
+    when(doctorRepository.findById(2L)).thenReturn(Optional.of(doctor));
+    when(departmentRepository.findById(3L)).thenReturn(Optional.of(department));
+    when(appointmentSlotRepository.findByIdForUpdate(4L)).thenReturn(Optional.of(slot));
+    when(registrationRepository.existsByPatientIdAndSlotIdAndStatusNot(1L, 4L, "CANCELLED")).thenReturn(false);
+    when(patientRepository.findById(1L)).thenReturn(Optional.of(account));
+    when(patientVisitorRepository.findByIdAndOwnerPatientId(8L, 1L)).thenReturn(Optional.of(visitor));
+    when(registrationRepository.save(any(Registration.class))).thenAnswer(invocation -> {
+      Registration registration = invocation.getArgument(0);
+      registration.setId(7L);
+      return registration;
+    });
+
+    var result = registrationService.create(new CreateRegistrationRequest(2L, 3L, LocalDateTime.now(), null, 4L, 8L, "VISITOR"));
+
+    assertEquals(7L, result.get("registrationId"));
+    assertEquals(8L, result.get("visitorId"));
+    assertEquals("VISITOR", result.get("visitorType"));
+    assertEquals("child", result.get("patientName"));
   }
 
   @Test
@@ -230,6 +265,26 @@ class RegistrationServiceTest {
     department.setId(id);
     department.setName("Cardiology");
     return department;
+  }
+
+  private static Patient patient(Long id, String name) {
+    Patient patient = new Patient();
+    patient.setId(id);
+    patient.setName(name);
+    patient.setGender("FEMALE");
+    patient.setAge(30);
+    return patient;
+  }
+
+  private static PatientVisitor visitor(Long id, Long ownerPatientId, String name) {
+    PatientVisitor visitor = new PatientVisitor();
+    visitor.setId(id);
+    visitor.setOwnerPatientId(ownerPatientId);
+    visitor.setName(name);
+    visitor.setRelationship("家属");
+    visitor.setGender("MALE");
+    visitor.setAge(6);
+    return visitor;
   }
 
   private static AppointmentSlot slot(Long id, Long doctorId, Long departmentId, Integer remaining, String status) {

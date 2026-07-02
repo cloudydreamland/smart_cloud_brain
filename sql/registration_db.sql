@@ -4,6 +4,12 @@ USE registration_db;
 CREATE TABLE IF NOT EXISTS registration (
   id BIGINT PRIMARY KEY AUTO_INCREMENT,
   patient_id BIGINT NOT NULL,
+  visitor_id BIGINT,
+  visitor_type VARCHAR(20),
+  visitor_name VARCHAR(80),
+  visitor_relationship VARCHAR(40),
+  visitor_gender VARCHAR(20),
+  visitor_age INT,
   doctor_id BIGINT NOT NULL,
   department_id BIGINT NOT NULL,
   triage_record_id BIGINT,

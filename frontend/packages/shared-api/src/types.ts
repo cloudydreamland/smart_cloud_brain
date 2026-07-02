@@ -21,7 +21,7 @@ export type PatientEmailCodeRequest = { email: string; phone?: string; purpose?:
 export type TriageRequest = { patientId?: number; chiefComplaint: string };
 export type RegistrationCreateRequest = {
   doctorId: number; departmentId: number; appointmentTime: string;
-  triageRecordId?: number | null; slotId?: number | null;
+  triageRecordId?: number | null; slotId?: number | null; visitorId?: number | null; visitorType?: string | null;
 };
 export type MedicalRecordGenerateRequest = { registrationId: number; departmentCode?: string; dialogueText: string };
 export type MedicalRecordSaveRequest = {
@@ -270,6 +270,10 @@ export interface Registration {
   patientName?: string;
   patientAge?: number;
   patientGender?: string;
+  visitorId?: number;
+  visitorType?: string;
+  visitorName?: string;
+  visitorRelationship?: string;
   doctorId?: number;
   doctorName?: string;
   departmentId?: number;

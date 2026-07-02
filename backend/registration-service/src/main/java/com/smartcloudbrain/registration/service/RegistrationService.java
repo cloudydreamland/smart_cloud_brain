@@ -11,11 +11,13 @@ import com.smartcloudbrain.registration.entity.AppointmentSlot;
 import com.smartcloudbrain.registration.entity.Department;
 import com.smartcloudbrain.registration.entity.Doctor;
 import com.smartcloudbrain.registration.entity.Patient;
+import com.smartcloudbrain.registration.entity.PatientVisitor;
 import com.smartcloudbrain.registration.entity.Registration;
 import com.smartcloudbrain.registration.repository.AppointmentSlotRepository;
 import com.smartcloudbrain.registration.repository.DepartmentRepository;
 import com.smartcloudbrain.registration.repository.DoctorRepository;
 import com.smartcloudbrain.registration.repository.PatientRepository;
+import com.smartcloudbrain.registration.repository.PatientVisitorRepository;
 import com.smartcloudbrain.registration.repository.RegistrationRepository;
 import com.smartcloudbrain.registration.event.DomainEventPublisher;
 import com.smartcloudbrain.common.security.AuthenticatedUser;
@@ -35,6 +37,7 @@ public class RegistrationService {
   private final RegistrationRepository registrationRepository;
   private final DoctorRepository doctorRepository;
   private final PatientRepository patientRepository;
+  private final PatientVisitorRepository patientVisitorRepository;
   private final DepartmentRepository departmentRepository;
   private final AppointmentSlotRepository appointmentSlotRepository;
   private final CurrentUserService currentUserService;
@@ -47,6 +50,7 @@ public class RegistrationService {
       RegistrationRepository registrationRepository,
       DoctorRepository doctorRepository,
       PatientRepository patientRepository,
+      PatientVisitorRepository patientVisitorRepository,
       DepartmentRepository departmentRepository,
       AppointmentSlotRepository appointmentSlotRepository,
       CurrentUserService currentUserService,
@@ -58,6 +62,7 @@ public class RegistrationService {
     this.registrationRepository = registrationRepository;
     this.doctorRepository = doctorRepository;
     this.patientRepository = patientRepository;
+    this.patientVisitorRepository = patientVisitorRepository;
     this.departmentRepository = departmentRepository;
     this.appointmentSlotRepository = appointmentSlotRepository;
     this.currentUserService = currentUserService;
@@ -111,8 +116,15 @@ public class RegistrationService {
     }
     slot.setUpdatedAt(LocalDateTime.now());
     appointmentSlotRepository.save(slot);
+    VisitorSnapshot visitor = resolveVisitor(request, user);
     Registration registration = new Registration();
     registration.setPatientId(user.userId());
+    registration.setVisitorId(visitor.id());
+    registration.setVisitorType(visitor.type());
+    registration.setVisitorName(visitor.name());
+    registration.setVisitorRelationship(visitor.relationship());
+    registration.setVisitorGender(visitor.gender());
+    registration.setVisitorAge(visitor.age());
     registration.setDoctorId(doctor.getId());
     registration.setDepartmentId(request.departmentId());
     registration.setTriageRecordId(request.triageRecordId());
@@ -189,12 +201,19 @@ public class RegistrationService {
     Patient patient = patientRepository.findById(registration.getPatientId()).orElse(null);
     Doctor doctor = doctorRepository.findById(registration.getDoctorId()).orElse(null);
     Department department = departmentRepository.findById(registration.getDepartmentId()).orElse(null);
+    String patientName = text(registration.getVisitorName(), patient == null ? "" : patient.getName());
+    String patientGender = text(registration.getVisitorGender(), patient == null ? "" : patient.getGender());
+    Integer patientAge = registration.getVisitorAge() == null && patient != null ? patient.getAge() : registration.getVisitorAge();
     Map<String, Object> view = new LinkedHashMap<>();
     view.put("registrationId", registration.getId());
     view.put("patientId", registration.getPatientId());
-    view.put("patientName", patient == null ? "" : patient.getName());
-    view.put("patientAge", patient == null ? null : patient.getAge());
-    view.put("patientGender", patient == null ? "" : patient.getGender());
+    view.put("patientName", patientName);
+    view.put("patientAge", patientAge);
+    view.put("patientGender", patientGender);
+    view.put("visitorId", registration.getVisitorId() == null ? registration.getPatientId() : registration.getVisitorId());
+    view.put("visitorType", text(registration.getVisitorType(), "ACCOUNT"));
+    view.put("visitorName", patientName);
+    view.put("visitorRelationship", text(registration.getVisitorRelationship(), "本人"));
     view.put("doctorId", registration.getDoctorId());
     view.put("doctorName", doctor == null ? "" : doctor.getName());
     view.put("departmentId", registration.getDepartmentId());
@@ -205,6 +224,24 @@ public class RegistrationService {
     view.put("status", registration.getStatus());
     view.put("triageRecordId", registration.getTriageRecordId() == null ? 0L : registration.getTriageRecordId());
     return view;
+  }
+
+  private VisitorSnapshot resolveVisitor(CreateRegistrationRequest request, AuthenticatedUser user) {
+    Patient patient = patientRepository.findById(user.userId())
+        .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+    if (!"VISITOR".equalsIgnoreCase(text(request.visitorType(), "")) || request.visitorId() == null) {
+      return new VisitorSnapshot(patient.getId(), "ACCOUNT", patient.getName(), "本人", patient.getGender(), patient.getAge());
+    }
+    PatientVisitor visitor = patientVisitorRepository.findByIdAndOwnerPatientId(request.visitorId(), user.userId())
+        .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+    return new VisitorSnapshot(visitor.getId(), "VISITOR", visitor.getName(), visitor.getRelationship(), visitor.getGender(), visitor.getAge());
+  }
+
+  private String text(String value, String fallback) {
+    return value == null || value.isBlank() ? fallback : value;
+  }
+
+  private record VisitorSnapshot(Long id, String type, String name, String relationship, String gender, Integer age) {
   }
 
   private void restoreSlotCapacity(Long slotId) {

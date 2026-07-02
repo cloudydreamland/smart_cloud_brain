@@ -8,8 +8,19 @@ public record CreateRegistrationRequest(
     @NotNull Long departmentId,
     @NotNull LocalDateTime appointmentTime,
     Long triageRecordId,
-    Long slotId
+    Long slotId,
+    Long visitorId,
+    String visitorType
 ) {
+  public CreateRegistrationRequest(
+      Long doctorId,
+      Long departmentId,
+      LocalDateTime appointmentTime,
+      Long triageRecordId,
+      Long slotId
+  ) {
+    this(doctorId, departmentId, appointmentTime, triageRecordId, slotId, null, null);
+  }
 }
 
 

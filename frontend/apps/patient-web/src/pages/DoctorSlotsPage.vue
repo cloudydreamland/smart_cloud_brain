@@ -1,135 +1,21 @@
 <script setup lang="ts">
-import { computed, inject, onMounted, ref, watch, type Ref } from "vue";
+import { computed, inject, onMounted, ref, type Ref } from "vue";
 import { storeToRefs } from "pinia";
-import { api, formatApiError, statusClass, statusText, toNumber, usePatientWorkflowStore, type Doctor, type Registration, type AppointmentSlot, type TriageRecord } from "@smart-cloud-brain/shared-api";
+import { api, formatApiError, toNumber, usePatientWorkflowStore, type AppointmentSlot } from "@smart-cloud-brain/shared-api";
 import { EmptyState, ErrorState, LoadingState, StatusTag, Toast } from "@smart-cloud-brain/shared-ui";
 import ConfirmAppointmentModal from "../components/ConfirmAppointmentModal.vue";
-
-type DateGroup = {
-  date: string;
-  label: string;
-  total: number;
-  slots: AppointmentSlot[];
-};
-
-type DoctorGroup = {
-  key: string;
-  doctorName: string;
-  departmentName: string;
-  total: number;
-  periods: { key: string; label: string; slots: AppointmentSlot[] }[];
-};
+import { useDoctorSlots } from "../composables/useDoctorSlots";
 
 const workflow = usePatientWorkflowStore();
-const { slots, doctors, triageHistory, registrations } = storeToRefs(workflow);
+const { slots, doctors, departments, triageHistory, registrations } = storeToRefs(workflow);
 const loading = ref(false);
 const loaded = ref(false);
 const saving = ref(false);
 const error = ref("");
 const toast = inject<Ref<InstanceType<typeof Toast>>>("toast");
-const selectedDate = ref("");
-const selectedSlot = ref<AppointmentSlot | null>(null);
 const confirmOpen = ref(false);
-
-const bookedTimes = computed(() => {
-  const times = new Set<string>();
-  registrations.value.forEach((reg) => {
-    const status = reg.status || "";
-    if (status === "CANCELLED") return;
-    const time = reg.appointmentTime || "";
-    if (time) times.add(time);
-  });
-  return times;
-});
-
-function isSlotBooked(slot: AppointmentSlot) {
-  return bookedTimes.value.has(slot.startTime || "");
-}
-
 const latestTriage = computed(() => triageHistory.value[0] ?? null);
-const assignedDoctorId = computed(() => toNumber(latestTriage.value?.assignedDoctorId, 0));
-const recommendedDepartment = computed(() => latestTriage.value?.recommendedDepartment || "");
-const assignedDoctorSlots = computed(() => slots.value.filter((slot) => assignedDoctorId.value && toNumber(slot.doctorId) === assignedDoctorId.value));
-const recommendedSlotIds = computed(() => {
-  if (!recommendedDepartment.value) return new Set<string>();
-  const ids = new Set<string>();
-  slots.value.forEach((slot) => {
-    if ((slot.departmentName || "").includes(recommendedDepartment.value)) {
-      ids.add(String(slot.slotId));
-    }
-  });
-  return ids;
-});
-const displaySlots = computed(() => {
-  const source = assignedDoctorSlots.value.length ? assignedDoctorSlots.value : slots.value;
-  return [...source].sort((left, right) => {
-    const leftRec = recommendedSlotIds.value.has(String(left.slotId)) ? 0 : 1;
-    const rightRec = recommendedSlotIds.value.has(String(right.slotId)) ? 0 : 1;
-    if (leftRec !== rightRec) return leftRec - rightRec;
-    return slotTimestamp(left) - slotTimestamp(right);
-  });
-});
-const guidanceLabel = computed(() => assignedDoctorId.value ? "已分配医生" : recommendedDepartment.value ? "推荐科室" : "");
-const guidanceValue = computed(() => {
-  if (!assignedDoctorId.value) return recommendedDepartment.value || "暂无";
-  const slotDoctor = slots.value.find((slot) => toNumber(slot.doctorId) === assignedDoctorId.value);
-  const doctor = doctors.value.find((item) => toNumber(item.id) === assignedDoctorId.value);
-  return slotDoctor?.doctorName || doctor?.name || `医生 #${assignedDoctorId.value}`;
-});
-const dateGroups = computed<DateGroup[]>(() => {
-  const groups = new Map<string, DateGroup>();
-  displaySlots.value.forEach((slot) => {
-    const time = slot.startTime || "";
-    const date = slotDateKey(time);
-    if (!groups.has(date)) {
-      groups.set(date, { date, label: slotDateLabel(time), total: 0, slots: [] as AppointmentSlot[] });
-    }
-    const group = groups.get(date)!;
-    group.total += 1;
-    group.slots.push(slot);
-  });
-  return [...groups.values()].sort((a, b) => a.date.localeCompare(b.date));
-});
-const activeDateGroup = computed(() => dateGroups.value.find((group) => group.date === selectedDate.value) ?? dateGroups.value[0]);
-const doctorGroups = computed<DoctorGroup[]>(() => {
-  const groups = new Map<string, { doctorName: string; departmentName: string; slots: AppointmentSlot[] }>();
-  activeDateGroup.value?.slots.forEach((slot) => {
-    const key = String(slot.doctorId || slot.doctorName || "unknown");
-    if (!groups.has(key)) {
-      groups.set(key, {
-        doctorName: slot.doctorName || "未命名医生",
-        departmentName: slot.departmentName || "未定科室",
-        slots: [],
-      });
-    }
-    groups.get(key)!.slots.push(slot);
-  });
-  return [...groups.entries()].map(([key, group]) => {
-    const periods = new Map<string, { key: string; label: string; slots: AppointmentSlot[] }>();
-    group.slots.forEach((slot) => {
-      const period = slotPeriod(slot.startTime || "");
-      if (!periods.has(period.key)) {
-        periods.set(period.key, { key: period.key, label: period.label, slots: [] });
-      }
-      periods.get(period.key)!.slots.push(slot);
-    });
-    return {
-      key,
-      doctorName: group.doctorName,
-      departmentName: group.departmentName,
-      total: group.slots.length,
-      periods: [...periods.values()].sort((left, right) => periodOrder(left.key) - periodOrder(right.key)),
-    };
-  });
-});
-
-watch(dateGroups, (groups) => {
-  if (!groups.length) {
-    selectedDate.value = "";
-  } else if (!groups.some((group) => group.date === selectedDate.value)) {
-    selectedDate.value = groups[0].date;
-  }
-}, { immediate: true });
+const slotState = useDoctorSlots(slots, registrations, departments, latestTriage);
 
 async function refresh() {
   loading.value = true;
@@ -137,6 +23,7 @@ async function refresh() {
   try {
     await workflow.refreshPublicData();
     await workflow.refreshAuthenticated();
+    await slotState.loadVisitors();
     loaded.value = true;
   } catch (err) {
     error.value = formatApiError(err, "号源加载失败");
@@ -146,65 +33,37 @@ async function refresh() {
 }
 
 function choose(slot: AppointmentSlot) {
-  if (isSlotBooked(slot)) return;
-  if (slot.status !== "AVAILABLE" || !slot.remainingCapacity) return;
-  selectedSlot.value = slot;
-  confirmOpen.value = true;
+  if (slotState.choose(slot)) confirmOpen.value = true;
 }
 
-function slotTimestamp(slot: AppointmentSlot) {
-  const value = Date.parse(slot.startTime || "");
-  return Number.isFinite(value) ? value : Number.MAX_SAFE_INTEGER;
-}
-
-function slotDateKey(time: string) {
-  return time && time !== "-" ? time.slice(0, 10) : "unscheduled";
-}
-
-function slotDateLabel(time: string) {
-  const key = slotDateKey(time);
-  if (key === "unscheduled") return "未定日期";
-  const date = new Date(`${key}T00:00:00`);
-  if (Number.isNaN(date.getTime())) return key;
-  return new Intl.DateTimeFormat("zh-CN", { month: "long", day: "numeric", weekday: "short" }).format(date);
-}
-
-function slotTimeText(slot: AppointmentSlot) {
-  const value = slot.startTime || "";
-  if (!value || value === "-") return "待定";
-  const time = value.includes("T") ? value.split("T")[1] : value.split(" ")[1];
-  return time ? time.slice(0, 5) : value;
-}
-
-function slotPeriod(time: string) {
-  const raw = time.includes("T") ? time.split("T")[1] : time.split(" ")[1] || "";
-  const hour = Number(raw.slice(0, 2));
-  if (!Number.isFinite(hour)) return { key: "unknown", label: "待定时段" };
-  if (hour < 12) return { key: "morning", label: "上午" };
-  if (hour < 18) return { key: "afternoon", label: "下午" };
-  return { key: "evening", label: "晚上" };
-}
-
-function periodOrder(key: string) {
-  return { morning: 1, afternoon: 2, evening: 3, unknown: 4 }[key as "morning" | "afternoon" | "evening" | "unknown"] ?? 5;
+function onDepartmentChange(event: Event) {
+  const target = event.target as HTMLSelectElement | null;
+  slotState.changeDepartment(target?.value || "");
 }
 
 async function confirmAppointment() {
-  if (!selectedSlot.value) return;
+  if (!slotState.selectedSlot.value) return;
+  const visitor = slotState.selectedVisitor.value;
+  if (!visitor) {
+    error.value = "请选择就诊人";
+    return;
+  }
   saving.value = true;
   error.value = "";
   try {
     await api.createRegistration({
-      doctorId: toNumber(selectedSlot.value.doctorId),
-      departmentId: toNumber(selectedSlot.value.departmentId),
-      appointmentTime: selectedSlot.value?.startTime || "",
-      slotId: toNumber(selectedSlot.value.slotId) || null,
+      doctorId: toNumber(slotState.selectedSlot.value.doctorId),
+      departmentId: toNumber(slotState.selectedSlot.value.departmentId),
+      appointmentTime: slotState.selectedSlot.value.startTime || "",
+      slotId: toNumber(slotState.selectedSlot.value.slotId) || null,
       triageRecordId: toNumber(triageHistory.value[0]?.triageRecordId, 0) || null,
+      visitorId: toNumber(visitor.id) || null,
+      visitorType: visitor.visitorType || "ACCOUNT",
     });
     await workflow.refreshAuthenticated();
     confirmOpen.value = false;
-    selectedSlot.value = null;
-    toast?.value?.success('预约已提交', '可在"我的挂号"页面查看或取消。');
+    slotState.selectedSlot.value = null;
+    toast?.value?.success("预约已提交", "可在“我的挂号”页面查看或取消。");
   } catch (err) {
     error.value = formatApiError(err, "挂号失败");
   } finally {
@@ -221,32 +80,50 @@ onMounted(refresh);
       <div class="panel-title">
         <p class="eyebrow">预约医生</p>
         <h2>可预约号源</h2>
-        <p>按日期选择号源，查看当天出诊医生及可预约时间段。</p>
+        <p>先选择就诊人和科室，再按日期查看当天出诊医生及可预约时间段。</p>
       </div>
       <button type="button" :disabled="loading" @click="refresh()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="{ 'spin': loading }"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="{ spin: loading }"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
         刷新号源
       </button>
     </header>
     <div class="panel-body stack">
       <ErrorState v-if="error" :message="error" />
+      <div class="registration-filter-bar">
+        <label>
+          <span>就诊人</span>
+          <select v-model="slotState.selectedVisitorKey.value" :disabled="slotState.visitorLoading.value">
+            <option v-for="visitor in slotState.visitorOptions.value" :key="String(visitor.value)" :value="String(visitor.value)">
+              {{ visitor.label }}
+            </option>
+          </select>
+        </label>
+        <label>
+          <span>科室</span>
+          <select :value="slotState.selectedDepartmentId.value" @change="onDepartmentChange">
+            <option v-for="department in slotState.departmentOptions.value" :key="String(department.value)" :value="String(department.value)">
+              {{ department.label }}
+            </option>
+          </select>
+        </label>
+      </div>
       <div class="summary-strip">
-        <div class="summary-item"><span>{{ guidanceLabel }}</span><strong>{{ guidanceValue }}</strong></div>
+        <div class="summary-item"><span>{{ slotState.guidanceLabel.value }}</span><strong>{{ slotState.guidanceValue.value }}</strong></div>
         <div class="summary-item"><span>医生</span><strong>{{ doctors.length }}</strong></div>
-        <div class="summary-item"><span>号源</span><strong>{{ displaySlots.length }}</strong></div>
-        <div class="summary-item"><span>可约日期</span><strong>{{ dateGroups.length }}</strong></div>
+        <div class="summary-item"><span>当前号源</span><strong>{{ slotState.displaySlots.value.length }}</strong></div>
+        <div class="summary-item"><span>可约日期</span><strong>{{ slotState.dateGroups.value.length }}</strong></div>
       </div>
 
       <LoadingState v-if="!loaded && loading" />
-      <div v-else-if="displaySlots.length" class="slot-schedule">
+      <div v-else-if="slotState.displaySlots.value.length" class="slot-schedule">
         <div class="slot-date-picker" role="tablist" aria-label="选择预约日期">
           <button
-            v-for="date in dateGroups"
+            v-for="date in slotState.dateGroups.value"
             :key="date.date"
             type="button"
             class="slot-date-option"
-            :class="{ active: selectedDate === date.date }"
-            @click="selectedDate = date.date"
+            :class="{ active: slotState.selectedDate.value === date.date }"
+            @click="slotState.selectedDate.value = date.date"
           >
             <strong>{{ date.label }}</strong>
             <span>{{ date.date }}</span>
@@ -254,35 +131,24 @@ onMounted(refresh);
           </button>
         </div>
 
-        <div v-if="doctorGroups.length" class="doctor-schedule-list">
-          <article v-for="doctor in doctorGroups" :key="doctor.key" class="doctor-schedule-card">
+        <div v-if="slotState.doctorGroups.value.length" class="doctor-schedule-list">
+          <article v-for="doctor in slotState.doctorGroups.value" :key="doctor.key" class="doctor-schedule-card">
             <header class="doctor-schedule-header">
-              <div>
-                <strong>{{ doctor.doctorName }}</strong>
-                <span>{{ doctor.departmentName }}</span>
-              </div>
+              <div><strong>{{ doctor.doctorName }}</strong><span>{{ doctor.departmentName }}</span></div>
               <span class="tag success">{{ doctor.total }} 个时段</span>
             </header>
             <div class="doctor-period-list">
               <section v-for="period in doctor.periods" :key="`${doctor.key}-${period.key}`" class="doctor-period-group">
-                <div class="doctor-period-label">
-                  <strong>{{ period.label }}</strong>
-                  <span>{{ period.slots.length }} 个可选</span>
-                </div>
+                <div class="doctor-period-label"><strong>{{ period.label }}</strong><span>{{ period.slots.length }} 个可选</span></div>
                 <div class="slot-card-grid">
-                  <article v-for="slot in period.slots" :key="String(slot.slotId)" class="slot-card" :class="{ selected: selectedSlot?.slotId === slot.slotId, booked: isSlotBooked(slot) }">
-                    <div class="row-main">
-                      <strong>{{ slotTimeText(slot) }}</strong>
-                      <p>余号 {{ String(slot.remainingCapacity ?? 0) }}/{{ String(slot.capacity ?? 0) }}</p>
-                    </div>
+                  <article v-for="slot in period.slots" :key="String(slot.slotId)" class="slot-card" :class="{ selected: slotState.selectedSlot.value?.slotId === slot.slotId, booked: slotState.isSlotBooked(slot) }">
+                    <div class="row-main"><strong>{{ slotState.slotTimeText(slot) }}</strong><p>余号 {{ String(slot.remainingCapacity ?? 0) }}/{{ String(slot.capacity ?? 0) }}</p></div>
                     <div class="toolbar">
-                      <template v-if="isSlotBooked(slot)">
-                        <span class="tag booked-label">已选择</span>
-                      </template>
+                      <span v-if="slotState.isSlotBooked(slot)" class="tag booked-label">已选择</span>
                       <template v-else>
-                        <span v-if="recommendedSlotIds.has(String(slot.slotId))" class="tag recommended-tag">✦ 推荐</span>
-                        <StatusTag :status="statusText(slot.status)" :tone="statusClass(slot.status)" />
-                        <button class="primary" type="button" :disabled="slot.status !== 'AVAILABLE' || !slot.remainingCapacity" @click="choose(slot)">{{ !slot.remainingCapacity ? '已满' : '选择' }}</button>
+                        <span v-if="slotState.recommendedSlotIds.value.has(String(slot.slotId))" class="tag recommended-tag">推荐科室</span>
+                        <StatusTag :status="slotState.statusText(slot.status)" :tone="slotState.statusClass(slot.status)" />
+                        <button class="primary" type="button" :disabled="slot.status !== 'AVAILABLE' || !slot.remainingCapacity" @click="choose(slot)">{{ !slot.remainingCapacity ? "已满" : "选择" }}</button>
                       </template>
                     </div>
                   </article>
@@ -293,15 +159,46 @@ onMounted(refresh);
         </div>
         <EmptyState v-else title="当天暂无医生出诊" message="请选择其他日期或刷新号源。" />
       </div>
-      <EmptyState v-else title="暂无号源" message="当前推荐科室暂无可预约号源，请刷新或稍后再试。" />
+      <EmptyState v-else title="暂无号源" message="当前科室暂无可预约号源，可切换其他科室或稍后再试。" />
     </div>
-    <ConfirmAppointmentModal :open="confirmOpen" :slot="selectedSlot" :busy="saving" @close="confirmOpen = false" @confirm="confirmAppointment" />
+    <ConfirmAppointmentModal :open="confirmOpen" :slot="slotState.selectedSlot.value" :visitor="slotState.selectedVisitor.value" :busy="saving" @close="confirmOpen = false" @confirm="confirmAppointment" />
   </section>
 </template>
 
 <style scoped>
+.registration-filter-bar {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.registration-filter-bar label {
+  display: grid;
+  gap: 8px;
+}
+
+.registration-filter-bar span {
+  color: var(--hospital-muted);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.registration-filter-bar select {
+  min-height: 42px;
+  border: 1px solid var(--hospital-line);
+  background: var(--surface);
+  color: var(--hospital-ink);
+  padding: 0 12px;
+}
+
 .recommended-tag {
-  background: var(--primary-soft, #e0f2fe);
-  color: var(--primary, #0369a1);
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+@media (max-width: 720px) {
+  .registration-filter-bar {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
