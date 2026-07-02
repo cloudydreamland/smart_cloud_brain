@@ -35,7 +35,7 @@ class MockAiProviderTest {
     ));
 
     assertEquals("MEDIUM", response.riskLevel());
-    assertTrue(response.suggestions().contains("bleeding"));
+    assertTrue(response.suggestions().contains("出血"));
   }
 
   @Test
