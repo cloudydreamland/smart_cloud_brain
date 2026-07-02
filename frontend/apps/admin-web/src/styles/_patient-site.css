@@ -110,8 +110,7 @@
 
 .patient-site-editor input,
 .patient-site-editor textarea,
-.patient-site-editor select,
-.patient-site-editor .scb-select {
+.patient-site-editor select {
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -120,10 +119,19 @@
 }
 
 .patient-site-editor input,
-.patient-site-editor select,
-.patient-site-editor .scb-select {
+.patient-site-editor select {
   height: 36px;
   padding: 0 10px;
+}
+
+.patient-site-editor .scb-select {
+  width: 100%;
+  min-width: 0;
+}
+
+.patient-site-editor .scb-select-trigger {
+  height: 36px;
+  border-radius: 8px;
 }
 
 .patient-site-editor input[type="checkbox"] {
