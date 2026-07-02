@@ -67,7 +67,7 @@ export function useDoctorSlots(
   const bookedTimes = computed(() => {
     const times = new Set<string>();
     registrations.value.forEach((reg) => {
-      if (reg.status === "CANCELLED") return;
+      if (["CANCELLED", "REFUNDING", "REFUNDED", "NO_SHOW"].includes(String(reg.status || "").toUpperCase())) return;
       if (selectedVisitor.value && !subjectMatches(reg, selectedVisitor.value)) return;
       if (reg.appointmentTime) times.add(reg.appointmentTime);
     });

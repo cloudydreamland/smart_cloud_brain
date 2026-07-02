@@ -13,8 +13,8 @@ const { patient, triageHistory, registrations, records, prescriptions, slots } =
 
 const latestTriage = computed(() => triageHistory.value[0] ?? workflow.triage ?? null);
 const activeRegistration = computed(() => registrations.value.find((item) => {
-  const status = item.status || "";
-  return !["COMPLETED", "CANCELLED"].includes(status);
+  const status = String(item.status || "").toUpperCase();
+  return !["COMPLETED", "CANCELLED", "NO_SHOW", "REFUNDED"].includes(status);
 }) ?? registrations.value[0] ?? null);
 const latestRecord = computed(() => records.value[0] ?? null);
 const latestPrescription = computed(() => prescriptions.value[0] ?? null);

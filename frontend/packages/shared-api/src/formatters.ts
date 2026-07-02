@@ -34,10 +34,10 @@ export function displayText(value: unknown, fallback = "-") {
 
 export function statusClass(status: unknown) {
   const value = String(status || "").toUpperCase();
-  if (["CREATED", "CONFIRMED", "COMPLETED", "AVAILABLE", "ENABLED", "PUBLISHED", "AI_RECOMMENDED", "LOW", "READ"].includes(value)) return "success";
-  if (["CANCELLED", "FAILED", "DISABLED", "HIGH", "CLOSED", "FULL", "RETIRED"].includes(value)) return "danger";
-  if (["PENDING", "DRAFT", "UNPUBLISHED", "UNREVIEWED", "MEDIUM", "MANUAL_REQUIRED", "UNREAD", "MAINTENANCE"].includes(value)) return "warning";
-  if (["IN_USE", "ASSIGNED"].includes(value)) return "info";
+  if (["CREATED", "CONFIRMED", "COMPLETED", "AVAILABLE", "ENABLED", "PUBLISHED", "AI_RECOMMENDED", "LOW", "READ", "PAID", "CHECKED_IN", "WAITING"].includes(value)) return "success";
+  if (["CANCELLED", "FAILED", "DISABLED", "HIGH", "CLOSED", "FULL", "RETIRED", "NO_SHOW", "REFUNDED"].includes(value)) return "danger";
+  if (["PENDING", "PENDING_PAYMENT", "DRAFT", "UNPUBLISHED", "UNREVIEWED", "MEDIUM", "MANUAL_REQUIRED", "UNREAD", "MAINTENANCE", "UNPAID", "REFUNDING"].includes(value)) return "warning";
+  if (["IN_USE", "ASSIGNED", "CALLED", "IN_CONSULTATION", "IN_PROGRESS"].includes(value)) return "info";
   return "info";
 }
 
@@ -45,6 +45,17 @@ export function statusText(status: unknown, fallback = "-") {
   const raw = String(status ?? "").trim();
   if (!raw) return fallback;
   const labels: Record<string, string> = {
+    PENDING_PAYMENT: "待支付",
+    PAID: "已支付",
+    CHECKED_IN: "已签到",
+    WAITING: "候诊中",
+    CALLED: "已叫号",
+    IN_CONSULTATION: "接诊中",
+    IN_PROGRESS: "接诊中",
+    NO_SHOW: "爽约",
+    REFUNDING: "退费中",
+    REFUNDED: "已退费",
+    UNPAID: "未支付",
     CREATED: "已创建", CONFIRMED: "已确认", COMPLETED: "已完成", AVAILABLE: "可预约",
     ENABLED: "启用", PUBLISHED: "已发布", AI_RECOMMENDED: "智能推荐", LOW: "低风险",
     READ: "已读", CANCELLED: "已取消", FAILED: "失败", DISABLED: "停用", HIGH: "高风险",
@@ -58,6 +69,7 @@ export function statusText(status: unknown, fallback = "-") {
     IDLE: "空闲", OPEN: "进行中", ACTIVE: "生效",
     IN_USE: "使用中", MAINTENANCE: "维修中", RETIRED: "已停用",
   };
+  if (raw.toUpperCase() === "CREATED") return "已预约";
   return labels[raw.toUpperCase()] ?? raw;
 }
 

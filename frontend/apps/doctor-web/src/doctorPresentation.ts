@@ -13,12 +13,12 @@ export const statusLabel = statusText;
 export function statusTone(status: unknown): Tone {
   const value = String(status || "").toUpperCase();
   if (["LOW", "READ", "DRAFT_READY"].includes(value)) return "low";
-  if (["COMPLETED", "PUBLISHED", "HANDLED"].includes(value)) return "success";
-  if (["HIGH", "FAILED", "CANCELLED"].includes(value)) return "danger";
-  if (["MEDIUM", "PENDING", "UNREVIEWED", "UNREAD", "GENERATING"].includes(value)) return "warning";
+  if (["COMPLETED", "PUBLISHED", "HANDLED", "PAID", "CHECKED_IN", "WAITING"].includes(value)) return "success";
+  if (["HIGH", "FAILED", "CANCELLED", "NO_SHOW", "REFUNDED"].includes(value)) return "danger";
+  if (["MEDIUM", "PENDING", "PENDING_PAYMENT", "UNREVIEWED", "UNREAD", "GENERATING", "REFUNDING"].includes(value)) return "warning";
   if (["CREATED"].includes(value)) return "pending";
-  if (["IGNORED"].includes(value)) return "info";
-  if (["CONFIRMED"].includes(value)) return "active";
+  if (["IGNORED", "CALLED"].includes(value)) return "info";
+  if (["CONFIRMED", "IN_CONSULTATION", "IN_PROGRESS"].includes(value)) return "active";
   return "info";
 }
 

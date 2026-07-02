@@ -1,29 +1,34 @@
 <script setup lang="ts">
 import { computed, inject, ref, watch, type Ref } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
-import { displayText, formatApiError, useDoctorWorkflowStore, usePagination } from "@smart-cloud-brain/shared-api";
+import { api, displayText, formatApiError, toNumber, useDoctorWorkflowStore, usePagination, type Registration } from "@smart-cloud-brain/shared-api";
 import { ErrorState, LoadingState, PaginationBar, Toast } from "@smart-cloud-brain/shared-ui";
 import { formatTime, liveRows, patientName, riskText, statusLabel, statusTone } from "../doctorPresentation";
 
 const workflow = useDoctorWorkflowStore();
 const route = useRoute();
+const router = useRouter();
 const { registrations } = storeToRefs(workflow);
 const sourceRows = liveRows(registrations);
 const filter = ref("");
 const keyword = ref(displayText(route.query.patientId ?? route.query.triageRecordId, ""));
 const loading = ref(false);
 const loaded = ref(false);
+const queueActionLoading = ref(false);
 const error = ref("");
 const toast = inject<Ref<InstanceType<typeof Toast>>>("toast");
 const options = [
   { label: "全部", value: "" },
-  { label: "待接诊", value: "CREATED" },
-  { label: "已确认", value: "CONFIRMED" },
-  { label: "已完成", value: "COMPLETED" },
+  { label: "已签到", value: "CHECKED_IN" },
+  { label: "候诊中", value: "WAITING" },
+  { label: "已叫号", value: "CALLED" },
+  { label: "接诊中", value: "IN_CONSULTATION" },
 ];
+const queueStatuses = new Set(["CHECKED_IN", "WAITING", "CALLED", "IN_CONSULTATION"]);
 
 const rows = computed(() => sourceRows.value.filter((item) => {
+  if (!queueStatuses.has(String(item.status || "").toUpperCase())) return false;
   const haystack = `${patientName(item)} ${displayText(item.patientId, "")} ${displayText(item.registrationId, "")} ${displayText(item.triageRecordId, "")} ${displayText(item.departmentName, "")} ${displayText(item.chiefComplaint, "")}`.toLowerCase();
   return (!filter.value || displayText(item.status) === filter.value) && (!keyword.value || haystack.includes(keyword.value.toLowerCase()));
 }));
@@ -42,6 +47,39 @@ async function refresh(silent = false, showLoading = true) {
   } finally {
     if (showLoading) loading.value = false;
   }
+}
+
+async function handleQueueAction(item: Registration) {
+  queueActionLoading.value = true;
+  error.value = "";
+  try {
+    const id = toNumber(item.registrationId);
+    if (item.canJoinQueue) {
+      await api.joinRegistrationQueue(id);
+    } else if (item.canCall) {
+      await api.callRegistration(id);
+    } else if (item.canStartConsultation) {
+      await api.startRegistrationConsultation(id);
+      await workflow.refresh();
+      await router.push({ name: "doctor-consult", params: { registrationId: String(id) } });
+      return;
+    }
+    await workflow.refresh();
+    toast?.value?.success?.("操作成功", "队列状态已更新。");
+  } catch (err) {
+    error.value = formatApiError(err, "队列状态更新失败，请稍后重试。");
+    toast?.value?.error?.("操作失败", error.value);
+  } finally {
+    queueActionLoading.value = false;
+  }
+}
+
+function actionText(item: Registration) {
+  if (item.canJoinQueue) return "进入候诊";
+  if (item.canCall) return "叫号";
+  if (item.canStartConsultation) return "开始接诊";
+  if (item.canComplete) return "继续接诊";
+  return "查看";
 }
 
 refresh(true, false);
@@ -111,8 +149,17 @@ watch(() => [route.query.patientId, route.query.triageRecordId], ([patientId, tr
                 <td><span class="tag" :class="statusTone(item.riskLevel)">{{ riskText(item) }}</span></td>
                 <td><span class="tag" :class="statusTone(item.status)">{{ statusLabel(item.status) }}</span></td>
                 <td class="actions-cell">
-                  <RouterLink class="action-btn primary" :to="`/consult/${item.registrationId}`">
-                    {{ displayText(item.status).toUpperCase() === "COMPLETED" ? "查看" : "接诊" }}
+                  <button
+                    v-if="item.canJoinQueue || item.canCall || item.canStartConsultation"
+                    type="button"
+                    class="action-btn primary"
+                    :disabled="queueActionLoading"
+                    @click="handleQueueAction(item)"
+                  >
+                    {{ actionText(item) }}
+                  </button>
+                  <RouterLink v-else class="action-btn primary" :to="`/consult/${item.registrationId}`">
+                    {{ actionText(item) }}
                   </RouterLink>
                 </td>
               </tr>

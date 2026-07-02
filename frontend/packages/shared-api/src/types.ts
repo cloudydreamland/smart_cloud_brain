@@ -9,6 +9,22 @@ import type { PatientSiteConfigKey } from "./patientSiteResolver";
 
 export type Role = "PATIENT" | "DOCTOR" | "ADMIN";
 export type SubjectType = "ACCOUNT" | "VISITOR";
+export type RegistrationStatus =
+  | "PENDING_PAYMENT"
+  | "PAID"
+  | "CHECKED_IN"
+  | "WAITING"
+  | "CALLED"
+  | "IN_CONSULTATION"
+  | "COMPLETED"
+  | "CANCELLED"
+  | "NO_SHOW"
+  | "REFUNDING"
+  | "REFUNDED"
+  | "CREATED"
+  | "IN_PROGRESS"
+  | string;
+export type PaymentStatus = "UNPAID" | "PAID" | "CLOSED" | "REFUNDING" | "REFUNDED" | string;
 
 export type ApiResult<T> = { code: number; message: string; data: T };
 export type Session = { token: string; userId: number; role: Role; name: string; departmentName?: string };
@@ -292,7 +308,22 @@ export interface Registration {
   departmentName?: string;
   appointmentTime?: string;
   createdAt?: string;
-  status?: string;
+  status?: RegistrationStatus;
+  orderId?: number;
+  orderNo?: string;
+  amount?: number | string;
+  paymentStatus?: PaymentStatus;
+  paymentMethod?: string;
+  paidAt?: string;
+  closedAt?: string;
+  canPay?: boolean;
+  canCancel?: boolean;
+  canCheckIn?: boolean;
+  canJoinQueue?: boolean;
+  canCall?: boolean;
+  canStartConsultation?: boolean;
+  canComplete?: boolean;
+  canRefund?: boolean;
   riskLevel?: string;
   chiefComplaint?: string;
   triageRecordId?: number;

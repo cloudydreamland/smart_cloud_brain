@@ -66,6 +66,7 @@ const triage = computed(() =>
 );
 const triageRisk = computed(() => displayText(triage.value?.riskLevel, displayText(registration.value?.riskLevel, "MEDIUM")));
 const isCompleted = computed(() => displayText(registration.value?.status, "").toUpperCase() === "COMPLETED");
+const canCompleteRegistration = computed(() => Boolean(registration.value?.canComplete) && !isCompleted.value);
 const selectableDrugNames = computed(() =>
   new Set(drugCatalog.value.filter((drug) => !drug.disabled).map((drug) => drug.name.trim())),
 );
@@ -221,7 +222,7 @@ onMounted(loadDrugCatalog);
       </div>
       <div class="context-actions">
         <button type="button" class="action-btn" @click="contextOpen = true">上下文</button>
-        <button v-if="!isCompleted" type="button" class="action-btn primary" :disabled="completeLoading" @click="completeOpen = true">完成接诊</button>
+        <button v-if="canCompleteRegistration" type="button" class="action-btn primary" :disabled="completeLoading" @click="completeOpen = true">完成接诊</button>
       </div>
     </header>
 
